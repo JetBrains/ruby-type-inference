@@ -1,21 +1,21 @@
 package org.jetbrains.plugins.ruby.ruby.codeInsight.types;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.resolve.ResolveUtil;
-import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.RMethodSymbolImpl;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.Symbol;
-import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.v2.TopLevelSymbol;
-import org.jetbrains.plugins.ruby.ruby.codeInsight.types.impl.RSymbolTypeImpl;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.SymbolUtil;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RPsiElement;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.expressions.RExpression;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.impl.references.RDotReferenceImpl;
-import org.jetbrains.plugins.ruby.ruby.lang.psi.impl.references.RReferenceBase;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.impl.variables.RIdentifierImpl;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.methodCall.RCall;
+import org.jetbrains.plugins.ruby.ruby.lang.psi.references.RDotReference;
+import org.jetbrains.plugins.ruby.ruby.lang.psi.references.RReference;
+import org.jetbrains.plugins.ruby.ruby.lang.psi.variables.RIdentifier;
 
-import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,24 +24,12 @@ import java.util.stream.Collectors;
 
 public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
     private class CallIdentifier {
-        String methodName;
-        String receiverName;
-        List<String> argTypeNames;
+        String methodFqn;
+        List<String> argFqns;
 
-        CallIdentifier(Symbol receiver, Symbol method, List<RType> argTypes) {
-            this.methodName = method != null ? method.getName() : null;
-            this.receiverName = receiver != null ? receiver.getName() : null;
-            this.argTypeNames = argTypes.stream()
-                    .map(RType::getPresentableName)
-                    .collect(Collectors.toList());
-        }
-
-        CallIdentifier(String receiverName, String methodName, List<RType> argTypes) {
-            this.methodName = methodName;
-            this.receiverName = receiverName;
-            this.argTypeNames = argTypes.stream()
-                    .map(RType::getPresentableName)
-                    .collect(Collectors.toList());
+        CallIdentifier(String methodFqn, List<String> argFqns) {
+            this.methodFqn = methodFqn;
+            this.argFqns = argFqns;
         }
 
         @Override
@@ -51,18 +39,15 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
 
             CallIdentifier that = (CallIdentifier) o;
 
-            if (methodName != null ? !methodName.equals(that.methodName) : that.methodName != null) return false;
-            if (receiverName != null ? !receiverName.equals(that.receiverName) : that.receiverName != null)
-                return false;
-            return argTypeNames != null ? argTypeNames.equals(that.argTypeNames) : that.argTypeNames == null;
+            if (methodFqn != null ? !methodFqn.equals(that.methodFqn) : that.methodFqn != null) return false;
+            return argFqns != null ? argFqns.equals(that.argFqns) : that.argFqns == null;
 
         }
 
         @Override
         public int hashCode() {
-            int result = methodName != null ? methodName.hashCode() : 0;
-            result = 31 * result + (receiverName != null ? receiverName.hashCode() : 0);
-            result = 31 * result + (argTypeNames != null ? argTypeNames.hashCode() : 0);
+            int result = methodFqn != null ? methodFqn.hashCode() : 0;
+            result = 31 * result + (argFqns != null ? argFqns.hashCode() : 0);
             return result;
         }
     }
@@ -71,15 +56,14 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
 //    {{
 //        put(
 //            new CallIdentifier(
-//                new TopLevelSymbol(),
-//                new RMethodSymbolImpl(),
-//                new ArrayList<RType>() {{
-//                    add(new RSymbolTypeImpl());
-//                    add(new RSymbolTypeImpl());
-//                    add(new RSymbolTypeImpl());
+//                "foo",
+//                new ArrayList<String>() {{
+//                    add("Fixnum");
+//                    add("Float");
+//                    add("String");
 //                }}
 //            ),
-//            new RSymbolTypeImpl()
+//            RTypeFactory.createTypeByFQN(getProject(), "Float")
 //        );
 //    }};
 
@@ -87,27 +71,30 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
     @Override
     @Nullable
     public RType createTypeByCallAndArgs(@NotNull RExpression call, @NotNull List<RPsiElement> callArgs) {
-        final List<RType> argTypes = callArgs.stream()
+        final List<String> argTypesFqns = callArgs.stream()
 //            .filter(arg -> arg instanceof RExpression)
-                .map(arg -> ((RExpression)arg).getType())
+                .map(arg -> ((RExpression)arg).getType().getPresentableName())
                 .collect(Collectors.toList());
 
         CallIdentifier callId;
         final PsiElement element2resolve = call instanceof RCall ? ((RCall)call).getPsiCommand() : call;
-        final Symbol method = ResolveUtil.resolveToSymbolWithCaching(element2resolve.getReference(), false);
-        if (method != null) {
-            final Symbol receiver = method.getParentSymbol();
-            callId = new CallIdentifier(receiver, method, argTypes);
-        } else if (element2resolve instanceof RDotReferenceImpl) {
+        Symbol symbol = ResolveUtil.resolveToSymbolWithCaching(element2resolve.getReference(), false);
+        if (symbol != null) {
+            final String methodFqn = SymbolUtil.getSymbolFullQualifiedName(symbol);
+            callId = new CallIdentifier(methodFqn, argTypesFqns);
+        } else if (element2resolve instanceof RReference) {
+            final RPsiElement receiver = ((RReference) element2resolve).getReceiver();
+            symbol = ResolveUtil.resolveToSymbolWithCaching(receiver.getReferenceEx(false));
+            final String receiverFqn = symbol != null ? SymbolUtil.getSymbolFullQualifiedName(symbol) : receiver.getName();
             final String methodName = ((RDotReferenceImpl) element2resolve).getName();
-            final String receiverName = ((RDotReferenceImpl) element2resolve).getReceiver().getName();
-            callId = new CallIdentifier(receiverName, methodName, argTypes);
+            final String methodFqn = receiverFqn + "." + methodName;
+            callId = new CallIdentifier(methodFqn, argTypesFqns);
         } else {
-            final String methodName = ((RIdentifierImpl) element2resolve).getName();
-            callId = new CallIdentifier(null, methodName, argTypes);
+            final String methodFqn = "main." + ((RIdentifier) element2resolve).getName();
+            callId = new CallIdentifier(methodFqn, argTypesFqns);
         }
 
-        callsReturnTypes.put(callId, argTypes.isEmpty() ? null : argTypes.get(0));
+        callsReturnTypes.put(callId, callArgs.isEmpty() ? null : RTypeFactory.createTypeByFQN(call.getProject(), "Float"));
 
 //        try {
 //            File file = new File("temp");
