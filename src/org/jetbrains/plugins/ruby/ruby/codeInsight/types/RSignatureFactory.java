@@ -15,27 +15,27 @@ import org.jetbrains.plugins.ruby.ruby.lang.psi.variables.RIdentifier;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class RSignatureUtil {
-    private RSignatureUtil() {
+public class RSignatureFactory {
+    private RSignatureFactory() {
     }
 
     @Nullable
-    public static RSignature getRSignatureByRExpressionAndArgs(@NotNull RExpression call,
-                                                               @NotNull List<RPsiElement> args) {
+    public static RSignature createSignatureByExpressionAndArgs(@NotNull RExpression call,
+                                                                @NotNull List<RPsiElement> args) {
         final PsiElement element2resolve = call instanceof RCall ? ((RCall) call).getPsiCommand() : call;
         final Symbol symbol = ResolveUtil.resolveToSymbolWithCaching(element2resolve.getReference(), false);
         if (symbol != null) {
-            return getRSignatureBySymbolAndArgs(symbol, args);
+            return createSignatureBySymbolAndArgs(symbol, args);
         } else if (element2resolve instanceof RReference) {
-            return getRSignatureByRReferenceAndArgs((RReference) element2resolve, args);
+            return createSignatureByReferenceAndArgs((RReference) element2resolve, args);
         } else {
-            return getRSignatureByRIdentifierAndArgs((RIdentifier) element2resolve, args);
+            return createSignatureByIdentifierAndArgs((RIdentifier) element2resolve, args);
         }
     }
 
     @Nullable
-    public static RSignature getRSignatureBySymbolAndArgs(@NotNull Symbol methodSymbol,
-                                                          @NotNull List<RPsiElement> args) {
+    public static RSignature createSignatureBySymbolAndArgs(@NotNull Symbol methodSymbol,
+                                                            @NotNull List<RPsiElement> args) {
         String methodFQN = SymbolUtil.getSymbolFullQualifiedName(methodSymbol);
         if (methodFQN != null) {
             final List<String> argsTypeName = args.stream()
@@ -49,8 +49,8 @@ public class RSignatureUtil {
     }
 
     @Nullable
-    public static RSignature getRSignatureByRReferenceAndArgs(@NotNull RReference methodRef,
-                                                              @NotNull List<RPsiElement> args) {
+    public static RSignature createSignatureByReferenceAndArgs(@NotNull RReference methodRef,
+                                                               @NotNull List<RPsiElement> args) {
         if (methodRef.getName() != null) {
             final List<String> argsTypeName = args.stream()
                     .map(arg -> ((RExpression) arg).getType().getPresentableName())
@@ -73,11 +73,12 @@ public class RSignatureUtil {
     }
 
     @Nullable
-    public static RSignature getRSignatureByRIdentifierAndArgs(@NotNull RIdentifier methodId,
-                                                               @NotNull List<RPsiElement> args) {
+    public static RSignature createSignatureByIdentifierAndArgs(@NotNull RIdentifier methodId,
+                                                                @NotNull List<RPsiElement> args) {
         if (methodId.getName() != null) {
             final List<String> argsTypeName = args.stream()
-                    .map(arg -> ((RExpression) arg).getType().getPresentableName())
+                    .map(arg -> ((RExpression) arg).getType())
+                    .map(RType::getPresentableName)
                     .collect(Collectors.toList());
 
             final Symbol scopeContext = SymbolUtil.getScopeContext(methodId);

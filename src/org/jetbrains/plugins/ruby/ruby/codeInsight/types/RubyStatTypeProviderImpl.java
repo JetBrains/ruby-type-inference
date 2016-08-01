@@ -11,7 +11,7 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
     @Override
     @Nullable
     public RType createTypeByCallAndArgs(@NotNull RExpression call, @NotNull List<RPsiElement> callArgs) {
-        RSignature signature = RSignatureUtil.getRSignatureByRExpressionAndArgs(call, callArgs);
+        RSignature signature = RSignatureFactory.createSignatureByExpressionAndArgs(call, callArgs);
         if (signature != null) {
             RSignatureCacheManager cacheManager = HashMapRSignatureCacheManager.getInstance();
 

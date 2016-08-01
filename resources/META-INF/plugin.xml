@@ -1,15 +1,14 @@
 <idea-plugin version="1">
-  <id>org.jetbrains.plugins.ruby</id>
+  <id>org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyStatTypeInference</id>
   <name>Ruby Stat Type Inference</name>
   <version>1.0</version>
-  <vendor email="Mikhail.Chernyavsky@jetbrains.com" url="http://www.jetbrains.com">JetBrains</vendor>
-  <depends>com.intellij.modules.lang</depends>
+  <vendor email="" url="http://www.jetbrains.com">JetBrains</vendor>
+  <depends>com.intellij.modules.ruby</depends>
   <description><![CDATA[
-      Short description for plugin.
+      TODO
     ]]></description>
 
   <change-notes><![CDATA[
-      Change notes.
     ]]>
   </change-notes>
 
