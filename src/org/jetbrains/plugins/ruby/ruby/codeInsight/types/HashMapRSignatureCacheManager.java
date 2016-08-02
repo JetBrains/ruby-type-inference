@@ -35,6 +35,15 @@ public class HashMapRSignatureCacheManager extends RSignatureCacheManager {
     private HashMapRSignatureCacheManager() {
         cache.put(
                 new RSignature(
+                        "test_eval_class",
+                        new ArrayList<String>() {{
+                            add(CoreTypes.String);
+                        }}
+                ),
+                "EvalClass"
+        );
+        cache.put(
+                new RSignature(
                         "Qwerty.bar",
                         new ArrayList<String>() {{
                             add(CoreTypes.Fixnum);
