@@ -15,14 +15,70 @@
  */
 package org.jetbrains.plugins.ruby.ruby.codeInsight.types;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.Type;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.*;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.v2.SymbolPsiProcessor;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.types.impl.REmptyType;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.types.impl.RSymbolTypeImpl;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public abstract class RSignatureCacheManager {
+    private static final Map<String, RType> ourSyntheticTypes = new HashMap<>();
+
     @Nullable
     public abstract String findReturnTypeNameBySignature(@NotNull final RSignature signature);
 
     public abstract void recordSignature(@NotNull final RSignature signature, @NotNull final String returnTypeName);
 
     public abstract void clearCache();
+
+    @NotNull
+    public RType createTypeByFQNFromStat(@NotNull final Project project, @NotNull final String classFQN) {
+        if (ourSyntheticTypes.containsKey(classFQN)) {
+            return ourSyntheticTypes.get(classFQN);
+        }
+
+        final List<RSignature> classMethodSignatures = getReceiverMethodSignatures(classFQN);
+        final List<RMethodSymbol> methodSymbols = new ArrayList<>();
+
+        final Symbol classSymbol = new SymbolImpl(project, classFQN, Type.CLASS, null) {
+            @NotNull
+            @Override
+            public Children getChildren() {
+                return new ChildrenImpl() {
+                    @Override
+                    public boolean processChildren(final SymbolPsiProcessor processor, final PsiElement invocationPoint) {
+                        for (final RMethodSymbol methodSymbol : methodSymbols) {
+                            if (!processor.process(methodSymbol)) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    }
+                };
+            }
+        };
+
+        methodSymbols.addAll(classMethodSignatures.stream()
+                .map(signature -> new RTypedSyntheticSymbol(project, signature.getMethodName(), Type.INSTANCE_METHOD,
+                        classSymbol, REmptyType.INSTANCE, -1))
+                .collect(Collectors.toList()));
+
+        final RType syntheticType = new RSymbolTypeImpl(classSymbol, Context.INSTANCE);
+        ourSyntheticTypes.put(classFQN, syntheticType);
+
+        return syntheticType;
+    }
+
+    @NotNull
+    protected abstract List<RSignature> getReceiverMethodSignatures(@NotNull final String receiverName);
 }

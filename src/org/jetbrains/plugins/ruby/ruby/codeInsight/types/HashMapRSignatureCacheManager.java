@@ -20,7 +20,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class HashMapRSignatureCacheManager extends RSignatureCacheManager {
     private static final RSignatureCacheManager INSTANCE = new HashMapRSignatureCacheManager();
@@ -41,6 +43,24 @@ public class HashMapRSignatureCacheManager extends RSignatureCacheManager {
                         }}
                 ),
                 "EvalClass"
+        );
+        myCache.put(
+                new RSignature(
+                        "foo",
+                        "EvalClass",
+                        new ArrayList<String>() {{
+                            add(CoreTypes.Fixnum);
+                        }}
+                ),
+                "Fixnum"
+        );
+        myCache.put(
+                new RSignature(
+                        "bar",
+                        "EvalClass",
+                        new ArrayList<>()
+                ),
+                "Fixnum"
         );
         myCache.put(
                 new RSignature(
@@ -166,5 +186,13 @@ public class HashMapRSignatureCacheManager extends RSignatureCacheManager {
     @Override
     public void clearCache() {
         myCache.clear();
+    }
+
+    @Override
+    @NotNull
+    protected List<RSignature> getReceiverMethodSignatures(@NotNull final String receiverName) {
+        return myCache.keySet().stream()
+                .filter(signature -> signature.getReceiverName().equals(receiverName))
+                .collect(Collectors.toList());
     }
 }

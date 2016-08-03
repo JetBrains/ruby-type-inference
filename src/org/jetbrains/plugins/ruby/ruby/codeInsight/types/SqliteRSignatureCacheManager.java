@@ -5,6 +5,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class SqliteRSignatureCacheManager extends RSignatureCacheManager {
     private static final Logger LOG = Logger.getInstance(SqliteRSignatureCacheManager.class.getName());
@@ -73,5 +76,26 @@ public class SqliteRSignatureCacheManager extends RSignatureCacheManager {
         } catch (SQLException e) {
             LOG.info(e);
         }
+    }
+
+    @Override
+    @NotNull
+    protected List<RSignature> getReceiverMethodSignatures(@NotNull final String receiverName) {
+        final List<RSignature> receiverMethodSignatures = new ArrayList<>();
+
+        try (final Statement statement = myConnection.createStatement()) {
+            final String sql = String.format("SELECT method_name, args_type_name FROM signatures " +
+                                             "WHERE receiver_name = '%s';", receiverName);
+            final ResultSet signatures = statement.executeQuery(sql);
+            while (signatures.next()) {
+                String methodName = signatures.getString("method_name");
+                List<String> argsTypeName = Arrays.asList(signatures.getString("args_type_name").split(";"));
+                receiverMethodSignatures.add(new RSignature(methodName, receiverName, argsTypeName));
+            }
+        } catch (SQLException e) {
+            LOG.info(e);
+        }
+
+        return receiverMethodSignatures;
     }
 }
