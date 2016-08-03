@@ -18,12 +18,12 @@ import java.util.List;
 import java.util.Map;
 
 public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
-    final static private Map<String, RType> syntheticTypes = new HashMap<>();
+    final static private Map<String, RType> ourSyntheticTypes = new HashMap<>();
 
     @NotNull
-    private static RType getSyntheticRTypeByClassNameFromStat(Project project, String className) {
-        if (syntheticTypes.containsKey(className)) {
-            return syntheticTypes.get(className);
+    private static RType getSyntheticRTypeByClassNameFromStat(final Project project, final String className) {
+        if (ourSyntheticTypes.containsKey(className)) {
+            return ourSyntheticTypes.get(className);
         }
 
         final List<RMethodSymbol> methodSymbols = new ArrayList<>();
@@ -35,7 +35,7 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
                 return new ChildrenImpl() {
                     @Override
                     public boolean processChildren(final SymbolPsiProcessor processor, final PsiElement invocationPoint) {
-                        for (RMethodSymbol methodSymbol : methodSymbols) {
+                        for (final RMethodSymbol methodSymbol : methodSymbols) {
                             if (!processor.process(methodSymbol)) {
                                 return false;
                             }
@@ -47,32 +47,32 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
         };
 
         methodSymbols.add(new RTypedSyntheticSymbol(project,
-                                                    "foo",
-                                                    Type.INSTANCE_METHOD,
-                                                    klass,
-                                                    REmptyType.INSTANCE,
-                                                    -1));
+                "foo",
+                Type.INSTANCE_METHOD,
+                klass,
+                REmptyType.INSTANCE,
+                -1));
         methodSymbols.add(new RTypedSyntheticSymbol(project,
-                                                    "bar",
-                                                    Type.INSTANCE_METHOD,
-                                                    klass,
-                                                    REmptyType.INSTANCE,
-                                                    -1));
+                "bar",
+                Type.INSTANCE_METHOD,
+                klass,
+                REmptyType.INSTANCE,
+                -1));
 
-        RType syntheticType = new RSymbolTypeImpl(klass, Context.INSTANCE);
-        syntheticTypes.put(className, syntheticType);
+        final RType syntheticType = new RSymbolTypeImpl(klass, Context.INSTANCE);
+        ourSyntheticTypes.put(className, syntheticType);
 
         return syntheticType;
     }
 
     @Override
     @Nullable
-    public RType createTypeByCallAndArgs(@NotNull RExpression call, @NotNull List<RPsiElement> callArgs) {
-        RSignature signature = RSignatureFactory.createSignatureByExpressionAndArgs(call, callArgs);
+    public RType createTypeByCallAndArgs(@NotNull final RExpression call, @NotNull final List<RPsiElement> callArgs) {
+        final RSignature signature = RSignatureFactory.createSignatureByExpressionAndArgs(call, callArgs);
         if (signature != null) {
-            RSignatureCacheManager cacheManager = HashMapRSignatureCacheManager.getInstance();
+            final RSignatureCacheManager cacheManager = HashMapRSignatureCacheManager.getInstance();
 
-            String returnTypeName = cacheManager.findReturnTypeNameBySignature(signature);
+            final String returnTypeName = cacheManager.findReturnTypeNameBySignature(signature);
             if (returnTypeName != null) {
                 RType returnType = RTypeFactory.createTypeByFQN(call.getProject(), returnTypeName);
                 if (returnType == REmptyType.INSTANCE) {

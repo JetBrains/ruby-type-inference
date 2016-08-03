@@ -20,8 +20,8 @@ public class RSignatureFactory {
     }
 
     @Nullable
-    public static RSignature createSignatureByExpressionAndArgs(@NotNull RExpression call,
-                                                                @NotNull List<RPsiElement> args) {
+    public static RSignature createSignatureByExpressionAndArgs(@NotNull final RExpression call,
+                                                                @NotNull final List<RPsiElement> args) {
         final PsiElement element2resolve = call instanceof RCall ? ((RCall) call).getPsiCommand() : call;
         final Symbol symbol = ResolveUtil.resolveToSymbolWithCaching(element2resolve.getReference(), false);
         if (symbol != null) {
@@ -34,63 +34,61 @@ public class RSignatureFactory {
     }
 
     @Nullable
-    public static RSignature createSignatureBySymbolAndArgs(@NotNull Symbol methodSymbol,
-                                                            @NotNull List<RPsiElement> args) {
-        String methodFQN = SymbolUtil.getSymbolFullQualifiedName(methodSymbol);
+    public static RSignature createSignatureBySymbolAndArgs(@NotNull final Symbol methodSymbol,
+                                                            @NotNull final List<RPsiElement> args) {
+        final String methodFQN = SymbolUtil.getSymbolFullQualifiedName(methodSymbol);
         if (methodFQN != null) {
             final List<String> argsTypeName = args.stream()
-                    .map(arg -> ((RExpression) arg).getType().getPresentableName())
+                    .map(arg -> ((RExpression) arg).getType())
+                    .map(RType::getPresentableName)
                     .collect(Collectors.toList());
 
-            return new RSignature(methodFQN, argsTypeName);
+            final int separatorIndex = methodFQN.lastIndexOf(".");
+            final String receiverFQN = separatorIndex >= 0 ? methodFQN.substring(0, separatorIndex) : null;
+            return new RSignature(methodSymbol.getName(), receiverFQN, argsTypeName);
         }
 
         return null;
     }
 
     @Nullable
-    public static RSignature createSignatureByReferenceAndArgs(@NotNull RReference methodRef,
-                                                               @NotNull List<RPsiElement> args) {
+    public static RSignature createSignatureByReferenceAndArgs(@NotNull final RReference methodRef,
+                                                               @NotNull final List<RPsiElement> args) {
         if (methodRef.getName() != null) {
             final List<String> argsTypeName = args.stream()
-                    .map(arg -> ((RExpression) arg).getType().getPresentableName())
+                    .map(arg -> ((RExpression) arg).getType())
+                    .map(RType::getPresentableName)
                     .collect(Collectors.toList());
 
             final RPsiElement receiver = methodRef.getReceiver();
             if (receiver != null) {
-                final Symbol symbol = ResolveUtil.resolveToSymbolWithCaching(receiver.getReferenceEx(false));
-                final String receiverFQN = symbol != null ? SymbolUtil.getSymbolFullQualifiedName(symbol) : receiver.getName();
-                if (receiverFQN != null) {
-                    final String methodFQN = receiverFQN + "." + methodRef.getName();
-                    return new RSignature(methodFQN, argsTypeName);
-                }
+                final Symbol receiverSymbol = ResolveUtil.resolveToSymbolWithCaching(receiver.getReferenceEx(false));
+                final String receiverFQN = receiverSymbol != null ? SymbolUtil.getSymbolFullQualifiedName(receiverSymbol) : receiver.getName();
+                return new RSignature(methodRef.getName(), receiverFQN, argsTypeName);
             }
 
-            return new RSignature(methodRef.getName(), argsTypeName);
+            return new RSignature(methodRef.getName(), null, argsTypeName);
         }
 
         return null;
     }
 
     @Nullable
-    public static RSignature createSignatureByIdentifierAndArgs(@NotNull RIdentifier methodId,
-                                                                @NotNull List<RPsiElement> args) {
+    public static RSignature createSignatureByIdentifierAndArgs(@NotNull final RIdentifier methodId,
+                                                                @NotNull final List<RPsiElement> args) {
         if (methodId.getName() != null) {
             final List<String> argsTypeName = args.stream()
                     .map(arg -> ((RExpression) arg).getType())
                     .map(RType::getPresentableName)
                     .collect(Collectors.toList());
 
-            final Symbol scopeContext = SymbolUtil.getScopeContext(methodId);
-            if (scopeContext != null && SymbolUtil.isClassOrModuleSymbol(scopeContext.getType())) {
-                final String receiverFQN = SymbolUtil.getSymbolFullQualifiedName(scopeContext);
-                if (receiverFQN != null) {
-                    final String methodFQN = receiverFQN + "." + methodId.getName();
-                    return new RSignature(methodFQN, argsTypeName);
-                }
+            final Symbol receiverSymbol = SymbolUtil.getScopeContext(methodId);
+            if (receiverSymbol != null && SymbolUtil.isClassOrModuleSymbol(receiverSymbol.getType())) {
+                final String receiverFQN = SymbolUtil.getSymbolFullQualifiedName(receiverSymbol);
+                return new RSignature(methodId.getName(), receiverFQN, argsTypeName);
             }
 
-            return new RSignature(methodId.getName(), argsTypeName);
+            return new RSignature(methodId.getName(), null, argsTypeName);
         }
 
         return null;

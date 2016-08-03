@@ -20,9 +20,9 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class RSignatureCacheManager {
     @Nullable
-    public abstract String findReturnTypeNameBySignature(@NotNull RSignature signature);
+    public abstract String findReturnTypeNameBySignature(@NotNull final RSignature signature);
 
-    public abstract void recordSignature(@NotNull RSignature signature, @NotNull String returnTypeName);
+    public abstract void recordSignature(@NotNull final RSignature signature, @NotNull final String returnTypeName);
 
     public abstract void clearCache();
 }

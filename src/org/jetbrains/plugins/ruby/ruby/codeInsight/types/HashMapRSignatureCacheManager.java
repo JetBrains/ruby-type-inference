@@ -25,115 +25,127 @@ import java.util.Map;
 public class HashMapRSignatureCacheManager extends RSignatureCacheManager {
     private static final RSignatureCacheManager INSTANCE = new HashMapRSignatureCacheManager();
 
-    private final Map<RSignature, String> cache = new HashMap<>();
+    private final Map<RSignature, String> myCache = new HashMap<>();
 
     public static RSignatureCacheManager getInstance() {
-        // TODO?: return ServiceManager.getService(project, HashMapRSignatureCacheManager.class);
         return INSTANCE;
     }
 
     private HashMapRSignatureCacheManager() {
-        cache.put(
+        myCache.put(
                 new RSignature(
                         "test_eval_class",
+                        "Object",
                         new ArrayList<String>() {{
                             add(CoreTypes.String);
                         }}
                 ),
                 "EvalClass"
         );
-        cache.put(
+        myCache.put(
                 new RSignature(
-                        "Qwerty.bar",
+                        "bar",
+                        "Qwerty",
                         new ArrayList<String>() {{
                             add(CoreTypes.Fixnum);
                         }}
                 ),
                 CoreTypes.Array
         );
-        cache.put(
+        myCache.put(
                 new RSignature(
-                        "Qwerty.bar",
+                        "bar",
+                        "Qwerty",
                         new ArrayList<>()
                 ),
                 CoreTypes.Bigdecimal
         );
-        cache.put(
+        myCache.put(
                 new RSignature(
-                        "Qwerty.baz",
+                        "baz",
+                        "Qwerty",
                         new ArrayList<String>() {{
                             add(CoreTypes.Fixnum);
                         }}
                 ),
                 CoreTypes.Bignum
         );
-        cache.put(
+        myCache.put(
                 new RSignature(
-                        "Qwerty.baz",
+                        "baz",
+                        "Qwerty",
                         new ArrayList<>()
                 ),
                 CoreTypes.Class
         );
-        cache.put(
+        myCache.put(
                 new RSignature(
-                        "qwe.bar",
+                        "bar",
+                        "qwe",
                         new ArrayList<String>() {{
                             add(CoreTypes.Fixnum);
                         }}
                 ),
                 CoreTypes.Complex
         );
-        cache.put(
+        myCache.put(
                 new RSignature(
-                        "qwe.bar",
+                        "bar",
+                        "qwe",
                         new ArrayList<>()
                 ),
                 CoreTypes.Enumerable
         );
-        cache.put(
+        myCache.put(
                 new RSignature(
-                        "qwe.baz",
+                        "baz",
+                        "qwe",
                         new ArrayList<String>() {{
                             add(CoreTypes.Fixnum);
                         }}
                 ),
                 CoreTypes.Exception
         );
-        cache.put(
+        myCache.put(
                 new RSignature(
-                        "qwe.baz",
+                        "baz",
+                        "qwe",
                         new ArrayList<>()
                 ),
                 CoreTypes.Fixnum
         );
-        cache.put(
+        myCache.put(
                 new RSignature(
                         "bar",
+                        "Object",
                         new ArrayList<String>() {{
                             add(CoreTypes.Fixnum);
                         }}
                 ),
                 CoreTypes.Float
         );
-        cache.put(
+        myCache.put(
                 new RSignature(
                         "bar",
+                        "Object",
                         new ArrayList<>()
                 ),
                 CoreTypes.Hash
         );
-        cache.put(
+        myCache.put(
                 new RSignature(
                         "baz",
+                        "Object",
                         new ArrayList<String>() {{
                             add(CoreTypes.Fixnum);
                         }}
                 ),
                 CoreTypes.IO
         );
-        cache.put(
+        myCache.put(
                 new RSignature(
                         "baz",
+                        "Object",
                         new ArrayList<>()
                 ),
                 CoreTypes.Time
@@ -142,17 +154,17 @@ public class HashMapRSignatureCacheManager extends RSignatureCacheManager {
 
     @Override
     @Nullable
-    public String findReturnTypeNameBySignature(@NotNull RSignature signature) {
-        return cache.containsKey(signature) ? cache.get(signature) : null;
+    public String findReturnTypeNameBySignature(@NotNull final RSignature signature) {
+        return myCache.containsKey(signature) ? myCache.get(signature) : null;
     }
 
     @Override
-    public void recordSignature(@NotNull RSignature signature, @NotNull String returnTypeName) {
-        cache.put(signature, returnTypeName);
+    public void recordSignature(@NotNull final RSignature signature, @NotNull final String returnTypeName) {
+        myCache.put(signature, returnTypeName);
     }
 
     @Override
     public void clearCache() {
-        cache.clear();
+        myCache.clear();
     }
 }
