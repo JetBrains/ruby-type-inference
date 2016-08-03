@@ -70,7 +70,7 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
     public RType createTypeByCallAndArgs(@NotNull final RExpression call, @NotNull final List<RPsiElement> callArgs) {
         final RSignature signature = RSignatureFactory.createSignatureByExpressionAndArgs(call, callArgs);
         if (signature != null) {
-            final RSignatureCacheManager cacheManager = HashMapRSignatureCacheManager.getInstance();
+            final RSignatureCacheManager cacheManager = SqliteRSignatureCacheManager.getInstance();
 
             final String returnTypeName = cacheManager.findReturnTypeNameBySignature(signature);
             if (returnTypeName != null) {
