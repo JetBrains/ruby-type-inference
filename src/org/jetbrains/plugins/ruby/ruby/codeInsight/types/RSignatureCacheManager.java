@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.Type;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.*;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.v2.SymbolPsiProcessor;
-import org.jetbrains.plugins.ruby.ruby.codeInsight.types.impl.REmptyType;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.impl.RSymbolTypeImpl;
 
 import java.util.ArrayList;
@@ -69,12 +68,15 @@ public abstract class RSignatureCacheManager {
         };
 
         methodSymbols.addAll(classMethodSignatures.stream()
-                .map(signature -> new RTypedSyntheticSymbol(project, signature.getMethodName(), Type.INSTANCE_METHOD,
-                        classSymbol, REmptyType.INSTANCE, -1))
+                .map(signature -> new RMethodSyntheticSymbol(project,
+                                                             signature.getMethodName(),
+                                                             Type.INSTANCE_METHOD,
+                                                             classSymbol,
+                                                             signature.getArgsInfo()))
                 .collect(Collectors.toList()));
 
         final RType syntheticType = new RSymbolTypeImpl(classSymbol, Context.INSTANCE);
-        ourSyntheticTypes.put(classFQN, syntheticType);
+        // ourSyntheticTypes.put(classFQN, syntheticType); TODO: Clear ourSyntheticTypes on run
 
         return syntheticType;
     }

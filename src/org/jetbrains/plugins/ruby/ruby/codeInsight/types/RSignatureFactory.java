@@ -39,13 +39,14 @@ public class RSignatureFactory {
         final String methodFQN = SymbolUtil.getSymbolFullQualifiedName(methodSymbol);
         if (methodFQN != null) {
             final List<String> argsTypeName = args.stream()
+                    .filter(arg -> arg instanceof RExpression)
                     .map(arg -> ((RExpression) arg).getType())
                     .map(RType::getPresentableName)
                     .collect(Collectors.toList());
 
             final int separatorIndex = methodFQN.lastIndexOf(".");
             final String receiverFQN = separatorIndex >= 0 ? methodFQN.substring(0, separatorIndex) : null;
-            return new RSignature(methodSymbol.getName(), receiverFQN, argsTypeName);
+            return new RSignature(methodSymbol.getName(), receiverFQN, argsTypeName, null);
         }
 
         return null;
@@ -56,6 +57,7 @@ public class RSignatureFactory {
                                                                @NotNull final List<RPsiElement> args) {
         if (methodRef.getName() != null) {
             final List<String> argsTypeName = args.stream()
+                    .filter(arg -> arg instanceof RExpression)
                     .map(arg -> ((RExpression) arg).getType())
                     .map(RType::getPresentableName)
                     .collect(Collectors.toList());
@@ -64,10 +66,10 @@ public class RSignatureFactory {
             if (receiver != null) {
                 final Symbol receiverSymbol = ResolveUtil.resolveToSymbolWithCaching(receiver.getReferenceEx(false));
                 final String receiverFQN = receiverSymbol != null ? SymbolUtil.getSymbolFullQualifiedName(receiverSymbol) : receiver.getName();
-                return new RSignature(methodRef.getName(), receiverFQN, argsTypeName);
+                return new RSignature(methodRef.getName(), receiverFQN, argsTypeName, null);
             }
 
-            return new RSignature(methodRef.getName(), null, argsTypeName);
+            return new RSignature(methodRef.getName(), null, argsTypeName, null);
         }
 
         return null;
@@ -78,6 +80,7 @@ public class RSignatureFactory {
                                                                 @NotNull final List<RPsiElement> args) {
         if (methodId.getName() != null) {
             final List<String> argsTypeName = args.stream()
+                    .filter(arg -> arg instanceof RExpression)
                     .map(arg -> ((RExpression) arg).getType())
                     .map(RType::getPresentableName)
                     .collect(Collectors.toList());
@@ -85,10 +88,10 @@ public class RSignatureFactory {
             final Symbol receiverSymbol = SymbolUtil.getScopeContext(methodId);
             if (receiverSymbol != null && SymbolUtil.isClassOrModuleSymbol(receiverSymbol.getType())) {
                 final String receiverFQN = SymbolUtil.getSymbolFullQualifiedName(receiverSymbol);
-                return new RSignature(methodId.getName(), receiverFQN, argsTypeName);
+                return new RSignature(methodId.getName(), receiverFQN, argsTypeName, null);
             }
 
-            return new RSignature(methodId.getName(), null, argsTypeName);
+            return new RSignature(methodId.getName(), null, argsTypeName, null);
         }
 
         return null;

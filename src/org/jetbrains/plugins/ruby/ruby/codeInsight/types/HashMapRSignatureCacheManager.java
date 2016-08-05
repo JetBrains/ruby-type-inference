@@ -16,8 +16,10 @@
 package org.jetbrains.plugins.ruby.ruby.codeInsight.types;
 
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.ArgumentInfo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,9 +39,12 @@ public class HashMapRSignatureCacheManager extends RSignatureCacheManager {
         myCache.put(
                 new RSignature(
                         "test_eval_class",
-                        "Object",
+                        CoreTypes.Object,
                         new ArrayList<String>() {{
                             add(CoreTypes.String);
+                        }},
+                        new ArrayList<ArgumentInfo>() {{
+                            add(new ArgumentInfo(StringRef.fromString("var1"), ArgumentInfo.Type.SIMPLE));
                         }}
                 ),
                 "EvalClass"
@@ -50,6 +55,9 @@ public class HashMapRSignatureCacheManager extends RSignatureCacheManager {
                         "EvalClass",
                         new ArrayList<String>() {{
                             add(CoreTypes.Fixnum);
+                        }},
+                        new ArrayList<ArgumentInfo>() {{
+                            add(new ArgumentInfo(StringRef.fromString("var1"), ArgumentInfo.Type.SIMPLE));
                         }}
                 ),
                 "Fixnum"
@@ -58,7 +66,8 @@ public class HashMapRSignatureCacheManager extends RSignatureCacheManager {
                 new RSignature(
                         "bar",
                         "EvalClass",
-                        new ArrayList<>()
+                        new ArrayList<>(),
+                        null
                 ),
                 "Fixnum"
         );
@@ -68,6 +77,9 @@ public class HashMapRSignatureCacheManager extends RSignatureCacheManager {
                         "Qwerty",
                         new ArrayList<String>() {{
                             add(CoreTypes.Fixnum);
+                        }},
+                        new ArrayList<ArgumentInfo>() {{
+                            add(new ArgumentInfo(StringRef.fromString("var1"), ArgumentInfo.Type.SIMPLE));
                         }}
                 ),
                 CoreTypes.Array
@@ -76,7 +88,8 @@ public class HashMapRSignatureCacheManager extends RSignatureCacheManager {
                 new RSignature(
                         "bar",
                         "Qwerty",
-                        new ArrayList<>()
+                        new ArrayList<>(),
+                        null
                 ),
                 CoreTypes.Bigdecimal
         );
@@ -86,6 +99,9 @@ public class HashMapRSignatureCacheManager extends RSignatureCacheManager {
                         "Qwerty",
                         new ArrayList<String>() {{
                             add(CoreTypes.Fixnum);
+                        }},
+                        new ArrayList<ArgumentInfo>() {{
+                            add(new ArgumentInfo(StringRef.fromString("var1"), ArgumentInfo.Type.SIMPLE));
                         }}
                 ),
                 CoreTypes.Bignum
@@ -94,7 +110,8 @@ public class HashMapRSignatureCacheManager extends RSignatureCacheManager {
                 new RSignature(
                         "baz",
                         "Qwerty",
-                        new ArrayList<>()
+                        new ArrayList<>(),
+                        null
                 ),
                 CoreTypes.Class
         );
@@ -104,6 +121,9 @@ public class HashMapRSignatureCacheManager extends RSignatureCacheManager {
                         "qwe",
                         new ArrayList<String>() {{
                             add(CoreTypes.Fixnum);
+                        }},
+                        new ArrayList<ArgumentInfo>() {{
+                            add(new ArgumentInfo(StringRef.fromString("var1"), ArgumentInfo.Type.SIMPLE));
                         }}
                 ),
                 CoreTypes.Complex
@@ -112,7 +132,8 @@ public class HashMapRSignatureCacheManager extends RSignatureCacheManager {
                 new RSignature(
                         "bar",
                         "qwe",
-                        new ArrayList<>()
+                        new ArrayList<>(),
+                        null
                 ),
                 CoreTypes.Enumerable
         );
@@ -122,6 +143,9 @@ public class HashMapRSignatureCacheManager extends RSignatureCacheManager {
                         "qwe",
                         new ArrayList<String>() {{
                             add(CoreTypes.Fixnum);
+                        }},
+                        new ArrayList<ArgumentInfo>() {{
+                            add(new ArgumentInfo(StringRef.fromString("var1"), ArgumentInfo.Type.SIMPLE));
                         }}
                 ),
                 CoreTypes.Exception
@@ -130,16 +154,20 @@ public class HashMapRSignatureCacheManager extends RSignatureCacheManager {
                 new RSignature(
                         "baz",
                         "qwe",
-                        new ArrayList<>()
+                        new ArrayList<>(),
+                        null
                 ),
                 CoreTypes.Fixnum
         );
         myCache.put(
                 new RSignature(
                         "bar",
-                        "Object",
+                        CoreTypes.Object,
                         new ArrayList<String>() {{
                             add(CoreTypes.Fixnum);
+                        }},
+                        new ArrayList<ArgumentInfo>() {{
+                            add(new ArgumentInfo(StringRef.fromString("var1"), ArgumentInfo.Type.SIMPLE));
                         }}
                 ),
                 CoreTypes.Float
@@ -147,17 +175,21 @@ public class HashMapRSignatureCacheManager extends RSignatureCacheManager {
         myCache.put(
                 new RSignature(
                         "bar",
-                        "Object",
-                        new ArrayList<>()
+                        CoreTypes.Object,
+                        new ArrayList<>(),
+                        null
                 ),
                 CoreTypes.Hash
         );
         myCache.put(
                 new RSignature(
                         "baz",
-                        "Object",
+                        CoreTypes.Object,
                         new ArrayList<String>() {{
                             add(CoreTypes.Fixnum);
+                        }},
+                        new ArrayList<ArgumentInfo>() {{
+                            add(new ArgumentInfo(StringRef.fromString(CoreTypes.String), ArgumentInfo.Type.SIMPLE));
                         }}
                 ),
                 CoreTypes.IO
@@ -165,8 +197,9 @@ public class HashMapRSignatureCacheManager extends RSignatureCacheManager {
         myCache.put(
                 new RSignature(
                         "baz",
-                        "Object",
-                        new ArrayList<>()
+                        CoreTypes.Object,
+                        new ArrayList<>(),
+                        null
                 ),
                 CoreTypes.Time
         );
