@@ -23,6 +23,7 @@ import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.Type;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.*;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.v2.SymbolPsiProcessor;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.impl.RSymbolTypeImpl;
+import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.ArgumentInfo;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -80,6 +81,9 @@ public abstract class RSignatureCacheManager {
 
         return syntheticType;
     }
+
+    @Nullable
+    public abstract List<ArgumentInfo> getMethodArgsInfo(@NotNull final String methodName, @Nullable String receiverName);
 
     @NotNull
     protected abstract List<RSignature> getReceiverMethodSignatures(@NotNull final String receiverName);

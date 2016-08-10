@@ -20,7 +20,6 @@ public class SqliteRSignatureCacheManager extends RSignatureCacheManager {
     private final Connection myConnection;
 
     public static RSignatureCacheManager getInstance() {
-//        TODO?: return ServiceManager.getService(project, SqliteRSignatureCacheManager.class);
         return INSTANCE;
     }
 
@@ -83,6 +82,29 @@ public class SqliteRSignatureCacheManager extends RSignatureCacheManager {
         } catch (SQLException e) {
             LOG.info(e);
         }
+    }
+
+    @Override
+    @Nullable
+    public List<ArgumentInfo> getMethodArgsInfo(@NotNull final String methodName, @Nullable String receiverName) {
+        try (final Statement statement = myConnection.createStatement()) {
+            final String sql = String.format("SELECT args_info FROM signatures " +
+                                             "WHERE method_name = '%s' AND receiver_name = '%s';",
+                                             methodName, receiverName);
+            final ResultSet signatures = statement.executeQuery(sql);
+            if (signatures.next()) {
+                return Arrays.stream(signatures.getString("args_info").split(";"))
+                        .map(argInfo -> argInfo.split(","))
+                        .filter(argInfo -> argInfo.length == 2)
+                        .map(argInfo -> new ArgumentInfo(StringRef.fromString(argInfo[1]),
+                                                         getArgTypeByRubyRepresentation(argInfo[0])))
+                        .collect(Collectors.toList());
+            }
+        } catch (SQLException e) {
+            LOG.info(e);
+        }
+
+        return null;
     }
 
     @Override

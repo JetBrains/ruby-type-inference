@@ -24,6 +24,7 @@ import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.Argume
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class HashMapRSignatureCacheManager extends RSignatureCacheManager {
@@ -219,6 +220,20 @@ public class HashMapRSignatureCacheManager extends RSignatureCacheManager {
     @Override
     public void clearCache() {
         myCache.clear();
+    }
+
+    @Override
+    @Nullable
+    public List<ArgumentInfo> getMethodArgsInfo(@NotNull final String methodName, @Nullable final String receiverName) {
+        Optional<RSignature> methodSignature = myCache.keySet().stream()
+                .filter(signature -> signature.getMethodName().equals(methodName) &&
+                        signature.getReceiverName().equals(receiverName != null ? receiverName : CoreTypes.Object))
+                .findAny();
+
+        if (methodSignature.isPresent()) {
+            methodSignature.get().getArgsInfo();
+        }
+        return null;
     }
 
     @Override
