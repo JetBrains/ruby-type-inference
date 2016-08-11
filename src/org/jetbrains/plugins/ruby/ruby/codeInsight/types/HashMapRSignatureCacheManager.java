@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.ruby.ruby.codeInsight.types;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
@@ -208,12 +209,13 @@ public class HashMapRSignatureCacheManager extends RSignatureCacheManager {
 
     @Override
     @Nullable
-    public String findReturnTypeNameBySignature(@NotNull final RSignature signature) {
+    public String findReturnTypeNameBySignature(@NotNull final RSignature signature, @Nullable final Module module) {
         return myCache.containsKey(signature) ? myCache.get(signature) : null;
     }
 
     @Override
-    public void recordSignature(@NotNull final RSignature signature, @NotNull final String returnTypeName) {
+    public void recordSignature(@NotNull final RSignature signature, @NotNull final String returnTypeName,
+                                @NotNull final String gemName, @NotNull final String gemVersion) {
         myCache.put(signature, returnTypeName);
     }
 

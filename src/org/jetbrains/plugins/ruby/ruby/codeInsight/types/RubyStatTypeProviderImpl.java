@@ -1,5 +1,7 @@
 package org.jetbrains.plugins.ruby.ruby.codeInsight.types;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import org.antlr.v4.runtime.misc.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +32,8 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
             }
 
             final RSignature signature = new RSignature(methodName, receiverName, argsTypeName, argsInfo);
-            final String returnTypeName = cacheManager.findReturnTypeNameBySignature(signature);
+            final Module module = ModuleUtilCore.findModuleForPsiElement(call);
+            final String returnTypeName = cacheManager.findReturnTypeNameBySignature(signature, module);
             if (returnTypeName != null) {
                 RType returnType = RTypeFactory.createTypeByFQN(call.getProject(), returnTypeName);
                 if (returnType == REmptyType.INSTANCE) {

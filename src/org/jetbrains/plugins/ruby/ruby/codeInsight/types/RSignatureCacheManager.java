@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.ruby.ruby.codeInsight.types;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -35,9 +36,10 @@ public abstract class RSignatureCacheManager {
     private static final Map<String, RType> ourSyntheticTypes = new HashMap<>();
 
     @Nullable
-    public abstract String findReturnTypeNameBySignature(@NotNull final RSignature signature);
+    public abstract String findReturnTypeNameBySignature(@NotNull final RSignature signature, @Nullable final Module module);
 
-    public abstract void recordSignature(@NotNull final RSignature signature, @NotNull final String returnTypeName);
+    public abstract void recordSignature(@NotNull final RSignature signature, @NotNull final String returnTypeName,
+                                         @NotNull final String gemName, @NotNull final String gemVersion);
 
     public abstract void clearCache();
 

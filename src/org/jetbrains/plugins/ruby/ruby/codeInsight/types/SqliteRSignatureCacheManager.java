@@ -1,9 +1,13 @@
 package org.jetbrains.plugins.ruby.ruby.codeInsight.types;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ruby.gem.GemInfo;
+import org.jetbrains.plugins.ruby.gem.util.GemSearchUtil;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.ArgumentInfo;
 
 import java.sql.*;
@@ -41,15 +45,29 @@ public class SqliteRSignatureCacheManager extends RSignatureCacheManager {
 
     @Override
     @Nullable
-    public String findReturnTypeNameBySignature(@NotNull final RSignature signature) {
+    public String findReturnTypeNameBySignature(@NotNull final RSignature signature, @Nullable final Module module) {
         try (final Statement statement = myConnection.createStatement()) {
-            final String sql = String.format("SELECT return_type_name FROM signatures WHERE " +
+            final String sql = String.format("SELECT return_type_name, gem_name, gem_version FROM signatures WHERE " +
                                              "method_name = '%s' AND receiver_name = '%s' AND args_type_name = '%s';",
                                              signature.getMethodName(), signature.getReceiverName(),
                                              String.join(";", signature.getArgsTypeName()));
-            final ResultSet returnTypeNames = statement.executeQuery(sql);
-            if (returnTypeNames.next()) {
-                return returnTypeNames.getString("return_type_name");
+            final ResultSet rs = statement.executeQuery(sql);
+            if (rs.next()) {
+                final String gemName = rs.getString("gem_name");
+                String gemVersion = "";
+                if (!gemName.isEmpty() && module != null) {
+                    final GemInfo gemInfo = GemSearchUtil.findGemEx(module, gemName);
+                    if (gemInfo == null) {
+                        return null;
+                    }
+                    gemVersion = StringUtil.notNullize(gemInfo.getRealVersion());
+                }
+
+                do {
+                    if (rs.getString("gem_version").equals(gemVersion)) {
+                        return rs.getString("return_type_name");
+                    }
+                } while (rs.next());
             }
         } catch (SQLException e) {
             LOG.info(e);
@@ -59,15 +77,17 @@ public class SqliteRSignatureCacheManager extends RSignatureCacheManager {
     }
 
     @Override
-    public void recordSignature(@NotNull final RSignature signature, @NotNull final String returnTypeName) {
+    public void recordSignature(@NotNull final RSignature signature, @NotNull final String returnTypeName,
+                                @NotNull final String gemName, @NotNull final String gemVersion) {
         try (final Statement statement = myConnection.createStatement()) {
             final String argsInfoSerialized = signature.getArgsInfo().stream()
                     .map(argInfo -> argInfo.getName() + "," + getRubyArgTypeRepresentation(argInfo.getType()))
                     .collect(Collectors.joining(";"));
-            final String sql = String.format("INSERT OR REPLACE INTO signatures values('%s', '%s', '%s', '%s', '%s');",
+            final String sql = String.format("INSERT OR REPLACE INTO signatures " +
+                                             "values('%s', '%s', '%s', '%s', '%s', '%s', '%s');",
                                              signature.getMethodName(), signature.getReceiverName(),
                                              String.join(";", signature.getArgsTypeName()), argsInfoSerialized,
-                                             returnTypeName);
+                                             returnTypeName, gemName, gemVersion);
             statement.executeUpdate(sql);
         } catch (SQLException e) {
             LOG.info(e);
