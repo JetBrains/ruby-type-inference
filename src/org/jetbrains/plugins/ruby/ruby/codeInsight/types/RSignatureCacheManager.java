@@ -17,6 +17,7 @@ package org.jetbrains.plugins.ruby.ruby.codeInsight.types;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,17 +27,15 @@ import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.v2.SymbolPsiProcessor
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.impl.RSymbolTypeImpl;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.ArgumentInfo;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
-public abstract class RSignatureCacheManager {
-    private static final Map<String, RType> ourSyntheticTypes = new HashMap<>();
+abstract class RSignatureCacheManager {
+    @NotNull
+    private static final Map<String, Pair<RType, Set<RSignature>>> ourSyntheticTypes = new HashMap<>();
 
     @Nullable
-    public abstract String findReturnTypeNameBySignature(@NotNull final RSignature signature, @Nullable final Module module);
+    public abstract String findReturnTypeNameBySignature(@Nullable final Module module, @NotNull final RSignature signature);
 
     public abstract void recordSignature(@NotNull final RSignature signature, @NotNull final String returnTypeName,
                                          @NotNull final String gemName, @NotNull final String gemVersion);
@@ -44,12 +43,33 @@ public abstract class RSignatureCacheManager {
     public abstract void clearCache();
 
     @NotNull
-    public RType createTypeByFQNFromStat(@NotNull final Project project, @NotNull final String classFQN) {
+    RType createTypeByFQNFromStat(@NotNull final Project project, @NotNull final String classFQN) {
+        final Set<RSignature> classMethodSignatures = getReceiverMethodSignatures(classFQN);
+
         if (ourSyntheticTypes.containsKey(classFQN)) {
-            return ourSyntheticTypes.get(classFQN);
+            final Pair<RType, Set<RSignature>> cached = ourSyntheticTypes.get(classFQN);
+            if (cached.getSecond().hashCode() == classMethodSignatures.hashCode()) {
+                return cached.getFirst();
+            }
         }
 
-        final List<RSignature> classMethodSignatures = getReceiverMethodSignatures(classFQN);
+        final Symbol classSymbol = createSyntheticClassSymbol(project, classFQN, classMethodSignatures);
+        final RType syntheticType = new RSymbolTypeImpl(classSymbol, Context.INSTANCE);
+
+        ourSyntheticTypes.put(classFQN, Pair.create(syntheticType, classMethodSignatures));
+        return syntheticType;
+    }
+
+    @NotNull
+    public abstract List<ArgumentInfo> getMethodArgsInfo(@NotNull final String methodName, @NotNull final String receiverName);
+
+    @NotNull
+    protected abstract Set<RSignature> getReceiverMethodSignatures(@NotNull final String receiverName);
+
+    @NotNull
+    private static Symbol createSyntheticClassSymbol(@NotNull final Project project,
+                                                     @NotNull final String classFQN,
+                                                     @NotNull final Set<RSignature> classMethodSignatures) {
         final List<RMethodSymbol> methodSymbols = new ArrayList<>();
 
         final Symbol classSymbol = new SymbolImpl(project, classFQN, Type.CLASS, null) {
@@ -78,15 +98,6 @@ public abstract class RSignatureCacheManager {
                                                              signature.getArgsInfo()))
                 .collect(Collectors.toList()));
 
-        final RType syntheticType = new RSymbolTypeImpl(classSymbol, Context.INSTANCE);
-        // ourSyntheticTypes.put(classFQN, syntheticType); TODO: Clear ourSyntheticTypes on run
-
-        return syntheticType;
+        return classSymbol;
     }
-
-    @Nullable
-    public abstract List<ArgumentInfo> getMethodArgsInfo(@NotNull final String methodName, @Nullable String receiverName);
-
-    @NotNull
-    protected abstract List<RSignature> getReceiverMethodSignatures(@NotNull final String receiverName);
 }

@@ -20,9 +20,9 @@ public class RMethodSyntheticSymbol extends SymbolImpl implements RMethodSymbol 
     @NotNull
     private final List<ArgumentInfo> myArgsInfo;
 
-    public RMethodSyntheticSymbol(final Project project,
-                                  @Nullable final String name,
-                                  final Type type,
+    public RMethodSyntheticSymbol(@NotNull final Project project,
+                                  @NotNull final String name,
+                                  @NotNull final Type type,
                                   @Nullable final Symbol parent,
                                   @NotNull final List<ArgumentInfo> argsInfo) {
         super(project, name, type, parent);
@@ -30,12 +30,12 @@ public class RMethodSyntheticSymbol extends SymbolImpl implements RMethodSymbol 
     }
 
     @Override
-    public int getMinParameterCount(final PsiElement invocationPoint) {
+    public int getMinParameterCount(@Nullable final PsiElement invocationPoint) {
         return RMethodBase.getMinNumberOfArgumentsFromArgumentInfos(myArgsInfo);
     }
 
     @Override
-    public int getMaxParameterCount(final PsiElement invocationPoint) {
+    public int getMaxParameterCount(@Nullable final PsiElement invocationPoint) {
         return RMethodBase.getMaxNumberOfArgumentsFromArgumentInfos(myArgsInfo);
     }
 
@@ -44,11 +44,13 @@ public class RMethodSyntheticSymbol extends SymbolImpl implements RMethodSymbol 
         return !myArgsInfo.isEmpty() && myArgsInfo.get(myArgsInfo.size() - 1).getType() == ArgumentInfo.Type.BLOCK;
     }
 
+    @Nullable
     @Override
-    public RType getCallType(final RCall call) {
+    public RType getCallType(@Nullable final RCall call) {
         return null;
     }
 
+    @NotNull
     @Override
     public String getArgsPresentation() {
         if (myArgsInfo.isEmpty()) {
@@ -63,9 +65,9 @@ public class RMethodSyntheticSymbol extends SymbolImpl implements RMethodSymbol 
         return true;
     }
 
-    @Override
     @NotNull
+    @Override
     public Visibility getVisibility() {
-        return Visibility.PUBLIC;
+        return Visibility.PUBLIC; // TODO: return correct visibility
     }
 }
