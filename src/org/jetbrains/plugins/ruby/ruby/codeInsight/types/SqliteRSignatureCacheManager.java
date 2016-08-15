@@ -2,9 +2,11 @@ package org.jetbrains.plugins.ruby.ruby.codeInsight.types;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.io.StringRef;
+import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.gem.GemInfo;
@@ -62,11 +64,47 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
             if (rs.next()) {
                 final String gemName = rs.getString("gem_name");
                 final String gemVersion = getGemVersionByName(module, gemName);
+
+                Couple<String> upperBoundVersionAndTypeName = Couple.getEmpty();
+                Couple<String> lowerBoundVersionAndTypeName = Couple.getEmpty();
+
                 do {
-                    if (rs.getString("gem_version").equals(gemVersion)) {
-                        return rs.getString("return_type_name");
+                    final Couple<String> currentVersionAndTypeName = Couple.of(rs.getString("gem_version"),
+                                                                               rs.getString("return_type_name"));
+
+                    final int compareResult = VersionComparatorUtil.compare(currentVersionAndTypeName.getFirst(),
+                                                                            gemVersion);
+                    if (compareResult == 0) {
+                        return currentVersionAndTypeName.getSecond();
+                    }
+
+                    final int compareWithUpperResult = upperBoundVersionAndTypeName.getFirst() != null
+                            ? VersionComparatorUtil.compare(currentVersionAndTypeName.getFirst(),
+                                                            upperBoundVersionAndTypeName.getFirst())
+                            : -1;
+                    final int compareWithLowerResult = lowerBoundVersionAndTypeName.getFirst() != null
+                            ? VersionComparatorUtil.compare(currentVersionAndTypeName.getFirst(),
+                                                            lowerBoundVersionAndTypeName.getFirst())
+                            : 1;
+                    if (compareResult >= 0 && compareWithUpperResult < 0) {
+                        upperBoundVersionAndTypeName = currentVersionAndTypeName;
+                    } else if (compareResult <= 0 && compareWithLowerResult > 0) {
+                        lowerBoundVersionAndTypeName = currentVersionAndTypeName;
                     }
                 } while (rs.next());
+
+                final String upperVersion = StringUtil.notNullize(upperBoundVersionAndTypeName.getFirst());
+                final String lowerVersion = StringUtil.notNullize(lowerBoundVersionAndTypeName.getFirst());
+                final int lcpWithUpper = longestCommonPrefixLength(gemVersion, upperVersion);
+                final int lcpWithLower = longestCommonPrefixLength(gemVersion, lowerVersion);
+                if (lcpWithUpper > lcpWithLower ||
+                    lcpWithUpper > 0 && lcpWithUpper == lcpWithLower &&
+                    Math.abs(gemVersion.charAt(lcpWithUpper) - upperVersion.charAt(lcpWithUpper)) <
+                            Math.abs(gemVersion.charAt(lcpWithUpper) - lowerVersion.charAt(lcpWithLower))) {
+                    return upperBoundVersionAndTypeName.getSecond();
+                } else {
+                    return lowerBoundVersionAndTypeName.getSecond();
+                }
             }
         } catch (SQLException e) {
             LOG.info(e);
@@ -167,6 +205,17 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
         } else {
             throw new IllegalArgumentException();
         }
+    }
+
+    private static int longestCommonPrefixLength(@NotNull String str1, @NotNull String str2) {
+        final int minLength = Math.min(str1.length(), str2.length());
+        for (int i = 0; i < minLength; i++) {
+            if (str1.charAt(i) != str2.charAt(i)) {
+                return i;
+            }
+        }
+
+        return minLength;
     }
 
     @NotNull
