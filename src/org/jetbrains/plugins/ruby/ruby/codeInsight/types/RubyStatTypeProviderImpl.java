@@ -11,6 +11,7 @@ import org.jetbrains.plugins.ruby.ruby.codeInsight.resolve.ResolveUtil;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.Symbol;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.SymbolUtil;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.impl.REmptyType;
+import org.jetbrains.plugins.ruby.ruby.lang.psi.RPossibleCall;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RPsiElement;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.assoc.RAssoc;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.ArgumentInfo;
@@ -19,7 +20,6 @@ import org.jetbrains.plugins.ruby.ruby.lang.psi.iterators.RBlockCall;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.methodCall.RArgumentToBlock;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.methodCall.RCall;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.references.RReference;
-import org.jetbrains.plugins.ruby.ruby.lang.psi.variables.RIdentifier;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -60,42 +60,37 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
 
     @NotNull
     private static Couple<String> getMethodAndReceiverNames(@NotNull final PsiElement methodElement) {
+        String methodName = null;
+        String receiverFQN = null;
+
         final Symbol methodSymbol = ResolveUtil.resolveToSymbolWithCaching(methodElement.getReference(), false);
         if (methodSymbol != null) {
+            methodName = methodSymbol.getName();
             final String methodFQN = SymbolUtil.getSymbolFullQualifiedName(methodSymbol);
             if (methodFQN != null) {
                 final int separatorIndex = methodFQN.lastIndexOf('.');
-                final String receiverFQN = separatorIndex >= 0 ? methodFQN.substring(0, separatorIndex) : null;
-                return new Couple<>(methodSymbol.getName(), receiverFQN);
+                receiverFQN = separatorIndex >= 0 ? methodFQN.substring(0, separatorIndex) : null;
+                return new Couple<>(methodName, receiverFQN);
             }
-        } else if (methodElement instanceof RReference) {
-            final RReference methodRef = (RReference) methodElement;
-            if (methodRef.getName() != null) {
-                final RPsiElement receiver = methodRef.getReceiver();
+        } else if (methodElement instanceof RPossibleCall) {
+            methodName = ((RPossibleCall) methodElement).getName();
+            if (methodElement instanceof RReference) {
+                final RPsiElement receiver = ((RReference) methodElement).getReceiver();
                 if (receiver != null) {
                     final Symbol receiverSymbol = ResolveUtil.resolveToSymbolWithCaching(receiver.getReferenceEx(false));
-                    final String receiverFQN = receiverSymbol != null
+                    receiverFQN = receiverSymbol != null
                             ? SymbolUtil.getSymbolFullQualifiedName(receiverSymbol)
                             : receiver.getName();
-                    return new Couple<>(methodRef.getName(), receiverFQN);
                 }
-
-                return new Couple<>(methodRef.getName(), null);
-            }
-        } else if (methodElement instanceof RIdentifier) {
-            RIdentifier methodId = (RIdentifier) methodElement;
-            if (methodId.getName() != null) {
-                final Symbol receiverSymbol = SymbolUtil.getScopeContext(methodId);
+            } else {
+                final Symbol receiverSymbol = SymbolUtil.getScopeContext(methodElement);
                 if (receiverSymbol != null && SymbolUtil.isClassOrModuleSymbol(receiverSymbol.getType())) {
-                    final String receiverFQN = SymbolUtil.getSymbolFullQualifiedName(receiverSymbol);
-                    return new Couple<>(methodId.getName(), receiverFQN);
+                    receiverFQN = SymbolUtil.getSymbolFullQualifiedName(receiverSymbol);
                 }
-
-                return new Couple<>(methodId.getName(), null);
             }
         }
 
-        return new Couple<>(null, null);
+        return new Couple<>(methodName, receiverFQN);
     }
 
     @NotNull
