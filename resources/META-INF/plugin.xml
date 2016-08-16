@@ -1,32 +1,37 @@
 <idea-plugin version="1">
-  <id>org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyStatTypeInference</id>
-  <name>Ruby Stat Type Inference</name>
-  <version>1.0</version>
-  <vendor email="" url="http://www.jetbrains.com">JetBrains</vendor>
-  <depends>com.intellij.modules.ruby</depends>
-  <description><![CDATA[
+    <id>org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyStatTypeInference</id>
+    <name>Ruby Stat Type Inference</name>
+    <version>1.0</version>
+    <vendor email="" url="http://www.jetbrains.com">JetBrains</vendor>
+    <depends>com.intellij.modules.ruby</depends>
+    <description><![CDATA[
       TODO
     ]]></description>
 
-  <change-notes><![CDATA[
+    <change-notes><![CDATA[
     ]]>
-  </change-notes>
+    </change-notes>
 
-  <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html for description -->
-  <idea-version since-build="141.0"/>
+    <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html for description -->
+    <idea-version since-build="141.0"/>
 
-  <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
-       on how to target different products -->
-  <!-- uncomment to enable plugin in all products
-  <depends>com.intellij.modules.lang</depends>
-  -->
+    <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+         on how to target different products -->
+    <!-- uncomment to enable plugin in all products
+    <depends>com.intellij.modules.lang</depends>
+    -->
 
-  <extensions defaultExtensionNs="org.jetbrains.plugins.ruby">
-    <rubyStatTypeProvider implementation="org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyStatTypeProviderImpl"/>
-  </extensions>
+    <extensions defaultExtensionNs="com.intellij">
+        <executor implementation="com.intellij.execution.executors.CollectTypeExecutor"/>
+        <programRunner implementation="org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyCollectTypeRunner"/>
+    </extensions>
 
-  <actions>
-    <!-- Add your actions here -->
-  </actions>
+    <extensions defaultExtensionNs="org.jetbrains.plugins.ruby">
+        <rubyStatTypeProvider implementation="org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyStatTypeProviderImpl"/>
+    </extensions>
+
+    <actions>
+        <!-- Add your actions here -->
+    </actions>
 
 </idea-plugin>
