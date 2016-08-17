@@ -40,8 +40,7 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
 
             final String receiverName = StringUtil.notNullize(names.getSecond(), CoreTypes.Object);
             final List<ArgumentInfo> argsInfo = cacheManager.getMethodArgsInfo(methodName, receiverName);
-            final List<String> argsTypeName = getArgsTypeName(callArgs);
-            appendBlockArgIfNeeded(call, argsInfo, argsTypeName);
+            final List<String> argsTypeName = getArgsTypeName(call.getParent(), argsInfo, callArgs);
 
             final Module module = ModuleUtilCore.findModuleForPsiElement(call);
             final RSignature signature = new RSignature(methodName, receiverName, Visibility.PUBLIC, argsInfo, argsTypeName);
@@ -95,29 +94,35 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
     }
 
     @NotNull
-    private static List<String> getArgsTypeName(@NotNull final List<RPsiElement> args) {
-        return args.stream()
+    private static List<String> getArgsTypeName(@NotNull final PsiElement callParent,
+                                                @NotNull final List<ArgumentInfo> argsInfo,
+                                                @NotNull final List<RPsiElement> args) {
+        final List<String> argsTypeName = args.stream()
                 .map(arg -> {
                     if (arg instanceof RAssoc) {
                         arg = ((RAssoc) arg).getValue();
                     }
+
                     if (arg instanceof RExpression) {
                         final RType type = ((RExpression) arg).getType();
                         return type.getPresentableName(); // TODO: fix and handle booleans
                     } else if (arg instanceof RArgumentToBlock) {
                         return CoreTypes.Proc;
                     }
+
                     return null;
                 })
                 .collect(Collectors.toList());
+        appendBlockArgIfNeeded(callParent, argsInfo, argsTypeName);
+        return argsTypeName;
     }
 
-    private static void appendBlockArgIfNeeded(@NotNull final RExpression call,
+    private static void appendBlockArgIfNeeded(@NotNull final PsiElement callParent,
                                                @NotNull final List<ArgumentInfo> argsInfo,
                                                @NotNull final List<String> argsTypeName) {
         if (!argsInfo.isEmpty() && argsInfo.get(argsInfo.size() - 1).getType() == ArgumentInfo.Type.BLOCK &&
             (argsTypeName.isEmpty() || !argsTypeName.get(argsTypeName.size() - 1).equals(CoreTypes.Proc))) {
-            argsTypeName.add(call.getParent() instanceof RBlockCall ? CoreTypes.Proc : CoreTypes.NilClass);
+            argsTypeName.add(callParent instanceof RBlockCall ? CoreTypes.Proc : CoreTypes.NilClass);
         }
     }
 
