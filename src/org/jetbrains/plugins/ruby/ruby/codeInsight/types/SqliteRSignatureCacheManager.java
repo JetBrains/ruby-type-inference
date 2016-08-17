@@ -18,7 +18,6 @@ import java.sql.*;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 class SqliteRSignatureCacheManager extends RSignatureCacheManager {
@@ -198,14 +197,14 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
 
     @NotNull
     private static List<ArgumentInfo> parseArgsInfo(@NotNull final String argsInfoSerialized) {
-        if (Pattern.matches("^([^;,]+,[^;,]+)?(;[^;,]+,[^;,]+)*$", argsInfoSerialized)) {
+        try {
             return StringUtil.splitHonorQuotes(argsInfoSerialized, ';').stream()
                     .map(argInfo -> StringUtil.splitHonorQuotes(argInfo, ','))
                     .map(argInfo -> new ArgumentInfo(StringRef.fromString(argInfo.get(1)),
                                                      getArgTypeByRubyRepresentation(argInfo.get(0))))
                     .collect(Collectors.toList());
-        } else {
-            throw new IllegalArgumentException();
+        } catch (IndexOutOfBoundsException e) {
+            throw new IllegalArgumentException(e);
         }
     }
 
@@ -231,8 +230,10 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
                 return "keyrest";
             case BLOCK:
                 return "block";
-            default:
+            case PREDEFINED:
                 return "opt";
+            default:
+                throw new IllegalArgumentException();
         }
     }
 
@@ -247,8 +248,12 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
                 return ArgumentInfo.Type.HASH;
             case "block":
                 return ArgumentInfo.Type.BLOCK;
-            default:
+            case "opt":
+            case "key":
+            case "keyreq":
                 return ArgumentInfo.Type.PREDEFINED;
+            default:
+                throw new IllegalArgumentException();
         }
     }
 }
