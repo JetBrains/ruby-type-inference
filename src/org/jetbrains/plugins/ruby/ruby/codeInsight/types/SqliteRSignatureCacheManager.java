@@ -15,9 +15,7 @@ import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.Argume
 import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.Visibility;
 
 import java.sql.*;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 class SqliteRSignatureCacheManager extends RSignatureCacheManager {
@@ -62,49 +60,13 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
                                              String.join(";", signature.getArgsTypeName()));
             final ResultSet rs = statement.executeQuery(sql);
             if (rs.next()) {
-                final String gemName = rs.getString("gem_name");
-                final String gemVersion = getGemVersionByName(module, gemName);
-
-                Couple<String> upperBoundVersionAndTypeName = Couple.getEmpty();
-                Couple<String> lowerBoundVersionAndTypeName = Couple.getEmpty();
-
+                final String gemVersion = getGemVersionByName(module, rs.getString("gem_name"));
+                final List<Couple<String>> versionsAndReturnTypes = new ArrayList<>();
                 do {
-                    final Couple<String> currentVersionAndTypeName = Couple.of(rs.getString("gem_version"),
-                                                                               rs.getString("return_type_name"));
-
-                    final int compareResult = VersionComparatorUtil.compare(currentVersionAndTypeName.getFirst(),
-                                                                            gemVersion);
-                    if (compareResult == 0) {
-                        return currentVersionAndTypeName.getSecond();
-                    }
-
-                    final int compareWithUpperResult = upperBoundVersionAndTypeName.getFirst() != null
-                            ? VersionComparatorUtil.compare(currentVersionAndTypeName.getFirst(),
-                                                            upperBoundVersionAndTypeName.getFirst())
-                            : -1;
-                    final int compareWithLowerResult = lowerBoundVersionAndTypeName.getFirst() != null
-                            ? VersionComparatorUtil.compare(currentVersionAndTypeName.getFirst(),
-                                                            lowerBoundVersionAndTypeName.getFirst())
-                            : 1;
-                    if (compareResult >= 0 && compareWithUpperResult < 0) {
-                        upperBoundVersionAndTypeName = currentVersionAndTypeName;
-                    } else if (compareResult <= 0 && compareWithLowerResult > 0) {
-                        lowerBoundVersionAndTypeName = currentVersionAndTypeName;
-                    }
+                    versionsAndReturnTypes.add(Couple.of(rs.getString("gem_version"), rs.getString("return_type_name")));
                 } while (rs.next());
 
-                final String upperVersion = StringUtil.notNullize(upperBoundVersionAndTypeName.getFirst());
-                final String lowerVersion = StringUtil.notNullize(lowerBoundVersionAndTypeName.getFirst());
-                final int lcpWithUpper = longestCommonPrefixLength(gemVersion, upperVersion);
-                final int lcpWithLower = longestCommonPrefixLength(gemVersion, lowerVersion);
-                if (lcpWithUpper > lcpWithLower ||
-                    lcpWithUpper > 0 && lcpWithUpper == lcpWithLower &&
-                    Math.abs(gemVersion.charAt(lcpWithUpper) - upperVersion.charAt(lcpWithUpper)) <
-                            Math.abs(gemVersion.charAt(lcpWithUpper) - lowerVersion.charAt(lcpWithLower))) {
-                    return upperBoundVersionAndTypeName.getSecond();
-                } else {
-                    return lowerBoundVersionAndTypeName.getSecond();
-                }
+                return findReturnTypeNameByGemVersion(gemVersion, versionsAndReturnTypes);
             }
         } catch (SQLException e) {
             LOG.info(e);
@@ -208,7 +170,38 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
         }
     }
 
-    private static int longestCommonPrefixLength(@NotNull String str1, @NotNull String str2) {
+    @NotNull
+    private String findReturnTypeNameByGemVersion(@NotNull final String gemVersion, @NotNull final List<Couple<String>> versionsAndReturnTypes) {
+        final Comparator<Couple<String>> versionsAndReturnTypesComparator = (Couple<String> vt1, Couple<String> vt2) ->
+                VersionComparatorUtil.compare(vt1.getFirst(), vt2.getFirst());
+        final NavigableSet<Couple<String>> sortedSet = new TreeSet<>(versionsAndReturnTypesComparator);
+        sortedSet.addAll(versionsAndReturnTypes);
+
+        final Couple<String> upperBound = sortedSet.ceiling(Couple.of(gemVersion, null));
+        final Couple<String> lowerBound = sortedSet.floor(Couple.of(gemVersion, null));
+        if (upperBound == null) {
+            return lowerBound.getSecond();
+        } else if (lowerBound == null) {
+            return upperBound.getSecond();
+        } else if (upperBound == lowerBound) {
+            return upperBound.getSecond();
+        } else if (firstStringCloser(gemVersion, upperBound.getFirst(), lowerBound.getFirst())) {
+            return upperBound.getSecond();
+        } else {
+            return lowerBound.getSecond();
+        }
+    }
+
+    private boolean firstStringCloser(@NotNull final String gemVersion,
+                                      @NotNull final String firstVersion, @NotNull final String secondVersion) {
+        final int lcpLengthFirst = longestCommonPrefixLength(gemVersion, firstVersion);
+        final int lcpLengthSecond = longestCommonPrefixLength(gemVersion, secondVersion);
+        return (lcpLengthFirst > lcpLengthSecond || lcpLengthFirst > 0 && lcpLengthFirst == lcpLengthSecond &&
+                Math.abs(gemVersion.charAt(lcpLengthFirst) - firstVersion.charAt(lcpLengthFirst)) <
+                Math.abs(gemVersion.charAt(lcpLengthFirst) - secondVersion.charAt(lcpLengthSecond)));
+    }
+
+    private static int longestCommonPrefixLength(@NotNull final String str1, @NotNull final String str2) {
         final int minLength = Math.min(str1.length(), str2.length());
         for (int i = 0; i < minLength; i++) {
             if (str1.charAt(i) != str2.charAt(i)) {
