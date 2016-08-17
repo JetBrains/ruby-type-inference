@@ -48,7 +48,7 @@ abstract class RSignatureCacheManager {
 
         if (ourSyntheticTypes.containsKey(classFQN)) {
             final Pair<RType, Set<RSignature>> cached = ourSyntheticTypes.get(classFQN);
-            if (cached.getSecond().hashCode() == classMethodSignatures.hashCode()) {
+            if (cached.getSecond().equals(classMethodSignatures)) {
                 return cached.getFirst();
             }
         }
