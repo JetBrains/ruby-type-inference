@@ -4,7 +4,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.ArgumentInfo;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.Visibility;
 
-import java.util.Collections;
 import java.util.List;
 
 class RSignature {
@@ -24,8 +23,8 @@ class RSignature {
         this.myMethodName = methodName;
         this.myReceiverName = receiverName;
         this.myVisibility = visibility;
-        this.myArgsInfo = Collections.unmodifiableList(argsInfo);
-        this.myArgsTypeName = Collections.unmodifiableList(argsTypeName);
+        this.myArgsInfo = argsInfo;
+        this.myArgsTypeName = argsTypeName;
     }
 
     @NotNull
