@@ -2,6 +2,7 @@ package org.jetbrains.plugins.ruby.ruby.codeInsight.types;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.ArgumentInfo;
+import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.Visibility;
 
 import java.util.Collections;
 import java.util.List;
@@ -12,14 +13,17 @@ class RSignature {
     @NotNull
     private final String myReceiverName;
     @NotNull
+    private final Visibility myVisibility;
+    @NotNull
     private final List<ArgumentInfo> myArgsInfo;
     @NotNull
     private final List<String> myArgsTypeName;
 
-    RSignature(@NotNull final String methodName, @NotNull final String receiverName,
+    RSignature(@NotNull final String methodName, @NotNull final String receiverName, @NotNull final Visibility visibility,
                @NotNull final List<ArgumentInfo> argsInfo, @NotNull final List<String> argsTypeName) {
         this.myMethodName = methodName;
         this.myReceiverName = receiverName;
+        this.myVisibility = visibility;
         this.myArgsInfo = Collections.unmodifiableList(argsInfo);
         this.myArgsTypeName = Collections.unmodifiableList(argsTypeName);
     }
@@ -32,6 +36,11 @@ class RSignature {
     @NotNull
     String getReceiverName() {
         return myReceiverName;
+    }
+
+    @NotNull
+    Visibility getVisibility() {
+        return myVisibility;
     }
 
     @NotNull

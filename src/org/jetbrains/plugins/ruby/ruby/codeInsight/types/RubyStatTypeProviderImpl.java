@@ -15,6 +15,7 @@ import org.jetbrains.plugins.ruby.ruby.lang.psi.RPossibleCall;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RPsiElement;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.assoc.RAssoc;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.ArgumentInfo;
+import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.Visibility;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.expressions.RExpression;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.iterators.RBlockCall;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.methodCall.RArgumentToBlock;
@@ -43,7 +44,7 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
             appendBlockArgIfNeeded(call, argsInfo, argsTypeName);
 
             final Module module = ModuleUtilCore.findModuleForPsiElement(call);
-            final RSignature signature = new RSignature(methodName, receiverName, argsInfo, argsTypeName);
+            final RSignature signature = new RSignature(methodName, receiverName, Visibility.PUBLIC, argsInfo, argsTypeName);
             final String returnTypeName = cacheManager.findReturnTypeNameBySignature(module, signature);
             if (returnTypeName != null) {
                 RType returnType = RTypeFactory.createTypeByFQN(call.getProject(), returnTypeName);

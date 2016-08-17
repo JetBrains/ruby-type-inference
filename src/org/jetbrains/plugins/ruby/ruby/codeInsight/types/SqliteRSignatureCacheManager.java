@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.gem.GemInfo;
 import org.jetbrains.plugins.ruby.gem.util.GemSearchUtil;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.ArgumentInfo;
+import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.Visibility;
 
 import java.sql.*;
 import java.util.HashSet;
@@ -121,10 +122,10 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
                     .map(argInfo -> argInfo.getName() + "," + getRubyArgTypeRepresentation(argInfo.getType()))
                     .collect(Collectors.joining(";"));
             final String sql = String.format("INSERT OR REPLACE INTO signatures " +
-                                             "values('%s', '%s', '%s', '%s', '%s', '%s', '%s');",
+                                             "values('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');",
                                              signature.getMethodName(), signature.getReceiverName(),
                                              String.join(";", signature.getArgsTypeName()), argsInfoSerialized,
-                                             returnTypeName, gemName, gemVersion);
+                                             returnTypeName, gemName, gemVersion, signature.getVisibility());
             statement.executeUpdate(sql);
         } catch (SQLException e) {
             LOG.info(e);
@@ -165,14 +166,15 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
         final Set<RSignature> receiverMethodSignatures = new HashSet<>();
 
         try (final Statement statement = myConnection.createStatement()) {
-            final String sql = String.format("SELECT method_name, args_type_name, args_info FROM signatures " +
+            final String sql = String.format("SELECT method_name, visibility, args_type_name, args_info FROM signatures " +
                                              "WHERE receiver_name = '%s';", receiverName);
             final ResultSet signatures = statement.executeQuery(sql);
             while (signatures.next()) {
                 final String methodName = signatures.getString("method_name");
+                final Visibility visibility = Visibility.valueOf(signatures.getString("visibility"));
                 final List<ArgumentInfo> argsInfo = parseArgsInfo(signatures.getString("args_info"));
                 final List<String> argsTypeName = StringUtil.splitHonorQuotes(signatures.getString("args_type_name"), ';');
-                final RSignature signature = new RSignature(methodName, receiverName, argsInfo, argsTypeName);
+                final RSignature signature = new RSignature(methodName, receiverName, visibility, argsInfo, argsTypeName);
                 receiverMethodSignatures.add(signature);
             }
         } catch (SQLException | IllegalArgumentException e) {

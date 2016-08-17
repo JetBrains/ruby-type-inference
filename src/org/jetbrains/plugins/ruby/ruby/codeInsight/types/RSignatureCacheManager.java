@@ -95,6 +95,7 @@ abstract class RSignatureCacheManager {
                                                              signature.getMethodName(),
                                                              Type.INSTANCE_METHOD,
                                                              classSymbol,
+                                                             signature.getVisibility(),
                                                              signature.getArgsInfo()))
                 .collect(Collectors.toList()));
 

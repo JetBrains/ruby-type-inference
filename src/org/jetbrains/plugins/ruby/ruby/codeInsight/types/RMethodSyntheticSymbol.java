@@ -18,14 +18,18 @@ import java.util.List;
 
 public class RMethodSyntheticSymbol extends SymbolImpl implements RMethodSymbol {
     @NotNull
+    private final Visibility myVisibility;
+    @NotNull
     private final List<ArgumentInfo> myArgsInfo;
 
     public RMethodSyntheticSymbol(@NotNull final Project project,
                                   @NotNull final String name,
                                   @NotNull final Type type,
                                   @Nullable final Symbol parent,
+                                  @NotNull final Visibility visibility,
                                   @NotNull final List<ArgumentInfo> argsInfo) {
         super(project, name, type, parent);
+        myVisibility = visibility;
         myArgsInfo = argsInfo;
     }
 
@@ -62,12 +66,12 @@ public class RMethodSyntheticSymbol extends SymbolImpl implements RMethodSymbol 
 
     @Override
     public boolean isSynthetic() {
-        return true;
+        return false;
     }
 
     @NotNull
     @Override
     public Visibility getVisibility() {
-        return Visibility.PUBLIC; // TODO: return correct visibility
+        return myVisibility;
     }
 }
