@@ -9,8 +9,8 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.ruby.run.configuration.AbstractRubyRunConfiguration;
+import org.jetbrains.plugins.ruby.ruby.run.configuration.RubyAbstractCommandLineState;
 import org.jetbrains.plugins.ruby.ruby.run.configuration.RubyRunner;
-import org.jetbrains.plugins.ruby.ruby.run.configuration.rubyScript.RubyRunCommandLineState;
 import org.jetbrains.plugins.ruby.ruby.run.configuration.rubyScript.RubyRunConfiguration;
 
 public class RubyCollectTypeRunner extends RubyRunner {
@@ -23,20 +23,21 @@ public class RubyCollectTypeRunner extends RubyRunner {
     @Override
     protected RunContentDescriptor doExecute(@NotNull final RunProfileState state,
                                              @NotNull final ExecutionEnvironment env) throws ExecutionException {
-        final RubyRunConfiguration configuration = ((RubyRunCommandLineState) state).getConfig();
-        final String scriptPath= configuration.getScriptPath();
-        final String scriptArgs = configuration.getScriptArgs();
+        if (state instanceof RubyAbstractCommandLineState) {
+            final AbstractRubyRunConfiguration config = ((RubyAbstractCommandLineState) state).getConfig();
+            if (config instanceof RubyRunConfiguration) {
+                final RubyRunConfiguration newConfig = (RubyRunConfiguration) config.clone();
+                newConfig.setScriptArgs(newConfig.getScriptPath() + ' ' + newConfig.getScriptArgs());
+                newConfig.setScriptPath(RUBY_TYPE_TRACKER_PATH); // TODO: remove the hard coded path and get it from config file
 
-        // TODO: remove the hard coded path and get it from config file
-        configuration.setScriptPath(RUBY_TYPE_TRACKER_PATH);
-        configuration.setScriptArgs(scriptPath + ' ' + scriptArgs);
+                final RunProfileState newState = newConfig.getState(env.getExecutor(), env);
+                if (newState != null) {
+                    return super.doExecute(newState, env);
+                }
+            }
+        }
 
-        final RunContentDescriptor result = super.doExecute(state, env);
-
-        configuration.setScriptPath(scriptPath);
-        configuration.setScriptArgs(scriptArgs);
-
-        return result;
+        return null;
     }
 
     @Override
