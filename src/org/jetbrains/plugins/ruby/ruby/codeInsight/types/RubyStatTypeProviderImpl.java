@@ -2,6 +2,7 @@ package org.jetbrains.plugins.ruby.ruby.codeInsight.types;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -22,8 +23,7 @@ import org.jetbrains.plugins.ruby.ruby.lang.psi.methodCall.RArgumentToBlock;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.methodCall.RCall;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.references.RReference;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.*;
 
 public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
     @Nullable
@@ -38,21 +38,33 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
                 return null;
             }
 
+            final Module module = ModuleUtilCore.findModuleForPsiElement(call);
             final String receiverName = StringUtil.notNullize(names.getSecond(), CoreTypes.Object);
             final List<ArgumentInfo> argsInfo = cacheManager.getMethodArgsInfo(methodName, receiverName);
-            final List<String> argsTypeName = getArgsTypeName(call.getParent(), argsInfo, callArgs);
+            final List<List<String>> argsTypeNames = getArgsTypeNames(call.getParent(), argsInfo, callArgs);
+            final RType result = argsTypeNames.stream()
+                    .map(argsTypeName -> new RSignature(methodName, receiverName, Visibility.PUBLIC, argsInfo, argsTypeName))
+                    .map(signature -> getReturnTypeBySignature(call.getProject(), module, cacheManager, signature))
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .reduce(REmptyType.INSTANCE, RTypeUtil::union);
+            return result;
+        }
 
-            final Module module = ModuleUtilCore.findModuleForPsiElement(call);
-            final RSignature signature = new RSignature(methodName, receiverName, Visibility.PUBLIC, argsInfo, argsTypeName);
-            final String returnTypeName = cacheManager.findReturnTypeNameBySignature(module, signature);
-            if (returnTypeName != null) {
-                RType returnType = RTypeFactory.createTypeByFQN(call.getProject(), returnTypeName);
-                if (returnType == REmptyType.INSTANCE) {
-                    returnType = cacheManager.createTypeByFQNFromStat(call.getProject(), returnTypeName);
-                }
+        return null;
+    }
 
-                return returnType;
+    @Nullable
+    private static RType getReturnTypeBySignature(@NotNull final Project project, @Nullable final Module module,
+                                                  @NotNull final RSignatureCacheManager cacheManager, @NotNull final RSignature signature) {
+        final String returnTypeName = cacheManager.findReturnTypeNameBySignature(module, signature);
+        if (returnTypeName != null) {
+            RType returnType = RTypeFactory.createTypeByFQN(project, returnTypeName);
+            if (returnType == REmptyType.INSTANCE) {
+                returnType = cacheManager.createTypeByFQNFromStat(project, returnTypeName);
             }
+
+            return returnType;
         }
 
         return null;
@@ -94,27 +106,55 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
     }
 
     @NotNull
-    private static List<String> getArgsTypeName(@NotNull final PsiElement callParent,
-                                                @NotNull final List<ArgumentInfo> argsInfo,
-                                                @NotNull final List<RPsiElement> args) {
-        final List<String> argsTypeName = args.stream()
-                .map(arg -> {
-                    if (arg instanceof RAssoc) {
-                        arg = ((RAssoc) arg).getValue();
-                    }
+    private static List<List<String>> getArgsTypeNames(@NotNull final PsiElement callParent,
+                                                       @NotNull final List<ArgumentInfo> argsInfo,
+                                                       @NotNull final List<RPsiElement> args) {
+        final List<List<String>> argsTypeNames = new ArrayList<>();
+        constructAllArgsTypeNamesRecursively(new LinkedList<>(args), new ArrayList<>(), argsTypeNames);
 
-                    if (arg instanceof RExpression) {
-                        final RType type = ((RExpression) arg).getType();
-                        return type.getPresentableName(); // TODO: fix and handle booleans
-                    } else if (arg instanceof RArgumentToBlock) {
-                        return CoreTypes.Proc;
-                    }
+        for (final List<String> argsTypeName: argsTypeNames) {
+            appendBlockArgIfNeeded(callParent, argsInfo, argsTypeName);
+        }
 
-                    return null;
-                })
-                .collect(Collectors.toList());
-        appendBlockArgIfNeeded(callParent, argsInfo, argsTypeName);
-        return argsTypeName;
+        return argsTypeNames;
+    }
+
+    private static void constructAllArgsTypeNamesRecursively(@NotNull final Deque<RPsiElement> args,
+                                                             @NotNull final List<String> currentArgsTypeName,
+                                                             @NotNull final List<List<String>> argsTypeNames) {
+        if (args.isEmpty()) {
+            argsTypeNames.add(currentArgsTypeName);
+        } else {
+            RPsiElement arg = args.pop();
+
+            if (arg instanceof RAssoc) {
+                arg = ((RAssoc) arg).getValue();
+            }
+
+            if (arg instanceof RExpression) {
+                final RType type = ((RExpression) arg).getType();
+                processTypeDuringConstructionArgsTypeNames(args, currentArgsTypeName, argsTypeNames, type);
+            } else if (arg instanceof RArgumentToBlock) {
+                currentArgsTypeName.add(CoreTypes.Proc);
+                constructAllArgsTypeNamesRecursively(args, currentArgsTypeName, argsTypeNames);
+            }
+        }
+    }
+
+    private static void processTypeDuringConstructionArgsTypeNames(@NotNull final Deque<RPsiElement> args,
+                                                                   @NotNull final List<String> currentArgsTypeName,
+                                                                   @NotNull final List<List<String>> argsTypeNames,
+                                                                   @NotNull final RType type) {
+        if (type instanceof RUnionType) {
+            final ArrayList<String> copyCurrentArgsTypeName = new ArrayList<>(currentArgsTypeName);
+            final Deque<RPsiElement> copyArgs = new LinkedList<>(args);
+            final RUnionType unionType = (RUnionType) type;
+            processTypeDuringConstructionArgsTypeNames(args, currentArgsTypeName, argsTypeNames, unionType.getType1());
+            processTypeDuringConstructionArgsTypeNames(copyArgs, copyCurrentArgsTypeName, argsTypeNames, unionType.getType2());
+        } else {
+            currentArgsTypeName.add(type.getPresentableName()); // TODO: fix
+            constructAllArgsTypeNamesRecursively(args, currentArgsTypeName, argsTypeNames);
+        }
     }
 
     private static void appendBlockArgIfNeeded(@NotNull final PsiElement callParent,
