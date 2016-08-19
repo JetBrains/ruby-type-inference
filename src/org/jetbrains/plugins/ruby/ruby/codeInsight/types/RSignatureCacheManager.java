@@ -34,8 +34,8 @@ abstract class RSignatureCacheManager {
     @NotNull
     private static final Map<String, Pair<RType, Set<RSignature>>> ourSyntheticTypes = new HashMap<>();
 
-    @Nullable
-    public abstract String findReturnTypeNameBySignature(@Nullable final Module module, @NotNull final RSignature signature);
+    @NotNull
+    public abstract List<String> findReturnTypeNamesBySignature(@Nullable final Module module, @NotNull final RSignature signature);
 
     public abstract void recordSignature(@NotNull final RSignature signature, @NotNull final String returnTypeName,
                                          @NotNull final String gemName, @NotNull final String gemVersion);

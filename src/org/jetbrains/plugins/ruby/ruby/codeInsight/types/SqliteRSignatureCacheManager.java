@@ -2,7 +2,6 @@ package org.jetbrains.plugins.ruby.ruby.codeInsight.types;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.io.StringRef;
@@ -50,9 +49,10 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
         myConnection = DriverManager.getConnection(String.format("jdbc:sqlite:%s", dbPath));
     }
 
-    @Nullable
+    @NotNull
     @Override
-    public String findReturnTypeNameBySignature(@Nullable final Module module, @NotNull final RSignature signature) {
+    public List<String> findReturnTypeNamesBySignature(@Nullable final Module module, @NotNull final RSignature signature) {
+        final List<String> resultReturnTypeNames = new ArrayList<>();
         try (final Statement statement = myConnection.createStatement()) {
             final String sql = String.format("SELECT return_type_name, gem_name, gem_version FROM signatures WHERE " +
                                              "method_name = '%s' AND receiver_name = '%s' AND args_type_name = '%s';",
@@ -60,19 +60,26 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
                                              String.join(";", signature.getArgsTypeName()));
             final ResultSet rs = statement.executeQuery(sql);
             if (rs.next()) {
-                final String gemVersion = getGemVersionByName(module, rs.getString("gem_name"));
-                final List<Couple<String>> versionsAndReturnTypes = new ArrayList<>();
+                final String moduleGemVersion = getGemVersionByName(module, rs.getString("gem_name"));
+                final List<String> gemVersions = new ArrayList<>();
+                final List<String> returnTypeNames = new ArrayList<>();
                 do {
-                    versionsAndReturnTypes.add(Couple.of(rs.getString("gem_version"), rs.getString("return_type_name")));
+                    gemVersions.add(rs.getString("gem_version"));
+                    returnTypeNames.add(rs.getString("return_type_name"));
                 } while (rs.next());
 
-                return findReturnTypeNameByGemVersion(gemVersion, versionsAndReturnTypes);
+                final String closestGemVersion = getClosestGemVersion(moduleGemVersion, gemVersions);
+                for (int i = 0; i < gemVersions.size(); i++) {
+                    if (gemVersions.get(i).equals(closestGemVersion)) {
+                        resultReturnTypeNames.add(returnTypeNames.get(i));
+                    }
+                }
             }
         } catch (SQLException e) {
             LOG.info(e);
         }
 
-        return null;
+        return resultReturnTypeNames;
     }
 
     @Override
@@ -171,24 +178,22 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
     }
 
     @NotNull
-    private String findReturnTypeNameByGemVersion(@NotNull final String gemVersion, @NotNull final List<Couple<String>> versionsAndReturnTypes) {
-        final Comparator<Couple<String>> versionsAndReturnTypesComparator = (Couple<String> vt1, Couple<String> vt2) ->
-                VersionComparatorUtil.compare(vt1.getFirst(), vt2.getFirst());
-        final NavigableSet<Couple<String>> sortedSet = new TreeSet<>(versionsAndReturnTypesComparator);
-        sortedSet.addAll(versionsAndReturnTypes);
+    private String getClosestGemVersion(@NotNull final String gemVersion, @NotNull final List<String> gemVersions) {
+        final NavigableSet<String> sortedSet = new TreeSet<>(VersionComparatorUtil.COMPARATOR);
+        sortedSet.addAll(gemVersions);
 
-        final Couple<String> upperBound = sortedSet.ceiling(Couple.of(gemVersion, null));
-        final Couple<String> lowerBound = sortedSet.floor(Couple.of(gemVersion, null));
+        final String upperBound = sortedSet.ceiling(gemVersion);
+        final String lowerBound = sortedSet.floor(gemVersion);
         if (upperBound == null) {
-            return lowerBound.getSecond();
+            return lowerBound;
         } else if (lowerBound == null) {
-            return upperBound.getSecond();
-        } else if (upperBound == lowerBound) {
-            return upperBound.getSecond();
-        } else if (firstStringCloser(gemVersion, upperBound.getFirst(), lowerBound.getFirst())) {
-            return upperBound.getSecond();
+            return upperBound;
+        } else if (upperBound.equals(lowerBound)) {
+            return upperBound;
+        } else if (firstStringCloser(gemVersion, upperBound, lowerBound)) {
+            return upperBound;
         } else {
-            return lowerBound.getSecond();
+            return lowerBound;
         }
     }
 

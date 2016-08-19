@@ -24,6 +24,7 @@ import org.jetbrains.plugins.ruby.ruby.lang.psi.methodCall.RCall;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.references.RReference;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
     @Nullable
@@ -42,32 +43,39 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
             final String receiverName = StringUtil.notNullize(names.getSecond(), CoreTypes.Object);
             final List<ArgumentInfo> argsInfo = cacheManager.getMethodArgsInfo(methodName, receiverName);
             final List<List<String>> argsTypeNames = getArgsTypeNames(call.getParent(), argsInfo, callArgs);
-            final RType result = argsTypeNames.stream()
+            final List<RType> returnTypes = argsTypeNames.stream()
                     .map(argsTypeName -> new RSignature(methodName, receiverName, Visibility.PUBLIC, argsInfo, argsTypeName))
-                    .map(signature -> getReturnTypeBySignature(call.getProject(), module, cacheManager, signature))
-                    .filter(Objects::nonNull)
+                    .flatMap(signature -> getReturnTypesBySignature(call.getProject(), module, cacheManager, signature).stream())
                     .distinct()
-                    .reduce(REmptyType.INSTANCE, RTypeUtil::union);
-            return result;
+                    .collect(Collectors.toList());
+
+            if (returnTypes.size() == 1) {
+                return returnTypes.get(0);
+            } else if (returnTypes.size() <= RType.TYPE_TREE_HEIGHT_LIMIT) {
+                return returnTypes.stream().reduce(REmptyType.INSTANCE, RTypeUtil::union);
+            }
         }
 
         return null;
     }
 
-    @Nullable
-    private static RType getReturnTypeBySignature(@NotNull final Project project, @Nullable final Module module,
-                                                  @NotNull final RSignatureCacheManager cacheManager, @NotNull final RSignature signature) {
-        final String returnTypeName = cacheManager.findReturnTypeNameBySignature(module, signature);
-        if (returnTypeName != null) {
-            RType returnType = RTypeFactory.createTypeByFQN(project, returnTypeName);
-            if (returnType == REmptyType.INSTANCE) {
-                returnType = cacheManager.createTypeByFQNFromStat(project, returnTypeName);
-            }
+    @NotNull
+    private static List<RType> getReturnTypesBySignature(@NotNull final Project project, @Nullable final Module module,
+                                                         @NotNull final RSignatureCacheManager cacheManager,
+                                                         @NotNull final RSignature signature) {
+        final List<String> returnTypeNames = cacheManager.findReturnTypeNamesBySignature(module, signature);
+        return returnTypeNames.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .map(returnTypeName -> {
+                        RType returnType = RTypeFactory.createTypeByFQN(project, returnTypeName);
+                        if (returnType == REmptyType.INSTANCE) {
+                            returnType = cacheManager.createTypeByFQNFromStat(project, returnTypeName);
+                        }
 
-            return returnType;
-        }
-
-        return null;
+                        return returnType;
+                })
+                .collect(Collectors.toList());
     }
 
     @NotNull
