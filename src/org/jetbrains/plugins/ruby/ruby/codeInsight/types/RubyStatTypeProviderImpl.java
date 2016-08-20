@@ -160,7 +160,7 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
             processTypeDuringConstructionArgsTypeNames(args, currentArgsTypeName, argsTypeNames, unionType.getType1());
             processTypeDuringConstructionArgsTypeNames(copyArgs, copyCurrentArgsTypeName, argsTypeNames, unionType.getType2());
         } else {
-            currentArgsTypeName.add(type.getPresentableName()); // TODO: fix
+            currentArgsTypeName.add(type.getName());
             constructAllArgsTypeNamesRecursively(args, currentArgsTypeName, argsTypeNames);
         }
     }
