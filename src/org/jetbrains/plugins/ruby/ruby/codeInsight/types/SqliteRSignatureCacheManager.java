@@ -13,6 +13,7 @@ import org.jetbrains.plugins.ruby.gem.util.GemSearchUtil;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.ArgumentInfo;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.Visibility;
 
+import java.net.URL;
 import java.sql.*;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -20,8 +21,6 @@ import java.util.stream.Collectors;
 class SqliteRSignatureCacheManager extends RSignatureCacheManager {
     @NotNull
     private static final Logger LOG = Logger.getInstance(SqliteRSignatureCacheManager.class.getName());
-    @NotNull
-    private static final String DB_PATH = "/home/user/sqlite/MyDB.db";
 
     @Nullable
     private static RSignatureCacheManager ourInstance;
@@ -33,8 +32,10 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
     static RSignatureCacheManager getInstance() {
         if (ourInstance == null) {
             try {
-                // TODO: remove the hard coded path and get it from config file
-                ourInstance = new SqliteRSignatureCacheManager(DB_PATH);
+                final URL dbURL = SqliteRSignatureCacheManager.class.getClassLoader().getResource("CallStat.db");
+                if (dbURL != null) {
+                    ourInstance = new SqliteRSignatureCacheManager(dbURL.getPath());
+                }
             } catch (ClassNotFoundException | SQLException e) {
                 LOG.info(e);
                 return null;

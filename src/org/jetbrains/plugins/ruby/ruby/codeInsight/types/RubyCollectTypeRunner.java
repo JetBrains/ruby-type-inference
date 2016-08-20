@@ -13,11 +13,11 @@ import org.jetbrains.plugins.ruby.ruby.run.configuration.RubyAbstractCommandLine
 import org.jetbrains.plugins.ruby.ruby.run.configuration.RubyRunner;
 import org.jetbrains.plugins.ruby.ruby.run.configuration.rubyScript.RubyRunConfiguration;
 
+import java.net.URL;
+
 public class RubyCollectTypeRunner extends RubyRunner {
     @NotNull
     private static final String RUBY_COLLECT_TYPE_RUNNER_ID = "RubyCollectType";
-    @NotNull
-    private static final String RUBY_TYPE_TRACKER_PATH = "/home/user/RubymineProjects/untitled/type_tracker.rb";
 
     @Nullable
     @Override
@@ -28,11 +28,13 @@ public class RubyCollectTypeRunner extends RubyRunner {
             if (config instanceof RubyRunConfiguration) {
                 final RubyRunConfiguration newConfig = (RubyRunConfiguration) config.clone();
                 newConfig.setScriptArgs(newConfig.getScriptPath() + ' ' + newConfig.getScriptArgs());
-                newConfig.setScriptPath(RUBY_TYPE_TRACKER_PATH); // TODO: remove the hard coded path and get it from config file
-
-                final RunProfileState newState = newConfig.getState(env.getExecutor(), env);
-                if (newState != null) {
-                    return super.doExecute(newState, env);
+                final URL typeTrackerScriptURL = this.getClass().getClassLoader().getResource("type_tracker.rb");
+                if (typeTrackerScriptURL != null) {
+                    newConfig.setScriptPath(typeTrackerScriptURL.getPath());
+                    final RunProfileState newState = newConfig.getState(env.getExecutor(), env);
+                    if (newState != null) {
+                        return super.doExecute(newState, env);
+                    }
                 }
             }
         }
