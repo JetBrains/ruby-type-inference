@@ -41,7 +41,7 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
 
             final Module module = ModuleUtilCore.findModuleForPsiElement(call);
             final String receiverName = StringUtil.notNullize(names.getSecond(), CoreTypes.Object);
-            final List<ArgumentInfo> argsInfo = cacheManager.getMethodArgsInfo(methodName, receiverName);
+            final List<ArgumentInfoWithValue> argsInfo = cacheManager.getMethodArgsInfo(methodName, receiverName);
             final List<List<String>> argsTypeNames = getArgsTypeNames(call.getParent(), argsInfo, callArgs);
             final List<RType> returnTypes = argsTypeNames.stream()
                     .map(argsTypeName -> new RSignature(methodName, receiverName, Visibility.PUBLIC, argsInfo, argsTypeName))
@@ -115,7 +115,7 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
 
     @NotNull
     private static List<List<String>> getArgsTypeNames(@NotNull final PsiElement callParent,
-                                                       @NotNull final List<ArgumentInfo> argsInfo,
+                                                       @NotNull final List<ArgumentInfoWithValue> argsInfo,
                                                        @NotNull final List<RPsiElement> args) {
         final List<List<String>> argsTypeNames = new ArrayList<>();
         constructAllArgsTypeNamesRecursively(new LinkedList<>(args), new ArrayList<>(), argsTypeNames);
@@ -166,7 +166,7 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
     }
 
     private static void appendBlockArgIfNeeded(@NotNull final PsiElement callParent,
-                                               @NotNull final List<ArgumentInfo> argsInfo,
+                                               @NotNull final List<ArgumentInfoWithValue> argsInfo,
                                                @NotNull final List<String> argsTypeName) {
         if (!argsInfo.isEmpty() && argsInfo.get(argsInfo.size() - 1).getType() == ArgumentInfo.Type.BLOCK &&
             (argsTypeName.isEmpty() || !argsTypeName.get(argsTypeName.size() - 1).equals(CoreTypes.Proc))) {

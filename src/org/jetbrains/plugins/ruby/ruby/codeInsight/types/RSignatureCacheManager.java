@@ -61,7 +61,7 @@ abstract class RSignatureCacheManager {
     }
 
     @NotNull
-    public abstract List<ArgumentInfo> getMethodArgsInfo(@NotNull final String methodName, @NotNull final String receiverName);
+    public abstract List<ArgumentInfoWithValue> getMethodArgsInfo(@NotNull final String methodName, @NotNull final String receiverName);
 
     @NotNull
     protected abstract Set<RSignature> getReceiverMethodSignatures(@NotNull final String receiverName);
@@ -96,7 +96,7 @@ abstract class RSignatureCacheManager {
                                                              Type.INSTANCE_METHOD,
                                                              classSymbol,
                                                              signature.getVisibility(),
-                                                             signature.getArgsInfo()))
+                                                             (List<ArgumentInfo>) (List<?>) signature.getArgsInfo()))
                 .collect(Collectors.toList()));
 
         return classSymbol;

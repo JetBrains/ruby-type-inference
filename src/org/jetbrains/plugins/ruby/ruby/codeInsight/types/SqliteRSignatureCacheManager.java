@@ -4,7 +4,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtilRt;
-import com.intellij.util.io.StringRef;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -113,7 +112,7 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
 
     @NotNull
     @Override
-    public List<ArgumentInfo> getMethodArgsInfo(@NotNull final String methodName, @Nullable String receiverName) {
+    public List<ArgumentInfoWithValue> getMethodArgsInfo(@NotNull final String methodName, @Nullable final String receiverName) {
          try (final Statement statement = myConnection.createStatement()) {
             final String sql = String.format("SELECT args_info FROM signatures " +
                                              "WHERE method_name = '%s' AND receiver_name = '%s';",
@@ -141,7 +140,7 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
             while (signatures.next()) {
                 final String methodName = signatures.getString("method_name");
                 final Visibility visibility = Visibility.valueOf(signatures.getString("visibility"));
-                final List<ArgumentInfo> argsInfo = parseArgsInfo(signatures.getString("args_info"));
+                final List<ArgumentInfoWithValue> argsInfo = parseArgsInfo(signatures.getString("args_info"));
                 final List<String> argsTypeName = StringUtil.splitHonorQuotes(signatures.getString("args_type_name"), ';');
                 final RSignature signature = new RSignature(methodName, receiverName, visibility, argsInfo, argsTypeName);
                 receiverMethodSignatures.add(signature);
@@ -166,12 +165,13 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
     }
 
     @NotNull
-    private static List<ArgumentInfo> parseArgsInfo(@NotNull final String argsInfoSerialized) {
+    private static List<ArgumentInfoWithValue> parseArgsInfo(@NotNull final String argsInfoSerialized) {
         try {
             return StringUtil.splitHonorQuotes(argsInfoSerialized, ';').stream()
                     .map(argInfo -> StringUtil.splitHonorQuotes(argInfo, ','))
-                    .map(argInfo -> new ArgumentInfo(StringRef.fromString(argInfo.get(1)),
-                                                     getArgTypeByRubyRepresentation(argInfo.get(0))))
+                    .map(argInfo -> new ArgumentInfoWithValue(argInfo.get(1),
+                                                              getArgTypeByRubyRepresentation(argInfo.get(0)),
+                                                              argInfo.get(2)))
                     .collect(Collectors.toList());
         } catch (IndexOutOfBoundsException e) {
             throw new IllegalArgumentException(e);
