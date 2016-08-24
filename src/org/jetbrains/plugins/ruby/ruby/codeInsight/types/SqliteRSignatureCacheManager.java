@@ -67,10 +67,15 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
                     returnTypeNames.add(rs.getString("return_type_name"));
                 } while (rs.next());
 
-                final String closestGemVersion = getClosestGemVersion(moduleGemVersion, gemVersions);
-                for (int i = 0; i < gemVersions.size(); i++) {
-                    if (gemVersions.get(i).equals(closestGemVersion)) {
-                        resultReturnTypeNames.add(returnTypeNames.get(i));
+                final Set<String> uniqueReturnTypeNames = new HashSet<>(returnTypeNames);
+                if (uniqueReturnTypeNames.size() == 1) {
+                    resultReturnTypeNames.add(uniqueReturnTypeNames.iterator().next());
+                } else {
+                    final String closestGemVersion = getClosestGemVersion(moduleGemVersion, gemVersions);
+                    for (int i = 0; i < gemVersions.size(); i++) {
+                        if (gemVersions.get(i).equals(closestGemVersion)) {
+                            resultReturnTypeNames.add(returnTypeNames.get(i));
+                        }
                     }
                 }
             }
