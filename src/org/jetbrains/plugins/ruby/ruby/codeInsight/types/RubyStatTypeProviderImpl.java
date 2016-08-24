@@ -16,7 +16,6 @@ import org.jetbrains.plugins.ruby.ruby.codeInsight.types.impl.REmptyType;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RPossibleCall;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RPsiElement;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.assoc.RAssoc;
-import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.Visibility;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.expressions.RExpression;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.iterators.RBlockCall;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.methodCall.RArgumentToBlock;
@@ -44,7 +43,12 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
             final List<ParameterInfo> argsInfo = cacheManager.getMethodArgsInfo(methodName, receiverName);
             final List<List<String>> argsTypeNames = getAllPossibleNormalizedArgsTypeNames(call.getParent(), argsInfo, callArgs);
             final List<RType> returnTypes = argsTypeNames.stream()
-                    .map(argsTypeName -> new RSignature(methodName, receiverName, Visibility.PUBLIC, argsInfo, argsTypeName))
+                    .map(argsTypeName -> new RSignatureBuilder()
+                            .setMethodName(methodName)
+                            .setReceiverName(receiverName)
+                            .setArgsInfo(argsInfo)
+                            .setArgsTypeName(argsTypeName)
+                            .build())
                     .flatMap(signature -> getReturnTypesBySignature(call.getProject(), module, cacheManager, signature).stream())
                     .distinct()
                     .collect(Collectors.toList());

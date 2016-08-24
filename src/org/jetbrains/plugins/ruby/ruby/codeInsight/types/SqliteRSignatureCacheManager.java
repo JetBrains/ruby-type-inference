@@ -138,15 +138,16 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
         final Set<RSignature> receiverMethodSignatures = new HashSet<>();
 
         try (final Statement statement = myConnection.createStatement()) {
-            final String sql = String.format("SELECT method_name, visibility, args_type_name, args_info FROM signatures " +
-                                             "WHERE receiver_name = '%s';", receiverName);
+            final String sql = String.format("SELECT * FROM signatures WHERE receiver_name = '%s';", receiverName);
             final ResultSet signatures = statement.executeQuery(sql);
             while (signatures.next()) {
-                final String methodName = signatures.getString("method_name");
-                final Visibility visibility = Visibility.valueOf(signatures.getString("visibility"));
-                final List<ParameterInfo> argsInfo = parseArgsInfo(signatures.getString("args_info"));
-                final List<String> argsTypeName = StringUtil.splitHonorQuotes(signatures.getString("args_type_name"), ';');
-                final RSignature signature = new RSignature(methodName, receiverName, visibility, argsInfo, argsTypeName);
+                final RSignature signature = new RSignatureBuilder()
+                        .setMethodName(signatures.getString("method_name"))
+                        .setReceiverName(receiverName)
+                        .setVisibility(Visibility.valueOf(signatures.getString("visibility")))
+                        .setArgsInfo(parseArgsInfo(signatures.getString("args_info")))
+                        .setArgsTypeName(StringUtil.splitHonorQuotes(signatures.getString("args_type_name"), ';'))
+                        .build();
                 receiverMethodSignatures.add(signature);
             }
         } catch (SQLException | IllegalArgumentException e) {
