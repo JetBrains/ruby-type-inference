@@ -13,12 +13,12 @@ class RSignature {
     @NotNull
     private final Visibility myVisibility;
     @NotNull
-    private final List<ArgumentInfoWithValue> myArgsInfo;
+    private final List<ParameterInfo> myArgsInfo;
     @NotNull
     private final List<String> myArgsTypeName;
 
     RSignature(@NotNull final String methodName, @NotNull final String receiverName, @NotNull final Visibility visibility,
-               @NotNull final List<ArgumentInfoWithValue> argsInfo, @NotNull final List<String> argsTypeName) {
+               @NotNull final List<ParameterInfo> argsInfo, @NotNull final List<String> argsTypeName) {
         this.myMethodName = methodName;
         this.myReceiverName = receiverName;
         this.myVisibility = visibility;
@@ -42,7 +42,7 @@ class RSignature {
     }
 
     @NotNull
-    List<ArgumentInfoWithValue> getArgsInfo() {
+    List<ParameterInfo> getArgsInfo() {
         return myArgsInfo;
     }
 

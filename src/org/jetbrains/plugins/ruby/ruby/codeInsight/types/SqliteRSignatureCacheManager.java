@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.gem.GemInfo;
 import org.jetbrains.plugins.ruby.gem.util.GemSearchUtil;
-import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.ArgumentInfo;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.Visibility;
 
 import java.net.URL;
@@ -57,7 +56,7 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
             final String sql = String.format("SELECT return_type_name, gem_name, gem_version FROM signatures WHERE " +
                                              "method_name = '%s' AND receiver_name = '%s' AND args_type_name = '%s';",
                                              signature.getMethodName(), signature.getReceiverName(),
-                                             String.join(";", signature.getArgsTypeName()));
+                                             String.join(",", signature.getArgsTypeName()));
             final ResultSet rs = statement.executeQuery(sql);
             if (rs.next()) {
                 final String moduleGemVersion = getGemVersionByName(module, rs.getString("gem_name"));
@@ -87,7 +86,7 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
                                 @NotNull final String gemName, @NotNull final String gemVersion) {
         try (final Statement statement = myConnection.createStatement()) {
             final String argsInfoSerialized = signature.getArgsInfo().stream()
-                    .map(argInfo -> argInfo.getName() + "," + getRubyArgTypeRepresentation(argInfo.getType()))
+                    .map(argInfo -> argInfo.getName() + "," + argInfo.getType() + "," + argInfo.getDefaultValueTypeName())
                     .collect(Collectors.joining(";"));
             final String sql = String.format("INSERT OR REPLACE INTO signatures " +
                                              "values('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');",
@@ -112,7 +111,7 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
 
     @NotNull
     @Override
-    public List<ArgumentInfoWithValue> getMethodArgsInfo(@NotNull final String methodName, @Nullable final String receiverName) {
+    public List<ParameterInfo> getMethodArgsInfo(@NotNull final String methodName, @Nullable final String receiverName) {
          try (final Statement statement = myConnection.createStatement()) {
             final String sql = String.format("SELECT args_info FROM signatures " +
                                              "WHERE method_name = '%s' AND receiver_name = '%s';",
@@ -140,7 +139,7 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
             while (signatures.next()) {
                 final String methodName = signatures.getString("method_name");
                 final Visibility visibility = Visibility.valueOf(signatures.getString("visibility"));
-                final List<ArgumentInfoWithValue> argsInfo = parseArgsInfo(signatures.getString("args_info"));
+                final List<ParameterInfo> argsInfo = parseArgsInfo(signatures.getString("args_info"));
                 final List<String> argsTypeName = StringUtil.splitHonorQuotes(signatures.getString("args_type_name"), ';');
                 final RSignature signature = new RSignature(methodName, receiverName, visibility, argsInfo, argsTypeName);
                 receiverMethodSignatures.add(signature);
@@ -165,13 +164,13 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
     }
 
     @NotNull
-    private static List<ArgumentInfoWithValue> parseArgsInfo(@NotNull final String argsInfoSerialized) {
+    private static List<ParameterInfo> parseArgsInfo(@NotNull final String argsInfoSerialized) {
         try {
             return StringUtil.splitHonorQuotes(argsInfoSerialized, ';').stream()
                     .map(argInfo -> StringUtil.splitHonorQuotes(argInfo, ','))
-                    .map(argInfo -> new ArgumentInfoWithValue(argInfo.get(1),
-                                                              getArgTypeByRubyRepresentation(argInfo.get(0)),
-                                                              argInfo.get(2)))
+                    .map(argInfo -> new ParameterInfo(argInfo.get(1),
+                                                      ParameterInfo.Type.valueOf(argInfo.get(0).toUpperCase()),
+                                                      argInfo.get(2)))
                     .collect(Collectors.toList());
         } catch (IndexOutOfBoundsException e) {
             throw new IllegalArgumentException(e);
@@ -216,43 +215,5 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
         }
 
         return minLength;
-    }
-
-    @NotNull
-    private static String getRubyArgTypeRepresentation(@NotNull final ArgumentInfo.Type type) {
-        switch (type) {
-            case SIMPLE:
-                return "req";
-            case ARRAY:
-                return "rest";
-            case HASH:
-                return "keyrest";
-            case BLOCK:
-                return "block";
-            case PREDEFINED:
-                return "opt";
-            default:
-                throw new IllegalArgumentException();
-        }
-    }
-
-    @NotNull
-    private static ArgumentInfo.Type getArgTypeByRubyRepresentation(@NotNull final String argTypeRepresentation) {
-        switch (argTypeRepresentation) {
-            case "req":
-                return ArgumentInfo.Type.SIMPLE;
-            case "rest":
-                return ArgumentInfo.Type.ARRAY;
-            case "keyrest":
-                return ArgumentInfo.Type.HASH;
-            case "block":
-                return ArgumentInfo.Type.BLOCK;
-            case "opt":
-            case "key":
-            case "keyreq":
-                return ArgumentInfo.Type.PREDEFINED;
-            default:
-                throw new IllegalArgumentException();
-        }
     }
 }

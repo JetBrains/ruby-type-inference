@@ -4,6 +4,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +16,6 @@ import org.jetbrains.plugins.ruby.ruby.codeInsight.types.impl.REmptyType;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RPossibleCall;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RPsiElement;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.assoc.RAssoc;
-import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.ArgumentInfo;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.Visibility;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.expressions.RExpression;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.iterators.RBlockCall;
@@ -41,8 +41,8 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
 
             final Module module = ModuleUtilCore.findModuleForPsiElement(call);
             final String receiverName = StringUtil.notNullize(names.getSecond(), CoreTypes.Object);
-            final List<ArgumentInfoWithValue> argsInfo = cacheManager.getMethodArgsInfo(methodName, receiverName);
-            final List<List<String>> argsTypeNames = getArgsTypeNames(call.getParent(), argsInfo, callArgs);
+            final List<ParameterInfo> argsInfo = cacheManager.getMethodArgsInfo(methodName, receiverName);
+            final List<List<String>> argsTypeNames = getAllPossibleNormalizedArgsTypeNames(call.getParent(), argsInfo, callArgs);
             final List<RType> returnTypes = argsTypeNames.stream()
                     .map(argsTypeName -> new RSignature(methodName, receiverName, Visibility.PUBLIC, argsInfo, argsTypeName))
                     .flatMap(signature -> getReturnTypesBySignature(call.getProject(), module, cacheManager, signature).stream())
@@ -114,65 +114,141 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
     }
 
     @NotNull
-    private static List<List<String>> getArgsTypeNames(@NotNull final PsiElement callParent,
-                                                       @NotNull final List<ArgumentInfoWithValue> argsInfo,
-                                                       @NotNull final List<RPsiElement> args) {
-        final List<List<String>> argsTypeNames = new ArrayList<>();
-        constructAllArgsTypeNamesRecursively(new LinkedList<>(args), new ArrayList<>(), argsTypeNames);
-
-        for (final List<String> argsTypeName: argsTypeNames) {
-            appendBlockArgIfNeeded(callParent, argsInfo, argsTypeName);
-        }
-
-        return argsTypeNames;
+    private static List<List<String>> getAllPossibleNormalizedArgsTypeNames(@NotNull final PsiElement callParent,
+                                                                            @NotNull final List<ParameterInfo> argsInfo,
+                                                                            @NotNull final List<RPsiElement> args) {
+        final Pair<Deque<List<String>>, Map<String, List<String>>> argsAndKwargsTypeNames = getArgsAndKwargsTypeNames(args);
+        final Deque<List<String>> argsTypeNames = argsAndKwargsTypeNames.getFirst();
+        final Map<String, List<String>> kwargsTypeNames = argsAndKwargsTypeNames.getSecond();
+        final Deque<List<String>> normalizedArgsTypeNames = normalizeArgsTypeNames(callParent, argsInfo, argsTypeNames, kwargsTypeNames);
+        return constructAllPossibleArgsTypeNamesRecursively(normalizedArgsTypeNames, new ArrayList<>(), new ArrayList<>());
     }
 
-    private static void constructAllArgsTypeNamesRecursively(@NotNull final Deque<RPsiElement> args,
-                                                             @NotNull final List<String> currentArgsTypeName,
-                                                             @NotNull final List<List<String>> argsTypeNames) {
-        if (args.isEmpty()) {
-            argsTypeNames.add(currentArgsTypeName);
-        } else {
-            RPsiElement arg = args.pop();
+    @NotNull
+    private static Pair<Deque<List<String>>, Map<String, List<String>>> getArgsAndKwargsTypeNames(@NotNull final List<RPsiElement> args) {
+        final Deque<List<String>> argsTypeNames = new ArrayDeque<>();
+        final Map<String, List<String>> kwargsTypeNames = new HashMap<>();
 
+        for (final RPsiElement arg : args) {
+            final List<String> argTypeNames = getArgTypeNames(arg);
             if (arg instanceof RAssoc) {
-                arg = ((RAssoc) arg).getValue();
-            }
-
-            if (arg instanceof RExpression) {
-                final RType type = ((RExpression) arg).getType();
-                processTypeDuringConstructionArgsTypeNames(args, currentArgsTypeName, argsTypeNames, type);
-            } else if (arg instanceof RArgumentToBlock) {
-                currentArgsTypeName.add(CoreTypes.Proc);
-                constructAllArgsTypeNamesRecursively(args, currentArgsTypeName, argsTypeNames);
+                kwargsTypeNames.put(((RAssoc) arg).getKeyText(), argTypeNames);
+            } else {
+                argsTypeNames.add(argTypeNames);
             }
         }
+
+        return Pair.create(argsTypeNames, kwargsTypeNames);
     }
 
-    private static void processTypeDuringConstructionArgsTypeNames(@NotNull final Deque<RPsiElement> args,
-                                                                   @NotNull final List<String> currentArgsTypeName,
-                                                                   @NotNull final List<List<String>> argsTypeNames,
-                                                                   @NotNull final RType type) {
-        if (type instanceof RUnionType) {
-            final ArrayList<String> copyCurrentArgsTypeName = new ArrayList<>(currentArgsTypeName);
-            final Deque<RPsiElement> copyArgs = new LinkedList<>(args);
-            final RUnionType unionType = (RUnionType) type;
-            processTypeDuringConstructionArgsTypeNames(args, currentArgsTypeName, argsTypeNames, unionType.getType1());
-            processTypeDuringConstructionArgsTypeNames(copyArgs, copyCurrentArgsTypeName, argsTypeNames, unionType.getType2());
+    @NotNull
+    private static List<String> getArgTypeNames(@NotNull RPsiElement arg) {
+        if (arg instanceof RAssoc) {
+            arg = ((RAssoc) arg).getValue();
+        }
+
+        final List<String> argTypeNames = new ArrayList<>();
+        if (arg instanceof RExpression) {
+            RType type = ((RExpression) arg).getType();
+            if (type instanceof RUnionType) {
+                final Deque<RType> types = new ArrayDeque<>();
+                types.add(type);
+                while (!types.isEmpty()) {
+                    type = types.pop();
+                    if (type instanceof RUnionType) {
+                        types.add(((RUnionType) type).getType1());
+                        types.add(((RUnionType) type).getType2());
+                    } else {
+                        argTypeNames.add(type.getName());
+                    }
+                }
+            } else {
+                argTypeNames.add(type.getName());
+            }
+        } else if (arg instanceof RArgumentToBlock) {
+            argTypeNames.add(CoreTypes.Proc);
+        }
+
+        return argTypeNames;
+    }
+
+    @NotNull
+    private static Deque<List<String>> normalizeArgsTypeNames(@NotNull final PsiElement callParent,
+                                                              @NotNull final List<ParameterInfo> argsInfo,
+                                                              @NotNull final Deque<List<String>> argsTypeNames,
+                                                              @NotNull final Map<String, List<String>> kwargsTypeNames) {
+        final List<String> possibleBlockType = argsTypeNames.peekLast();
+        boolean hasBlockArg = possibleBlockType != null && possibleBlockType.get(0).equals(CoreTypes.Proc);
+        if (hasBlockArg) {
+            argsTypeNames.removeLast();
+        }
+
+        final Deque<List<String>> normalizedArgsTypeNames = new ArrayDeque<>();
+        for (final ParameterInfo argInfo : argsInfo) {
+            switch (argInfo.getType()) {
+                case OPT:
+                    if (argsTypeNames.isEmpty()) {
+                        final List<String> defaultValueTypeName = new ArrayList<>();
+                        defaultValueTypeName.add(argInfo.getDefaultValueTypeName());
+                        normalizedArgsTypeNames.addLast(defaultValueTypeName);
+                        break;
+                    }
+                case REQ:
+                    normalizedArgsTypeNames.addLast(argsTypeNames.removeFirst());
+                    break;
+                case REST:
+                    argsTypeNames.clear();
+                    final List<String> restTypeName = new ArrayList<>();
+                    restTypeName.add(CoreTypes.Array);
+                    normalizedArgsTypeNames.addLast(restTypeName);
+                    break;
+                case KEY:
+                    if (!kwargsTypeNames.containsKey(argInfo.getName())) {
+                        final List<String> defaultValueTypeName = new ArrayList<>();
+                        defaultValueTypeName.add(argInfo.getDefaultValueTypeName());
+                        normalizedArgsTypeNames.addLast(defaultValueTypeName);
+                        break;
+                    }
+                case KEYREQ:
+                    normalizedArgsTypeNames.addLast(kwargsTypeNames.get(argInfo.getName()));
+                    break;
+                case KEYREST:
+                    final List<String> keyrestTypeName = new ArrayList<>();
+                    keyrestTypeName.add(CoreTypes.Hash);
+                    normalizedArgsTypeNames.addLast(keyrestTypeName);
+                    break;
+                case BLOCK:
+                    final List<String> blockTypeName = new ArrayList<>();
+                    blockTypeName.add(hasBlockArg || callParent instanceof RBlockCall ? CoreTypes.Proc : CoreTypes.NilClass);
+                    normalizedArgsTypeNames.addLast(blockTypeName);
+                    break;
+            }
+        }
+
+        return normalizedArgsTypeNames;
+    }
+
+    private static List<List<String>> constructAllPossibleArgsTypeNamesRecursively(@NotNull final Deque<List<String>> argsTypeNames,
+                                                                                   @NotNull final List<String> currentArgsTypeName,
+                                                                                   @NotNull final List<List<String>> allPossibleArgsTypeNames) {
+        if (argsTypeNames.isEmpty()) {
+            allPossibleArgsTypeNames.add(currentArgsTypeName);
         } else {
-            currentArgsTypeName.add(type.getName());
-            constructAllArgsTypeNamesRecursively(args, currentArgsTypeName, argsTypeNames);
+            final List<String> argTypeNames = argsTypeNames.removeFirst();
+            final String argTypeName = argTypeNames.remove(argTypeNames.size() - 1);
+            if (!argTypeNames.isEmpty()) {
+                for (final String currentArgTypeName : argTypeNames) {
+                    final Deque<List<String>> copyArgsTypeNames = new ArrayDeque<>(argsTypeNames);
+                    final ArrayList<String> copyCurrentArgsTypeName = new ArrayList<>(currentArgsTypeName);
+                    copyCurrentArgsTypeName.add(currentArgTypeName);
+                    constructAllPossibleArgsTypeNamesRecursively(copyArgsTypeNames, copyCurrentArgsTypeName, allPossibleArgsTypeNames);
+                }
+            }
+
+            currentArgsTypeName.add(argTypeName);
+            constructAllPossibleArgsTypeNamesRecursively(argsTypeNames, currentArgsTypeName, allPossibleArgsTypeNames);
         }
+
+        return allPossibleArgsTypeNames;
     }
-
-    private static void appendBlockArgIfNeeded(@NotNull final PsiElement callParent,
-                                               @NotNull final List<ArgumentInfoWithValue> argsInfo,
-                                               @NotNull final List<String> argsTypeName) {
-        if (!argsInfo.isEmpty() && argsInfo.get(argsInfo.size() - 1).getType() == ArgumentInfo.Type.BLOCK &&
-            (argsTypeName.isEmpty() || !argsTypeName.get(argsTypeName.size() - 1).equals(CoreTypes.Proc))) {
-            argsTypeName.add(callParent instanceof RBlockCall ? CoreTypes.Proc : CoreTypes.NilClass);
-        }
-    }
-
-
 }

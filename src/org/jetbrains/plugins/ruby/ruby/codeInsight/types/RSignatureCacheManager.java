@@ -25,7 +25,6 @@ import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.Type;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.*;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.v2.SymbolPsiProcessor;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.impl.RSymbolTypeImpl;
-import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.ArgumentInfo;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -61,7 +60,7 @@ abstract class RSignatureCacheManager {
     }
 
     @NotNull
-    public abstract List<ArgumentInfoWithValue> getMethodArgsInfo(@NotNull final String methodName, @NotNull final String receiverName);
+    public abstract List<ParameterInfo> getMethodArgsInfo(@NotNull final String methodName, @NotNull final String receiverName);
 
     @NotNull
     protected abstract Set<RSignature> getReceiverMethodSignatures(@NotNull final String receiverName);
@@ -96,7 +95,9 @@ abstract class RSignatureCacheManager {
                                                              Type.INSTANCE_METHOD,
                                                              classSymbol,
                                                              signature.getVisibility(),
-                                                             (List<ArgumentInfo>) (List<?>) signature.getArgsInfo()))
+                                                             signature.getArgsInfo().stream()
+                                                                .map(ParameterInfo::toArgumentInfo)
+                                                                .collect(Collectors.toList())))
                 .collect(Collectors.toList()));
 
         return classSymbol;
