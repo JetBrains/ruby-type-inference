@@ -77,15 +77,23 @@ class RSignature {
 
         return myMethodName.equals(that.myMethodName) &&
                myReceiverName.equals(that.myReceiverName) &&
-               myArgsTypeName.equals(that.myArgsTypeName);
+               myVisibility == that.myVisibility &&
+               myArgsInfo.equals(that.myArgsInfo) &&
+               myArgsTypeName.equals(that.myArgsTypeName) &&
+               myGemName.equals(that.myGemName) &&
+               myGemVersion.equals(that.myGemVersion);
+
     }
 
     @Override
     public int hashCode() {
         int result = myMethodName.hashCode();
         result = 31 * result + myReceiverName.hashCode();
+        result = 31 * result + myVisibility.hashCode();
         result = 31 * result + myArgsInfo.hashCode();
         result = 31 * result + myArgsTypeName.hashCode();
+        result = 31 * result + myGemName.hashCode();
+        result = 31 * result + myGemVersion.hashCode();
         return result;
     }
 }
