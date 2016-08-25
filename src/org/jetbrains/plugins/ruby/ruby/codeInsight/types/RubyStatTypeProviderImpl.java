@@ -73,7 +73,7 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
     private static List<RType> getReturnTypesBySignature(@NotNull final Project project, @Nullable final Module module,
                                                          @NotNull final RSignatureCacheManager cacheManager,
                                                          @NotNull final RSignature signature) {
-        final List<String> returnTypeNames = cacheManager.findReturnTypeNamesBySignature(module, signature);
+        final List<String> returnTypeNames = cacheManager.findReturnTypeNamesBySignature(project, module, signature);
         return returnTypeNames.stream()
                 .filter(Objects::nonNull)
                 .distinct()

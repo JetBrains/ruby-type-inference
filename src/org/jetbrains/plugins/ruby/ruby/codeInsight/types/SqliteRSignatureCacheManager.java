@@ -2,6 +2,9 @@ package org.jetbrains.plugins.ruby.ruby.codeInsight.types;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.text.VersionComparatorUtil;
@@ -9,6 +12,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.gem.GemInfo;
 import org.jetbrains.plugins.ruby.gem.util.GemSearchUtil;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.Symbol;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.SymbolUtil;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.v2.ClassModuleSymbol;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.Visibility;
 
 import java.net.URL;
@@ -50,40 +56,49 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
 
     @NotNull
     @Override
-    public List<String> findReturnTypeNamesBySignature(@Nullable final Module module, @NotNull final RSignature signature) {
-        final List<String> resultReturnTypeNames = new ArrayList<>();
-        try (final Statement statement = myConnection.createStatement()) {
-            final String sql = String.format("SELECT return_type_name, gem_name, gem_version FROM signatures WHERE " +
-                                             "method_name = '%s' AND receiver_name = '%s' AND args_type_name = '%s';",
-                                             signature.getMethodName(), signature.getReceiverName(),
-                                             String.join(",", signature.getArgsTypeName()));
-            final ResultSet rs = statement.executeQuery(sql);
-            if (rs.next()) {
-                final String moduleGemVersion = getGemVersionByName(module, rs.getString("gem_name"));
-                final List<String> gemVersions = new ArrayList<>();
-                final List<String> returnTypeNames = new ArrayList<>();
-                do {
-                    gemVersions.add(rs.getString("gem_version"));
-                    returnTypeNames.add(rs.getString("return_type_name"));
-                } while (rs.next());
+    public List<String> findReturnTypeNamesBySignature(@NotNull final Project project, @Nullable final Module module,
+                                                       @NotNull final RSignature signature) {
+        final List<Pair<RSignature, String>> signaturesAndReturnTypeNames =
+                getSignaturesAndReturnTypeNames(signature.getMethodName(), signature.getReceiverName());
+        final List<Trinity<RSignature, String, Integer>> signaturesAndReturnTypeNamesAndDistances =
+                signaturesAndReturnTypeNames.stream()
+                        .map(pair -> Trinity.create(pair.getFirst(), pair.getSecond(),
+                                                    calcArgsTypeNamesDistance(project, signature.getArgsTypeName(),
+                                                                              pair.getFirst().getArgsTypeName())))
+                        .collect(Collectors.toList());
 
-                final Set<String> uniqueReturnTypeNames = new HashSet<>(returnTypeNames);
-                if (uniqueReturnTypeNames.size() == 1) {
-                    resultReturnTypeNames.add(uniqueReturnTypeNames.iterator().next());
-                } else {
-                    final String closestGemVersion = getClosestGemVersion(moduleGemVersion, gemVersions);
-                    for (int i = 0; i < gemVersions.size(); i++) {
-                        if (gemVersions.get(i).equals(closestGemVersion)) {
-                            resultReturnTypeNames.add(returnTypeNames.get(i));
-                        }
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            LOG.info(e);
+        signaturesAndReturnTypeNamesAndDistances.removeIf(signAndRetTypeAndDist ->
+                signAndRetTypeAndDist.getThird() == null);
+        if (signaturesAndReturnTypeNamesAndDistances.isEmpty()) {
+            return new ArrayList<>();
         }
 
-        return resultReturnTypeNames;
+        if (checkIfOnlyOneUniqueReturnTypeName(signaturesAndReturnTypeNamesAndDistances)) {
+            return new ArrayList<String>() {{
+                add(signaturesAndReturnTypeNamesAndDistances.get(0).getSecond());
+            }};
+        }
+
+        final String gemName = signaturesAndReturnTypeNamesAndDistances.get(0).getFirst().getGemName();
+        final String moduleGemVersion = getGemVersionByName(module, gemName);
+        filterSignaturesAndReturnTypesByModuleGemVersion(moduleGemVersion, signaturesAndReturnTypeNamesAndDistances);
+
+        if (checkIfOnlyOneUniqueReturnTypeName(signaturesAndReturnTypeNamesAndDistances)) {
+            return new ArrayList<String>() {{
+                add(signaturesAndReturnTypeNamesAndDistances.get(0).getSecond());
+            }};
+        }
+
+        final int minDistance = signaturesAndReturnTypeNamesAndDistances.stream()
+                .mapToInt(Trinity::getThird)
+                .min()
+                .getAsInt();
+        signaturesAndReturnTypeNamesAndDistances.removeIf(signAndRetTypeAndDist ->
+                signAndRetTypeAndDist.getThird() > minDistance);
+
+        return signaturesAndReturnTypeNamesAndDistances.stream()
+                .map(Trinity::getSecond)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -184,7 +199,7 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
     }
 
     @NotNull
-    private String getClosestGemVersion(@NotNull final String gemVersion, @NotNull final List<String> gemVersions) {
+    private static String getClosestGemVersion(@NotNull final String gemVersion, @NotNull final List<String> gemVersions) {
         final NavigableSet<String> sortedSet = new TreeSet<>(VersionComparatorUtil.COMPARATOR);
         sortedSet.addAll(gemVersions);
 
@@ -203,8 +218,8 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
         }
     }
 
-    private boolean firstStringCloser(@NotNull final String gemVersion,
-                                      @NotNull final String firstVersion, @NotNull final String secondVersion) {
+    private static boolean firstStringCloser(@NotNull final String gemVersion,
+                                             @NotNull final String firstVersion, @NotNull final String secondVersion) {
         final int lcpLengthFirst = longestCommonPrefixLength(gemVersion, firstVersion);
         final int lcpLengthSecond = longestCommonPrefixLength(gemVersion, secondVersion);
         return (lcpLengthFirst > lcpLengthSecond || lcpLengthFirst > 0 && lcpLengthFirst == lcpLengthSecond &&
@@ -221,5 +236,98 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
         }
 
         return minLength;
+    }
+
+    @Nullable
+    private static Integer calcArgsTypeNamesDistance(@NotNull final Project project,
+                                                     @NotNull final List<String> from, @NotNull final List<String> to) {
+        if (from.size() != to.size()) {
+            return null;
+        }
+
+        Integer distanceBetweenAllArgs = 0;
+        for (int i = 0; i < from.size(); i++) {
+            final Symbol fromArgSymbol = SymbolUtil.findClassOrModule(project, from.get(i));
+            final Symbol toArgSymbol = SymbolUtil.findClassOrModule(project, to.get(i));
+            final Integer distanceBetweenTwoArgs = calcArgTypeSymbolsDistance((ClassModuleSymbol) fromArgSymbol,
+                    (ClassModuleSymbol) toArgSymbol);
+            if (distanceBetweenTwoArgs == null) {
+                return null;
+            } else {
+                distanceBetweenAllArgs += distanceBetweenTwoArgs;
+            }
+        }
+
+        return distanceBetweenAllArgs;
+    }
+
+    @Nullable
+    private static Integer calcArgTypeSymbolsDistance(@Nullable final ClassModuleSymbol from,
+                                                      @Nullable final ClassModuleSymbol to) {
+        if (from == null || to == null) {
+            return null;
+        }
+
+        int distance = 0;
+        for (ClassModuleSymbol current = from; current != null; current = (ClassModuleSymbol) current.getSuperClassSymbol(null)) {
+            if (current.equals(to)) {
+                return distance;
+            }
+
+            distance += 1;
+        }
+
+        return null;
+    }
+
+    private static boolean checkIfOnlyOneUniqueReturnTypeName(List<Trinity<RSignature, String, Integer>> signaturesAndReturnTypeNamesAndDistances) {
+        final long countOfDistinctReturnTypeNames = signaturesAndReturnTypeNamesAndDistances.stream()
+                .map(Trinity::getSecond)
+                .distinct()
+                .count();
+        return countOfDistinctReturnTypeNames == 1;
+    }
+
+    private static void filterSignaturesAndReturnTypesByModuleGemVersion(@NotNull final String moduleGemVersion,
+                                                                         @NotNull final List<Trinity<RSignature, String, Integer>> signaturesAndReturnTypeNamesAndDistances) {
+        final List<String> gemVersions = signaturesAndReturnTypeNamesAndDistances.stream()
+                .map(Trinity::getFirst)
+                .map(RSignature::getGemVersion)
+                .collect(Collectors.toList());
+        final String closestGemVersion = getClosestGemVersion(moduleGemVersion, gemVersions);
+        signaturesAndReturnTypeNamesAndDistances.removeIf(signAndRetTypeAndDist -> {
+            final String gemVersion = signAndRetTypeAndDist.getFirst().getGemVersion();
+            return !gemVersion.equals(closestGemVersion);
+        });
+    }
+
+    @NotNull
+    private List<Pair<RSignature, String>> getSignaturesAndReturnTypeNames(@NotNull final String methodName,
+                                                                           @NotNull final String receiverName) {
+        final List<Pair<RSignature, String>> signaturesAndReturnTypeNames = new ArrayList<>();
+        try (final Statement statement = myConnection.createStatement()) {
+            final String sql = String.format("SELECT * FROM signatures WHERE method_name = '%s' AND receiver_name = '%s';",
+                    methodName, receiverName);
+            final ResultSet rs = statement.executeQuery(sql);
+            if (rs.next()) {
+                do {
+                    final RSignature newSignature = new RSignatureBuilder()
+                            .setMethodName(rs.getString("method_name"))
+                            .setReceiverName(rs.getString("receiver_name"))
+                            .setVisibility(Visibility.valueOf(rs.getString("visibility")))
+                            .setArgsInfo(parseArgsInfo(rs.getString("args_info")))
+                            .setArgsTypeName(StringUtil.splitHonorQuotes(rs.getString("args_type_name"), ';'))
+                            .setGemName(rs.getString("gem_name"))
+                            .setGemVersion(rs.getString("gem_version"))
+                            .build();
+                    final String newReturnTypeName  = rs.getString("return_type_name");
+                    signaturesAndReturnTypeNames.add(Pair.create(newSignature, newReturnTypeName));
+                } while (rs.next());
+            }
+        } catch (SQLException e) {
+            LOG.info(e);
+        }
+
+        return signaturesAndReturnTypeNames;
     }
 }
