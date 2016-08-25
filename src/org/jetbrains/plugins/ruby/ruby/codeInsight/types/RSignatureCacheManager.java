@@ -37,8 +37,7 @@ abstract class RSignatureCacheManager {
     public abstract List<String> findReturnTypeNamesBySignature(@NotNull final Project project, @Nullable final Module module,
                                                                 @NotNull final RSignature signature);
 
-    public abstract void recordSignature(@NotNull final RSignature signature, @NotNull final String returnTypeName,
-                                         @NotNull final String gemName, @NotNull final String gemVersion);
+    public abstract void recordSignature(@NotNull final RSignature signature, @NotNull final String returnTypeName);
 
     public abstract void clearCache();
 

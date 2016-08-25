@@ -102,8 +102,7 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
     }
 
     @Override
-    public void recordSignature(@NotNull final RSignature signature, @NotNull final String returnTypeName,
-                                @NotNull final String gemName, @NotNull final String gemVersion) {
+    public void recordSignature(@NotNull final RSignature signature, @NotNull final String returnTypeName) {
         try (final Statement statement = myConnection.createStatement()) {
             final String argsInfoSerialized = signature.getArgsInfo().stream()
                     .map(argInfo -> argInfo.getName() + "," + argInfo.getType() + "," + argInfo.getDefaultValueTypeName())
@@ -112,7 +111,8 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
                                              "values('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');",
                                              signature.getMethodName(), signature.getReceiverName(),
                                              String.join(";", signature.getArgsTypeName()), argsInfoSerialized,
-                                             returnTypeName, gemName, gemVersion, signature.getVisibility());
+                                             returnTypeName, signature.getGemName(), signature.getGemVersion(),
+                                             signature.getVisibility());
             statement.executeUpdate(sql);
         } catch (SQLException e) {
             LOG.info(e);
