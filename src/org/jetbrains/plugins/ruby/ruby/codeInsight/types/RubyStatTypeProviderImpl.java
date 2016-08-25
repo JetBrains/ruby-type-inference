@@ -41,7 +41,13 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
             final Module module = ModuleUtilCore.findModuleForPsiElement(call);
             final String receiverName = StringUtil.notNullize(names.getSecond(), CoreTypes.Object);
             final List<ParameterInfo> argsInfo = cacheManager.getMethodArgsInfo(methodName, receiverName);
-            final List<List<String>> argsTypeNames = getAllPossibleNormalizedArgsTypeNames(call.getParent(), argsInfo, callArgs);
+            final List<List<String>> argsTypeNames;
+            try {
+                argsTypeNames = getAllPossibleNormalizedArgsTypeNames(call.getParent(), argsInfo, callArgs);
+            } catch (IllegalArgumentException e) {
+                return null;
+            }
+
             final List<RType> returnTypes = argsTypeNames.stream()
                     .map(argsTypeName -> new RSignatureBuilder()
                             .setMethodName(methodName)
@@ -188,45 +194,53 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
         }
 
         final Deque<List<String>> normalizedArgsTypeNames = new ArrayDeque<>();
-        for (final ParameterInfo argInfo : argsInfo) {
-            switch (argInfo.getType()) {
-                case OPT:
-                    if (argsTypeNames.isEmpty()) {
-                        final List<String> defaultValueTypeName = new ArrayList<>();
-                        defaultValueTypeName.add(argInfo.getDefaultValueTypeName());
-                        normalizedArgsTypeNames.addLast(defaultValueTypeName);
+        try {
+            for (final ParameterInfo argInfo : argsInfo) {
+                switch (argInfo.getType()) {
+                    case OPT:
+                        if (argsTypeNames.isEmpty()) {
+                            final List<String> defaultValueTypeName = new ArrayList<>();
+                            defaultValueTypeName.add(argInfo.getDefaultValueTypeName());
+                            normalizedArgsTypeNames.addLast(defaultValueTypeName);
+                            break;
+                        }
+                    case REQ:
+                        normalizedArgsTypeNames.addLast(argsTypeNames.removeFirst());
                         break;
-                    }
-                case REQ:
-                    normalizedArgsTypeNames.addLast(argsTypeNames.removeFirst());
-                    break;
-                case REST:
-                    argsTypeNames.clear();
-                    final List<String> restTypeName = new ArrayList<>();
-                    restTypeName.add(CoreTypes.Array);
-                    normalizedArgsTypeNames.addLast(restTypeName);
-                    break;
-                case KEY:
-                    if (!kwargsTypeNames.containsKey(argInfo.getName())) {
-                        final List<String> defaultValueTypeName = new ArrayList<>();
-                        defaultValueTypeName.add(argInfo.getDefaultValueTypeName());
-                        normalizedArgsTypeNames.addLast(defaultValueTypeName);
+                    case REST:
+                        argsTypeNames.clear();
+                        final List<String> restTypeName = new ArrayList<>();
+                        restTypeName.add(CoreTypes.Array);
+                        normalizedArgsTypeNames.addLast(restTypeName);
                         break;
-                    }
-                case KEYREQ:
-                    normalizedArgsTypeNames.addLast(kwargsTypeNames.get(argInfo.getName()));
-                    break;
-                case KEYREST:
-                    final List<String> keyrestTypeName = new ArrayList<>();
-                    keyrestTypeName.add(CoreTypes.Hash);
-                    normalizedArgsTypeNames.addLast(keyrestTypeName);
-                    break;
-                case BLOCK:
-                    final List<String> blockTypeName = new ArrayList<>();
-                    blockTypeName.add(hasBlockArg || callParent instanceof RBlockCall ? CoreTypes.Proc : CoreTypes.NilClass);
-                    normalizedArgsTypeNames.addLast(blockTypeName);
-                    break;
+                    case KEY:
+                        if (!kwargsTypeNames.containsKey(argInfo.getName())) {
+                            final List<String> defaultValueTypeName = new ArrayList<>();
+                            defaultValueTypeName.add(argInfo.getDefaultValueTypeName());
+                            normalizedArgsTypeNames.addLast(defaultValueTypeName);
+                            break;
+                        }
+                    case KEYREQ:
+                        if (!kwargsTypeNames.containsKey(argInfo.getName())) {
+                            throw new NoSuchElementException();
+                        }
+
+                        normalizedArgsTypeNames.addLast(kwargsTypeNames.get(argInfo.getName()));
+                        break;
+                    case KEYREST:
+                        final List<String> keyrestTypeName = new ArrayList<>();
+                        keyrestTypeName.add(CoreTypes.Hash);
+                        normalizedArgsTypeNames.addLast(keyrestTypeName);
+                        break;
+                    case BLOCK:
+                        final List<String> blockTypeName = new ArrayList<>();
+                        blockTypeName.add(hasBlockArg || callParent instanceof RBlockCall ? CoreTypes.Proc : CoreTypes.NilClass);
+                        normalizedArgsTypeNames.addLast(blockTypeName);
+                        break;
+                }
             }
+        } catch (NoSuchElementException e) {
+            throw new IllegalArgumentException(e);
         }
 
         return normalizedArgsTypeNames;
