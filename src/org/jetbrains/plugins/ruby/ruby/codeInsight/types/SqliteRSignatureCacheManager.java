@@ -302,7 +302,8 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
         return null;
     }
 
-    private static boolean checkIfOnlyOneUniqueReturnTypeName(List<Trinity<RSignature, String, Integer>> signaturesAndReturnTypeNamesAndDistances) {
+    private static boolean checkIfOnlyOneUniqueReturnTypeName(@NotNull final List<Trinity<RSignature, String, Integer>>
+                                                                      signaturesAndReturnTypeNamesAndDistances) {
         final long countOfDistinctReturnTypeNames = signaturesAndReturnTypeNamesAndDistances.stream()
                 .map(Trinity::getSecond)
                 .distinct()
@@ -311,7 +312,8 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
     }
 
     private static void filterSignaturesAndReturnTypesByModuleGemVersion(@NotNull final String moduleGemVersion,
-                                                                         @NotNull final List<Trinity<RSignature, String, Integer>> signaturesAndReturnTypeNamesAndDistances) {
+                                                                         @NotNull final List<Trinity<RSignature, String, Integer>>
+                                                                                 signaturesAndReturnTypeNamesAndDistances) {
         final List<String> gemVersions = signaturesAndReturnTypeNamesAndDistances.stream()
                 .map(Trinity::getFirst)
                 .map(RSignature::getGemVersion)

@@ -58,7 +58,6 @@ abstract class RSignatureCacheManager {
 
         final Symbol classSymbol = createSyntheticClassSymbol(project, classFQN, classMethodSignatures);
         final RType syntheticType = new RSymbolTypeImpl(classSymbol, Context.INSTANCE);
-
         ourSyntheticTypes.put(classFQN, Pair.create(syntheticType, classMethodSignatures));
         return syntheticType;
     }
@@ -81,12 +80,14 @@ abstract class RSignatureCacheManager {
             public Children getChildren() {
                 return new ChildrenImpl() {
                     @Override
-                    public boolean processChildren(final SymbolPsiProcessor processor, final PsiElement invocationPoint) {
+                    public boolean processChildren(@NotNull final SymbolPsiProcessor processor,
+                                                   @Nullable final PsiElement invocationPoint) {
                         for (final RMethodSymbol methodSymbol : methodSymbols) {
                             if (!processor.process(methodSymbol)) {
                                 return false;
                             }
                         }
+
                         return true;
                     }
                 };
@@ -100,8 +101,8 @@ abstract class RSignatureCacheManager {
                                                              classSymbol,
                                                              signature.getVisibility(),
                                                              signature.getArgsInfo().stream()
-                                                                .map(ParameterInfo::toArgumentInfo)
-                                                                .collect(Collectors.toList())))
+                                                                     .map(ParameterInfo::toArgumentInfo)
+                                                                     .collect(Collectors.toList())))
                 .collect(Collectors.toList()));
 
         return classSymbol;

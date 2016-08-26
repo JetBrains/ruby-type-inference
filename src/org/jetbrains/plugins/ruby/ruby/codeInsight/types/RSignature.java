@@ -7,9 +7,9 @@ import java.util.List;
 
 class RSignature {
     @NotNull
-    private String myMethodName;
+    private final String myMethodName;
     @NotNull
-    private String myReceiverName;
+    private final String myReceiverName;
     @NotNull
     private final Visibility myVisibility;
     @NotNull

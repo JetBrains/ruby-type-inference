@@ -16,18 +16,18 @@ import org.jetbrains.plugins.ruby.ruby.lang.psi.methodCall.RCall;
 
 import java.util.List;
 
-public class RMethodSyntheticSymbol extends SymbolImpl implements RMethodSymbol {
+class RMethodSyntheticSymbol extends SymbolImpl implements RMethodSymbol {
     @NotNull
     private final Visibility myVisibility;
     @NotNull
     private final List<ArgumentInfo> myArgsInfo;
 
-    public RMethodSyntheticSymbol(@NotNull final Project project,
-                                  @NotNull final String name,
-                                  @NotNull final Type type,
-                                  @Nullable final Symbol parent,
-                                  @NotNull final Visibility visibility,
-                                  @NotNull final List<ArgumentInfo> argsInfo) {
+    RMethodSyntheticSymbol(@NotNull final Project project,
+                           @NotNull final String name,
+                           @NotNull final Type type,
+                           @Nullable final Symbol parent,
+                           @NotNull final Visibility visibility,
+                           @NotNull final List<ArgumentInfo> argsInfo) {
         super(project, name, type, parent);
         myVisibility = visibility;
         myArgsInfo = argsInfo;

@@ -188,7 +188,7 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
                                                               @NotNull final Deque<List<String>> argsTypeNames,
                                                               @NotNull final Map<String, List<String>> kwargsTypeNames) {
         final List<String> possibleBlockType = argsTypeNames.peekLast();
-        boolean hasBlockArg = possibleBlockType != null && possibleBlockType.get(0).equals(CoreTypes.Proc);
+        final boolean hasBlockArg = possibleBlockType != null && possibleBlockType.get(0).equals(CoreTypes.Proc);
         if (hasBlockArg) {
             argsTypeNames.removeLast();
         }
