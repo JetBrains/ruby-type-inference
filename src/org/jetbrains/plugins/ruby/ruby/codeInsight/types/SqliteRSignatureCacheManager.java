@@ -105,7 +105,8 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
     public void recordSignature(@NotNull final RSignature signature, @NotNull final String returnTypeName) {
         try (final Statement statement = myConnection.createStatement()) {
             final String argsInfoSerialized = signature.getArgsInfo().stream()
-                    .map(argInfo -> argInfo.getName() + "," + argInfo.getType() + "," + argInfo.getDefaultValueTypeName())
+                    .map(argInfo -> String.join(",", argInfo.getType().toString().toLowerCase(), argInfo.getName(),
+                                                     argInfo.getDefaultValueTypeName()))
                     .collect(Collectors.joining(";"));
             final String sql = String.format("INSERT OR REPLACE INTO signatures " +
                                              "values('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');",
