@@ -39,6 +39,10 @@ abstract class RSignatureCacheManager {
 
     public abstract void recordSignature(@NotNull final RSignature signature, @NotNull final String returnTypeName);
 
+    public abstract void deleteSignature(@NotNull final RSignature signature);
+
+    public abstract void compact(@NotNull final Project project);
+
     public abstract void clearCache();
 
     @NotNull

@@ -120,6 +120,28 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
     }
 
     @Override
+    public void deleteSignature(@NotNull final RSignature signature) {
+        try (final Statement statement = myConnection.createStatement()) {
+            final String sql = String.format("DELETE FROM signatures WHERE args_type_name = '%s' " +
+                                             "AND method_name = '%s' AND receiver_name = '%s' " +
+                                             "AND gem_name = '%s' AND gem_version = '%s';",
+                                             String.join(";", signature.getArgsTypeName()),
+                                             signature.getMethodName(), signature.getReceiverName(),
+                                             signature.getGemName(), signature.getGemVersion());
+            statement.executeUpdate(sql);
+        } catch (SQLException e) {
+            LOG.info(e);
+        }
+    }
+
+    @Override
+    public void compact(@NotNull final Project project) {
+        mergeRecordsWithSameSignatureButDifferentReturnTypeNames(project);
+        // TODO: merge records with different signatures but same return type name
+        // TODO: infer code contracts
+    }
+
+    @Override
     public void clearCache() {
         try (final Statement statement = myConnection.createStatement()) {
             final String sql = "DELETE FROM signatures;";
@@ -329,5 +351,117 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
         }
 
         return signaturesAndReturnTypeNames;
+    }
+
+    private void mergeRecordsWithSameSignatureButDifferentReturnTypeNames(@NotNull final Project project) {
+        final List<RSignature> signatures = getListOfSignaturesWithMoreThanOneReturnTypeNames();
+        for (final RSignature signature : signatures) {
+            final List<String> returnTypeNames = getReturnTypeNamesBySignature(signature);
+            final List<ClassModuleSymbol> returnTypeSymbols = returnTypeNames.stream()
+                    .map(returnTypeName -> SymbolUtil.findClassOrModule(project, returnTypeName))
+                    .map(returnTypeSymbol -> (ClassModuleSymbol) returnTypeSymbol)
+                    .collect(Collectors.toList());
+            String leastCommonSuperclassFQN = null;
+            if (!returnTypeSymbols.contains(null)) {
+                final ClassModuleSymbol leastCommonSuperclass = getLeastCommonSuperclass(returnTypeSymbols);
+                if (leastCommonSuperclass != null) {
+                    leastCommonSuperclassFQN = String.join("::", leastCommonSuperclass.getFQN());
+                }
+            }
+
+            deleteSignature(signature);
+            recordSignature(signature, StringUtil.notNullize(leastCommonSuperclassFQN, CoreTypes.Object));
+        }
+    }
+
+    private List<RSignature> getListOfSignaturesWithMoreThanOneReturnTypeNames() {
+        try (final Statement statement = myConnection.createStatement()) {
+            final String sql = "SELECT DISTINCT * FROM signatures " +
+                               "GROUP BY method_name, receiver_name, args_type_name, gem_name, gem_version " +
+                               "HAVING COUNT(return_type_name) > 1;";
+            final ResultSet rs = statement.executeQuery(sql);
+            final List<RSignature> signatures = new ArrayList<>();
+            while (rs.next()) {
+                final RSignature signature = new RSignatureBuilder()
+                        .setMethodName(rs.getString("method_name"))
+                        .setReceiverName(rs.getString("receiver_name"))
+                        .setVisibility(Visibility.valueOf(rs.getString("visibility")))
+                        .setArgsInfo(parseArgsInfo(rs.getString("args_info")))
+                        .setArgsTypeName(StringUtil.splitHonorQuotes(rs.getString("args_type_name"), ';'))
+                        .setGemName(rs.getString("gem_name"))
+                        .setGemVersion(rs.getString("gem_version"))
+                        .build();
+                signatures.add(signature);
+            }
+
+            return signatures;
+        } catch (SQLException | IllegalArgumentException e) {
+            LOG.info(e);
+        }
+
+        return ContainerUtilRt.emptyList();
+    }
+
+    @NotNull
+    private List<String> getReturnTypeNamesBySignature(@NotNull final RSignature signature) {
+        try (final Statement statement = myConnection.createStatement()) {
+            final String sql = String.format("SELECT return_type_name FROM signatures WHERE args_type_name = '%s' " +
+                                             "AND method_name = '%s' AND receiver_name = '%s' " +
+                                             "AND gem_name = '%s' AND gem_version = '%s';",
+                                             String.join(";", signature.getArgsTypeName()),
+                                             signature.getMethodName(), signature.getReceiverName(),
+                                             signature.getGemName(), signature.getGemVersion());
+            final ResultSet rs = statement.executeQuery(sql);
+            final List<String> returnTypeNames = new ArrayList<>();
+            while (rs.next()) {
+                returnTypeNames.add(rs.getString("return_type_name"));
+            }
+
+            return returnTypeNames;
+        } catch (SQLException e) {
+            LOG.info(e);
+        }
+
+        return ContainerUtilRt.emptyList();
+    }
+
+    @Nullable
+    private ClassModuleSymbol getLeastCommonSuperclass(@NotNull final List<ClassModuleSymbol> returnTypeSymbols) {
+        final List<ClassModuleSymbol> longestCommonPrefix = returnTypeSymbols.stream()
+                .filter(Objects::nonNull)
+                .map(this::getInheritanceHierarchy)
+                .reduce(this::getLongestCommonPrefix)
+                .orElse(null);
+        if (longestCommonPrefix != null && !longestCommonPrefix.isEmpty()) {
+            return longestCommonPrefix.get(longestCommonPrefix.size() - 1);
+        }
+
+        return null;
+    }
+
+    @NotNull
+    private List<ClassModuleSymbol> getInheritanceHierarchy(@NotNull final ClassModuleSymbol classSymbol) {
+        final List<ClassModuleSymbol> inheritanceHierarchy = new ArrayList<>();
+        for (ClassModuleSymbol currentClassSymbol = classSymbol;
+             currentClassSymbol != null;
+             currentClassSymbol = (ClassModuleSymbol) currentClassSymbol.getSuperClassSymbol(null)) {
+            inheritanceHierarchy.add(currentClassSymbol);
+        }
+
+        Collections.reverse(inheritanceHierarchy);
+        return inheritanceHierarchy;
+    }
+
+    @NotNull
+    private <T> List<T> getLongestCommonPrefix(@NotNull final List<T> list1, @NotNull final List<T> list2) {
+        final int minSize = Math.min(list1.size(), list2.size());
+        int prefixLength;
+        for (prefixLength = 0; prefixLength < minSize; prefixLength++) {
+            if (!list1.get(prefixLength).equals(list2.get(prefixLength))) {
+                break;
+            }
+        }
+
+        return list1.subList(0, prefixLength);
     }
 }
