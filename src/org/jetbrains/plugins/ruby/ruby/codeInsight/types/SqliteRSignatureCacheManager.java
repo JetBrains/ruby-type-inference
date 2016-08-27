@@ -103,17 +103,17 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
 
     @Override
     public void recordSignature(@NotNull final RSignature signature, @NotNull final String returnTypeName) {
+        final String argsInfoSerialized = signature.getArgsInfo().stream()
+                .map(argInfo -> String.join(",", argInfo.getType().toString().toLowerCase(), argInfo.getName(),
+                                                 argInfo.getDefaultValueTypeName()))
+                .collect(Collectors.joining(";"));
+        final String sql = String.format("INSERT OR REPLACE INTO signatures " +
+                                         "values('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');",
+                                         signature.getMethodName(), signature.getReceiverName(),
+                                         String.join(";", signature.getArgsTypeName()), argsInfoSerialized,
+                                         returnTypeName, signature.getGemName(), signature.getGemVersion(),
+                                         signature.getVisibility());
         try (final Statement statement = myConnection.createStatement()) {
-            final String argsInfoSerialized = signature.getArgsInfo().stream()
-                    .map(argInfo -> String.join(",", argInfo.getType().toString().toLowerCase(), argInfo.getName(),
-                                                     argInfo.getDefaultValueTypeName()))
-                    .collect(Collectors.joining(";"));
-            final String sql = String.format("INSERT OR REPLACE INTO signatures " +
-                                             "values('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');",
-                                             signature.getMethodName(), signature.getReceiverName(),
-                                             String.join(";", signature.getArgsTypeName()), argsInfoSerialized,
-                                             returnTypeName, signature.getGemName(), signature.getGemVersion(),
-                                             signature.getVisibility());
             statement.executeUpdate(sql);
         } catch (SQLException e) {
             LOG.info(e);
@@ -122,13 +122,13 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
 
     @Override
     public void deleteSignature(@NotNull final RSignature signature) {
+        final String sql = String.format("DELETE FROM signatures WHERE args_type_name = '%s' " +
+                                         "AND method_name = '%s' AND receiver_name = '%s' " +
+                                         "AND gem_name = '%s' AND gem_version = '%s';",
+                                         String.join(";", signature.getArgsTypeName()),
+                                         signature.getMethodName(), signature.getReceiverName(),
+                                         signature.getGemName(), signature.getGemVersion());
         try (final Statement statement = myConnection.createStatement()) {
-            final String sql = String.format("DELETE FROM signatures WHERE args_type_name = '%s' " +
-                                             "AND method_name = '%s' AND receiver_name = '%s' " +
-                                             "AND gem_name = '%s' AND gem_version = '%s';",
-                                             String.join(";", signature.getArgsTypeName()),
-                                             signature.getMethodName(), signature.getReceiverName(),
-                                             signature.getGemName(), signature.getGemVersion());
             statement.executeUpdate(sql);
         } catch (SQLException e) {
             LOG.info(e);
@@ -144,8 +144,8 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
 
     @Override
     public void clearCache() {
+        final String sql = "DELETE FROM signatures;";
         try (final Statement statement = myConnection.createStatement()) {
-            final String sql = "DELETE FROM signatures;";
             statement.executeUpdate(sql);
         } catch (SQLException e) {
             LOG.info(e);
@@ -155,13 +155,13 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
     @NotNull
     @Override
     public List<ParameterInfo> getMethodArgsInfo(@NotNull final String methodName, @Nullable final String receiverName) {
-         try (final Statement statement = myConnection.createStatement()) {
-            final String sql = String.format("SELECT args_info FROM signatures " +
-                                             "WHERE method_name = '%s' AND receiver_name = '%s';",
-                                             methodName, receiverName);
-            final ResultSet signatures = statement.executeQuery(sql);
-            if (signatures.next()) {
-                return parseArgsInfo(signatures.getString("args_info"));
+        final String sql = String.format("SELECT args_info FROM signatures " +
+                                         "WHERE method_name = '%s' AND receiver_name = '%s';",
+                                         methodName, receiverName);
+        try (final Statement statement = myConnection.createStatement()) {
+            final ResultSet resultSet = statement.executeQuery(sql);
+            if (resultSet.next()) {
+                return parseArgsInfo(resultSet.getString("args_info"));
             }
         } catch (SQLException | IllegalArgumentException e) {
             LOG.info(e);
@@ -173,10 +173,9 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
     @NotNull
     @Override
     protected Set<RSignature> getReceiverMethodSignatures(@NotNull final String receiverName) {
+        final String sql = String.format("SELECT * FROM signatures WHERE receiver_name = '%s';", receiverName);
         final Set<RSignature> receiverMethodSignatures = new HashSet<>();
-
         try (final Statement statement = myConnection.createStatement()) {
-            final String sql = String.format("SELECT * FROM signatures WHERE receiver_name = '%s';", receiverName);
             final ResultSet signatures = statement.executeQuery(sql);
             while (signatures.next()) {
                 final RSignature signature = new RSignatureBuilder()
@@ -189,6 +188,7 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
                 receiverMethodSignatures.add(signature);
             }
         } catch (SQLException | IllegalArgumentException e) {
+            receiverMethodSignatures.clear();
             LOG.info(e);
         }
 
@@ -329,27 +329,27 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
     @NotNull
     private List<Pair<RSignature, String>> getSignaturesAndReturnTypeNames(@NotNull final String methodName,
                                                                            @NotNull final String receiverName) {
+        final String sql = String.format("SELECT * FROM signatures " +
+                                         "WHERE method_name = '%s' AND receiver_name = '%s';",
+                                         methodName, receiverName);
         final List<Pair<RSignature, String>> signaturesAndReturnTypeNames = new ArrayList<>();
         try (final Statement statement = myConnection.createStatement()) {
-            final String sql = String.format("SELECT * FROM signatures WHERE method_name = '%s' AND receiver_name = '%s';",
-                    methodName, receiverName);
-            final ResultSet rs = statement.executeQuery(sql);
-            if (rs.next()) {
-                do {
-                    final RSignature newSignature = new RSignatureBuilder()
-                            .setMethodName(rs.getString("method_name"))
-                            .setReceiverName(rs.getString("receiver_name"))
-                            .setVisibility(Visibility.valueOf(rs.getString("visibility")))
-                            .setArgsInfo(parseArgsInfo(rs.getString("args_info")))
-                            .setArgsTypeName(StringUtil.splitHonorQuotes(rs.getString("args_type_name"), ';'))
-                            .setGemName(rs.getString("gem_name"))
-                            .setGemVersion(rs.getString("gem_version"))
-                            .build();
-                    final String newReturnTypeName  = rs.getString("return_type_name");
-                    signaturesAndReturnTypeNames.add(Pair.create(newSignature, newReturnTypeName));
-                } while (rs.next());
+            final ResultSet resultSet = statement.executeQuery(sql);
+            while (resultSet.next()) {
+                final RSignature newSignature = new RSignatureBuilder()
+                        .setMethodName(resultSet.getString("method_name"))
+                        .setReceiverName(resultSet.getString("receiver_name"))
+                        .setVisibility(Visibility.valueOf(resultSet.getString("visibility")))
+                        .setArgsInfo(parseArgsInfo(resultSet.getString("args_info")))
+                        .setArgsTypeName(StringUtil.splitHonorQuotes(resultSet.getString("args_type_name"), ';'))
+                        .setGemName(resultSet.getString("gem_name"))
+                        .setGemVersion(resultSet.getString("gem_version"))
+                        .build();
+                final String newReturnTypeName  = resultSet.getString("return_type_name");
+                signaturesAndReturnTypeNames.add(Pair.create(newSignature, newReturnTypeName));
             }
         } catch (SQLException e) {
+            signaturesAndReturnTypeNames.clear();
             LOG.info(e);
         }
 
@@ -378,54 +378,52 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
     }
 
     private List<RSignature> getListOfSignaturesWithMoreThanOneReturnTypeNames() {
+        final String sql = "SELECT DISTINCT * FROM signatures " +
+                           "GROUP BY method_name, receiver_name, args_type_name, gem_name, gem_version " +
+                           "HAVING COUNT(return_type_name) > 1;";
+        final List<RSignature> signatures = new ArrayList<>();
         try (final Statement statement = myConnection.createStatement()) {
-            final String sql = "SELECT DISTINCT * FROM signatures " +
-                               "GROUP BY method_name, receiver_name, args_type_name, gem_name, gem_version " +
-                               "HAVING COUNT(return_type_name) > 1;";
-            final ResultSet rs = statement.executeQuery(sql);
-            final List<RSignature> signatures = new ArrayList<>();
-            while (rs.next()) {
+            final ResultSet resultSet = statement.executeQuery(sql);
+            while (resultSet.next()) {
                 final RSignature signature = new RSignatureBuilder()
-                        .setMethodName(rs.getString("method_name"))
-                        .setReceiverName(rs.getString("receiver_name"))
-                        .setVisibility(Visibility.valueOf(rs.getString("visibility")))
-                        .setArgsInfo(parseArgsInfo(rs.getString("args_info")))
-                        .setArgsTypeName(StringUtil.splitHonorQuotes(rs.getString("args_type_name"), ';'))
-                        .setGemName(rs.getString("gem_name"))
-                        .setGemVersion(rs.getString("gem_version"))
+                        .setMethodName(resultSet.getString("method_name"))
+                        .setReceiverName(resultSet.getString("receiver_name"))
+                        .setVisibility(Visibility.valueOf(resultSet.getString("visibility")))
+                        .setArgsInfo(parseArgsInfo(resultSet.getString("args_info")))
+                        .setArgsTypeName(StringUtil.splitHonorQuotes(resultSet.getString("args_type_name"), ';'))
+                        .setGemName(resultSet.getString("gem_name"))
+                        .setGemVersion(resultSet.getString("gem_version"))
                         .build();
                 signatures.add(signature);
             }
-
-            return signatures;
         } catch (SQLException | IllegalArgumentException e) {
+            signatures.clear();
             LOG.info(e);
         }
 
-        return ContainerUtilRt.emptyList();
+        return signatures;
     }
 
     @NotNull
     private List<String> getReturnTypeNamesBySignature(@NotNull final RSignature signature) {
+        final String sql = String.format("SELECT return_type_name FROM signatures " +
+                                         "WHERE method_name = '%s' AND receiver_name = '%s' " +
+                                         "AND args_type_name = '%s' AND gem_name = '%s' AND gem_version = '%s';",
+                                         signature.getMethodName(), signature.getReceiverName(),
+                                         String.join(";", signature.getArgsTypeName()),
+                                         signature.getGemName(), signature.getGemVersion());
+        final List<String> returnTypeNames = new ArrayList<>();
         try (final Statement statement = myConnection.createStatement()) {
-            final String sql = String.format("SELECT return_type_name FROM signatures WHERE args_type_name = '%s' " +
-                                             "AND method_name = '%s' AND receiver_name = '%s' " +
-                                             "AND gem_name = '%s' AND gem_version = '%s';",
-                                             String.join(";", signature.getArgsTypeName()),
-                                             signature.getMethodName(), signature.getReceiverName(),
-                                             signature.getGemName(), signature.getGemVersion());
-            final ResultSet rs = statement.executeQuery(sql);
-            final List<String> returnTypeNames = new ArrayList<>();
-            while (rs.next()) {
-                returnTypeNames.add(rs.getString("return_type_name"));
+            final ResultSet resultSet = statement.executeQuery(sql);
+            while (resultSet.next()) {
+                returnTypeNames.add(resultSet.getString("return_type_name"));
             }
-
-            return returnTypeNames;
         } catch (SQLException e) {
+            returnTypeNames.clear();
             LOG.info(e);
         }
 
-        return ContainerUtilRt.emptyList();
+        return returnTypeNames;
     }
 
     @Nullable
