@@ -1,71 +1,70 @@
 package org.jetbrains.plugins.ruby.ruby.codeInsight.types;
 
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.Visibility;
 
 import java.util.List;
 
 class RSignatureBuilder {
-    @Nullable
-    private String methodName;
-    @Nullable
-    private String receiverName;
     @NotNull
-    private Visibility visibility = Visibility.PUBLIC;
-    @Nullable
-    private List<ParameterInfo> argsInfo;
-    @Nullable
-    private List<String> argsTypeName;
+    private final String myMethodName;
     @NotNull
-    private String gemName = "";
+    private String myReceiverName = CoreTypes.Object;
     @NotNull
-    private String gemVersion = "";
+    private Visibility myVisibility = Visibility.PUBLIC;
+    @NotNull
+    private List<ParameterInfo> myArgsInfo = ContainerUtilRt.emptyList();
+    @NotNull
+    private List<String> myArgsTypeName = ContainerUtilRt.emptyList();
+    @NotNull
+    private String myGemName = "";
+    @NotNull
+    private String myGemVersion = "";
 
-    @NotNull
-    RSignatureBuilder setMethodName(@NotNull final String methodName) {
-        this.methodName = methodName;
-        return this;
+    RSignatureBuilder(@NotNull final String myMethodName) {
+        this.myMethodName = myMethodName;
     }
 
     @NotNull
     RSignatureBuilder setReceiverName(@NotNull final String receiverName) {
-        this.receiverName = receiverName;
+        this.myReceiverName = receiverName;
         return this;
     }
 
     @NotNull
     RSignatureBuilder setVisibility(@NotNull final Visibility visibility) {
-        this.visibility = visibility;
+        this.myVisibility = visibility;
         return this;
     }
 
     @NotNull
     RSignatureBuilder setArgsInfo(@NotNull final List<ParameterInfo> argsInfo) {
-        this.argsInfo = argsInfo;
+        this.myArgsInfo = argsInfo;
         return this;
     }
 
     @NotNull
     RSignatureBuilder setArgsTypeName(@NotNull final List<String> argsTypeName) {
-        this.argsTypeName = argsTypeName;
+        this.myArgsTypeName = argsTypeName;
         return this;
     }
 
     @NotNull
     RSignatureBuilder setGemName(@NotNull final String gemName) {
-        this.gemName = gemName;
+        this.myGemName = gemName;
         return this;
     }
 
     @NotNull
     RSignatureBuilder setGemVersion(@NotNull final String gemVersion) {
-        this.gemVersion = gemVersion;
+        this.myGemVersion = gemVersion;
         return this;
     }
 
     @NotNull
     RSignature build() {
-        return new RSignature(methodName, receiverName, visibility, argsInfo, argsTypeName, gemName, gemVersion);
+        return new RSignature(myMethodName, myReceiverName, myVisibility, myArgsInfo, myArgsTypeName,
+                              myGemName, myGemVersion);
     }
 }

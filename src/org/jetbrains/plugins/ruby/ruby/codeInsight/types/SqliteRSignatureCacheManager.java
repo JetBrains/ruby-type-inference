@@ -178,8 +178,7 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
         try (final Statement statement = myConnection.createStatement()) {
             final ResultSet signatures = statement.executeQuery(sql);
             while (signatures.next()) {
-                final RSignature signature = new RSignatureBuilder()
-                        .setMethodName(signatures.getString("method_name"))
+                final RSignature signature = new RSignatureBuilder(signatures.getString("method_name"))
                         .setReceiverName(receiverName)
                         .setVisibility(Visibility.valueOf(signatures.getString("visibility")))
                         .setArgsInfo(parseArgsInfo(signatures.getString("args_info")))
@@ -336,8 +335,7 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
         try (final Statement statement = myConnection.createStatement()) {
             final ResultSet resultSet = statement.executeQuery(sql);
             while (resultSet.next()) {
-                final RSignature newSignature = new RSignatureBuilder()
-                        .setMethodName(resultSet.getString("method_name"))
+                final RSignature newSignature = new RSignatureBuilder(resultSet.getString("method_name"))
                         .setReceiverName(resultSet.getString("receiver_name"))
                         .setVisibility(Visibility.valueOf(resultSet.getString("visibility")))
                         .setArgsInfo(parseArgsInfo(resultSet.getString("args_info")))
@@ -385,8 +383,7 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
         try (final Statement statement = myConnection.createStatement()) {
             final ResultSet resultSet = statement.executeQuery(sql);
             while (resultSet.next()) {
-                final RSignature signature = new RSignatureBuilder()
-                        .setMethodName(resultSet.getString("method_name"))
+                final RSignature signature = new RSignatureBuilder(resultSet.getString("method_name"))
                         .setReceiverName(resultSet.getString("receiver_name"))
                         .setVisibility(Visibility.valueOf(resultSet.getString("visibility")))
                         .setArgsInfo(parseArgsInfo(resultSet.getString("args_info")))

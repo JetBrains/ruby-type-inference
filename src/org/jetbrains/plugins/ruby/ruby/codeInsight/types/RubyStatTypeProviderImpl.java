@@ -49,8 +49,7 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
             }
 
             final List<RType> returnTypes = argsTypeNames.stream()
-                    .map(argsTypeName -> new RSignatureBuilder()
-                            .setMethodName(methodName)
+                    .map(argsTypeName -> new RSignatureBuilder(methodName)
                             .setReceiverName(receiverName)
                             .setArgsInfo(argsInfo)
                             .setArgsTypeName(argsTypeName)
