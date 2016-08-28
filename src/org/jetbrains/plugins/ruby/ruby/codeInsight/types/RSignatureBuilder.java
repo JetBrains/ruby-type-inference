@@ -21,6 +21,8 @@ class RSignatureBuilder {
     private String myGemName = "";
     @NotNull
     private String myGemVersion = "";
+    @NotNull
+    private String myReturnTypeName = CoreTypes.Object;
 
     RSignatureBuilder(@NotNull final String myMethodName) {
         this.myMethodName = myMethodName;
@@ -63,8 +65,14 @@ class RSignatureBuilder {
     }
 
     @NotNull
+    RSignatureBuilder setReturnTypeName(@NotNull final String returnTypeName) {
+        this.myReturnTypeName = returnTypeName;
+        return this;
+    }
+
+    @NotNull
     RSignature build() {
         return new RSignature(myMethodName, myReceiverName, myVisibility, myArgsInfo, myArgsTypeName,
-                              myGemName, myGemVersion);
+                              myGemName, myGemVersion, myReturnTypeName);
     }
 }

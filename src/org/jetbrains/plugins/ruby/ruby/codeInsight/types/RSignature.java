@@ -20,10 +20,12 @@ class RSignature {
     private final String myGemName;
     @NotNull
     private final String myGemVersion;
+    @NotNull
+    private String myReturnTypeName;
 
     RSignature(@NotNull final String methodName, @NotNull final String receiverName, @NotNull final Visibility visibility,
                @NotNull final List<ParameterInfo> argsInfo, @NotNull final List<String> argsTypeName,
-               @NotNull final String gemName, @NotNull final String gemVersion) {
+               @NotNull final String gemName, @NotNull final String gemVersion, @NotNull final String returnTypeName) {
         this.myMethodName = methodName;
         this.myReceiverName = receiverName;
         this.myVisibility = visibility;
@@ -31,6 +33,7 @@ class RSignature {
         this.myArgsTypeName = argsTypeName;
         this.myGemName = gemName;
         this.myGemVersion = gemVersion;
+        this.myReturnTypeName = returnTypeName;
     }
 
     @NotNull
@@ -66,6 +69,15 @@ class RSignature {
     @NotNull
     String getGemVersion() {
         return myGemVersion;
+    }
+
+    @NotNull
+    String getReturnTypeName() {
+        return myReturnTypeName;
+    }
+
+    void setReturnTypeName(@NotNull final String returnTypeName) {
+        this.myReturnTypeName = returnTypeName;
     }
 
     @Override
