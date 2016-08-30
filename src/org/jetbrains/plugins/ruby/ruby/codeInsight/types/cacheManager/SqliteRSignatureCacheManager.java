@@ -231,8 +231,8 @@ public class SqliteRSignatureCacheManager extends RSignatureCacheManager {
     }
 
     @Nullable
-    private static Integer calcArgsTypeNamesDistance(@NotNull final Project project,
-                                                     @NotNull final List<String> from, @NotNull final List<String> to) {
+    public static Integer calcArgsTypeNamesDistance(@NotNull final Project project,
+                                                    @NotNull final List<String> from, @NotNull final List<String> to) {
         if (from.size() != to.size()) {
             return null;
         }
@@ -334,7 +334,7 @@ public class SqliteRSignatureCacheManager extends RSignatureCacheManager {
     }
 
     @Nullable
-    private static ClassModuleSymbol getLeastCommonSuperclass(@NotNull final Set<ClassModuleSymbol> returnTypeSymbols) {
+    public static ClassModuleSymbol getLeastCommonSuperclass(@NotNull final Set<ClassModuleSymbol> returnTypeSymbols) {
         final List<ClassModuleSymbol> longestCommonPrefix = returnTypeSymbols.stream()
                 .filter(Objects::nonNull)
                 .map(SqliteRSignatureCacheManager::getInheritanceHierarchy)
