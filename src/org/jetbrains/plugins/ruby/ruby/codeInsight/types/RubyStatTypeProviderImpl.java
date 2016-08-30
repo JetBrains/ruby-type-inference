@@ -173,11 +173,11 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
                         types.add(((RUnionType) type).getType1());
                         types.add(((RUnionType) type).getType2());
                     } else {
-                        argTypeNames.add(type.getName());
+                        argTypeNames.add(StringUtil.notNullize(type.getName(), CoreTypes.Object));
                     }
                 }
             } else {
-                argTypeNames.add(type.getName());
+                argTypeNames.add(StringUtil.notNullize(type.getName(), CoreTypes.Object));
             }
         } else if (arg instanceof RArgumentToBlock) {
             argTypeNames.add(CoreTypes.Proc);
