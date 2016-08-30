@@ -1,10 +1,10 @@
-package org.jetbrains.plugins.ruby.ruby.codeInsight.types;
+package org.jetbrains.plugins.ruby.ruby.codeInsight.types.signature;
 
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.ArgumentInfo;
 
-class ParameterInfo {
+public class ParameterInfo {
     @NotNull
     private final String myName;
     @NotNull
@@ -12,7 +12,7 @@ class ParameterInfo {
     @NotNull
     private final String myDefaultValueTypeName;
 
-    ParameterInfo(@NotNull final String name, @NotNull final Type type,
+    public ParameterInfo(@NotNull final String name, @NotNull final Type type,
                   @NotNull final String defaultValueTypeName) {
         this.myName = name;
         this.myType = type;
@@ -20,17 +20,17 @@ class ParameterInfo {
     }
 
     @NotNull
-    String getName() {
+    public String getName() {
         return myName;
     }
 
     @NotNull
-    Type getType() {
+    public Type getType() {
         return myType;
     }
 
     @NotNull
-    String getDefaultValueTypeName() {
+    public String getDefaultValueTypeName() {
         return myDefaultValueTypeName;
     }
 
@@ -55,7 +55,7 @@ class ParameterInfo {
         return result;
     }
 
-    enum Type {
+    public enum Type {
         REQ,
         OPT,
         REST,
@@ -66,7 +66,7 @@ class ParameterInfo {
     }
 
     @NotNull
-    ArgumentInfo toArgumentInfo() {
+    public ArgumentInfo toArgumentInfo() {
         return new ArgumentInfo(StringRef.fromString(myName), parameterTypeToArgumentType(myType));
     }
 

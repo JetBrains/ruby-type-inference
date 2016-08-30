@@ -1,11 +1,11 @@
-package org.jetbrains.plugins.ruby.ruby.codeInsight.types;
+package org.jetbrains.plugins.ruby.ruby.codeInsight.types.signature;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.Visibility;
 
 import java.util.List;
 
-class RSignature {
+public class RSignature {
     @NotNull
     private final String myMethodName;
     @NotNull
@@ -23,9 +23,9 @@ class RSignature {
     @NotNull
     private String myReturnTypeName;
 
-    RSignature(@NotNull final String methodName, @NotNull final String receiverName, @NotNull final Visibility visibility,
-               @NotNull final List<ParameterInfo> argsInfo, @NotNull final List<String> argsTypeName,
-               @NotNull final String gemName, @NotNull final String gemVersion, @NotNull final String returnTypeName) {
+    public RSignature(@NotNull final String methodName, @NotNull final String receiverName, @NotNull final Visibility visibility,
+                      @NotNull final List<ParameterInfo> argsInfo, @NotNull final List<String> argsTypeName,
+                      @NotNull final String gemName, @NotNull final String gemVersion, @NotNull final String returnTypeName) {
         this.myMethodName = methodName;
         this.myReceiverName = receiverName;
         this.myVisibility = visibility;
@@ -37,46 +37,46 @@ class RSignature {
     }
 
     @NotNull
-    String getMethodName() {
+    public String getMethodName() {
         return myMethodName;
     }
 
     @NotNull
-    String getReceiverName() {
+    public String getReceiverName() {
         return myReceiverName;
     }
 
     @NotNull
-    Visibility getVisibility() {
+    public Visibility getVisibility() {
         return myVisibility;
     }
 
     @NotNull
-    List<ParameterInfo> getArgsInfo() {
+    public List<ParameterInfo> getArgsInfo() {
         return myArgsInfo;
     }
 
     @NotNull
-    List<String> getArgsTypeName() {
+    public List<String> getArgsTypeName() {
         return myArgsTypeName;
     }
 
     @NotNull
-    String getGemName() {
+    public String getGemName() {
         return myGemName;
     }
 
     @NotNull
-    String getGemVersion() {
+    public String getGemVersion() {
         return myGemVersion;
     }
 
     @NotNull
-    String getReturnTypeName() {
+    public String getReturnTypeName() {
         return myReturnTypeName;
     }
 
-    void setReturnTypeName(@NotNull final String returnTypeName) {
+    public void setReturnTypeName(@NotNull final String returnTypeName) {
         this.myReturnTypeName = returnTypeName;
     }
 

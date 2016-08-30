@@ -1,13 +1,11 @@
-package org.jetbrains.plugins.ruby.ruby.codeInsight.types;
+package org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.Type;
-import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.RMethodSymbol;
-import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.Symbol;
-import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.SymbolImpl;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.types.RType;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.ArgumentInfo;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.Visibility;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.impl.controlStructures.methods.RCommandArgumentListImpl;
@@ -16,13 +14,13 @@ import org.jetbrains.plugins.ruby.ruby.lang.psi.methodCall.RCall;
 
 import java.util.List;
 
-class RMethodSyntheticSymbol extends SymbolImpl implements RMethodSymbol {
+public class RMethodSyntheticSymbol extends SymbolImpl implements RMethodSymbol {
     @NotNull
     private final Visibility myVisibility;
     @NotNull
     private final List<ArgumentInfo> myArgsInfo;
 
-    RMethodSyntheticSymbol(@NotNull final Project project,
+    public RMethodSyntheticSymbol(@NotNull final Project project,
                            @NotNull final String name,
                            @NotNull final Type type,
                            @Nullable final Symbol parent,

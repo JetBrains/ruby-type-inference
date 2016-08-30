@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.ruby.ruby.codeInsight.types;
+package org.jetbrains.plugins.ruby.ruby.codeInsight.types.cacheManager;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -14,6 +14,10 @@ import org.jetbrains.plugins.ruby.gem.util.GemSearchUtil;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.Symbol;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.SymbolUtil;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.v2.ClassModuleSymbol;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.types.CoreTypes;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signature.ParameterInfo;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signature.RSignature;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signature.RSignatureBuilder;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.Visibility;
 
 import java.net.URL;
@@ -21,7 +25,7 @@ import java.sql.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-class SqliteRSignatureCacheManager extends RSignatureCacheManager {
+public class SqliteRSignatureCacheManager extends RSignatureCacheManager {
     @NotNull
     private static final Logger LOG = Logger.getInstance(SqliteRSignatureCacheManager.class.getName());
 
@@ -32,7 +36,7 @@ class SqliteRSignatureCacheManager extends RSignatureCacheManager {
     private final Connection myConnection;
 
     @Nullable
-    static RSignatureCacheManager getInstance() {
+    public static RSignatureCacheManager getInstance() {
         if (ourInstance == null) {
             try {
                 final URL dbURL = SqliteRSignatureCacheManager.class.getClassLoader().getResource("CallStat.db");
