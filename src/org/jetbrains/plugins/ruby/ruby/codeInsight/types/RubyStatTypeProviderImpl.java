@@ -24,6 +24,7 @@ import org.jetbrains.plugins.ruby.ruby.lang.psi.assoc.RAssoc;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.expressions.RExpression;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.iterators.RBlockCall;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.methodCall.RArgumentToBlock;
+import org.jetbrains.plugins.ruby.ruby.lang.psi.methodCall.RArrayToArguments;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.methodCall.RCall;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.references.RReference;
 
@@ -141,6 +142,10 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
         final Map<String, List<String>> kwargsTypeNames = new HashMap<>();
 
         for (final RPsiElement arg : args) {
+            if (arg instanceof RArrayToArguments) {
+                continue;
+            }
+
             final List<String> argTypeNames = getArgTypeNames(arg);
             if (arg instanceof RAssoc) {
                 kwargsTypeNames.put(((RAssoc) arg).getKeyText(), argTypeNames);
