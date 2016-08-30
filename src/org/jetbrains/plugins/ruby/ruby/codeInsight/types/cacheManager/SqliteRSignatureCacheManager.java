@@ -15,6 +15,7 @@ import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.Symbol;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.SymbolUtil;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.v2.ClassModuleSymbol;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.CoreTypes;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.types.graph.RSignatureDAG;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signature.ParameterInfo;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signature.RSignature;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signature.RSignatureBuilder;
@@ -129,7 +130,7 @@ public class SqliteRSignatureCacheManager extends RSignatureCacheManager {
     @Override
     public void compact(@NotNull final Project project) {
         mergeRecordsWithSameSignatureButDifferentReturnTypeNames(project);
-        // TODO: merge records with different signatures but same return type name
+        mergeRecordsWithDifferentSignaturesButSameReturnTypeName(project);
         // TODO: infer code contracts
     }
 
@@ -316,6 +317,28 @@ public class SqliteRSignatureCacheManager extends RSignatureCacheManager {
             signature.setReturnTypeName(StringUtil.notNullize(leastCommonSuperclassFQN, CoreTypes.Object));
             deleteSignature(signature);
             recordSignature(signature);
+        }
+    }
+
+    private void mergeRecordsWithDifferentSignaturesButSameReturnTypeName(@NotNull final Project project) {
+        String sql = "SELECT DISTINCT * FROM signatures GROUP BY method_name, receiver_name, gem_name, gem_version " +
+                     "HAVING COUNT(args_type_name) > 1;";
+        final List<RSignature> groups = executeQuery(sql);
+        for (final RSignature signature : groups) {
+            sql = String.format("SELECT * FROM signatures WHERE method_name = '%s' AND receiver_name = '%s' " +
+                                "AND gem_name = '%s' AND gem_version = '%s';", signature.getMethodName(),
+                                signature.getReceiverName(), signature.getGemName(), signature.getGemVersion());
+            final List<RSignature> signatures = executeQuery(sql);
+
+            final RSignatureDAG dag = new RSignatureDAG(project, signature.getArgsTypeName().size());
+            dag.addAll(signatures);
+
+            sql = String.format("DELETE FROM signatures WHERE method_name = '%s' AND receiver_name = '%s' " +
+                                "AND gem_name = '%s' AND gem_version = '%s';", signature.getMethodName(),
+                                signature.getReceiverName(), signature.getGemName(), signature.getGemVersion());
+            executeUpdate(sql);
+
+            dag.depthFirstSearch(this::recordSignature);
         }
     }
 
