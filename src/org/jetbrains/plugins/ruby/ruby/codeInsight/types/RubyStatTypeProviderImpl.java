@@ -110,11 +110,8 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
             methodName = ((RPossibleCall) methodElement).getName();
             if (methodElement instanceof RReference) {
                 final RPsiElement receiver = ((RReference) methodElement).getReceiver();
-                if (receiver != null) {
-                    final Symbol receiverSymbol = ResolveUtil.resolveToSymbolWithCaching(receiver.getReferenceEx(false));
-                    receiverFQN = receiverSymbol != null
-                            ? SymbolUtil.getSymbolFullQualifiedName(receiverSymbol)
-                            : receiver.getName();
+                if (receiver instanceof RExpression) {
+                    receiverFQN = ((RExpression) receiver).getType().getName();
                 }
             } else {
                 final Symbol receiverSymbol = SymbolUtil.getScopeContext(methodElement);
