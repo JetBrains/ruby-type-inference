@@ -334,11 +334,11 @@ public class SqliteRSignatureCacheManager extends RSignatureCacheManager {
     }
 
     @Nullable
-    private ClassModuleSymbol getLeastCommonSuperclass(@NotNull final Set<ClassModuleSymbol> returnTypeSymbols) {
+    private static ClassModuleSymbol getLeastCommonSuperclass(@NotNull final Set<ClassModuleSymbol> returnTypeSymbols) {
         final List<ClassModuleSymbol> longestCommonPrefix = returnTypeSymbols.stream()
                 .filter(Objects::nonNull)
-                .map(this::getInheritanceHierarchy)
-                .reduce(this::getLongestCommonPrefix)
+                .map(SqliteRSignatureCacheManager::getInheritanceHierarchy)
+                .reduce(SqliteRSignatureCacheManager::getLongestCommonPrefix)
                 .orElse(null);
         if (longestCommonPrefix != null && !longestCommonPrefix.isEmpty()) {
             return longestCommonPrefix.get(longestCommonPrefix.size() - 1);
@@ -348,7 +348,7 @@ public class SqliteRSignatureCacheManager extends RSignatureCacheManager {
     }
 
     @NotNull
-    private List<ClassModuleSymbol> getInheritanceHierarchy(@NotNull final ClassModuleSymbol classSymbol) {
+    private static List<ClassModuleSymbol> getInheritanceHierarchy(@NotNull final ClassModuleSymbol classSymbol) {
         final List<ClassModuleSymbol> inheritanceHierarchy = new ArrayList<>();
         for (ClassModuleSymbol currentClassSymbol = classSymbol;
              currentClassSymbol != null;
@@ -361,7 +361,7 @@ public class SqliteRSignatureCacheManager extends RSignatureCacheManager {
     }
 
     @NotNull
-    private <T> List<T> getLongestCommonPrefix(@NotNull final List<T> list1, @NotNull final List<T> list2) {
+    private static <T> List<T> getLongestCommonPrefix(@NotNull final List<T> list1, @NotNull final List<T> list2) {
         final int minSize = Math.min(list1.size(), list2.size());
         int prefixLength;
         for (prefixLength = 0; prefixLength < minSize; prefixLength++) {
