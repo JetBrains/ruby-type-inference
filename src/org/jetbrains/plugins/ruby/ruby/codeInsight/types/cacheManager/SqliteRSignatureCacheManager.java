@@ -65,8 +65,8 @@ public class SqliteRSignatureCacheManager extends RSignatureCacheManager {
                                          signature.getMethodName(), signature.getReceiverName());
         final List<RSignature> signatures = executeQuery(sql);
         final List<Pair<RSignature, Integer>> signaturesAndDistances = signatures.stream()
-                .map(sign -> Pair.create(sign, RSignatureDAG.calcArgsTypeNamesDistance(project, signature.getArgsTypeName(),
-                                                                                       sign.getArgsTypeName())))
+                .map(sign -> Pair.create(sign, RSignatureDAG.getArgsTypeNamesDistance(project, signature.getArgsTypeName(),
+                                                                                      sign.getArgsTypeName())))
                 .collect(Collectors.toList());
 
         signaturesAndDistances.removeIf(signAndFist -> signAndFist.getSecond() == null);

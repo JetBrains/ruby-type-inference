@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.ruby.ruby.codeInsight.types.graph;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
@@ -18,31 +19,22 @@ import java.util.stream.Collectors;
 
 public class RSignatureDAG {
     @NotNull
+    private static final Map<Couple<List<String>>, Integer> ourArgsTypeNameDistancesCache = new HashMap<>();
+
+    @NotNull
     private final Project myProject;
     @NotNull
     private final Node<RSignature> myRoot;
 
     @Nullable
-    public static Integer calcArgsTypeNamesDistance(@NotNull final Project project,
-                                                    @NotNull final List<String> from, @NotNull final List<String> to) {
-        if (from.size() != to.size()) {
-            return null;
+    public static Integer getArgsTypeNamesDistance(@NotNull final Project project,
+                                                   @NotNull final List<String> from, @NotNull final List<String> to) {
+        final Couple<List<String>> key = Couple.of(from, to);
+        if (!ourArgsTypeNameDistancesCache.containsKey(key)) {
+            ourArgsTypeNameDistancesCache.put(key, calcArgsTypeNamesDistance(project, from, to));
         }
 
-        Integer distanceBetweenAllArgs = 0;
-        for (int i = 0; i < from.size(); i++) {
-            Symbol fromArgSymbol = SymbolUtil.findClassOrModule(project, from.get(i));
-            Symbol toArgSymbol = SymbolUtil.findClassOrModule(project, to.get(i));
-            final Integer distanceBetweenTwoArgs = calcArgTypeSymbolsDistance((ClassModuleSymbol) fromArgSymbol,
-                    (ClassModuleSymbol) toArgSymbol);
-            if (distanceBetweenTwoArgs == null) {
-                return null;
-            } else {
-                distanceBetweenAllArgs += distanceBetweenTwoArgs;
-            }
-        }
-
-        return distanceBetweenAllArgs;
+        return ourArgsTypeNameDistancesCache.get(key);
     }
 
     @Nullable
@@ -75,8 +67,8 @@ public class RSignatureDAG {
     public void addAll(@NotNull final List<RSignature> signatures) {
         signatures.stream()
                 .map(signature -> {
-                    final Integer distance = calcArgsTypeNamesDistance(myProject, signature.getArgsTypeName(),
-                                                                       myRoot.getVertex().getArgsTypeName());
+                    final Integer distance = getArgsTypeNamesDistance(myProject, signature.getArgsTypeName(),
+                                                                      myRoot.getVertex().getArgsTypeName());
                     return Pair.create(signature, distance);
 
                 })
@@ -87,6 +79,29 @@ public class RSignatureDAG {
 
     public void depthFirstSearch(@NotNull final Consumer<RSignature> visitor) {
         depthFirstSearch(myRoot, visitor, new HashSet<>());
+    }
+
+    @Nullable
+    private static Integer calcArgsTypeNamesDistance(@NotNull final Project project,
+                                                     @NotNull final List<String> from, @NotNull final List<String> to) {
+        if (from.size() != to.size()) {
+            return null;
+        }
+
+        Integer distanceBetweenAllArgs = 0;
+        for (int i = 0; i < from.size(); i++) {
+            Symbol fromArgSymbol = SymbolUtil.findClassOrModule(project, from.get(i));
+            Symbol toArgSymbol = SymbolUtil.findClassOrModule(project, to.get(i));
+            final Integer distanceBetweenTwoArgs = calcArgTypeSymbolsDistance((ClassModuleSymbol) fromArgSymbol,
+                    (ClassModuleSymbol) toArgSymbol);
+            if (distanceBetweenTwoArgs == null) {
+                return null;
+            } else {
+                distanceBetweenAllArgs += distanceBetweenTwoArgs;
+            }
+        }
+
+        return distanceBetweenAllArgs;
     }
 
     @Nullable
@@ -143,7 +158,7 @@ public class RSignatureDAG {
                 .filter(edge -> {
                     final List<String> argsTypeNameFrom = newNode.getVertex().getArgsTypeName();
                     final List<String> argsTypeNameTo = edge.getTo().getVertex().getArgsTypeName();
-                    return calcArgsTypeNamesDistance(myProject, argsTypeNameFrom, argsTypeNameTo) != null;
+                    return getArgsTypeNamesDistance(myProject, argsTypeNameFrom, argsTypeNameTo) != null;
                 })
                 .collect(Collectors.toList());
         if (!edges.isEmpty()) {
@@ -162,7 +177,7 @@ public class RSignatureDAG {
         final List<String> argsTypeNameFrom = newNode.getVertex().getArgsTypeName();
         final List<String> argsTypeNameTo = currentNode.getVertex().getArgsTypeName();
         @SuppressWarnings("ConstantConditions")
-        final Integer weight = calcArgsTypeNamesDistance(myProject, argsTypeNameFrom, argsTypeNameTo);
+        final Integer weight = getArgsTypeNamesDistance(myProject, argsTypeNameFrom, argsTypeNameTo);
         currentNode.addEdge(newNode, weight);
     }
 
@@ -184,7 +199,7 @@ public class RSignatureDAG {
                 final List<String> currentArgsTypeName = currentNode.getVertex().getArgsTypeName();
                 final List<String> mergedArgsTypeName = mergedNode.getVertex().getArgsTypeName();
                 @SuppressWarnings("ConstantConditions")
-                final Integer weight = calcArgsTypeNamesDistance(myProject, mergedArgsTypeName, currentArgsTypeName);
+                final Integer weight = getArgsTypeNamesDistance(myProject, mergedArgsTypeName, currentArgsTypeName);
                 currentNode.removeEdge(childNode);
                 currentNode.addEdge(mergedNode, weight);
                 return true;
@@ -200,7 +215,7 @@ public class RSignatureDAG {
             final List<String> fromArgsTypeName = childNode.getVertex().getArgsTypeName();
             final List<String> toArgsTypeName = to.getVertex().getArgsTypeName();
             @SuppressWarnings("ConstantConditions")
-            final int weight = calcArgsTypeNamesDistance(myProject, fromArgsTypeName, toArgsTypeName);
+            final int weight = getArgsTypeNamesDistance(myProject, fromArgsTypeName, toArgsTypeName);
             to.addEdge(childNode, weight);
         }
     }
