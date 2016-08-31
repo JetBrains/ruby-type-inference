@@ -90,14 +90,24 @@ public class RSignatureDAG {
 
         Integer distanceBetweenAllArgs = 0;
         for (int i = 0; i < from.size(); i++) {
-            Symbol fromArgSymbol = SymbolUtil.findClassOrModule(project, from.get(i));
-            Symbol toArgSymbol = SymbolUtil.findClassOrModule(project, to.get(i));
-            final Integer distanceBetweenTwoArgs = calcArgTypeSymbolsDistance((ClassModuleSymbol) fromArgSymbol,
-                    (ClassModuleSymbol) toArgSymbol);
-            if (distanceBetweenTwoArgs == null) {
-                return null;
-            } else {
-                distanceBetweenAllArgs += distanceBetweenTwoArgs;
+            final String fromArgTypeName = from.get(i);
+            final String toArgTypeName = to.get(i);
+            if (!fromArgTypeName.equals(toArgTypeName)) {
+                Symbol fromArgSymbol = SymbolUtil.findClassOrModule(project, fromArgTypeName);
+                Symbol toArgSymbol = SymbolUtil.findClassOrModule(project, toArgTypeName);
+                if (fromArgSymbol == null && toArgTypeName.equals(CoreTypes.Object)) {
+                    distanceBetweenAllArgs += 1000;
+                } else if (fromArgSymbol != null && toArgSymbol != null) {
+                    final Integer distanceBetweenTwoArgs = calcArgTypeSymbolsDistance((ClassModuleSymbol) fromArgSymbol,
+                                                                                      (ClassModuleSymbol) toArgSymbol);
+                    if (distanceBetweenTwoArgs == null) {
+                        return null;
+                    } else {
+                        distanceBetweenAllArgs += distanceBetweenTwoArgs;
+                    }
+                } else {
+                    return null;
+                }
             }
         }
 
@@ -105,12 +115,8 @@ public class RSignatureDAG {
     }
 
     @Nullable
-    private static Integer calcArgTypeSymbolsDistance(@Nullable final ClassModuleSymbol from,
-                                                      @Nullable final ClassModuleSymbol to) {
-        if (from == null || to == null) {
-            return null;
-        }
-
+    private static Integer calcArgTypeSymbolsDistance(@NotNull final ClassModuleSymbol from,
+                                                      @NotNull final ClassModuleSymbol to) {
         int distance = 0;
         for (ClassModuleSymbol current = from; current != null; current = (ClassModuleSymbol) current.getSuperClassSymbol(null)) {
             if (current.equals(to)) {
@@ -193,7 +199,8 @@ public class RSignatureDAG {
         for (final Edge<RSignature> edge : edges) {
             final Node<RSignature> childNode = edge.getTo();
             final RSignature mergedSignature = mergeSignatures(newNode.getVertex(), childNode.getVertex());
-            if (!mergedSignature.equals(currentNode.getVertex())) {
+            if (!mergedSignature.getArgsTypeName().equals(currentNode.getVertex().getArgsTypeName()) &&
+                !mergedSignature.getReturnTypeName().equals(currentNode.getVertex().getReturnTypeName())) {
                 final Node<RSignature> mergedNode = new Node<>(mergedSignature);
                 copyChildren(childNode, mergedNode);
                 final List<String> currentArgsTypeName = currentNode.getVertex().getArgsTypeName();
