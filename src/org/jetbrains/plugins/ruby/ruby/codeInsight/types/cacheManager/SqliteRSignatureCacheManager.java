@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.gem.GemInfo;
 import org.jetbrains.plugins.ruby.gem.util.GemSearchUtil;
-import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.Symbol;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.SymbolUtil;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.v2.ClassModuleSymbol;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.CoreTypes;
@@ -66,8 +65,8 @@ public class SqliteRSignatureCacheManager extends RSignatureCacheManager {
                                          signature.getMethodName(), signature.getReceiverName());
         final List<RSignature> signatures = executeQuery(sql);
         final List<Pair<RSignature, Integer>> signaturesAndDistances = signatures.stream()
-                .map(sign -> Pair.create(sign, calcArgsTypeNamesDistance(project, signature.getArgsTypeName(),
-                                                                         sign.getArgsTypeName())))
+                .map(sign -> Pair.create(sign, RSignatureDAG.calcArgsTypeNamesDistance(project, signature.getArgsTypeName(),
+                                                                                       sign.getArgsTypeName())))
                 .collect(Collectors.toList());
 
         signaturesAndDistances.removeIf(signAndFist -> signAndFist.getSecond() == null);
@@ -231,48 +230,6 @@ public class SqliteRSignatureCacheManager extends RSignatureCacheManager {
         return minLength;
     }
 
-    @Nullable
-    public static Integer calcArgsTypeNamesDistance(@NotNull final Project project,
-                                                    @NotNull final List<String> from, @NotNull final List<String> to) {
-        if (from.size() != to.size()) {
-            return null;
-        }
-
-        Integer distanceBetweenAllArgs = 0;
-        for (int i = 0; i < from.size(); i++) {
-            final Symbol fromArgSymbol = SymbolUtil.findClassOrModule(project, from.get(i));
-            final Symbol toArgSymbol = SymbolUtil.findClassOrModule(project, to.get(i));
-            final Integer distanceBetweenTwoArgs = calcArgTypeSymbolsDistance((ClassModuleSymbol) fromArgSymbol,
-                    (ClassModuleSymbol) toArgSymbol);
-            if (distanceBetweenTwoArgs == null) {
-                return null;
-            } else {
-                distanceBetweenAllArgs += distanceBetweenTwoArgs;
-            }
-        }
-
-        return distanceBetweenAllArgs;
-    }
-
-    @Nullable
-    private static Integer calcArgTypeSymbolsDistance(@Nullable final ClassModuleSymbol from,
-                                                      @Nullable final ClassModuleSymbol to) {
-        if (from == null || to == null) {
-            return null;
-        }
-
-        int distance = 0;
-        for (ClassModuleSymbol current = from; current != null; current = (ClassModuleSymbol) current.getSuperClassSymbol(null)) {
-            if (current.equals(to)) {
-                return distance;
-            }
-
-            distance += 1;
-        }
-
-        return null;
-    }
-
     private static boolean checkIfOnlyOneUniqueReturnTypeName(@NotNull final List<Pair<RSignature, Integer>>
                                                               signaturesAndReturnTypeNames) {
         final long countOfDistinctReturnTypeNames = signaturesAndReturnTypeNames.stream()
@@ -308,7 +265,7 @@ public class SqliteRSignatureCacheManager extends RSignatureCacheManager {
                     .collect(Collectors.toSet());
             String leastCommonSuperclassFQN = null;
             if (!returnTypeSymbols.contains(null)) {
-                final ClassModuleSymbol leastCommonSuperclass = getLeastCommonSuperclass(returnTypeSymbols);
+                final ClassModuleSymbol leastCommonSuperclass = RSignatureDAG.getLeastCommonSuperclass(returnTypeSymbols);
                 if (leastCommonSuperclass != null) {
                     leastCommonSuperclassFQN = String.join("::", leastCommonSuperclass.getFQN());
                 }
@@ -354,46 +311,6 @@ public class SqliteRSignatureCacheManager extends RSignatureCacheManager {
         return signatures.stream()
                 .map(RSignature::getReturnTypeName)
                 .collect(Collectors.toSet());
-    }
-
-    @Nullable
-    public static ClassModuleSymbol getLeastCommonSuperclass(@NotNull final Set<ClassModuleSymbol> returnTypeSymbols) {
-        final List<ClassModuleSymbol> longestCommonPrefix = returnTypeSymbols.stream()
-                .filter(Objects::nonNull)
-                .map(SqliteRSignatureCacheManager::getInheritanceHierarchy)
-                .reduce(SqliteRSignatureCacheManager::getLongestCommonPrefix)
-                .orElse(null);
-        if (longestCommonPrefix != null && !longestCommonPrefix.isEmpty()) {
-            return longestCommonPrefix.get(longestCommonPrefix.size() - 1);
-        }
-
-        return null;
-    }
-
-    @NotNull
-    private static List<ClassModuleSymbol> getInheritanceHierarchy(@NotNull final ClassModuleSymbol classSymbol) {
-        final List<ClassModuleSymbol> inheritanceHierarchy = new ArrayList<>();
-        for (ClassModuleSymbol currentClassSymbol = classSymbol;
-             currentClassSymbol != null;
-             currentClassSymbol = (ClassModuleSymbol) currentClassSymbol.getSuperClassSymbol(null)) {
-            inheritanceHierarchy.add(currentClassSymbol);
-        }
-
-        Collections.reverse(inheritanceHierarchy);
-        return inheritanceHierarchy;
-    }
-
-    @NotNull
-    private static <T> List<T> getLongestCommonPrefix(@NotNull final List<T> list1, @NotNull final List<T> list2) {
-        final int minSize = Math.min(list1.size(), list2.size());
-        int prefixLength;
-        for (prefixLength = 0; prefixLength < minSize; prefixLength++) {
-            if (!list1.get(prefixLength).equals(list2.get(prefixLength))) {
-                break;
-            }
-        }
-
-        return list1.subList(0, prefixLength);
     }
 
     private void executeUpdate(@NotNull final String sql) {
