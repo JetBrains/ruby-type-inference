@@ -2,16 +2,27 @@ package com.intellij.execution.executors;
 
 import com.intellij.execution.Executor;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.net.URL;
 
 public class CollectTypeExecutor extends Executor {
     @NotNull
     public static final String EXECUTOR_ID = "CollectType";
+
+    @NotNull
+    private final Icon myIcon;
+
+    public CollectTypeExecutor() {
+        final URL iconURL = CollectTypeExecutor.class.getClassLoader().getResource("runCollectType.png");
+        final Icon icon = IconLoader.findIcon(iconURL);
+        myIcon = icon != null ? icon : AllIcons.General.Error;
+    }
 
     @Override
     public String getToolWindowId() {
@@ -20,13 +31,13 @@ public class CollectTypeExecutor extends Executor {
 
     @Override
     public Icon getToolWindowIcon() {
-        return AllIcons.General.RunWithCoverage;
+        return myIcon;
     }
 
     @NotNull
     @Override
     public Icon getIcon() {
-        return AllIcons.General.RunWithCoverage;
+        return myIcon;
     }
 
     @Nullable
