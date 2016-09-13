@@ -9,11 +9,9 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.ruby.run.configuration.AbstractRubyRunConfiguration;
+import org.jetbrains.plugins.ruby.ruby.run.configuration.CollectTypeExecSettings;
 import org.jetbrains.plugins.ruby.ruby.run.configuration.RubyAbstractCommandLineState;
 import org.jetbrains.plugins.ruby.ruby.run.configuration.RubyRunner;
-import org.jetbrains.plugins.ruby.ruby.run.configuration.rubyScript.RubyRunConfiguration;
-
-import java.net.URL;
 
 public class RubyCollectTypeRunner extends RubyRunner {
     @NotNull
@@ -24,18 +22,11 @@ public class RubyCollectTypeRunner extends RubyRunner {
     protected RunContentDescriptor doExecute(@NotNull final RunProfileState state,
                                              @NotNull final ExecutionEnvironment env) throws ExecutionException {
         if (state instanceof RubyAbstractCommandLineState) {
-            final AbstractRubyRunConfiguration config = ((RubyAbstractCommandLineState) state).getConfig();
-            if (config instanceof RubyRunConfiguration) {
-                final RubyRunConfiguration newConfig = (RubyRunConfiguration) config.clone();
-                newConfig.setScriptArgs(newConfig.getScriptPath() + ' ' + newConfig.getScriptArgs());
-                final URL typeTrackerScriptURL = this.getClass().getClassLoader().getResource("type_tracker.rb");
-                if (typeTrackerScriptURL != null) {
-                    newConfig.setScriptPath(typeTrackerScriptURL.getPath());
-                    final RunProfileState newState = newConfig.getState(env.getExecutor(), env);
-                    if (newState != null) {
-                        return super.doExecute(newState, env);
-                    }
-                }
+            final AbstractRubyRunConfiguration newConfig = ((RubyAbstractCommandLineState) state).getConfig().clone();
+            CollectTypeExecSettings.putTo(newConfig, CollectTypeExecSettings.createSettings(true));
+            final RunProfileState newState = newConfig.getState(env.getExecutor(), env);
+            if (newState != null) {
+                return super.doExecute(newState, env);
             }
         }
 

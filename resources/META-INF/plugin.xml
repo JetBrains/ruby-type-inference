@@ -28,6 +28,8 @@
 
     <extensions defaultExtensionNs="org.jetbrains.plugins.ruby">
         <rubyStatTypeProvider implementation="org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyStatTypeProviderImpl"/>
+        <runConfigurationExtension
+                implementation="org.jetbrains.plugins.ruby.ruby.run.configuration.CollectTypeRunConfigurationExtension"/>
     </extensions>
 
     <actions>
