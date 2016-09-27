@@ -19,9 +19,10 @@ public class CollectTypeExecutor extends Executor {
     private final Icon myIcon;
 
     public CollectTypeExecutor() {
-        final URL iconURL = CollectTypeExecutor.class.getClassLoader().getResource("runCollectType.png");
-        final Icon icon = IconLoader.findIcon(iconURL);
-        myIcon = icon != null ? icon : AllIcons.General.Error;
+//        final URL iconURL = CollectTypeExecutor.class.getClassLoader().getResource("runCollectType.png");
+//        final Icon icon = IconLoader.findIcon(iconURL);
+//        myIcon = icon != null ? icon : AllIcons.General.Error;
+        myIcon = AllIcons.General.Error;
     }
 
     @Override
