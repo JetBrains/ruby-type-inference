@@ -11,6 +11,7 @@ import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.*;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.v2.SymbolPsiProcessor;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.Context;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.RType;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.types.impl.REmptyType;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.impl.RSymbolTypeImpl;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signature.ParameterInfo;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signature.RSignature;
@@ -37,6 +38,9 @@ public abstract class RSignatureCacheManager {
     @NotNull
     public RType createTypeByFQNFromStat(@NotNull final Project project, @NotNull final String classFQN) {
         final Set<RSignature> classMethodSignatures = getReceiverMethodSignatures(classFQN);
+        if (classMethodSignatures.isEmpty()) {
+            return REmptyType.INSTANCE;
+        }
 
         if (ourSyntheticTypes.containsKey(classFQN)) {
             final Pair<RType, Set<RSignature>> cached = ourSyntheticTypes.get(classFQN);
