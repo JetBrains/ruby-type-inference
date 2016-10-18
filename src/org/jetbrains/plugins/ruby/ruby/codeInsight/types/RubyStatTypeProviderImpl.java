@@ -12,12 +12,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.resolve.ResolveUtil;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.Symbol;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.SymbolUtil;
-import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signatureManager.RSignatureManager;
-import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signatureManager.SqliteRSignatureManager;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.impl.REmptyType;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signature.ParameterInfo;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signature.RSignature;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signature.RSignatureBuilder;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signatureManager.ProxyCacheRSignatureManager;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signatureManager.RSignatureManager;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signatureManager.SqliteRSignatureManager;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RPossibleCall;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RPsiElement;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.assoc.RAssoc;
@@ -39,11 +40,13 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
         final Couple<String> names = getMethodAndReceiverNames(callElement);
         final String methodName = names.getFirst();
         if (methodName != null) {
-            final RSignatureManager cacheManager = SqliteRSignatureManager.getInstance();
-            if (cacheManager == null) {
+            final RSignatureManager signatureManager = SqliteRSignatureManager.getInstance();
+            if (signatureManager == null) {
                 return null;
             }
 
+            final RSignatureManager cacheManager = ProxyCacheRSignatureManager.getInstance(call.getProject(),
+                                                                                           signatureManager);
             final Module module = ModuleUtilCore.findModuleForPsiElement(call);
             final String receiverName = StringUtil.notNullize(names.getSecond(), CoreTypes.Object);
             final List<ParameterInfo> argsInfo = cacheManager.getMethodArgsInfo(methodName, receiverName);

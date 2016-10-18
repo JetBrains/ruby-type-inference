@@ -80,6 +80,30 @@ public class RSignatureDAG {
         depthFirstSearch(myRoot, visitor, new HashSet<>());
     }
 
+    @NotNull
+    public List<RSignature> findClosest(@NotNull final RSignature signature) {
+        final List<Pair<Node<RSignature>, Integer>> nodesAndDistances = findClosest(signature, myRoot, 0);
+        final int minDistance = nodesAndDistances.stream()
+                .mapToInt(p -> p.second)
+                .min()
+                .orElse(0);
+        return nodesAndDistances.stream()
+                .filter(p -> p.second == minDistance)
+                .map(p -> p.first)
+                .map(Node::getVertex)
+                .collect(Collectors.toList());
+    }
+
+    public void removeAll() {
+        myRoot.getEdges().forEach(myRoot::removeEdge);
+    }
+
+    public List<RSignature> toList() {
+        final List<RSignature> result = new ArrayList<>();
+        depthFirstSearch(result::add);
+        return result;
+    }
+
     @Nullable
     private static Integer calcArgsTypeNamesDistance(@NotNull final Project project,
                                                      @NotNull final List<String> from, @NotNull final List<String> to) {
@@ -257,5 +281,27 @@ public class RSignatureDAG {
                 depthFirstSearch(edge.getTo(), visitor, visited);
             }
         }
+    }
+
+    private List<Pair<Node<RSignature>, Integer>> findClosest(@NotNull final RSignature signature,
+                                                              @NotNull final Node<RSignature> currentNode,
+                                                              final int distance) {
+        final List<Pair<Node<RSignature>, Integer>> signaturesAndDistances = currentNode.getEdges().stream()
+                .map(Edge::getTo)
+                .map(v -> Pair.create(v, RSignatureDAG.getArgsTypeNamesDistance(myProject,
+                                                                                signature.getArgsTypeName(),
+                                                                                v.getVertex().getArgsTypeName())))
+                .filter(p -> p.second != null)
+                .collect(Collectors.toList());
+
+        if (signaturesAndDistances.isEmpty()) {
+            return new ArrayList<Pair<Node<RSignature>, Integer>>() {{
+                add(Pair.create(currentNode, distance));
+            }};
+        }
+
+        return signaturesAndDistances.stream()
+                .flatMap(p -> findClosest(signature, p.first, p.second + distance).stream())
+                .collect(Collectors.toList());
     }
 }
