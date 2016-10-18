@@ -29,13 +29,13 @@ public class SqliteRSignatureManager extends RSignatureManager {
     private static final Logger LOG = Logger.getInstance(SqliteRSignatureManager.class.getName());
 
     @Nullable
-    private static RSignatureManager ourInstance;
+    private static SqliteRSignatureManager ourInstance;
 
     @NotNull
     private final Connection myConnection;
 
     @Nullable
-    public static RSignatureManager getInstance() {
+    public static SqliteRSignatureManager getInstance() {
         if (ourInstance == null) {
             try {
                 final URL dbURL = SqliteRSignatureManager.class.getClassLoader().getResource("CallStat.db");
