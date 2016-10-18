@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.ruby.ruby.codeInsight.types.cacheManager;
+package org.jetbrains.plugins.ruby.ruby.codeInsight.types.signatureManager;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -19,7 +19,7 @@ import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signature.RSignature;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public abstract class RSignatureCacheManager {
+public abstract class RSignatureManager {
     @NotNull
     private static final Map<String, Pair<RType, Set<RSignature>>> ourSyntheticTypes = new HashMap<>();
 
@@ -33,7 +33,7 @@ public abstract class RSignatureCacheManager {
 
     public abstract void compact(@NotNull final Project project);
 
-    public abstract void clearCache();
+    public abstract void clear();
 
     @NotNull
     public RType createTypeByFQNFromStat(@NotNull final Project project, @NotNull final String classFQN) {

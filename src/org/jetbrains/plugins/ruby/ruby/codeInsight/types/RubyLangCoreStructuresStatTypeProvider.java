@@ -2,8 +2,8 @@ package org.jetbrains.plugins.ruby.ruby.codeInsight.types;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.ruby.ruby.codeInsight.types.cacheManager.RSignatureCacheManager;
-import org.jetbrains.plugins.ruby.ruby.codeInsight.types.cacheManager.SqliteRSignatureCacheManager;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signatureManager.RSignatureManager;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signatureManager.SqliteRSignatureManager;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RPsiElement;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.impl.references.RReferenceBase;
 
@@ -17,14 +17,14 @@ public class RubyLangCoreStructuresStatTypeProvider implements RubyLangCoreStruc
                 return null;
             }
 
-            final RSignatureCacheManager cacheManager = SqliteRSignatureCacheManager.getInstance();
-            if (cacheManager == null) {
+            final RSignatureManager signatureManager = SqliteRSignatureManager.getInstance();
+            if (signatureManager == null) {
                 return null;
             }
 
             final String receiverFQN = receiver.getName();
             if (receiverFQN != null) {
-                return cacheManager.createTypeByFQNFromStat(receiver.getProject(), receiverFQN);
+                return signatureManager.createTypeByFQNFromStat(receiver.getProject(), receiverFQN);
             }
         }
 

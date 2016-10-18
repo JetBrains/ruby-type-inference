@@ -12,8 +12,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.resolve.ResolveUtil;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.Symbol;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.SymbolUtil;
-import org.jetbrains.plugins.ruby.ruby.codeInsight.types.cacheManager.RSignatureCacheManager;
-import org.jetbrains.plugins.ruby.ruby.codeInsight.types.cacheManager.SqliteRSignatureCacheManager;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signatureManager.RSignatureManager;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signatureManager.SqliteRSignatureManager;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.impl.REmptyType;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signature.ParameterInfo;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signature.RSignature;
@@ -39,7 +39,7 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
         final Couple<String> names = getMethodAndReceiverNames(callElement);
         final String methodName = names.getFirst();
         if (methodName != null) {
-            final RSignatureCacheManager cacheManager = SqliteRSignatureCacheManager.getInstance();
+            final RSignatureManager cacheManager = SqliteRSignatureManager.getInstance();
             if (cacheManager == null) {
                 return null;
             }
@@ -76,7 +76,7 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
 
     @NotNull
     private static List<RType> getReturnTypesBySignature(@NotNull final Project project, @Nullable final Module module,
-                                                         @NotNull final RSignatureCacheManager cacheManager,
+                                                         @NotNull final RSignatureManager cacheManager,
                                                          @NotNull final RSignature signature) {
         final List<String> returnTypeNames = cacheManager.findReturnTypeNamesBySignature(project, module, signature);
         return returnTypeNames.stream()

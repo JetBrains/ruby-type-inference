@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.ruby.ruby.codeInsight.types.cacheManager;
+package org.jetbrains.plugins.ruby.ruby.codeInsight.types.signatureManager;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -25,23 +25,23 @@ import java.sql.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class SqliteRSignatureCacheManager extends RSignatureCacheManager {
+public class SqliteRSignatureManager extends RSignatureManager {
     @NotNull
-    private static final Logger LOG = Logger.getInstance(SqliteRSignatureCacheManager.class.getName());
+    private static final Logger LOG = Logger.getInstance(SqliteRSignatureManager.class.getName());
 
     @Nullable
-    private static RSignatureCacheManager ourInstance;
+    private static RSignatureManager ourInstance;
 
     @NotNull
     private final Connection myConnection;
 
     @Nullable
-    public static RSignatureCacheManager getInstance() {
+    public static RSignatureManager getInstance() {
         if (ourInstance == null) {
             try {
-                final URL dbURL = SqliteRSignatureCacheManager.class.getClassLoader().getResource("CallStat.db");
+                final URL dbURL = SqliteRSignatureManager.class.getClassLoader().getResource("CallStat.db");
                 if (dbURL != null) {
-                    ourInstance = new SqliteRSignatureCacheManager(dbURL.getPath());
+                    ourInstance = new SqliteRSignatureManager(dbURL.getPath());
                 }
             } catch (ClassNotFoundException | SQLException e) {
                 LOG.info(e);
@@ -52,7 +52,7 @@ public class SqliteRSignatureCacheManager extends RSignatureCacheManager {
         return ourInstance;
     }
 
-    private SqliteRSignatureCacheManager(@NotNull final String dbPath) throws ClassNotFoundException, SQLException {
+    private SqliteRSignatureManager(@NotNull final String dbPath) throws ClassNotFoundException, SQLException {
         Class.forName("org.sqlite.JDBC");
         myConnection = DriverManager.getConnection(String.format("jdbc:sqlite:%s", dbPath));
     }
@@ -134,7 +134,7 @@ public class SqliteRSignatureCacheManager extends RSignatureCacheManager {
     }
 
     @Override
-    public void clearCache() {
+    public void clear() {
         final String sql = "DELETE FROM signatures;";
         executeUpdate(sql);
     }
