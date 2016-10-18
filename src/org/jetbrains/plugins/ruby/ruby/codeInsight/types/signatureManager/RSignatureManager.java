@@ -4,6 +4,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.Type;
@@ -59,6 +60,26 @@ public abstract class RSignatureManager {
     public abstract List<ParameterInfo> getMethodArgsInfo(@NotNull final String methodName, @NotNull final String receiverName);
 
     @NotNull
+    public static String getClosestGemVersion(@NotNull final String gemVersion, @NotNull final List<String> gemVersions) {
+        final NavigableSet<String> sortedSet = new TreeSet<>(VersionComparatorUtil.COMPARATOR);
+        sortedSet.addAll(gemVersions);
+
+        final String upperBound = sortedSet.ceiling(gemVersion);
+        final String lowerBound = sortedSet.floor(gemVersion);
+        if (upperBound == null) {
+            return lowerBound;
+        } else if (lowerBound == null) {
+            return upperBound;
+        } else if (upperBound.equals(lowerBound)) {
+            return upperBound;
+        } else if (firstStringCloser(gemVersion, upperBound, lowerBound)) {
+            return upperBound;
+        } else {
+            return lowerBound;
+        }
+    }
+
+    @NotNull
     protected abstract Set<RSignature> getReceiverMethodSignatures(@NotNull final String receiverName);
 
     @NotNull
@@ -99,5 +120,25 @@ public abstract class RSignatureManager {
                 .collect(Collectors.toList()));
 
         return classSymbol;
+    }
+
+    private static boolean firstStringCloser(@NotNull final String gemVersion,
+                                             @NotNull final String firstVersion, @NotNull final String secondVersion) {
+        final int lcpLengthFirst = longestCommonPrefixLength(gemVersion, firstVersion);
+        final int lcpLengthSecond = longestCommonPrefixLength(gemVersion, secondVersion);
+        return (lcpLengthFirst > lcpLengthSecond || lcpLengthFirst > 0 && lcpLengthFirst == lcpLengthSecond &&
+                Math.abs(gemVersion.charAt(lcpLengthFirst) - firstVersion.charAt(lcpLengthFirst)) <
+                        Math.abs(gemVersion.charAt(lcpLengthFirst) - secondVersion.charAt(lcpLengthSecond)));
+    }
+
+    private static int longestCommonPrefixLength(@NotNull final String str1, @NotNull final String str2) {
+        final int minLength = Math.min(str1.length(), str2.length());
+        for (int i = 0; i < minLength; i++) {
+            if (str1.charAt(i) != str2.charAt(i)) {
+                return i;
+            }
+        }
+
+        return minLength;
     }
 }
