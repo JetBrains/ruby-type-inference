@@ -26,12 +26,12 @@ public class Node<T> {
         return myEdges;
     }
 
-    public boolean hasEdge(@NotNull final Node<T> node) {
+    public boolean hasEdgeTo(@NotNull final Node<T> node) {
         return findEdge(node).isPresent();
     }
 
-    public boolean addEdge(@NotNull final Node<T> node, final int weight) {
-        if (hasEdge(node)) {
+    public boolean addEdgeTo(@NotNull final Node<T> node, final int weight) {
+        if (hasEdgeTo(node)) {
             return false;
         }
 
@@ -39,7 +39,11 @@ public class Node<T> {
         return myEdges.add(newEdge);
     }
 
-    public boolean removeEdge(@NotNull final Node<T> node) {
+    public boolean removeEdge(@NotNull final Edge<T> edge) {
+        return myEdges.remove(edge);
+    }
+
+    public boolean removeEdgeTo(@NotNull final Node<T> node) {
         final Optional<Edge<T>> optional = findEdge(node);
         if (optional.isPresent()) {
             return myEdges.remove(optional.get());

@@ -70,7 +70,6 @@ public class RSignatureDAG {
                     final Integer distance = getArgsTypeNamesDistance(myProject, signature.getArgsTypeName(),
                                                                       myRoot.getVertex().getArgsTypeName());
                     return Pair.create(signature, distance);
-
                 })
                 .sorted((p1, p2) -> p1.getSecond().compareTo(p2.getSecond()))
                 .map(pair -> pair.getFirst())
@@ -184,7 +183,7 @@ public class RSignatureDAG {
         final List<String> argsTypeNameTo = currentNode.getVertex().getArgsTypeName();
         @SuppressWarnings("ConstantConditions")
         final Integer weight = getArgsTypeNamesDistance(myProject, argsTypeNameFrom, argsTypeNameTo);
-        currentNode.addEdge(newNode, weight);
+        currentNode.addEdgeTo(newNode, weight);
     }
 
     private boolean tryToMergeChildrenWithNode(final @NotNull Node<RSignature> currentNode,
@@ -207,8 +206,8 @@ public class RSignatureDAG {
                 final List<String> mergedArgsTypeName = mergedNode.getVertex().getArgsTypeName();
                 @SuppressWarnings("ConstantConditions")
                 final Integer weight = getArgsTypeNamesDistance(myProject, mergedArgsTypeName, currentArgsTypeName);
-                currentNode.removeEdge(childNode);
-                currentNode.addEdge(mergedNode, weight);
+                currentNode.removeEdgeTo(childNode);
+                currentNode.addEdgeTo(mergedNode, weight);
                 return true;
             }
         }
@@ -223,7 +222,7 @@ public class RSignatureDAG {
             final List<String> toArgsTypeName = to.getVertex().getArgsTypeName();
             @SuppressWarnings("ConstantConditions")
             final int weight = getArgsTypeNamesDistance(myProject, fromArgsTypeName, toArgsTypeName);
-            to.addEdge(childNode, weight);
+            to.addEdgeTo(childNode, weight);
         }
     }
 
