@@ -9,26 +9,26 @@ class TypeTracker
 
   def initialize
     @logger = Logger.new($stdout)
-    @signatures = Hash.new { |h, k| h[k] = Array.new }
+    @signatures = Array.new
+    @cache = Set.new
     @pending_inserts = Set.new
     @db_connection = SQLite3::Database.open(__dir__ + '/CallStat.db')
     @method_inspector = MethodInspector.new
 
     @trace = TracePoint.trace(:call, :return, :raise) do |tp|
-      case tp.event
-        when :call
-          handle_call(tp)
-        when :return
-          handle_return(tp)
-        else
-          @signatures[Thread.current.object_id].pop
+      begin
+        case tp.event
+          when :call
+            handle_call(tp)
+          when :return
+            handle_return(tp)
+          else
+            @signatures.pop
+        end
+      rescue NameError, NoMethodError
+        @signatures.push([nil, nil]) if tp.event == :call
       end
     end
-    @trace.disable
-  end
-
-  def get_tp
-    @trace
   end
 
   def flush
@@ -50,17 +50,22 @@ class TypeTracker
   private
   def handle_call(tp)
     binding = tp.binding
-    method = binding.receiver.method(tp.method_id)
+    method = tp.defined_class.instance_method(tp.method_id) # binding.receiver.method(tp.method_id)
     args_type_name = method.parameters.inject([]) do |pt, p|
-      pt << binding.local_variable_get(p[1]).class if p[1] && binding.local_variable_defined?(p[1])
+      pt << (p[1] ? binding.local_variable_get(p[1]).class : NilClass)
     end.join(';')
 
-    @signatures[Thread.current.object_id].push([method, args_type_name])
+    key = [method, args_type_name].hash
+    if @cache.add?(key)
+      @signatures.push([method, args_type_name])
+    else
+      @signatures.push([nil, nil])
+    end
   end
 
   private
   def handle_return(tp)
-    method, args_type_name = @signatures[Thread.current.object_id].pop
+    method, args_type_name = @signatures.pop
 
     if method
       method_name = tp.method_id
@@ -78,8 +83,16 @@ class TypeTracker
         visibility = 'PRIVATE'
       end
 
-      @pending_inserts << [method_name, receiver_name, args_type_name, method, return_type_name,
-                           gem_name, gem_version, visibility]
+      args_info = method.parameters.inject([]) do |pt, p|
+        pt << "#{p[0]},#{p[1]},#{NilClass}"
+      end.join(';')
+
+      # @pending_inserts << [method_name, receiver_name, args_type_name, method, return_type_name,
+      #                      gem_name, gem_version, visibility]
+      sql = @@INSERT % [method_name, receiver_name, args_type_name, args_info, return_type_name,
+                        gem_name, gem_version, visibility]
+      # @logger.info(sql)
+      @db_connection.execute(sql)
     end
   end
 end
@@ -94,6 +107,7 @@ class MethodInspector
         params = tp.defined_class.instance_method(tp.method_id).parameters
         params.each do |param|
           param << binding.local_variable_get(param[1]) if param[1] && binding.local_variable_defined?(param[1])
+          param
         end
         raise InspectException.new(params)
       end
@@ -146,16 +160,5 @@ class InspectException < StandardError
   end
 end
 
-if ARGV.empty?
-  puts 'Must specify a script to run'
-  exit(1)
-end
-
-abs_prog_script = File.expand_path(ARGV.shift)
 
 type_tracker = TypeTracker.new
-type_tracker.get_tp.enable do
-  load abs_prog_script
-end
-
-type_tracker.flush
