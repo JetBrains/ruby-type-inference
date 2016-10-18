@@ -32,6 +32,10 @@ public abstract class RSignatureManager {
 
     public abstract void deleteSignature(@NotNull final RSignature signature);
 
+    public abstract void deleteSimilarSignatures(@NotNull final RSignature signature);
+
+    public abstract List<RSignature> getSimilarSignatures(@NotNull final RSignature signature);
+
     public abstract void compact(@NotNull final Project project);
 
     public abstract void clear();

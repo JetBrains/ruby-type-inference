@@ -125,6 +125,21 @@ public class SqliteRSignatureManager extends RSignatureManager {
         executeUpdate(sql);
     }
 
+    public void deleteSimilarSignatures(@NotNull final RSignature signature) {
+        final String sql = String.format("DELETE FROM signatures WHERE method_name = '%s' AND receiver_name = '%s' " +
+                                         "AND gem_name = '%s' AND gem_version = '%s';", signature.getMethodName(),
+                                         signature.getReceiverName(), signature.getGemName(), signature.getGemVersion());
+        executeUpdate(sql);
+    }
+
+    @NotNull
+    public List<RSignature> getSimilarSignatures(@NotNull final RSignature signature) {
+        final String sql = String.format("SELECT * FROM signatures WHERE method_name = '%s' AND receiver_name = '%s' " +
+                                         "AND gem_name = '%s' AND gem_version = '%s';", signature.getMethodName(),
+                                         signature.getReceiverName(), signature.getGemName(), signature.getGemVersion());
+        return executeQuery(sql);
+    }
+
     @Override
     public void compact(@NotNull final Project project) {
         mergeRecordsWithSameSignatureButDifferentReturnTypeNames(project);
@@ -241,19 +256,10 @@ public class SqliteRSignatureManager extends RSignatureManager {
                      "HAVING COUNT(args_type_name) > 1;";
         final List<RSignature> groups = executeQuery(sql);
         for (final RSignature signature : groups) {
-            sql = String.format("SELECT * FROM signatures WHERE method_name = '%s' AND receiver_name = '%s' " +
-                                "AND gem_name = '%s' AND gem_version = '%s';", signature.getMethodName(),
-                                signature.getReceiverName(), signature.getGemName(), signature.getGemVersion());
-            final List<RSignature> signatures = executeQuery(sql);
-
+            final List<RSignature> signatures = getSimilarSignatures(signature);
             final RSignatureDAG dag = new RSignatureDAG(project, signature.getArgsTypeName().size());
             dag.addAll(signatures);
-
-            sql = String.format("DELETE FROM signatures WHERE method_name = '%s' AND receiver_name = '%s' " +
-                                "AND gem_name = '%s' AND gem_version = '%s';", signature.getMethodName(),
-                                signature.getReceiverName(), signature.getGemName(), signature.getGemVersion());
-            executeUpdate(sql);
-
+            deleteSimilarSignatures(signature);
             dag.depthFirstSearch(this::recordSignature);
         }
     }
