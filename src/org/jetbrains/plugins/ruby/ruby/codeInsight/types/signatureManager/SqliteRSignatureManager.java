@@ -241,7 +241,7 @@ public class SqliteRSignatureManager extends RSignatureManager {
             if (!returnTypeSymbols.contains(null)) {
                 final ClassModuleSymbol leastCommonSuperclass = RSignatureDAG.getLeastCommonSuperclass(returnTypeSymbols);
                 if (leastCommonSuperclass != null) {
-                    leastCommonSuperclassFQN = String.join("::", leastCommonSuperclass.getFQN());
+                    leastCommonSuperclassFQN = leastCommonSuperclass.getFQN().getFullPath();
                 }
             }
 

@@ -7,9 +7,9 @@ import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signatureManager.Sqlite
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RPsiElement;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.impl.references.RReferenceBase;
 
-public class RubyLangCoreStructuresStatTypeProvider implements RubyLangCoreStructuresTypeProvider {
+public class RubyLangCoreStructuresStatTypeProvider {
     @Nullable
-    @Override
+//    @Override
     public RType createTypeByLangCoreConstruction(@NotNull final RReferenceBase ref) {
         if (ref.isConstructorLike()) {
             final RPsiElement receiver = ref.getReceiver();

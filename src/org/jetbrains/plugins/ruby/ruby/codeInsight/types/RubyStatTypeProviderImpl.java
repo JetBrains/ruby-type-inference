@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.resolve.ResolveUtil;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.fqn.FQN;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.Symbol;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.SymbolUtil;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.impl.REmptyType;
@@ -103,13 +104,10 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
 
         final Symbol methodSymbol = ResolveUtil.resolveToSymbolWithCaching(methodElement.getReference(), false);
         if (methodSymbol != null) {
-            methodName = methodSymbol.getName();
-            final String methodFQN = SymbolUtil.getSymbolFullQualifiedName(methodSymbol);
-            if (methodFQN != null) {
-                final int separatorIndex = methodFQN.lastIndexOf('.');
-                receiverFQN = separatorIndex >= 0 ? methodFQN.substring(0, separatorIndex) : null;
-                return new Couple<>(methodName, receiverFQN);
-            }
+            final FQN methodFQN = methodSymbol.getFQNWithNesting();
+            methodName = methodFQN.getShortName();
+            receiverFQN = methodFQN.getCallerFQN().getFullPath();
+            return new Couple<>(methodName, receiverFQN);
         } else if (methodElement instanceof RPossibleCall) {
             methodName = ((RPossibleCall) methodElement).getName();
             if (methodElement instanceof RReference) {
@@ -120,7 +118,7 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
             } else {
                 final Symbol receiverSymbol = SymbolUtil.getScopeContext(methodElement);
                 if (receiverSymbol != null && SymbolUtil.isClassOrModuleSymbol(receiverSymbol.getType())) {
-                    receiverFQN = SymbolUtil.getSymbolFullQualifiedName(receiverSymbol);
+                    receiverFQN = receiverSymbol.getFQNWithNesting().getFullPath();
                 }
             }
         }
