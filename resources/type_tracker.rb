@@ -5,7 +5,7 @@ require 'set'
 require 'sqlite3'
 
 class TypeTracker
-  @@INSERT = "INSERT OR REPLACE INTO signatures VALUES('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')"
+  @@INSERT = "INSERT OR REPLACE INTO rsignature VALUES('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')"
 
   def initialize
     @logger = Logger.new($stdout)

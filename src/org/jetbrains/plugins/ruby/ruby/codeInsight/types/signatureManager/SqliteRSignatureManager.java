@@ -60,7 +60,7 @@ public class SqliteRSignatureManager extends RSignatureManager {
     @Override
     public List<String> findReturnTypeNamesBySignature(@NotNull final Project project, @Nullable final Module module,
                                                        @NotNull final RSignature signature) {
-        final String sql = String.format("SELECT * FROM signatures WHERE method_name = '%s' AND receiver_name = '%s';",
+        final String sql = String.format("SELECT * FROM rsignature WHERE method_name = '%s' AND receiver_name = '%s';",
                                          signature.getMethodName(), signature.getReceiverName());
         final List<RSignature> signatures = executeQuery(sql);
         final List<Pair<RSignature, Integer>> signaturesAndDistances = signatures.stream()
@@ -105,7 +105,7 @@ public class SqliteRSignatureManager extends RSignatureManager {
                 .map(argInfo -> String.join(",", argInfo.getType().toString().toLowerCase(), argInfo.getName(),
                                                  argInfo.getDefaultValueTypeName()))
                 .collect(Collectors.joining(";"));
-        final String sql = String.format("INSERT OR REPLACE INTO signatures " +
+        final String sql = String.format("INSERT OR REPLACE INTO rsignature " +
                                          "values('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');",
                                          signature.getMethodName(), signature.getReceiverName(),
                                          String.join(";", signature.getArgsTypeName()), argsInfoSerialized,
@@ -116,7 +116,7 @@ public class SqliteRSignatureManager extends RSignatureManager {
 
     @Override
     public void deleteSignature(@NotNull final RSignature signature) {
-        final String sql = String.format("DELETE FROM signatures WHERE args_type_name = '%s' " +
+        final String sql = String.format("DELETE FROM rsignature WHERE args_type_name = '%s' " +
                                          "AND method_name = '%s' AND receiver_name = '%s' " +
                                          "AND gem_name = '%s' AND gem_version = '%s';",
                                          String.join(";", signature.getArgsTypeName()),
@@ -126,7 +126,7 @@ public class SqliteRSignatureManager extends RSignatureManager {
     }
 
     public void deleteSimilarSignatures(@NotNull final RSignature signature) {
-        final String sql = String.format("DELETE FROM signatures WHERE method_name = '%s' AND receiver_name = '%s' " +
+        final String sql = String.format("DELETE FROM rsignature WHERE method_name = '%s' AND receiver_name = '%s' " +
                                          "AND gem_name = '%s' AND gem_version = '%s';", signature.getMethodName(),
                                          signature.getReceiverName(), signature.getGemName(), signature.getGemVersion());
         executeUpdate(sql);
@@ -134,7 +134,7 @@ public class SqliteRSignatureManager extends RSignatureManager {
 
     @NotNull
     public List<RSignature> getSimilarSignatures(@NotNull final RSignature signature) {
-        final String sql = String.format("SELECT * FROM signatures WHERE method_name = '%s' AND receiver_name = '%s' " +
+        final String sql = String.format("SELECT * FROM rsignature WHERE method_name = '%s' AND receiver_name = '%s' " +
                                          "AND gem_name = '%s' AND gem_version = '%s';", signature.getMethodName(),
                                          signature.getReceiverName(), signature.getGemName(), signature.getGemVersion());
         return executeQuery(sql);
@@ -149,14 +149,14 @@ public class SqliteRSignatureManager extends RSignatureManager {
 
     @Override
     public void clear() {
-        final String sql = "DELETE FROM signatures;";
+        final String sql = "DELETE FROM rsignature;";
         executeUpdate(sql);
     }
 
     @NotNull
     @Override
     public List<ParameterInfo> getMethodArgsInfo(@NotNull final String methodName, @Nullable final String receiverName) {
-        final String sql = String.format("SELECT args_info FROM signatures WHERE method_name = '%s' AND receiver_name = '%s';",
+        final String sql = String.format("SELECT args_info FROM rsignature WHERE method_name = '%s' AND receiver_name = '%s';",
                                          methodName, receiverName);
         try (final Statement statement = myConnection.createStatement()) {
             final ResultSet resultSet = statement.executeQuery(sql);
@@ -173,7 +173,7 @@ public class SqliteRSignatureManager extends RSignatureManager {
     @NotNull
     @Override
     protected Set<RSignature> getReceiverMethodSignatures(@NotNull final String receiverName) {
-        final String sql = String.format("SELECT * FROM signatures WHERE receiver_name = '%s';", receiverName);
+        final String sql = String.format("SELECT * FROM rsignature WHERE receiver_name = '%s';", receiverName);
         final List<RSignature> signatures = executeQuery(sql);
         return new HashSet<>(signatures);
     }
@@ -227,7 +227,7 @@ public class SqliteRSignatureManager extends RSignatureManager {
     }
 
     private void mergeRecordsWithSameSignatureButDifferentReturnTypeNames(@NotNull final Project project) {
-        final String sql = "SELECT DISTINCT * FROM signatures " +
+        final String sql = "SELECT DISTINCT * FROM rsignature " +
                            "GROUP BY method_name, receiver_name, args_type_name, gem_name, gem_version " +
                            "HAVING COUNT(return_type_name) > 1;";
         final List<RSignature> signatures = executeQuery(sql);
@@ -252,7 +252,7 @@ public class SqliteRSignatureManager extends RSignatureManager {
     }
 
     private void mergeRecordsWithDifferentSignaturesButSameReturnTypeName(@NotNull final Project project) {
-        String sql = "SELECT DISTINCT * FROM signatures GROUP BY method_name, receiver_name, gem_name, gem_version " +
+        String sql = "SELECT DISTINCT * FROM rsignature GROUP BY method_name, receiver_name, gem_name, gem_version " +
                      "HAVING COUNT(args_type_name) > 1;";
         final List<RSignature> groups = executeQuery(sql);
         for (final RSignature signature : groups) {
@@ -266,7 +266,7 @@ public class SqliteRSignatureManager extends RSignatureManager {
 
     @NotNull
     private Set<String> getReturnTypeNamesBySignature(@NotNull final RSignature signature) {
-        final String sql = String.format("SELECT * FROM signatures " +
+        final String sql = String.format("SELECT * FROM rsignature " +
                                          "WHERE method_name = '%s' AND receiver_name = '%s' " +
                                          "AND args_type_name = '%s' AND gem_name = '%s' AND gem_version = '%s';",
                                          signature.getMethodName(), signature.getReceiverName(),
