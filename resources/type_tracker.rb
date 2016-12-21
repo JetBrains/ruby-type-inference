@@ -57,7 +57,7 @@ class TypeTracker
       receiver_name = tp.defined_class.name ? tp.defined_class : tp.defined_class.superclass
       return_type_name = tp.return_value.class
 
-      matches = tp.path.scan(/\w+-\d+\.\d+\.\d+/)
+      matches = tp.path.scan(/\w+-\d+(?:\.\d+)+/)
       gem_name, gem_version = matches[1] ? matches[1].split('-') : ['', '']
 
       if tp.defined_class.public_method_defined?(tp.method_id)
