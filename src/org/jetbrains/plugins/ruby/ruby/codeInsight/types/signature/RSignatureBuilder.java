@@ -25,8 +25,8 @@ public class RSignatureBuilder {
     @NotNull
     private String myReturnTypeName = CoreTypes.Object;
 
-    public RSignatureBuilder(@NotNull final String myMethodName) {
-        this.myMethodName = myMethodName;
+    public RSignatureBuilder(@NotNull final String methodName) {
+        this.myMethodName = methodName;
     }
 
     @NotNull
