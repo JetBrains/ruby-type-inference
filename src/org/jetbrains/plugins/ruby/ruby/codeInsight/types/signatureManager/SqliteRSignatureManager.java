@@ -140,6 +140,12 @@ public class SqliteRSignatureManager extends RSignatureManager {
         return executeQuery(sql);
     }
 
+    @NotNull
+    public List<RSignature> getLocalSignatures() {
+        final String sql = "SELECT * FROM rsignature WHERE is_local = true;";
+        return executeQuery(sql);
+    }
+
     @Override
     public void compact(@NotNull final Project project) {
         mergeRecordsWithSameSignatureButDifferentReturnTypeNames(project);
@@ -150,6 +156,29 @@ public class SqliteRSignatureManager extends RSignatureManager {
     @Override
     public void clear() {
         final String sql = "DELETE FROM rsignature;";
+        executeUpdate(sql);
+    }
+
+    @Override
+    public long getStatFileLastModified(@NotNull final String gemName, @NotNull final String gemVersion) {
+        final String sql = String.format("SELECT last_modified FROM stat_file " +
+                                         "WHERE gem_name = '%s' AND gem_version = '%s';",  gemName, gemVersion);
+        try (final Statement statement = myConnection.createStatement()) {
+            final ResultSet resultSet = statement.executeQuery(sql);
+            if (resultSet.next()) {
+                return resultSet.getLong("last_modified");
+            }
+        } catch (SQLException e) {
+            LOG.info(e);
+        }
+
+        return 0;
+    }
+
+    public void setStatFileLastModified(@NotNull final String gemName, @NotNull final String gemVersion,
+                                        final long lastModified) {
+        final String sql = String.format("INSERT OR REPLACE INTO stat_file values('%s', '%s', %d);",
+                                         gemName, gemVersion, lastModified);
         executeUpdate(sql);
     }
 

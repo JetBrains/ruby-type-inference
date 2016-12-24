@@ -137,6 +137,11 @@ public class ProxyCacheRSignatureManager extends RSignatureManager {
     }
 
     @Override
+    public List<RSignature> getLocalSignatures() {
+        return myDecoratedManager.getLocalSignatures();
+    }
+
+    @Override
     public void compact(@NotNull final Project project) {
         // TODO: ProxyCacheRSignatureManager::compact
     }
@@ -146,6 +151,17 @@ public class ProxyCacheRSignatureManager extends RSignatureManager {
         myPersistedDAGs.clear();
         mySignatureCache.cleanUp();
 //        myDecoratedManager.clear();
+    }
+
+    @Override
+    public long getStatFileLastModified(@NotNull final String gemName,
+                                        @NotNull final String gemVersion) {
+        return myDecoratedManager.getStatFileLastModified(gemName, gemVersion);
+    }
+
+    public void setStatFileLastModified(@NotNull final String gemName, @NotNull final String gemVersion,
+                                        final long lastModified) {
+        myDecoratedManager.setStatFileLastModified(gemName, gemVersion, lastModified);
     }
 
     @NotNull

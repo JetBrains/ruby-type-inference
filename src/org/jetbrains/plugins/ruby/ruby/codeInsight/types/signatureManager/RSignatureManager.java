@@ -36,9 +36,16 @@ public abstract class RSignatureManager {
 
     public abstract List<RSignature> getSimilarSignatures(@NotNull final RSignature signature);
 
+    public abstract List<RSignature> getLocalSignatures();
+
     public abstract void compact(@NotNull final Project project);
 
     public abstract void clear();
+
+    public abstract long getStatFileLastModified(@NotNull final String gemName, @NotNull final String gemVersion);
+
+    public abstract void setStatFileLastModified(@NotNull final String gemName, @NotNull final String gemVersion,
+                                                 final long lastModified);
 
     @NotNull
     public RType createTypeByFQNFromStat(@NotNull final Project project, @NotNull final String classFQN) {
