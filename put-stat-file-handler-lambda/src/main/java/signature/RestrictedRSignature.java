@@ -21,21 +21,23 @@ public class RestrictedRSignature {
     private final String myGemVersion;
     @NotNull
     private String myReturnTypeName;
+    private boolean myIsLocal;
 
     public RestrictedRSignature(@NotNull final String methodName, @NotNull final String receiverName,
                                 @NotNull final RestrictedVisibility visibility,
                                 @NotNull final List<RestrictedParameterInfo> argsInfo,
                                 @NotNull final List<String> argsTypeName,
                                 @NotNull final String gemName, @NotNull final String gemVersion,
-                                @NotNull final String returnTypeName) {
-        this.myMethodName = methodName;
-        this.myReceiverName = receiverName;
-        this.myVisibility = visibility;
-        this.myArgsInfo = argsInfo;
-        this.myArgsTypeName = argsTypeName;
-        this.myGemName = gemName;
-        this.myGemVersion = gemVersion;
-        this.myReturnTypeName = returnTypeName;
+                                @NotNull final String returnTypeName, final boolean isLocal) {
+        myMethodName = methodName;
+        myReceiverName = receiverName;
+        myVisibility = visibility;
+        myArgsInfo = argsInfo;
+        myArgsTypeName = argsTypeName;
+        myGemName = gemName;
+        myGemVersion = gemVersion;
+        myReturnTypeName = returnTypeName;
+        myIsLocal = isLocal;
     }
 
     @NotNull
@@ -76,5 +78,9 @@ public class RestrictedRSignature {
     @NotNull
     public String getReturnTypeName() {
         return myReturnTypeName;
+    }
+
+    public boolean isLocal() {
+        return myIsLocal;
     }
 }

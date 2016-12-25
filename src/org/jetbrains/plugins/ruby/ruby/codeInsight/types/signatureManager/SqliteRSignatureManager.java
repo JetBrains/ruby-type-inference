@@ -142,7 +142,7 @@ public class SqliteRSignatureManager extends RSignatureManager {
 
     @NotNull
     public List<RSignature> getLocalSignatures() {
-        final String sql = "SELECT * FROM rsignature WHERE is_local = true;";
+        final String sql = "SELECT * FROM rsignature WHERE is_local = true AND gem_name <> '' AND gem_version <> '';";
         return executeQuery(sql);
     }
 

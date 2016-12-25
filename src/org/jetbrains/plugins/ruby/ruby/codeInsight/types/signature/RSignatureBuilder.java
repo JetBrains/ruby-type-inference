@@ -24,6 +24,7 @@ public class RSignatureBuilder {
     private String myGemVersion = "";
     @NotNull
     private String myReturnTypeName = CoreTypes.Object;
+    private boolean myIsLocal = true;
 
     public RSignatureBuilder(@NotNull final String methodName) {
         this.myMethodName = methodName;
@@ -31,49 +32,55 @@ public class RSignatureBuilder {
 
     @NotNull
     public RSignatureBuilder setReceiverName(@NotNull final String receiverName) {
-        this.myReceiverName = receiverName;
+        myReceiverName = receiverName;
         return this;
     }
 
     @NotNull
     public RSignatureBuilder setVisibility(@NotNull final Visibility visibility) {
-        this.myVisibility = visibility;
+        myVisibility = visibility;
         return this;
     }
 
     @NotNull
     public RSignatureBuilder setArgsInfo(@NotNull final List<ParameterInfo> argsInfo) {
-        this.myArgsInfo = argsInfo;
+        myArgsInfo = argsInfo;
         return this;
     }
 
     @NotNull
     public RSignatureBuilder setArgsTypeName(@NotNull final List<String> argsTypeName) {
-        this.myArgsTypeName = argsTypeName;
+        myArgsTypeName = argsTypeName;
         return this;
     }
 
     @NotNull
     public RSignatureBuilder setGemName(@NotNull final String gemName) {
-        this.myGemName = gemName;
+        myGemName = gemName;
         return this;
     }
 
     @NotNull
     public RSignatureBuilder setGemVersion(@NotNull final String gemVersion) {
-        this.myGemVersion = gemVersion;
+        myGemVersion = gemVersion;
         return this;
     }
 
     @NotNull
     public RSignatureBuilder setReturnTypeName(@NotNull final String returnTypeName) {
-        this.myReturnTypeName = returnTypeName;
+        myReturnTypeName = returnTypeName;
+        return this;
+    }
+
+    @NotNull
+    public RSignatureBuilder setIsLocal(@NotNull final boolean isLocal) {
+        myIsLocal = isLocal;
         return this;
     }
 
     @NotNull
     public RSignature build() {
         return new RSignature(myMethodName, myReceiverName, myVisibility, myArgsInfo, myArgsTypeName,
-                              myGemName, myGemVersion, myReturnTypeName);
+                              myGemName, myGemVersion, myReturnTypeName, myIsLocal);
     }
 }

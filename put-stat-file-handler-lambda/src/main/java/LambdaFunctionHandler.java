@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class LambdaFunctionHandler implements RequestHandler<S3Event, Object> {
+    @NotNull
     private final AmazonS3 myClient = new AmazonS3Client();
 
     @Override
@@ -76,18 +77,17 @@ public class LambdaFunctionHandler implements RequestHandler<S3Event, Object> {
                 .map(argInfo -> String.join(",", argInfo.getType().toString().toLowerCase(), argInfo.getName(),
                         argInfo.getDefaultValueTypeName()))
                 .collect(Collectors.joining(";"));
-        return String.format("INSERT OR NONE INTO rsignature values('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', 0);",
-                signature.getMethodName(), signature.getReceiverName(),
-                String.join(";", signature.getArgsTypeName()), argsInfoSerialized,
-                signature.getReturnTypeName(), signature.getGemName(), signature.getGemVersion(),
-                signature.getVisibility());
+        return String.format("INSERT INTO rsignature values('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', FALSE) " +
+                             "ON CONFLICT DO NOTHING;",  signature.getMethodName(), signature.getReceiverName(),
+                signature.getVisibility(), String.join(";", signature.getArgsTypeName()), argsInfoSerialized,
+                signature.getReturnTypeName(), signature.getGemName(), signature.getGemVersion());
 
     }
 
     @NotNull
     private static Connection getConnectionToDB() throws SQLException, ClassNotFoundException {
         final String host ="typestatdbinstance.ccmaoqa8spde.eu-central-1.rds.amazonaws.com";
-        final String port = "4247";
+        final String port = "5432";
         final String user = "typestatdbuser";
         final String password = "typestatdbuserpassword";
         final String name = "typestatdb";

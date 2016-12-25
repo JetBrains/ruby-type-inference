@@ -22,18 +22,21 @@ public class RSignature {
     private final String myGemVersion;
     @NotNull
     private String myReturnTypeName;
+    private final boolean myIsLocal;
 
     public RSignature(@NotNull final String methodName, @NotNull final String receiverName, @NotNull final Visibility visibility,
                       @NotNull final List<ParameterInfo> argsInfo, @NotNull final List<String> argsTypeName,
-                      @NotNull final String gemName, @NotNull final String gemVersion, @NotNull final String returnTypeName) {
-        this.myMethodName = methodName;
-        this.myReceiverName = receiverName;
-        this.myVisibility = visibility;
-        this.myArgsInfo = argsInfo;
-        this.myArgsTypeName = argsTypeName;
-        this.myGemName = gemName;
-        this.myGemVersion = gemVersion;
-        this.myReturnTypeName = returnTypeName;
+                      @NotNull final String gemName, @NotNull final String gemVersion, @NotNull final String returnTypeName,
+                      final boolean isLocal) {
+        myMethodName = methodName;
+        myReceiverName = receiverName;
+        myVisibility = visibility;
+        myArgsInfo = argsInfo;
+        myArgsTypeName = argsTypeName;
+        myGemName = gemName;
+        myGemVersion = gemVersion;
+        myReturnTypeName = returnTypeName;
+        myIsLocal = isLocal;
     }
 
     @NotNull
@@ -80,6 +83,10 @@ public class RSignature {
         this.myReturnTypeName = returnTypeName;
     }
 
+    public boolean isLocal() {
+        return myIsLocal;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -89,7 +96,7 @@ public class RSignature {
 
         return myMethodName.equals(that.myMethodName) &&
                myReceiverName.equals(that.myReceiverName) &&
-               myVisibility == that.myVisibility &&
+               myVisibility.equals(that.myVisibility) &&
                myArgsInfo.equals(that.myArgsInfo) &&
                myArgsTypeName.equals(that.myArgsTypeName) &&
                myGemName.equals(that.myGemName) &&
