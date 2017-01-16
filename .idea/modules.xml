@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/ruby-type-inference.iml" filepath="$PROJECT_DIR$/ruby-type-inference.iml" />
+      <module fileurl="file://$PROJECT_DIR$/ruby-type-inference-contruct-creator/ruby-type-inference-contruct-creator.iml" filepath="$PROJECT_DIR$/ruby-type-inference-contruct-creator/ruby-type-inference-contruct-creator.iml" />
     </modules>
   </component>
 </project>

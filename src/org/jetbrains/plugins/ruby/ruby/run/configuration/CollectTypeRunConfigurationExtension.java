@@ -76,6 +76,7 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
         final Map<String, String> env = cmdLine.getEnvironment();
         final String rubyOpt = StringUtil.notNullize(env.get(RubyUtil.RUBYOPT));
         final String newRubyOpt = rubyOpt + " -I" + libFolder.getPath() + " -r" + typeTrackerScriptURL.getPath();
+        //final String newRubyOpt = rubyOpt + " -r" + typeTrackerScriptURL.getPath();
         cmdLine.withEnvironment(RubyUtil.RUBYOPT, newRubyOpt);
     }
 
