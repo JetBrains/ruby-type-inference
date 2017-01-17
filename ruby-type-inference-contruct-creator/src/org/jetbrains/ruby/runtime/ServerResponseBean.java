@@ -1,4 +1,4 @@
-package org.jetbrains.ruby.runtime.SignatureServer;
+package org.jetbrains.ruby.runtime;
 
 public class ServerResponseBean {
     public String method_name;
