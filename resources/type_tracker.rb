@@ -5,7 +5,7 @@ require 'set'
 require 'socket'
 require 'json'
 
-require_relative 'arg_scanner/arg_scanner'
+require 'arg_scanner'
 
 include ArgScanner
 
