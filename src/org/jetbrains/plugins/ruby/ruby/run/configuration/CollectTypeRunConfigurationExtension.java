@@ -18,6 +18,8 @@ import org.jetbrains.plugins.ruby.ruby.RubyUtil;
 
 import java.net.URL;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationExtension {
     @NonNls
@@ -63,21 +65,31 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
             return;
         }
 
-        final GemInfo gemInfo = GemSearchUtil.findGem(sdk, "sqlite3");
+        final String includeOptions = Stream.of("sqlite3", "arg_scanner")
+                .map(gem -> getRequireKeyForGem(sdk, gem))
+                .filter(Objects::nonNull)
+                .reduce(String::concat)
+                .orElseGet(String::new);
+
+        final Map<String, String> env = cmdLine.getEnvironment();
+        final String rubyOpt = StringUtil.notNullize(env.get(RubyUtil.RUBYOPT));
+        final String newRubyOpt = rubyOpt + includeOptions + " -r" + typeTrackerScriptURL.getPath();
+        //final String newRubyOpt = rubyOpt + " -r" + typeTrackerScriptURL.getPath();
+        cmdLine.withEnvironment(RubyUtil.RUBYOPT, newRubyOpt);
+    }
+
+    @Nullable
+    private String getRequireKeyForGem(@Nullable Sdk sdk, @NotNull String gemName) {
+        final GemInfo gemInfo = GemSearchUtil.findGem(sdk, gemName);
         if (gemInfo == null) {
-            return;
+            return null;
         }
 
         final VirtualFile libFolder = gemInfo.getLibFolder();
         if (libFolder == null) {
-            return;
+            return null;
         }
-
-        final Map<String, String> env = cmdLine.getEnvironment();
-        final String rubyOpt = StringUtil.notNullize(env.get(RubyUtil.RUBYOPT));
-        final String newRubyOpt = rubyOpt + " -I" + libFolder.getPath() + " -r" + typeTrackerScriptURL.getPath();
-        //final String newRubyOpt = rubyOpt + " -r" + typeTrackerScriptURL.getPath();
-        cmdLine.withEnvironment(RubyUtil.RUBYOPT, newRubyOpt);
+        return " -I" + libFolder.getPath();
     }
 
     @Nullable
