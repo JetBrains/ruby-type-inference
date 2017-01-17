@@ -4,13 +4,9 @@ import java.util.*;
 
 public class RSignatureContractContainer {
     private Map<RMethodInfo, RSignatureContract> contracts;
-    private int contractCount = 0;
 
     public RSignatureContractContainer() {
         contracts = new HashMap<>();
-    }
-    public RSignatureContract getContract(RMethodInfo info){
-        return  contracts.get(info);
     }
 
 
@@ -39,7 +35,6 @@ public class RSignatureContractContainer {
 
     public void addSignature(RSignature signature){
         RMethodInfo currInfo = new RMethodInfo(signature);
-        this.contractCount++;
 
         //org.jetbrains.ruby.runtime.signature.fetch();
 
@@ -50,9 +45,5 @@ public class RSignatureContractContainer {
             RSignatureContract contract = new RSignatureContract(signature);
             contracts.put(currInfo, contract);
         }
-    }
-    public int getContractCount()
-    {
-        return this.contractCount;
     }
 }
