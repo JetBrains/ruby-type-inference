@@ -18,6 +18,7 @@ public class SignatureServer {
         RSignatureContractContainer mainContainer = new RSignatureContractContainer();
 
         try (ServerSocket listener = new ServerSocket(7777)) {
+            //noinspection InfiniteLoopStatement
             while (true) {
                 Socket socket = listener.accept();
                 BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -27,7 +28,8 @@ public class SignatureServer {
                     try {
                         System.out.println(currString);
                         if (currString.equals("break connection")) {
-                            return;
+                            mainContainer.print();
+                            break;
                         }
 
                         ServerResponseBean result = new Gson().fromJson(currString, ServerResponseBean.class);
@@ -48,8 +50,6 @@ public class SignatureServer {
                     }
                 }
             }
-        } finally {
-            mainContainer.print();
         }
     }
 }
