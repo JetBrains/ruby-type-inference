@@ -36,14 +36,6 @@ public class SignatureServer {
                         RSignature currSignature = new RSignature(result);
 
                         mainContainer.addSignature(currSignature);
-                        //System.out.println("Done " + mainContainer.getContractCount());
-
-//                        if(mainContainer.getContractCount() > 2000)
-//                        {
-//                            return;
-//                        }
-
-
                     } catch (JsonParseException e) {
                         System.out.println("!" + currString + "!");
                         e.printStackTrace();
