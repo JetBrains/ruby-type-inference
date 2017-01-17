@@ -10,7 +10,7 @@ import com.amazonaws.services.s3.model.S3Object;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.jetbrains.annotations.NotNull;
-import signature.RestrictedRSignature;
+import org.jetbrains.ruby.runtime.signature.RestrictedRSignature;
 
 import java.io.BufferedReader;
 import java.io.IOException;

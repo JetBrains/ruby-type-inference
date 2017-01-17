@@ -1,6 +1,6 @@
-package signature;
+package org.jetbrains.ruby.runtime.signature;
 
-import SignatureServer.ServerResponseBean;
+import org.jetbrains.ruby.runtime.SignatureServer.ServerResponseBean;
 
 import java.util.Arrays;
 import java.util.LinkedList;

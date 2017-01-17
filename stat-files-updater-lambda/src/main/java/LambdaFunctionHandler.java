@@ -12,9 +12,9 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
-import signature.RestrictedParameterInfo;
-import signature.RestrictedRSignature;
-import signature.RestrictedVisibility;
+import org.jetbrains.ruby.runtime.signature.RestrictedParameterInfo;
+import org.jetbrains.ruby.runtime.signature.RestrictedRSignature;
+import org.jetbrains.ruby.runtime.signature.RestrictedVisibility;
 
 import java.io.*;
 import java.sql.*;

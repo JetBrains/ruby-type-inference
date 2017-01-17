@@ -136,10 +136,10 @@ class TypeTracker
       pt << (p[1] ? binding.local_variable_get(p[1]).class : NilClass)
     end.join(';')
 
-    # this.myReceiverName = signature.getReceiverName();
-    # this.myGemName = signature.getGemName();
-    # this.myGemVersion = signature.getGemVersion();
-    # this.myVisibility = signature.getVisibility();
+    # this.myReceiverName = org.jetbrains.ruby.runtime.signature.getReceiverName();
+    # this.myGemName = org.jetbrains.ruby.runtime.signature.getGemName();
+    # this.myGemVersion = org.jetbrains.ruby.runtime.signature.getGemVersion();
+    # this.myVisibility = org.jetbrains.ruby.runtime.signature.getVisibility();
 
 
     key = [method, args_type_name, call_info_mid, call_info_argc, call_info_kw_args, path, lineno].hash

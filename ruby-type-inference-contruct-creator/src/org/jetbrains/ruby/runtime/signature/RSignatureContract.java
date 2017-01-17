@@ -1,4 +1,4 @@
-package signature;
+package org.jetbrains.ruby.runtime.signature;
 
 import javafx.util.Pair;
 

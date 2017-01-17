@@ -1,4 +1,4 @@
-package signature;
+package org.jetbrains.ruby.runtime.signature;
 
 import java.util.HashMap;
 import java.util.List;
@@ -39,7 +39,7 @@ public class RSignatureContractContainer {
         RMethodInfo currInfo = new RMethodInfo(signature);
         this.contractCount++;
 
-        //signature.fetch();
+        //org.jetbrains.ruby.runtime.signature.fetch();
 
         if(contracts.containsKey(currInfo)){
             contracts.get(currInfo).addRSignature(signature);

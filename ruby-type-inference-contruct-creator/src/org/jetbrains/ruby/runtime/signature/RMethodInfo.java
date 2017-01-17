@@ -1,6 +1,4 @@
-package signature;
-
-import java.util.List;
+package org.jetbrains.ruby.runtime.signature;
 
 public class RMethodInfo {
     private final String myMethodName;

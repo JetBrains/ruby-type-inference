@@ -1,11 +1,10 @@
-package SignatureClient;
+package org.jetbrains.ruby.runtime.SignatureClient;
 
+import javax.swing.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
-
-import javax.swing.JOptionPane;
 
 public class SignatureClient {
 

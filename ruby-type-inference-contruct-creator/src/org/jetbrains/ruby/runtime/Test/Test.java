@@ -1,9 +1,10 @@
-package Test;
-import signature.RSignature;
-import signature.RSignatureContract;
+package org.jetbrains.ruby.runtime.Test;
 
-import java.io.Console;
-import java.util.*;
+import org.jetbrains.ruby.runtime.signature.RSignature;
+import org.jetbrains.ruby.runtime.signature.RSignatureContract;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class Test {

@@ -1,4 +1,4 @@
-package signature;
+package org.jetbrains.ruby.runtime.signature;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

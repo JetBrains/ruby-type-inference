@@ -1,4 +1,4 @@
-package signature;
+package org.jetbrains.ruby.runtime.signature;
 
 import java.util.Arrays;
 import java.util.LinkedList;
