@@ -1,6 +1,12 @@
 .idea/misc.xml
 .idea/workspace.xml
 .idea/libraries/
+.idea/dataSources.local.xml
+.idea/sqldialects.xml
+.idea/uiDesigner.xml
+
+ruby-type-inference-contruct-creator/.idea/
+
 
 out/
 
