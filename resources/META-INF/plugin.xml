@@ -1,4 +1,4 @@
-<idea-plugin version="1">
+<idea-plugin>
     <id>org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyStatTypeInference</id>
     <name>Ruby Stat Type Inference</name>
     <version>1.0</version>
@@ -30,8 +30,8 @@
         <rubyStatTypeProvider implementation="org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyStatTypeProviderImpl"/>
         <runConfigurationExtension
                 implementation="org.jetbrains.plugins.ruby.ruby.run.configuration.CollectTypeRunConfigurationExtension"/>
-        <rubyLangCoreStructuresTypeProvider
-                implementation="org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyLangCoreStructuresStatTypeProvider"/>
+<!--        <rubyLangCoreStructuresTypeProvider
+                implementation="org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyLangCoreStructuresStatTypeProvider"/> -->
     </extensions>
 
     <actions>

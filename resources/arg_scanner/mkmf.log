@@ -1,0 +1,211 @@
+have_header: checking for vm_core.h... -------------------- no
+
+"gcc -o conftest -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0/x86_64-linux -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0/ruby/backward -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0 -I. -I/home/viuginick/.rbenv/sources/2.3.0/ruby-2.3.0 -I/home/viuginick/.rbenv/versions/2.3.0/include     -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wunused-variable -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration -Wdeprecated-declarations -Wno-packed-bitfield-compat -Wno-maybe-uninitialized conftest.c  -L. -L/home/viuginick/.rbenv/versions/2.3.0/lib -Wl,-R/home/viuginick/.rbenv/versions/2.3.0/lib -L. -L/home/viuginick/.rbenv/versions/2.3.0/lib  -fstack-protector -rdynamic -Wl,-export-dynamic     -Wl,-R/home/viuginick/.rbenv/versions/2.3.0/lib -L/home/viuginick/.rbenv/versions/2.3.0/lib -lruby-static  -lpthread -lgmp -ldl -lcrypt -lm   -lc"
+checked program was:
+/* begin */
+1: #include "ruby.h"
+2: 
+3: int main(int argc, char **argv)
+4: {
+5:   return 0;
+6: }
+/* end */
+
+"gcc -E -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0/x86_64-linux -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0/ruby/backward -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0 -I. -I/home/viuginick/.rbenv/sources/2.3.0/ruby-2.3.0 -I/home/viuginick/.rbenv/versions/2.3.0/include     -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wunused-variable -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration -Wdeprecated-declarations -Wno-packed-bitfield-compat -Wno-maybe-uninitialized  conftest.c -o conftest.i"
+conftest.c:3:21: fatal error: vm_core.h: No such file or directory
+compilation terminated.
+checked program was:
+/* begin */
+1: #include "ruby.h"
+2: 
+3: #include <vm_core.h>
+/* end */
+
+--------------------
+
+have_header: checking for iseq.h... -------------------- no
+
+"gcc -E -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0/x86_64-linux -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0/ruby/backward -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0 -I. -I/home/viuginick/.rbenv/sources/2.3.0/ruby-2.3.0 -I/home/viuginick/.rbenv/versions/2.3.0/include     -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wunused-variable -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration -Wdeprecated-declarations -Wno-packed-bitfield-compat -Wno-maybe-uninitialized  conftest.c -o conftest.i"
+conftest.c:3:18: fatal error: iseq.h: No such file or directory
+compilation terminated.
+checked program was:
+/* begin */
+1: #include "ruby.h"
+2: 
+3: #include <iseq.h>
+/* end */
+
+--------------------
+
+have_header: checking for vm_core.h... -------------------- no
+
+"gcc -E -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0/x86_64-linux -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0/ruby/backward -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0 -I. -I/home/viuginick/.rbenv/sources/2.3.0/ruby-2.3.0 -I/home/viuginick/.rbenv/versions/2.3.0/include     -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wunused-variable -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration -Wdeprecated-declarations -Wno-packed-bitfield-compat -Wno-maybe-uninitialized  conftest.c -o conftest.i"
+conftest.c:3:21: fatal error: vm_core.h: No such file or directory
+compilation terminated.
+checked program was:
+/* begin */
+1: #include "ruby.h"
+2: 
+3: #include <vm_core.h>
+/* end */
+
+--------------------
+
+have_header: checking for vm_insnhelper.h... -------------------- no
+
+"gcc -E -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0/x86_64-linux -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0/ruby/backward -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0 -I. -I/home/viuginick/.rbenv/sources/2.3.0/ruby-2.3.0 -I/home/viuginick/.rbenv/versions/2.3.0/include     -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wunused-variable -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration -Wdeprecated-declarations -Wno-packed-bitfield-compat -Wno-maybe-uninitialized  conftest.c -o conftest.i"
+conftest.c:3:27: fatal error: vm_insnhelper.h: No such file or directory
+compilation terminated.
+checked program was:
+/* begin */
+1: #include "ruby.h"
+2: 
+3: #include <vm_insnhelper.h>
+/* end */
+
+--------------------
+
+have_header: checking for method.h... -------------------- no
+
+"gcc -E -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0/x86_64-linux -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0/ruby/backward -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0 -I. -I/home/viuginick/.rbenv/sources/2.3.0/ruby-2.3.0 -I/home/viuginick/.rbenv/versions/2.3.0/include     -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wunused-variable -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration -Wdeprecated-declarations -Wno-packed-bitfield-compat -Wno-maybe-uninitialized  conftest.c -o conftest.i"
+conftest.c:3:20: fatal error: method.h: No such file or directory
+compilation terminated.
+checked program was:
+/* begin */
+1: #include "ruby.h"
+2: 
+3: #include <method.h>
+/* end */
+
+--------------------
+
+have_header: checking for vm_core.h... -------------------- no
+
+"gcc -E -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0/x86_64-linux -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0/ruby/backward -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0 -I. -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0/ruby-2.3.0-p0  -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wunused-variable -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration -Wdeprecated-declarations -Wno-packed-bitfield-compat -Wno-maybe-uninitialized  conftest.c -o conftest.i"
+conftest.c:3:21: fatal error: vm_core.h: No such file or directory
+compilation terminated.
+checked program was:
+/* begin */
+1: #include "ruby.h"
+2: 
+3: #include <vm_core.h>
+/* end */
+
+--------------------
+
+have_header: checking for iseq.h... -------------------- no
+
+"gcc -E -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0/x86_64-linux -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0/ruby/backward -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0 -I. -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0/ruby-2.3.0-p0  -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wunused-variable -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration -Wdeprecated-declarations -Wno-packed-bitfield-compat -Wno-maybe-uninitialized  conftest.c -o conftest.i"
+conftest.c:3:18: fatal error: iseq.h: No such file or directory
+compilation terminated.
+checked program was:
+/* begin */
+1: #include "ruby.h"
+2: 
+3: #include <iseq.h>
+/* end */
+
+--------------------
+
+have_header: checking for vm_core.h... -------------------- no
+
+"gcc -E -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0/x86_64-linux -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0/ruby/backward -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0 -I. -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0/ruby-2.3.0-p0  -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wunused-variable -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration -Wdeprecated-declarations -Wno-packed-bitfield-compat -Wno-maybe-uninitialized  conftest.c -o conftest.i"
+conftest.c:3:21: fatal error: vm_core.h: No such file or directory
+compilation terminated.
+checked program was:
+/* begin */
+1: #include "ruby.h"
+2: 
+3: #include <vm_core.h>
+/* end */
+
+--------------------
+
+have_header: checking for vm_insnhelper.h... -------------------- no
+
+"gcc -E -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0/x86_64-linux -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0/ruby/backward -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0 -I. -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0/ruby-2.3.0-p0  -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wunused-variable -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration -Wdeprecated-declarations -Wno-packed-bitfield-compat -Wno-maybe-uninitialized  conftest.c -o conftest.i"
+conftest.c:3:27: fatal error: vm_insnhelper.h: No such file or directory
+compilation terminated.
+checked program was:
+/* begin */
+1: #include "ruby.h"
+2: 
+3: #include <vm_insnhelper.h>
+/* end */
+
+--------------------
+
+have_header: checking for method.h... -------------------- no
+
+"gcc -E -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0/x86_64-linux -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0/ruby/backward -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0 -I. -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0/ruby-2.3.0-p0  -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wunused-variable -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration -Wdeprecated-declarations -Wno-packed-bitfield-compat -Wno-maybe-uninitialized  conftest.c -o conftest.i"
+conftest.c:3:20: fatal error: method.h: No such file or directory
+compilation terminated.
+checked program was:
+/* begin */
+1: #include "ruby.h"
+2: 
+3: #include <method.h>
+/* end */
+
+--------------------
+
+have_header: checking for vm_core.h... -------------------- yes
+
+"gcc -E -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0/x86_64-linux -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0/ruby/backward -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0 -I. -I/home/viuginick/.gem/ruby/2.3.0/gems/debase-ruby_core_source-0.9.2/lib/debase/ruby_core_source/ruby-2.3.0-p0  -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wunused-variable -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration -Wdeprecated-declarations -Wno-packed-bitfield-compat -Wno-maybe-uninitialized  conftest.c -o conftest.i"
+checked program was:
+/* begin */
+1: #include "ruby.h"
+2: 
+3: #include <vm_core.h>
+/* end */
+
+--------------------
+
+have_header: checking for iseq.h... -------------------- yes
+
+"gcc -E -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0/x86_64-linux -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0/ruby/backward -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0 -I. -I/home/viuginick/.gem/ruby/2.3.0/gems/debase-ruby_core_source-0.9.2/lib/debase/ruby_core_source/ruby-2.3.0-p0  -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wunused-variable -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration -Wdeprecated-declarations -Wno-packed-bitfield-compat -Wno-maybe-uninitialized  conftest.c -o conftest.i"
+checked program was:
+/* begin */
+1: #include "ruby.h"
+2: 
+3: #include <iseq.h>
+/* end */
+
+--------------------
+
+have_header: checking for vm_core.h... -------------------- yes
+
+"gcc -E -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0/x86_64-linux -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0/ruby/backward -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0 -I. -I/home/viuginick/.gem/ruby/2.3.0/gems/debase-ruby_core_source-0.9.2/lib/debase/ruby_core_source/ruby-2.3.0-p0  -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wunused-variable -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration -Wdeprecated-declarations -Wno-packed-bitfield-compat -Wno-maybe-uninitialized  conftest.c -o conftest.i"
+checked program was:
+/* begin */
+1: #include "ruby.h"
+2: 
+3: #include <vm_core.h>
+/* end */
+
+--------------------
+
+have_header: checking for vm_insnhelper.h... -------------------- yes
+
+"gcc -E -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0/x86_64-linux -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0/ruby/backward -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0 -I. -I/home/viuginick/.gem/ruby/2.3.0/gems/debase-ruby_core_source-0.9.2/lib/debase/ruby_core_source/ruby-2.3.0-p0  -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wunused-variable -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration -Wdeprecated-declarations -Wno-packed-bitfield-compat -Wno-maybe-uninitialized  conftest.c -o conftest.i"
+checked program was:
+/* begin */
+1: #include "ruby.h"
+2: 
+3: #include <vm_insnhelper.h>
+/* end */
+
+--------------------
+
+have_header: checking for method.h... -------------------- yes
+
+"gcc -E -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0/x86_64-linux -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0/ruby/backward -I/home/viuginick/.rbenv/versions/2.3.0/include/ruby-2.3.0 -I. -I/home/viuginick/.gem/ruby/2.3.0/gems/debase-ruby_core_source-0.9.2/lib/debase/ruby_core_source/ruby-2.3.0-p0  -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-parentheses -Wno-long-long -Wno-missing-field-initializers -Wunused-variable -Wpointer-arith -Wwrite-strings -Wdeclaration-after-statement -Wimplicit-function-declaration -Wdeprecated-declarations -Wno-packed-bitfield-compat -Wno-maybe-uninitialized  conftest.c -o conftest.i"
+checked program was:
+/* begin */
+1: #include "ruby.h"
+2: 
+3: #include <method.h>
+/* end */
+
+--------------------
+
