@@ -1,0 +1,10 @@
+require "bundler/gem_tasks"
+require "rake/extensiontask"
+
+task :build => :compile
+
+Rake::ExtensionTask.new("arg_scanner") do |ext|
+  ext.lib_dir = "lib/arg_scanner"
+end
+
+task :default => [:clobber, :compile, :spec]
