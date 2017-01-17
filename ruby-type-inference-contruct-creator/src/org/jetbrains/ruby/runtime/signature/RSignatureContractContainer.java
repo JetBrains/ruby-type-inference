@@ -36,8 +36,6 @@ public class RSignatureContractContainer {
     public void addSignature(RSignature signature){
         RMethodInfo currInfo = new RMethodInfo(signature);
 
-        //org.jetbrains.ruby.runtime.signature.fetch();
-
         if(contracts.containsKey(currInfo)){
             contracts.get(currInfo).addRSignature(signature);
         }
