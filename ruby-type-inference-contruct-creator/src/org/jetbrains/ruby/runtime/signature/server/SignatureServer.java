@@ -1,8 +1,7 @@
-package org.jetbrains.ruby.runtime.SignatureServer;
+package org.jetbrains.ruby.runtime.signature.server;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
-import org.jetbrains.ruby.runtime.ServerResponseBean;
 import org.jetbrains.ruby.runtime.signature.RSignature;
 import org.jetbrains.ruby.runtime.signature.RSignatureContractContainer;
 

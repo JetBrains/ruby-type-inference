@@ -1,4 +1,4 @@
-package org.jetbrains.ruby.runtime.SignatureClient;
+package org.jetbrains.ruby.runtime.signature.server;
 
 import javax.swing.*;
 import java.io.BufferedReader;
