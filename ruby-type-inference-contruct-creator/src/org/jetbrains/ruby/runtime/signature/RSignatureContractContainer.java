@@ -1,8 +1,6 @@
 package org.jetbrains.ruby.runtime.signature;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class RSignatureContractContainer {
     private Map<RMethodInfo, RSignatureContract> contracts;
@@ -18,21 +16,25 @@ public class RSignatureContractContainer {
 
     public void print()
     {
-        for (RMethodInfo rMethodInfo : contracts.keySet()) {
-            System.out.println("-----------");
-            System.out.println("Number of calls:" + contracts.get(rMethodInfo).getCounter());
-            System.out.println(rMethodInfo.toString());
-            System.out.println(rMethodInfo.getPath());
-            System.out.println(rMethodInfo.getLine());
-            contracts.get(rMethodInfo).minimization();
-            List<String> presentation = contracts.get(rMethodInfo).getStringPresentation();
-            if(presentation.size() > 1){
-                System.out.println("OurClient");
-            }
-            for (String s : presentation) {
-                System.out.println(s);
-            }
-        }
+        contracts.entrySet().stream()
+                .sorted(Collections.reverseOrder(Comparator.comparingInt(entry -> entry.getValue().getCounter())))
+                .forEachOrdered(entry -> {
+                    final RMethodInfo key = entry.getKey();
+                    final RSignatureContract value = entry.getValue();
+                    System.out.println("-----------");
+                    System.out.println("Number of calls:" + value.getCounter());
+                    System.out.println(key.toString());
+                    System.out.println(key.getPath());
+                    System.out.println(key.getLine());
+                    contracts.get(key).minimization();
+                    List<String> presentation = value.getStringPresentation();
+                    if (presentation.size() > 1) {
+                        System.out.println("OurClient");
+                    }
+                    for (String s : presentation) {
+                        System.out.println(s);
+                    }
+                });
     }
 
     public void addSignature(RSignature signature){
