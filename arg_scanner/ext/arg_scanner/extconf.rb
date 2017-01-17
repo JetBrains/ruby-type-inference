@@ -25,7 +25,7 @@ if ENV['debase_debug']
 end
 
 dir_config("ruby")
-if !Debase::RubyCoreSource.create_makefile_with_core(hdrs, "arg_scanner")
+if !Debase::RubyCoreSource.create_makefile_with_core(hdrs, "arg_scanner/arg_scanner")
   STDERR.print("Makefile creation failed\n")
   STDERR.print("*************************************************************\n\n")
   STDERR.print("  NOTE: If your headers were not found, try passing\n")
