@@ -30,7 +30,7 @@ public class SignatureServer {
                             return;
                         }
 
-                        ServerResponseBean result = new Gson().fromJson(new InputStreamReader(socket.getInputStream()), ServerResponseBean.class);
+                        ServerResponseBean result = new Gson().fromJson(currString, ServerResponseBean.class);
                         RSignature currSignature = new RSignature(result);
 
                         mainContainer.addSignature(currSignature);
