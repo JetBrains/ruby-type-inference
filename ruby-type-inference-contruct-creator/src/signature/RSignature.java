@@ -1,8 +1,10 @@
 package signature;
 
-import org.json.simple.JSONObject;
+import SignatureServer.ServerResponseBean;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 public class RSignature {
     private final String myMethodName;
@@ -20,16 +22,16 @@ public class RSignature {
     private final List<String> myKeyWords;
     private String myReturnTypeName;
 
-    public RSignature (JSONObject object) {
-        this.myMethodName = (String) object.get("method_name");
-        this.myReceiverName = (String) object.get("receiver_name");
-        this.myGemName = (String) object.get("gem_name");
-        this.myGemVersion = (String) object.get("gem_version");
-        this.myVisibility = (String) object.get("visibility");
-        this.myReturnTypeName = (String) object.get("return_type_name");
-        this.myCallArgc = Integer.parseInt((String)object.get("call_info_argc"));
+    public RSignature (ServerResponseBean bean) {
+        this.myMethodName = bean.method_name;
+        this.myReceiverName = bean.receiver_name;
+        this.myGemName = bean.gem_name;
+        this.myGemVersion = bean.gem_version;
+        this.myVisibility = bean.visibility;
+        this.myReturnTypeName = bean.return_type_name;
+        this.myCallArgc = bean.call_info_argc;
 
-        String argsTypeName = (String)object.get("args_type_name");
+        String argsTypeName = bean.args_type_name;
         this.myArgsTypeName = new LinkedList<>();
         if(!argsTypeName.equals("")) {
             for (String argumentName : Arrays.asList(argsTypeName.split("\\s*;\\s*"))) {
@@ -37,7 +39,7 @@ public class RSignature {
             }
         }
 
-        String argsInfo = (String)object.get("args_info");
+        String argsInfo = bean.args_info;
         this.myArgsInfo = new LinkedList<>();
         if(!argsInfo.equals("")) {
             for (String argument : Arrays.asList(argsInfo.split("\\s*;\\s*"))) {
@@ -45,15 +47,15 @@ public class RSignature {
             }
         }
 
-        String kwInfo = (String)object.get("call_info_kw_args");
+        String kwInfo = bean.call_info_kw_args;
         this.myKeyWords = new LinkedList<>();
         if(!kwInfo.equals("")){
             for (String kwArg : Arrays.asList(kwInfo.split("\\s*,\\s*"))) {
                 this.myKeyWords.add(kwArg);
             }
         }
-        this.myPath = (String) object.get("path");
-        this.myLineNumber = Integer.parseInt((String)object.get("lineno"));
+        this.myPath = bean.path;
+        this.myLineNumber = bean.lineno;
     }
     public RSignature(final String methodName, final String receiverName, final List<String> argsTypeName,
                       final String gemName, final String gemVersion, final String returnTypeName, final String visibility, final List<RMethodArgument> argsInfo, int argc, final List<String> keyWords, final String path, final Integer lineno) {
