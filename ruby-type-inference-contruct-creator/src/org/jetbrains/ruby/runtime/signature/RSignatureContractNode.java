@@ -5,13 +5,10 @@ import java.util.Set;
 
 public class RSignatureContractNode {
     private Integer argIndex;
+
     private String nodeType;
 
     private HashMap<String, RSignatureContractNode> typeTransitions;
-
-    public Integer getIndex() {
-        return this.argIndex;
-    }
 
     public RSignatureContractNode goByTypeSymbol(String typeName)
     {

@@ -10,12 +10,16 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class SignatureServer {
 
     public static void main(String[] args) throws IOException {
 
         RSignatureContractContainer mainContainer = new RSignatureContractContainer();
+
+        Path file = Paths.get("callStatLog.txt");
 
         try (ServerSocket listener = new ServerSocket(7777)) {
             //noinspection InfiniteLoopStatement
@@ -28,7 +32,7 @@ public class SignatureServer {
                     try {
                         System.out.println(currString);
                         if (currString.equals("break connection")) {
-                            mainContainer.print();
+                            mainContainer.print(file);
                             break;
                         }
 

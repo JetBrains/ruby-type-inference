@@ -1,5 +1,9 @@
 package org.jetbrains.ruby.runtime.signature;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 
 public class RSignatureContractContainer {
@@ -10,27 +14,37 @@ public class RSignatureContractContainer {
     }
 
 
-    public void print()
+    public void print(Path file)
     {
         contracts.entrySet().stream()
                 .sorted(Collections.reverseOrder(Comparator.comparingInt(entry -> entry.getValue().getCounter())))
                 .forEachOrdered(entry -> {
                     final RMethodInfo key = entry.getKey();
                     final RSignatureContract value = entry.getValue();
-                    System.out.println("-----------");
-                    System.out.println("Number of calls:" + value.getCounter());
-                    System.out.println(key.toString());
-                    System.out.println(key.getPath());
-                    System.out.println(key.getLine());
+
+                    List<String> lines = new ArrayList();
+                    lines.add("-----------");
+                    lines.add("Number of calls:" + value.getCounter());
+                    lines.add(key.toString());
+                    lines.add(key.getPath());
+                    lines.add(Integer.toString(key.getLine()));
                     contracts.get(key).minimization();
-                    List<String> presentation = value.getStringPresentation();
-                    if (presentation.size() > 1) {
-                        System.out.println("OurClient");
+                    lines.addAll(value.getStringPresentation());
+
+                    if(lines.size() > 9)
+                    {
+                        lines.add("OurClient");
                     }
-                    for (String s : presentation) {
-                        System.out.println(s);
+
+                    try {
+                        Files.write(file, lines, StandardOpenOption.APPEND);
+                    } catch (IOException e)
+                    {
+                        System.out.println("IOException");
                     }
+
                 });
+        System.out.println("Finished");
     }
 
     public void addSignature(RSignature signature){

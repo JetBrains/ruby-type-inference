@@ -112,7 +112,7 @@ public class RSignatureContract {
             termNode = this.createTermNode(returnType);
         }
 
-        if(signature.getArgsTypeName().size() == 1 && signature.getArgsTypeName().get(0).length() == 0)
+        if(signature.getArgsTypeName().size() == 0)
         {
             this.startContractNode.addLink("no arguments", termNode);
             return;
@@ -215,7 +215,7 @@ public class RSignatureContract {
         List<String> answer = new ArrayList<>();
 
         Queue<Pair<RSignatureContractNode, String>> tmp = new LinkedList<>();
-        tmp.add(new Pair(this.startContractNode, ""));
+        tmp.add(new Pair(this.startContractNode, null));
 
         while (!tmp.isEmpty())
         {
@@ -232,7 +232,7 @@ public class RSignatureContract {
 
             if(currNode.getNodeType() != null)
             {
-                answer.add(currString + " -> " + currNode.getNodeType());
+                answer.add("(" + currString + ")" + " -> " + currNode.getNodeType());
                 continue;
             }
 
@@ -249,7 +249,14 @@ public class RSignatureContract {
                 }
                 else
                 {
-                    newVertexes.put(tmpNode, currString + ";" + transitionType);
+                    if(transitionType.equals("no arguments"))
+                        newVertexes.put(tmpNode, "");
+                    else {
+                        if (currString == null)
+                            newVertexes.put(tmpNode, transitionType);
+                        else
+                            newVertexes.put(tmpNode, currString + ";" + transitionType);
+                    }
                 }
             }
             for (RSignatureContractNode node : newVertexes.keySet()) {
