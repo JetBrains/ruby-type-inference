@@ -42,6 +42,11 @@ public class RSignatureContract {
         return termNodes.get(type);
     }
 
+    private RSignatureContractNode createJoinTypeTermNode()
+    {
+        return new RSignatureContractNode("join type node");
+    }
+
     public RSignatureContractNode getTermNode(String type)
     {
         return termNodes.get(type);
@@ -114,7 +119,7 @@ public class RSignatureContract {
 
         if(signature.getArgsTypeName().size() == 0)
         {
-            this.startContractNode.addLink("no arguments", termNode);
+            this.startContractNode.addLink("no arguments", termNode, returnType);
             return;
         }
 
@@ -125,16 +130,30 @@ public class RSignatureContract {
 
             if(i == signature.getArgsTypeName().size())
             {
-
-                currNode.addLink(type, termNode);
+                if(currNode.goByTypeSymbol(type) != null && currNode.goByTypeSymbol(type) != termNode)
+                {
+                    RSignatureContractNode oldTerm = currNode.goByTypeSymbol(type);
+                    if(oldTerm.getNodeType().equals("join type node")){
+                        oldTerm.addNodeType(returnType);
+                    }
+                    else
+                    {
+                        RSignatureContractNode newTerm = createJoinTypeTermNode();
+                        newTerm.addNodeType(oldTerm.getNodeType());
+                        newTerm.addNodeType(returnType);
+                        currNode.addLink(type, newTerm, returnType);
+                    }
+                }
+                else
+                    currNode.addLink(type, termNode, returnType);
                 return;
             }
 
 
             if(currNode.goByTypeSymbol(type) == null)
             {
-                RSignatureContractNode newNode = this.createNodeAndAddToLevels(i);//new RSignatureContractNode(i);
-                currNode.addLink(type, newNode);
+                RSignatureContractNode newNode = this.createNodeAndAddToLevels(i);
+                currNode.addLink(type, newNode, returnType);
                 currNode = newNode;
             }
             else
@@ -200,7 +219,7 @@ public class RSignatureContract {
                 for (RSignatureContractNode node : prevLevel) {
                     for (String type : node.getTransitionKeys()) {
                         RSignatureContractNode child = node.goByTypeSymbol(type);
-                        node.addLink(type, representatives.get(child));
+                        node.addLink(type, representatives.get(child), node.getReachableTerm());
                     }
                 }
             }
@@ -232,8 +251,15 @@ public class RSignatureContract {
 
             if(currNode.getNodeType() != null)
             {
-                answer.add("(" + currString + ")" + " -> " + currNode.getNodeType());
-                continue;
+                if(currNode.getNodeType().equals("join type node"))
+                {
+                    answer.add("(" + currString + ")" + " -> " + currNode.getNodeTypesStringPresentation());
+                    continue;
+                }
+                else {
+                    answer.add("(" + currString + ")" + " -> " + currNode.getNodeType());
+                    continue;
+                }
             }
 
             Map <RSignatureContractNode, String> newVertexes = new HashMap<>();

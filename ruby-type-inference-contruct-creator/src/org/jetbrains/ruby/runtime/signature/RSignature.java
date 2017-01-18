@@ -237,22 +237,22 @@ public class RSignature {
             }
         }
 
-        if(myCallArgc != 0 || myKeyWords.size() != 0)
-        {
-            System.out.println("Incorrect ArgC");
-        }
-        for (RMethodArgument argument : myArgsInfo) {
-            if(argument.getArgModifier() == RMethodArgument.ArgModifier.req && !argument.getIsGiven())
-            {
-                System.out.println("Req not given");
-                break;
-            }
-            if(argument.getArgModifier() == RMethodArgument.ArgModifier.keyreq && !argument.getIsGiven())
-            {
-                System.out.println("Keyreq not given");
-                break;
-            }
-        }
+//        if(myCallArgc != 0 || myKeyWords.size() != 0)
+//        {
+//            System.out.println("Incorrect ArgC");
+//        }
+//        for (RMethodArgument argument : myArgsInfo) {
+//            if(argument.getArgModifier() == RMethodArgument.ArgModifier.req && !argument.getIsGiven())
+//            {
+//                System.out.println("Req not given");
+//                break;
+//            }
+//            if(argument.getArgModifier() == RMethodArgument.ArgModifier.keyreq && !argument.getIsGiven())
+//            {
+//                System.out.println("Keyreq not given");
+//                break;
+//            }
+//        }
 
         //RMethodArgument argument = myArgsInfo.get(restPosition);
     }
