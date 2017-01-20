@@ -28,6 +28,8 @@ public class RSignatureContractContainer {
                     lines.add(key.toString());
                     lines.add(key.getPath());
                     lines.add(Integer.toString(key.getLine()));
+                    lines.add("Mask:" + Integer.toString(value.getStartNode().getMask(), 2));
+
                     contracts.get(key).minimization();
                     lines.addAll(value.getStringPresentation());
 

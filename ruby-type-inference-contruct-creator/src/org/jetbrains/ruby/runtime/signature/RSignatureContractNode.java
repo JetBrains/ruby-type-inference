@@ -1,6 +1,9 @@
 package org.jetbrains.ruby.runtime.signature;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.StringJoiner;
 
 public class RSignatureContractNode {
     private Integer argIndex;
@@ -9,6 +12,7 @@ public class RSignatureContractNode {
     private String nodeType;
 
     private String reachableTerm;
+    private int mask = 0;
 
     private HashMap<String, RSignatureContractNode> typeTransitions;
 
@@ -34,6 +38,14 @@ public class RSignatureContractNode {
     public String getNodeType()
     {
         return this.nodeType;
+    }
+
+    public int getMask() {
+        return this.mask;
+    }
+
+    public void setMask(int mask) {
+        this.mask = mask;
     }
     public void addNodeType(String type)
     {
@@ -61,6 +73,7 @@ public class RSignatureContractNode {
     }
 
     public void addLink(final String type, RSignatureContractNode arrivalNode, String returnType) {
+
         this.typeTransitions.put(type, arrivalNode);
 
         if(reachableTerm == null)
@@ -70,5 +83,18 @@ public class RSignatureContractNode {
             if(!reachableTerm.equals(returnType))
                 reachableTerm = null;
         }
+    }
+
+    public void updateMask(String type, String returnType) {
+        int tmpMask = goByTypeSymbol(type).getMask();
+        tmpMask <<= 1;
+
+        if (type.equals(returnType))
+            tmpMask |= 1;
+
+        if (typeTransitions.size() == 1)
+            setMask(tmpMask);
+        else
+            setMask(getMask() & tmpMask);
     }
 }

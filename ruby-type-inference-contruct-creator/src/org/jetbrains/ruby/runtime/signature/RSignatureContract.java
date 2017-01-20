@@ -87,6 +87,9 @@ public class RSignatureContract {
         }
     }
 
+    public RSignatureContractNode getStartNode() {
+        return startContractNode;
+    }
     public String getMethodName() {
         return myMethodName;
     }
@@ -122,6 +125,8 @@ public class RSignatureContract {
             this.startContractNode.addLink("no arguments", termNode, returnType);
             return;
         }
+        Stack<RSignatureContractNode> nodes = new Stack<>();
+        nodes.add(currNode);
 
         for (RMethodArgument argument : signature.getArgsInfo()) {
             String type = argument.getType();
@@ -141,12 +146,11 @@ public class RSignatureContract {
                         RSignatureContractNode newTerm = createJoinTypeTermNode();
                         newTerm.addNodeType(oldTerm.getNodeType());
                         newTerm.addNodeType(returnType);
-                        currNode.addLink(type, newTerm, returnType);
                     }
                 }
                 else
                     currNode.addLink(type, termNode, returnType);
-                return;
+                break;
             }
 
 
@@ -160,6 +164,16 @@ public class RSignatureContract {
                 currNode = currNode.goByTypeSymbol(type);
 
             i++;
+            nodes.add(currNode);
+        }
+
+        for (int j = signature.getArgsInfo().size() - 1; j >= 0; j--) {
+            RMethodArgument argument = signature.getArgsInfo().get(j);
+            String type = argument.getType();
+            if (!argument.getIsGiven())
+                type = "-";
+            currNode = nodes.pop();
+            currNode.updateMask(type, returnType);
         }
     }
 

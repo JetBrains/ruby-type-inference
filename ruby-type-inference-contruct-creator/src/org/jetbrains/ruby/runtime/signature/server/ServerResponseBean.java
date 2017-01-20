@@ -2,6 +2,7 @@ package org.jetbrains.ruby.runtime.signature.server;
 
 public class ServerResponseBean {
     public String method_name;
+    public String call_info_mid;
     public String receiver_name;
     public String gem_name;
     public String gem_version;

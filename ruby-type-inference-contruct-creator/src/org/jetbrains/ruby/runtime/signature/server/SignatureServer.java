@@ -30,7 +30,6 @@ public class SignatureServer {
 
                 while ((currString = br.readLine()) != null) {
                     try {
-                        System.out.println(currString);
                         if (currString.equals("break connection")) {
                             mainContainer.print(file);
                             break;
@@ -39,7 +38,11 @@ public class SignatureServer {
                         ServerResponseBean result = new Gson().fromJson(currString, ServerResponseBean.class);
                         RSignature currSignature = new RSignature(result);
 
-                        mainContainer.addSignature(currSignature);
+                        if (result.call_info_mid.equals(result.method_name)) {
+                            System.out.println(currString);
+                            mainContainer.addSignature(currSignature);
+                        }
+
                     } catch (JsonParseException e) {
                         System.out.println("!" + currString + "!");
                         e.printStackTrace();
