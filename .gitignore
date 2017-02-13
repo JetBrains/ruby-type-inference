@@ -3,3 +3,6 @@ ruby-type-inference-contruct-creator/.idea/
 
 
 out/
+
+lambda-put-handler/target/
+lambda-update-handler/target/

@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>ruby-type-inference</groupId>
-    <artifactId>update-stat-files-periodically</artifactId>
+    <artifactId>lambda-put-handler</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <dependencies>
