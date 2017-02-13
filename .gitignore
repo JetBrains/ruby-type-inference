@@ -1,14 +1,5 @@
-.idea/misc.xml
-.idea/workspace.xml
-.idea/libraries/
-.idea/dataSources.local.xml
-.idea/sqldialects.xml
-.idea/uiDesigner.xml
-
+.idea/
 ruby-type-inference-contruct-creator/.idea/
 
 
 out/
-
-put-stat-file-handler-lambda/target/
-put-stat-file-handler-lambda/put-stat-file-handler.iml
