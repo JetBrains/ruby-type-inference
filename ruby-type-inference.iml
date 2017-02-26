@@ -11,5 +11,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="Maven: com.amazonaws:aws-java-sdk-s3:1.11.0" level="project" />
     <orderEntry type="library" name="Maven: com.amazonaws:aws-java-sdk-core:1.11.0" level="project" />
+    <orderEntry type="module" module-name="ruby-call-signature" />
   </component>
 </module>

@@ -4,6 +4,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.io.StringRef;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,8 +15,11 @@ import org.jetbrains.plugins.ruby.ruby.codeInsight.types.Context;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.RType;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.impl.REmptyType;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.impl.RSymbolTypeImpl;
-import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signature.ParameterInfo;
-import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signature.RSignature;
+import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.ArgumentInfo;
+import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.Visibility;
+import ruby.codeInsight.types.signature.ParameterInfo;
+import ruby.codeInsight.types.signature.RSignature;
+import ruby.codeInsight.types.signature.RVisibility;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -124,13 +128,43 @@ public abstract class RSignatureManager {
                                                              signature.getMethodName(),
                                                              Type.INSTANCE_METHOD,
                                                              classSymbol,
-                                                             signature.getVisibility(),
+                                                             castRVisibilityToVisibility(signature.getVisibility()),
                                                              signature.getArgsInfo().stream()
-                                                                     .map(ParameterInfo::toArgumentInfo)
+                                                                     .map(RSignatureManager::castParameterInfoToArgumentInfo)
                                                                      .collect(Collectors.toList())))
                 .collect(Collectors.toList()));
 
         return classSymbol;
+    }
+
+    @NotNull
+    private static Visibility castRVisibilityToVisibility(@NotNull final RVisibility visibility) {
+        return Visibility.values()[visibility.ordinal()];
+    }
+
+    @NotNull
+    private static ArgumentInfo castParameterInfoToArgumentInfo(@NotNull final ParameterInfo param) {
+        return new ArgumentInfo(StringRef.fromString(param.getName()), castParameterTypeToArgumentType(param.getType()));
+    }
+
+    @NotNull
+    private static ArgumentInfo.Type castParameterTypeToArgumentType(@NotNull final ParameterInfo.Type type) {
+        switch (type) {
+            case REQ:
+            case KEYREQ:
+                return ArgumentInfo.Type.SIMPLE;
+            case OPT:
+            case KEY:
+                return ArgumentInfo.Type.PREDEFINED;
+            case REST:
+                return ArgumentInfo.Type.ARRAY;
+            case KEYREST:
+                return ArgumentInfo.Type.HASH;
+            case BLOCK:
+                return ArgumentInfo.Type.BLOCK;
+            default:
+                throw new IllegalArgumentException();
+        }
     }
 
     private static boolean firstStringCloser(@NotNull final String gemVersion,

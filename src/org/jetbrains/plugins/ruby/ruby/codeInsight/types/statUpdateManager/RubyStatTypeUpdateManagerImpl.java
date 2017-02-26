@@ -13,9 +13,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.gem.GemInfo;
 import org.jetbrains.plugins.ruby.gem.GemManager;
-import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signature.RSignature;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signatureManager.RSignatureManager;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signatureManager.SqliteRSignatureManager;
+import ruby.codeInsight.types.signature.RSignature;
 
 import java.io.*;
 import java.net.URL;

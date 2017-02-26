@@ -14,10 +14,10 @@ import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.SymbolUtil;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.v2.ClassModuleSymbol;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.CoreTypes;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.graph.RSignatureDAG;
-import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signature.ParameterInfo;
-import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signature.RSignature;
-import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signature.RSignatureBuilder;
-import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.Visibility;
+import ruby.codeInsight.types.signature.ParameterInfo;
+import ruby.codeInsight.types.signature.RSignature;
+import ruby.codeInsight.types.signature.RSignatureBuilder;
+import ruby.codeInsight.types.signature.RVisibility;
 
 import java.net.URL;
 import java.sql.*;
@@ -323,7 +323,7 @@ public class SqliteRSignatureManager extends RSignatureManager {
             while (resultSet.next()) {
                 final RSignature signature = new RSignatureBuilder(resultSet.getString("method_name"))
                         .setReceiverName(resultSet.getString("receiver_name"))
-                        .setVisibility(Visibility.valueOf(resultSet.getString("visibility")))
+                        .setVisibility(RVisibility.valueOf(resultSet.getString("visibility")))
                         .setArgsInfo(parseArgsInfo(resultSet.getString("args_info")))
                         .setArgsTypeName(StringUtil.splitHonorQuotes(resultSet.getString("args_type_name"), ';'))
                         .setGemName(resultSet.getString("gem_name"))

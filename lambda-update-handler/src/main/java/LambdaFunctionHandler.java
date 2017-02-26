@@ -12,9 +12,10 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.ruby.runtime.signature.RestrictedParameterInfo;
-import org.jetbrains.ruby.runtime.signature.RestrictedRSignature;
-import org.jetbrains.ruby.runtime.signature.RestrictedVisibility;
+
+import ruby.codeInsight.types.signature.ParameterInfo;
+import ruby.codeInsight.types.signature.RSignature;
+import ruby.codeInsight.types.signature.RVisibility;
 
 import java.io.*;
 import java.sql.*;
@@ -33,10 +34,10 @@ public class LambdaFunctionHandler implements RequestHandler<S3Event, Object> {
         try {
             final List<Pair<String, String>> gemNamesAndVersions = getGemNamesAndVersions();
             for (final Pair<String, String> gemNameAndVersion : gemNamesAndVersions) {
-                final List<RestrictedRSignature> signaturesFromDB = getSignaturesFromDB(gemNameAndVersion);
+                final List<RSignature> signaturesFromDB = getSignaturesFromDB(gemNameAndVersion);
                 final String statFileName = String.format("%s-%s.json", gemNameAndVersion.getKey(),
                                                                         gemNameAndVersion.getValue());
-                final List<RestrictedRSignature> signaturesFromStatFile =
+                final List<RSignature> signaturesFromStatFile =
                         myClient.doesObjectExist(EXPORT_BUCKET_NAME, statFileName)
                                 ? getSignaturesFromStatFile(EXPORT_BUCKET_NAME, statFileName)
                                 : new ArrayList<>();
@@ -54,7 +55,7 @@ public class LambdaFunctionHandler implements RequestHandler<S3Event, Object> {
     }
 
     @NotNull
-    private List<RestrictedRSignature> getSignaturesFromDB(@NotNull final Pair<String, String> gemNameAndVersion)
+    private List<RSignature> getSignaturesFromDB(@NotNull final Pair<String, String> gemNameAndVersion)
             throws SQLException, ClassNotFoundException {
         final String sql = String.format("SELECT * FROM rsignature WHERE gem_name = '%s' AND gem_version = '%s'",
                                          gemNameAndVersion.getKey(), gemNameAndVersion.getValue());
@@ -62,14 +63,14 @@ public class LambdaFunctionHandler implements RequestHandler<S3Event, Object> {
     }
 
     @NotNull
-    private List<RestrictedRSignature> getSignaturesFromStatFile(@NotNull final String bucketName,
+    private List<RSignature> getSignaturesFromStatFile(@NotNull final String bucketName,
                                                                  @NotNull final String statFileName)
             throws IOException {
         final GetObjectRequest request = new GetObjectRequest(bucketName, statFileName);
         final S3Object s3object = myClient.getObject(request);
         final Gson gson = new Gson();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(s3object.getObjectContent()))) {
-            return gson.fromJson(reader, new TypeToken<List<RestrictedRSignature>>() {}.getType());
+            return gson.fromJson(reader, new TypeToken<List<RSignature>>() {}.getType());
         }
     }
 
@@ -90,7 +91,7 @@ public class LambdaFunctionHandler implements RequestHandler<S3Event, Object> {
         return gemAndVersions;
     }
 
-    private void putSignaturesToServer(@NotNull final List<RestrictedRSignature> signatures,
+    private void putSignaturesToServer(@NotNull final List<RSignature> signatures,
                                        @NotNull final String statFileName) {
         final Gson gson = new GsonBuilder().create();
         final String json = gson.toJson(signatures);
@@ -101,16 +102,16 @@ public class LambdaFunctionHandler implements RequestHandler<S3Event, Object> {
     }
 
     @NotNull
-    private List<RestrictedRSignature> executeQuery(@NotNull final String sql) throws SQLException, ClassNotFoundException {
-        final List<RestrictedRSignature> signatures = new ArrayList<>();
+    private List<RSignature> executeQuery(@NotNull final String sql) throws SQLException, ClassNotFoundException {
+        final List<RSignature> signatures = new ArrayList<>();
         final Connection connection = getConnectionToDB();
         try (final Statement statement = connection.createStatement()) {
             final ResultSet resultSet = statement.executeQuery(sql);
             while (resultSet.next()) {
-                final RestrictedRSignature signature = new RestrictedRSignature(
+                final RSignature signature = new RSignature(
                         resultSet.getString("method_name"),
                         resultSet.getString("receiver_name"),
-                        RestrictedVisibility.valueOf(resultSet.getString("visibility")),
+                        RVisibility.valueOf(resultSet.getString("visibility")),
                         parseArgsInfo(resultSet.getString("args_info")),
                         Arrays.asList(resultSet.getString("args_type_name").split(";")),
                         resultSet.getString("gem_name"),
@@ -125,12 +126,12 @@ public class LambdaFunctionHandler implements RequestHandler<S3Event, Object> {
     }
 
     @NotNull
-    private static List<RestrictedParameterInfo> parseArgsInfo(@NotNull final String argsInfoSerialized) {
+    private static List<ParameterInfo> parseArgsInfo(@NotNull final String argsInfoSerialized) {
         return Arrays.stream(argsInfoSerialized.split(";"))
                 .map(argInfo -> Arrays.asList(argInfo.split(",")))
                 .filter(list -> list.size() == 3)
-                .map(argInfo -> new RestrictedParameterInfo(argInfo.get(1),
-                        RestrictedParameterInfo.Type.valueOf(argInfo.get(0).toUpperCase()),
+                .map(argInfo -> new ParameterInfo(argInfo.get(1),
+                        ParameterInfo.Type.valueOf(argInfo.get(0).toUpperCase()),
                         argInfo.get(2)))
                 .collect(Collectors.toList());
     }

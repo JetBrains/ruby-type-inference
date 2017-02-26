@@ -1,7 +1,6 @@
-package org.jetbrains.plugins.ruby.ruby.codeInsight.types.signature;
+package ruby.codeInsight.types.signature;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.Visibility;
 
 import java.util.List;
 
@@ -11,7 +10,7 @@ public class RSignature {
     @NotNull
     private final String myReceiverName;
     @NotNull
-    private final Visibility myVisibility;
+    private final RVisibility myVisibility;
     @NotNull
     private final List<ParameterInfo> myArgsInfo;
     @NotNull
@@ -24,9 +23,14 @@ public class RSignature {
     private String myReturnTypeName;
     private final boolean myIsLocal;
 
-    public RSignature(@NotNull final String methodName, @NotNull final String receiverName, @NotNull final Visibility visibility,
-                      @NotNull final List<ParameterInfo> argsInfo, @NotNull final List<String> argsTypeName,
-                      @NotNull final String gemName, @NotNull final String gemVersion, @NotNull final String returnTypeName,
+    public RSignature(@NotNull final String methodName,
+                      @NotNull final String receiverName,
+                      @NotNull final RVisibility visibility,
+                      @NotNull final List<ParameterInfo> argsInfo,
+                      @NotNull final List<String> argsTypeName,
+                      @NotNull final String gemName,
+                      @NotNull final String gemVersion,
+                      @NotNull final String returnTypeName,
                       final boolean isLocal) {
         myMethodName = methodName;
         myReceiverName = receiverName;
@@ -50,7 +54,7 @@ public class RSignature {
     }
 
     @NotNull
-    public Visibility getVisibility() {
+    public RVisibility getVisibility() {
         return myVisibility;
     }
 

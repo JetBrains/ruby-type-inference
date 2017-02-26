@@ -1,9 +1,8 @@
-package org.jetbrains.ruby.runtime.signature;
+package ruby.codeInsight.types.signature;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public class RestrictedParameterInfo {
+public class ParameterInfo {
     @NotNull
     private final String myName;
     @NotNull
@@ -11,8 +10,8 @@ public class RestrictedParameterInfo {
     @NotNull
     private final String myDefaultValueTypeName;
 
-    public RestrictedParameterInfo(@NotNull final String name, @NotNull final Type type,
-                                   @NotNull final String defaultValueTypeName) {
+    public ParameterInfo(@NotNull final String name, @NotNull final Type type,
+                         @NotNull final String defaultValueTypeName) {
         this.myName = name;
         this.myType = type;
         this.myDefaultValueTypeName = defaultValueTypeName;
@@ -34,15 +33,16 @@ public class RestrictedParameterInfo {
     }
 
     @Override
-    public boolean equals(@Nullable final Object o) {
+    public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        final RestrictedParameterInfo that = (RestrictedParameterInfo) o;
+        ParameterInfo that = (ParameterInfo) o;
 
         if (!myName.equals(that.myName)) return false;
         if (myType != that.myType) return false;
         return myDefaultValueTypeName.equals(that.myDefaultValueTypeName);
+
     }
 
     @Override

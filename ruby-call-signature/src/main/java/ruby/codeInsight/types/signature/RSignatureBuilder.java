@@ -1,29 +1,27 @@
-package org.jetbrains.plugins.ruby.ruby.codeInsight.types.signature;
+package ruby.codeInsight.types.signature;
 
-import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.ruby.ruby.codeInsight.types.CoreTypes;
-import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.Visibility;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class RSignatureBuilder {
     @NotNull
     private final String myMethodName;
     @NotNull
-    private String myReceiverName = CoreTypes.Object;
+    private String myReceiverName = "Object";
     @NotNull
-    private Visibility myVisibility = Visibility.PUBLIC;
+    private RVisibility myVisibility = RVisibility.PUBLIC;
     @NotNull
-    private List<ParameterInfo> myArgsInfo = ContainerUtilRt.emptyList();
+    private List<ParameterInfo> myArgsInfo = new ArrayList<>();
     @NotNull
-    private List<String> myArgsTypeName = ContainerUtilRt.emptyList();
+    private List<String> myArgsTypeName = new ArrayList<>();
     @NotNull
     private String myGemName = "";
     @NotNull
     private String myGemVersion = "";
     @NotNull
-    private String myReturnTypeName = CoreTypes.Object;
+    private String myReturnTypeName = "Object";
     private boolean myIsLocal = true;
 
     public RSignatureBuilder(@NotNull final String methodName) {
@@ -37,7 +35,7 @@ public class RSignatureBuilder {
     }
 
     @NotNull
-    public RSignatureBuilder setVisibility(@NotNull final Visibility visibility) {
+    public RSignatureBuilder setVisibility(@NotNull final RVisibility visibility) {
         myVisibility = visibility;
         return this;
     }
@@ -73,7 +71,7 @@ public class RSignatureBuilder {
     }
 
     @NotNull
-    public RSignatureBuilder setIsLocal(@NotNull final boolean isLocal) {
+    public RSignatureBuilder setIsLocal(final boolean isLocal) {
         myIsLocal = isLocal;
         return this;
     }

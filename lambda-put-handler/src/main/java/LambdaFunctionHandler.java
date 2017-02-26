@@ -10,7 +10,7 @@ import com.amazonaws.services.s3.model.S3Object;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.ruby.runtime.signature.RestrictedRSignature;
+import ruby.codeInsight.types.signature.RSignature;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -35,7 +35,7 @@ public class LambdaFunctionHandler implements RequestHandler<S3Event, Object> {
         final String bucketName = record.getS3().getBucket().getName();
         final String statFileName = record.getS3().getObject().getKey();
         try {
-            final List<RestrictedRSignature> signatures = getRestrictedSignaturesFromStatFile(bucketName, statFileName);
+            final List<RSignature> signatures = getRestrictedSignaturesFromStatFile(bucketName, statFileName);
             insertSignaturesToStorage(signatures);
             myClient.deleteObject(bucketName, statFileName);
         } catch (IOException | SQLException | ClassNotFoundException e) {
@@ -47,18 +47,18 @@ public class LambdaFunctionHandler implements RequestHandler<S3Event, Object> {
     }
 
     @NotNull
-    private List<RestrictedRSignature> getRestrictedSignaturesFromStatFile(@NotNull final String bucketName,
-                                                                           @NotNull final String statFileName)
+    private List<RSignature> getRestrictedSignaturesFromStatFile(@NotNull final String bucketName,
+                                                                 @NotNull final String statFileName)
             throws IOException {
         final GetObjectRequest request = new GetObjectRequest(bucketName, statFileName);
         final S3Object s3object = myClient.getObject(request);
         final Gson gson = new Gson();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(s3object.getObjectContent()))) {
-            return gson.fromJson(reader, new TypeToken<List<RestrictedRSignature>>() {}.getType());
+            return gson.fromJson(reader, new TypeToken<List<RSignature>>() {}.getType());
         }
     }
 
-    private static void insertSignaturesToStorage(@NotNull final List<RestrictedRSignature> signatures)
+    private static void insertSignaturesToStorage(@NotNull final List<RSignature> signatures)
             throws SQLException, ClassNotFoundException {
         final List<String> sqls = signatures.stream()
                 .map(LambdaFunctionHandler::signatureToSqlString)
@@ -72,7 +72,7 @@ public class LambdaFunctionHandler implements RequestHandler<S3Event, Object> {
     }
 
     @NotNull
-    private static String signatureToSqlString(@NotNull final RestrictedRSignature signature) {
+    private static String signatureToSqlString(@NotNull final RSignature signature) {
         final String argsInfoSerialized = signature.getArgsInfo().stream()
                 .map(argInfo -> String.join(",", argInfo.getType().toString().toLowerCase(), argInfo.getName(),
                         argInfo.getDefaultValueTypeName()))

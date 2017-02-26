@@ -5,6 +5,7 @@
       <module fileurl="file://$PROJECT_DIR$/arg_scanner/arg_scanner.iml" filepath="$PROJECT_DIR$/arg_scanner/arg_scanner.iml" />
       <module fileurl="file://$PROJECT_DIR$/lambda-put-handler/lambda-put-handler.iml" filepath="$PROJECT_DIR$/lambda-put-handler/lambda-put-handler.iml" />
       <module fileurl="file://$PROJECT_DIR$/lambda-update-handler/lambda-update-handler.iml" filepath="$PROJECT_DIR$/lambda-update-handler/lambda-update-handler.iml" />
+      <module fileurl="file://$PROJECT_DIR$/ruby-call-signature/ruby-call-signature.iml" filepath="$PROJECT_DIR$/ruby-call-signature/ruby-call-signature.iml" />
       <module fileurl="file://$PROJECT_DIR$/ruby-stat-collector/ruby-stat-collector.iml" filepath="$PROJECT_DIR$/ruby-stat-collector/ruby-stat-collector.iml" />
       <module fileurl="file://$PROJECT_DIR$/ruby-type-inference.iml" filepath="$PROJECT_DIR$/ruby-type-inference.iml" />
       <module fileurl="file://$PROJECT_DIR$/ruby-type-inference-contruct-creator/ruby-type-inference-contruct-creator.iml" filepath="$PROJECT_DIR$/ruby-type-inference-contruct-creator/ruby-type-inference-contruct-creator.iml" />
