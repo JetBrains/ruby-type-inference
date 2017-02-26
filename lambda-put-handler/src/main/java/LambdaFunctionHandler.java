@@ -2,43 +2,35 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.S3Event;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.event.S3EventNotification.S3EventNotificationRecord;
-import com.amazonaws.services.s3.model.GetObjectRequest;
-import com.amazonaws.services.s3.model.S3Object;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import org.jetbrains.annotations.NotNull;
 import ruby.codeInsight.types.signature.RSignature;
+import ruby.codeInsight.types.storage.server.RSignatureStorageServer;
+import ruby.codeInsight.types.storage.server.RSignatureStorageServerImpl;
 
-import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.sql.Connection;
-import java.sql.DriverManager;
+import java.net.URL;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Properties;
 
 public class LambdaFunctionHandler implements RequestHandler<S3Event, Object> {
-    @NotNull
-    private final AmazonS3 myClient = new AmazonS3Client();
-
     @Override
     public Object handleRequest(@NotNull final S3Event event, @NotNull final Context context) {
         final LambdaLogger logger = context.getLogger();
         logger.log("Input: " + event);
-
-        final S3EventNotificationRecord record = event.getRecords().get(0);
-        final String bucketName = record.getS3().getBucket().getName();
-        final String statFileName = record.getS3().getObject().getKey();
+        final String statFileName = event.getRecords().get(0).getS3().getObject().getKey();
         try {
-            final List<RSignature> signatures = getRestrictedSignaturesFromStatFile(bucketName, statFileName);
-            insertSignaturesToStorage(signatures);
-            myClient.deleteObject(bucketName, statFileName);
-        } catch (IOException | SQLException | ClassNotFoundException e) {
+            final Properties properties = getProperties();
+            final RSignatureStorageServer server = new RSignatureStorageServerImpl(
+                    properties.getProperty("host"), properties.getProperty("port"),
+                    properties.getProperty("login"), properties.getProperty("password"),
+                    properties.getProperty("dbName"));
+            final List<RSignature> signatures = server.getSignaturesFromStatFile(statFileName, false);
+            server.insertSignaturesToStorage(signatures);
+            server.deleteStatFile(statFileName, false);
+        } catch (ClassNotFoundException | IOException | SQLException e) {
             logger.log(e.toString());
             return "FAIL";
         }
@@ -47,52 +39,16 @@ public class LambdaFunctionHandler implements RequestHandler<S3Event, Object> {
     }
 
     @NotNull
-    private List<RSignature> getRestrictedSignaturesFromStatFile(@NotNull final String bucketName,
-                                                                 @NotNull final String statFileName)
-            throws IOException {
-        final GetObjectRequest request = new GetObjectRequest(bucketName, statFileName);
-        final S3Object s3object = myClient.getObject(request);
-        final Gson gson = new Gson();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(s3object.getObjectContent()))) {
-            return gson.fromJson(reader, new TypeToken<List<RSignature>>() {}.getType());
+    private static Properties getProperties() throws IOException {
+        final String PROPERTIES_FILE = "aws.properties";
+        final Properties properties = new Properties();
+        final URL propertiesURL = LambdaFunctionHandler.class.getClassLoader().getResource(PROPERTIES_FILE);
+        if (propertiesURL == null) {
+            throw new FileNotFoundException("File " + PROPERTIES_FILE + " not found");
         }
-    }
 
-    private static void insertSignaturesToStorage(@NotNull final List<RSignature> signatures)
-            throws SQLException, ClassNotFoundException {
-        final List<String> sqls = signatures.stream()
-                .map(LambdaFunctionHandler::signatureToSqlString)
-                .collect(Collectors.toList());
-        final Connection connection = getConnectionToDB();
-        try (final Statement statement = connection.createStatement()) {
-            for (final String sql : sqls) {
-                statement.execute(sql);
-            }
-        }
-    }
-
-    @NotNull
-    private static String signatureToSqlString(@NotNull final RSignature signature) {
-        final String argsInfoSerialized = signature.getArgsInfo().stream()
-                .map(argInfo -> String.join(",", argInfo.getType().toString().toLowerCase(), argInfo.getName(),
-                        argInfo.getDefaultValueTypeName()))
-                .collect(Collectors.joining(";"));
-        return String.format("INSERT INTO rsignature values('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', FALSE) " +
-                             "ON CONFLICT DO NOTHING;",  signature.getMethodName(), signature.getReceiverName(),
-                signature.getVisibility(), String.join(";", signature.getArgsTypeName()), argsInfoSerialized,
-                signature.getReturnTypeName(), signature.getGemName(), signature.getGemVersion());
-
-    }
-
-    @NotNull
-    private static Connection getConnectionToDB() throws SQLException, ClassNotFoundException {
-        final String host ="typestatdbinstance.ccmaoqa8spde.eu-central-1.rds.amazonaws.com";
-        final String port = "5432";
-        final String user = "typestatdbuser";
-        final String password = "typestatdbuserpassword";
-        final String name = "typestatdb";
-        final String url = String.format("jdbc:postgresql://%s:%s/%s", host, port, name);
-        Class.forName("org.postgresql.Driver");
-        return DriverManager.getConnection(url, user, password);
+        final String propertiesPath = propertiesURL.getPath();
+        properties.load(new FileInputStream(propertiesPath));
+        return properties;
     }
 }

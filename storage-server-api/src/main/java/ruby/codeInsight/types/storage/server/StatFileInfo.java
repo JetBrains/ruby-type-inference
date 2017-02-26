@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.ruby.ruby.codeInsight.types.statUpdateManager;
+package ruby.codeInsight.types.storage.server;
 
 import org.jetbrains.annotations.NotNull;
 
