@@ -14,7 +14,6 @@ import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.fqn.FQN;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.Symbol;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.SymbolUtil;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.impl.REmptyType;
-import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signatureManager.ProxyCacheRSignatureManager;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signatureManager.RSignatureManager;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signatureManager.SqliteRSignatureManager;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RPossibleCall;
@@ -50,11 +49,11 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
                 return null;
             }
 
-            final RSignatureManager cacheManager = ProxyCacheRSignatureManager.getInstance(call.getProject(),
-                                                                                           signatureManager);
+//            final RSignatureManager cacheManager = ProxyCacheRSignatureManager.getInstance(call.getProject(),
+//                                                                                           signatureManager);
             final Module module = ModuleUtilCore.findModuleForPsiElement(call);
             final String receiverName = StringUtil.notNullize(names.getSecond(), CoreTypes.Object);
-            final List<ParameterInfo> argsInfo = cacheManager.getMethodArgsInfo(methodName, receiverName);
+            final List<ParameterInfo> argsInfo = signatureManager.getMethodArgsInfo(methodName, receiverName);
             final List<List<String>> argsTypeNames;
             try {
                 argsTypeNames = getAllPossibleNormalizedArgsTypeNames(call.getParent(), argsInfo, callArgs);
@@ -68,7 +67,7 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
                             .setArgsInfo(argsInfo)
                             .setArgsTypeName(argsTypeName)
                             .build())
-                    .flatMap(signature -> getReturnTypesBySignature(call.getProject(), module, cacheManager, signature).stream())
+                    .flatMap(signature -> getReturnTypesBySignature(call.getProject(), module, signatureManager, signature).stream())
                     .distinct()
                     .collect(Collectors.toList());
 
