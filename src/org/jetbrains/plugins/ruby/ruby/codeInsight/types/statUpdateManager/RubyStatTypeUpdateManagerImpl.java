@@ -14,6 +14,7 @@ import ruby.codeInsight.types.storage.server.RSignatureStorageServer;
 import ruby.codeInsight.types.storage.server.RSignatureStorageServerImpl;
 import ruby.codeInsight.types.storage.server.StatFileInfo;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
@@ -28,8 +29,14 @@ public class RubyStatTypeUpdateManagerImpl extends RubyStatTypeUpdateManager {
     @Nullable
     private static RubyStatTypeUpdateManager ourInstance;
 
-    @Nullable
-    public static RubyStatTypeUpdateManager getInstance() {
+    @NotNull
+    private final RSignatureManager mySignatureManager = SqliteRSignatureManager.getInstance();
+    @NotNull
+    private final RSignatureStorageServer myServerConnection = new RSignatureStorageServerImpl();
+
+    @NotNull
+    public static RubyStatTypeUpdateManager getInstance()
+            throws SQLException, ClassNotFoundException, FileNotFoundException {
         if (ourInstance == null) {
             ourInstance = new RubyStatTypeUpdateManagerImpl();
         }
@@ -39,21 +46,8 @@ public class RubyStatTypeUpdateManagerImpl extends RubyStatTypeUpdateManager {
 
     @Override
     public void updateLocalStat(@NotNull final Project project, @NotNull final Module module) {
-        final RSignatureStorageServer server;
-        try {
-            server = new RSignatureStorageServerImpl();
-        } catch (SQLException | ClassNotFoundException e) {
-            LOG.error(e);
-            return;
-        }
-
-        final RSignatureManager signatureManager = SqliteRSignatureManager.getInstance();
-        if (signatureManager == null) {
-            return;
-        }
-
         // 1. Get a list of stat files from server
-        final List<StatFileInfo> statFiles = server.getStatFileInfos(true);
+        final List<StatFileInfo> statFiles = myServerConnection.getStatFileInfos(true);
 
         // 2. Get a list of current gems
         final Set<GemInfo> gems = GemManager.getAllGems(module);
@@ -65,7 +59,7 @@ public class RubyStatTypeUpdateManagerImpl extends RubyStatTypeUpdateManager {
 
         // 4. Filter out unwanted files
         neededStatFiles.removeIf(statFile -> {
-            final long localLastModified = signatureManager.getStatFileLastModified(
+            final long localLastModified = mySignatureManager.getStatFileLastModified(
                     statFile.getGemName(), statFile.getGemVersion());
             return statFile.getLastModified() <= localLastModified;
         });
@@ -74,9 +68,10 @@ public class RubyStatTypeUpdateManagerImpl extends RubyStatTypeUpdateManager {
         //    then update last modified time for stat files in the DB table
         for (final StatFileInfo statFile : neededStatFiles) {
             try {
-                final List<RSignature> signatures = server.getSignaturesFromStatFile(statFile.getFullGemName(), true);
-                signatures.forEach(signatureManager::recordSignature);
-                signatureManager.setStatFileLastModified(
+                final List<RSignature> signatures = myServerConnection.getSignaturesFromStatFile(statFile.getFullGemName(),
+                        true);
+                signatures.forEach(mySignatureManager::recordSignature);
+                mySignatureManager.setStatFileLastModified(
                         statFile.getGemName(), statFile.getGemVersion(), statFile.getLastModified());
             } catch (IOException e) {
                 LOG.error(e);
@@ -86,22 +81,9 @@ public class RubyStatTypeUpdateManagerImpl extends RubyStatTypeUpdateManager {
 
     @Override
     public void uploadCollectedStat() {
-        final RSignatureStorageServer server;
-        try {
-            server = new RSignatureStorageServerImpl();
-        } catch (SQLException | ClassNotFoundException e) {
-            LOG.error(e);
-            return;
-        }
-
-        final RSignatureManager signatureManager = SqliteRSignatureManager.getInstance();
-        if (signatureManager == null) {
-            return;
-        }
-
-        final List<RSignature> signatures = signatureManager.getLocalSignatures();
+        final List<RSignature> signatures = mySignatureManager.getLocalSignatures();
         final String statFileName = UUID.randomUUID().toString() + ".json";
-        server.insertSignaturesToStatFile(signatures, statFileName, false);
+        myServerConnection.insertSignaturesToStatFile(signatures, statFileName, false);
     }
 
     @Nullable
@@ -124,6 +106,6 @@ public class RubyStatTypeUpdateManagerImpl extends RubyStatTypeUpdateManager {
                 .get();
     }
 
-    private RubyStatTypeUpdateManagerImpl() {
+    private RubyStatTypeUpdateManagerImpl() throws SQLException, ClassNotFoundException, FileNotFoundException {
     }
 }

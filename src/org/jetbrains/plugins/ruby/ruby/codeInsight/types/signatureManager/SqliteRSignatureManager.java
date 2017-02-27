@@ -19,9 +19,13 @@ import ruby.codeInsight.types.signature.RSignature;
 import ruby.codeInsight.types.signature.RSignatureBuilder;
 import ruby.codeInsight.types.signature.RVisibility;
 
+import java.io.FileNotFoundException;
 import java.net.URL;
 import java.sql.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class SqliteRSignatureManager extends RSignatureManager {
@@ -34,18 +38,16 @@ public class SqliteRSignatureManager extends RSignatureManager {
     @NotNull
     private final Connection myConnection;
 
-    @Nullable
-    public static SqliteRSignatureManager getInstance() {
+    @NotNull
+    public static SqliteRSignatureManager getInstance()
+            throws SQLException, ClassNotFoundException, FileNotFoundException {
         if (ourInstance == null) {
-            try {
-                final URL dbURL = SqliteRSignatureManager.class.getClassLoader().getResource("CallStat.db");
-                if (dbURL != null) {
-                    ourInstance = new SqliteRSignatureManager(dbURL.getPath());
-                }
-            } catch (ClassNotFoundException | SQLException e) {
-                LOG.info(e);
-                return null;
+            final URL dbURL = SqliteRSignatureManager.class.getClassLoader().getResource("CallStat.db");
+            if (dbURL == null) {
+                throw new FileNotFoundException("CallStat database not found");
             }
+
+            ourInstance = new SqliteRSignatureManager(dbURL.getPath());
         }
 
         return ourInstance;

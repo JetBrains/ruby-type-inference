@@ -7,6 +7,9 @@ import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signatureManager.Sqlite
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RPsiElement;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.impl.references.RReferenceBase;
 
+import java.io.FileNotFoundException;
+import java.sql.SQLException;
+
 public class RubyLangCoreStructuresStatTypeProvider {
     @Nullable
 //    @Override
@@ -17,8 +20,10 @@ public class RubyLangCoreStructuresStatTypeProvider {
                 return null;
             }
 
-            final RSignatureManager signatureManager = SqliteRSignatureManager.getInstance();
-            if (signatureManager == null) {
+            final RSignatureManager signatureManager;
+            try {
+                signatureManager = SqliteRSignatureManager.getInstance();
+            } catch (SQLException | ClassNotFoundException | FileNotFoundException e) {
                 return null;
             }
 

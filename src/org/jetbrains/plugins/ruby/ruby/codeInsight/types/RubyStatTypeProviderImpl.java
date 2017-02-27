@@ -30,6 +30,8 @@ import ruby.codeInsight.types.signature.ParameterInfo;
 import ruby.codeInsight.types.signature.RSignature;
 import ruby.codeInsight.types.signature.RSignatureBuilder;
 
+import java.io.FileNotFoundException;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -41,8 +43,10 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
         final Couple<String> names = getMethodAndReceiverNames(callElement);
         final String methodName = names.getFirst();
         if (methodName != null) {
-            final RSignatureManager signatureManager = SqliteRSignatureManager.getInstance();
-            if (signatureManager == null) {
+            final RSignatureManager signatureManager;
+            try {
+                signatureManager = SqliteRSignatureManager.getInstance();
+            } catch (SQLException | ClassNotFoundException | FileNotFoundException e) {
                 return null;
             }
 

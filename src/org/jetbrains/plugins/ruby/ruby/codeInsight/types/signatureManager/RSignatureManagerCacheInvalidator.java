@@ -13,6 +13,9 @@ import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.FileNotFoundException;
+import java.sql.SQLException;
+
 public class RSignatureManagerCacheInvalidator implements ApplicationComponent {
     @Override
     public void initComponent() {
@@ -23,10 +26,14 @@ public class RSignatureManagerCacheInvalidator implements ApplicationComponent {
                                        @NotNull ExecutionEnvironment env,
                                        @NotNull ProcessHandler handler) {
                 if (env.getExecutor() instanceof CollectTypeExecutor) {
-                    final RSignatureManager signatureManager = SqliteRSignatureManager.getInstance();
-                    if (signatureManager != null) {
-                        ProxyCacheRSignatureManager.getInstance(env.getProject(), signatureManager).invalidateAll();
+                    final RSignatureManager signatureManager;
+                    try {
+                        signatureManager = SqliteRSignatureManager.getInstance();
+                    } catch (SQLException | ClassNotFoundException | FileNotFoundException e) {
+                        return;
                     }
+
+                    ProxyCacheRSignatureManager.getInstance(env.getProject(), signatureManager).invalidateAll();
                 }
             }
         });
@@ -35,10 +42,14 @@ public class RSignatureManagerCacheInvalidator implements ApplicationComponent {
         projectManager.addProjectManagerListener(new ProjectManagerAdapter() {
             @Override
             public void projectClosed(final Project project) {
-                final RSignatureManager signatureManager = SqliteRSignatureManager.getInstance();
-                if (signatureManager != null) {
-                    ProxyCacheRSignatureManager.getInstance(project, signatureManager).invalidateAll();
+                final RSignatureManager signatureManager;
+                try {
+                    signatureManager = SqliteRSignatureManager.getInstance();
+                } catch (SQLException | ClassNotFoundException | FileNotFoundException e) {
+                    return;
                 }
+
+                ProxyCacheRSignatureManager.getInstance(project, signatureManager).invalidateAll();
             }
         });
     }
