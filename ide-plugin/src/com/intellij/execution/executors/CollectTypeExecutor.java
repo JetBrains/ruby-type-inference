@@ -2,14 +2,12 @@ package com.intellij.execution.executors;
 
 import com.intellij.execution.Executor;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.net.URL;
 
 public class CollectTypeExecutor extends Executor {
     @NotNull

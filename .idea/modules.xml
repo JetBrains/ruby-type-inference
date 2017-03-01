@@ -3,6 +3,9 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/arg_scanner/arg_scanner.iml" filepath="$PROJECT_DIR$/arg_scanner/arg_scanner.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ide-plugin/ide-plugin.iml" filepath="$PROJECT_DIR$/.idea/modules/ide-plugin/ide-plugin.iml" group="ide-plugin" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ide-plugin/ide-plugin_main.iml" filepath="$PROJECT_DIR$/.idea/modules/ide-plugin/ide-plugin_main.iml" group="ide-plugin" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ide-plugin/ide-plugin_test.iml" filepath="$PROJECT_DIR$/.idea/modules/ide-plugin/ide-plugin_test.iml" group="ide-plugin" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/lambda-/lambda-.iml" filepath="$PROJECT_DIR$/.idea/modules/lambda-/lambda-.iml" group="lambda-" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/lambda-/lambda-_main.iml" filepath="$PROJECT_DIR$/.idea/modules/lambda-/lambda-_main.iml" group="lambda-" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/lambda-/lambda-_test.iml" filepath="$PROJECT_DIR$/.idea/modules/lambda-/lambda-_test.iml" group="lambda-" />

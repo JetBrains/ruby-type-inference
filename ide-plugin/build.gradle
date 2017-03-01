@@ -1,0 +1,25 @@
+buildscript {
+    repositories {
+        maven { url 'http://dl.bintray.com/jetbrains/intellij-plugin-service' }
+    }
+}
+
+plugins {
+    id "org.jetbrains.intellij" version "0.2.5"
+}
+
+dependencies {
+    compile project(':ruby-call-signature'), project(':storage-server-api')
+}
+
+sourceSets {
+    main.java.srcDirs = ['src']
+    main.resources.srcDirs = ['resources']
+
+}
+
+intellij {
+    version 'IU-LATEST-TRUNK-SNAPSHOT'
+    pluginName 'ruby-runtime-stats'
+    plugins = ['org.jetbrains.plugins.ruby:2017.1.20170301']
+}

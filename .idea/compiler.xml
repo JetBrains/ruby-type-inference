@@ -12,6 +12,8 @@
       <entry name="!?*.clj" />
     </wildcardResourcePatterns>
     <bytecodeTargetLevel>
+      <module name="ide-plugin_main" target="1.8" />
+      <module name="ide-plugin_test" target="1.8" />
       <module name="lambda-put-handler_main" target="1.8" />
       <module name="lambda-put-handler_test" target="1.8" />
       <module name="lambda-update-handler_main" target="1.8" />
