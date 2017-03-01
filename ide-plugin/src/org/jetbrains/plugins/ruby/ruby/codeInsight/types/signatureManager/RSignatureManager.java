@@ -154,8 +154,9 @@ public abstract class RSignatureManager {
             case KEYREQ:
                 return ArgumentInfo.Type.SIMPLE;
             case OPT:
-            case KEY:
                 return ArgumentInfo.Type.PREDEFINED;
+            case KEY:
+                return ArgumentInfo.Type.NAMED;
             case REST:
                 return ArgumentInfo.Type.ARRAY;
             case KEYREST:
