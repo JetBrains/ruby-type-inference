@@ -18,11 +18,15 @@
         <outputRelativeToContentRoot value="true" />
         <module name="lambda-put-handler" />
         <module name="lambda-update-handler" />
+        <module name="ruby-call-signature" />
+        <module name="storage-server-api" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="lambda-put-handler" target="1.8" />
       <module name="lambda-update-handler" target="1.8" />
+      <module name="ruby-call-signature" target="1.8" />
+      <module name="storage-server-api" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>
