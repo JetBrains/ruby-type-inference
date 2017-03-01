@@ -3,13 +3,26 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/arg_scanner/arg_scanner.iml" filepath="$PROJECT_DIR$/arg_scanner/arg_scanner.iml" />
-      <module fileurl="file://$PROJECT_DIR$/lambda-put-handler/lambda-put-handler.iml" filepath="$PROJECT_DIR$/lambda-put-handler/lambda-put-handler.iml" />
-      <module fileurl="file://$PROJECT_DIR$/lambda-update-handler/lambda-update-handler.iml" filepath="$PROJECT_DIR$/lambda-update-handler/lambda-update-handler.iml" />
-      <module fileurl="file://$PROJECT_DIR$/ruby-call-signature/ruby-call-signature.iml" filepath="$PROJECT_DIR$/ruby-call-signature/ruby-call-signature.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/lambda-/lambda-.iml" filepath="$PROJECT_DIR$/.idea/modules/lambda-/lambda-.iml" group="lambda-" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/lambda-/lambda-_main.iml" filepath="$PROJECT_DIR$/.idea/modules/lambda-/lambda-_main.iml" group="lambda-" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/lambda-/lambda-_test.iml" filepath="$PROJECT_DIR$/.idea/modules/lambda-/lambda-_test.iml" group="lambda-" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/lambda-put-handler/lambda-put-handler.iml" filepath="$PROJECT_DIR$/.idea/modules/lambda-put-handler/lambda-put-handler.iml" group="lambda-put-handler" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/lambda-put-handler/lambda-put-handler_main.iml" filepath="$PROJECT_DIR$/.idea/modules/lambda-put-handler/lambda-put-handler_main.iml" group="lambda-put-handler" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/lambda-put-handler/lambda-put-handler_test.iml" filepath="$PROJECT_DIR$/.idea/modules/lambda-put-handler/lambda-put-handler_test.iml" group="lambda-put-handler" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/lambda-update-handler/lambda-update-handler.iml" filepath="$PROJECT_DIR$/.idea/modules/lambda-update-handler/lambda-update-handler.iml" group="lambda-update-handler" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/lambda-update-handler/lambda-update-handler_main.iml" filepath="$PROJECT_DIR$/.idea/modules/lambda-update-handler/lambda-update-handler_main.iml" group="lambda-update-handler" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/lambda-update-handler/lambda-update-handler_test.iml" filepath="$PROJECT_DIR$/.idea/modules/lambda-update-handler/lambda-update-handler_test.iml" group="lambda-update-handler" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ruby-call-signature/ruby-call-signature.iml" filepath="$PROJECT_DIR$/.idea/modules/ruby-call-signature/ruby-call-signature.iml" group="ruby-call-signature" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ruby-call-signature/ruby-call-signature_main.iml" filepath="$PROJECT_DIR$/.idea/modules/ruby-call-signature/ruby-call-signature_main.iml" group="ruby-call-signature" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ruby-call-signature/ruby-call-signature_test.iml" filepath="$PROJECT_DIR$/.idea/modules/ruby-call-signature/ruby-call-signature_test.iml" group="ruby-call-signature" />
       <module fileurl="file://$PROJECT_DIR$/ruby-stat-collector/ruby-stat-collector.iml" filepath="$PROJECT_DIR$/ruby-stat-collector/ruby-stat-collector.iml" />
-      <module fileurl="file://$PROJECT_DIR$/ruby-type-inference.iml" filepath="$PROJECT_DIR$/ruby-type-inference.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ruby-type-inference.iml" filepath="$PROJECT_DIR$/.idea/modules/ruby-type-inference.iml" />
       <module fileurl="file://$PROJECT_DIR$/ruby-type-inference-contruct-creator/ruby-type-inference-contruct-creator.iml" filepath="$PROJECT_DIR$/ruby-type-inference-contruct-creator/ruby-type-inference-contruct-creator.iml" />
-      <module fileurl="file://$PROJECT_DIR$/storage-server-api/storage-server-api.iml" filepath="$PROJECT_DIR$/storage-server-api/storage-server-api.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ruby-type-inference_main.iml" filepath="$PROJECT_DIR$/.idea/modules/ruby-type-inference_main.iml" group="ruby-type-inference" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ruby-type-inference_test.iml" filepath="$PROJECT_DIR$/.idea/modules/ruby-type-inference_test.iml" group="ruby-type-inference" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/storage-server-api/storage-server-api.iml" filepath="$PROJECT_DIR$/.idea/modules/storage-server-api/storage-server-api.iml" group="storage-server-api" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/storage-server-api/storage-server-api_main.iml" filepath="$PROJECT_DIR$/.idea/modules/storage-server-api/storage-server-api_main.iml" group="storage-server-api" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/storage-server-api/storage-server-api_test.iml" filepath="$PROJECT_DIR$/.idea/modules/storage-server-api/storage-server-api_test.iml" group="storage-server-api" />
     </modules>
   </component>
 </project>

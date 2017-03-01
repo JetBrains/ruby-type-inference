@@ -1,0 +1,56 @@
+buildscript {
+    repositories {
+        jcenter()
+        mavenCentral()
+
+        maven { url 'http://dl.bintray.com/jetbrains/intellij-plugin-service' }
+    }
+
+    dependencies {
+        classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7"
+    }
+}
+
+plugins {
+    id "org.jetbrains.intellij" version "0.2.5"
+}
+
+allprojects {
+    repositories {
+        mavenCentral()
+    }
+
+    apply plugin: 'java'
+
+    dependencies {
+        compile 'org.jetbrains:annotations:15.0'
+    }
+}
+
+subprojects {
+    if (it.name in ['storage-server-api', 'lambda-update-handler', 'lambda-put-handler']) {
+        dependencies {
+            compile 'com.amazonaws:aws-lambda-java-core:1.1.0'
+            compile 'com.amazonaws:aws-lambda-java-events:1.3.0'
+            compile 'com.amazonaws:aws-lambda-java-log4j:1.0.0'
+            compile 'com.google.code.gson:gson:2.8.0'
+            compile 'postgresql:postgresql:9.1-901.jdbc4'
+        }
+    }
+}
+
+dependencies {
+    compile project(':ruby-call-signature'), project(':storage-server-api')
+}
+
+sourceSets {
+    main.java.srcDirs = ['src']
+    main.resources.srcDirs = ['resources']
+
+}
+
+intellij {
+    version 'IU-LATEST-TRUNK-SNAPSHOT'
+    pluginName 'ruby-runtime-stats'
+    plugins = ['org.jetbrains.plugins.ruby:2017.1.20170301']
+}

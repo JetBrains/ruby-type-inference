@@ -11,22 +11,17 @@
       <entry name="!?*.kt" />
       <entry name="!?*.clj" />
     </wildcardResourcePatterns>
-    <annotationProcessing>
-      <profile name="Maven default annotation processors profile" enabled="true">
-        <sourceOutputDir name="target/generated-sources/annotations" />
-        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
-        <outputRelativeToContentRoot value="true" />
-        <module name="lambda-put-handler" />
-        <module name="lambda-update-handler" />
-        <module name="ruby-call-signature" />
-        <module name="storage-server-api" />
-      </profile>
-    </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="lambda-put-handler" target="1.8" />
-      <module name="lambda-update-handler" target="1.8" />
-      <module name="ruby-call-signature" target="1.8" />
-      <module name="storage-server-api" target="1.8" />
+      <module name="lambda-put-handler_main" target="1.8" />
+      <module name="lambda-put-handler_test" target="1.8" />
+      <module name="lambda-update-handler_main" target="1.8" />
+      <module name="lambda-update-handler_test" target="1.8" />
+      <module name="ruby-call-signature_main" target="1.8" />
+      <module name="ruby-call-signature_test" target="1.8" />
+      <module name="ruby-type-inference_main" target="1.8" />
+      <module name="ruby-type-inference_test" target="1.8" />
+      <module name="storage-server-api_main" target="1.8" />
+      <module name="storage-server-api_test" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>

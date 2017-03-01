@@ -8,11 +8,11 @@ out/
 **/.idea/misc.xml
 **/.idea/gradle.xml
 **/.idea/uiDesigner.xml
-**/.idea/compiler.xml
 **/.idea/kotlinc.xml
 **/.idea/dataSources.local.xml
 **/.idea/shelf/
 **/.idea/libraries/
+**/.idea/modules/
 **/.idea/.name
 **/.idea/*.png
 

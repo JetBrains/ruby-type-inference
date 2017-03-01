@@ -1,0 +1,11 @@
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile project(':ruby-call-signature')
+}
+
+sourceSets {
+    main.java.srcDirs = ['src/main/java']
+}
