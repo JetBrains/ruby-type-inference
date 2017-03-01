@@ -11,9 +11,9 @@ import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.graph.RSignatureDAG;
-import ruby.codeInsight.types.signature.ParameterInfo;
-import ruby.codeInsight.types.signature.RSignature;
-import ruby.codeInsight.types.signature.RSignatureBuilder;
+import org.jetbrains.ruby.codeInsight.types.signature.ParameterInfo;
+import org.jetbrains.ruby.codeInsight.types.signature.RSignature;
+import org.jetbrains.ruby.codeInsight.types.signature.RSignatureBuilder;
 
 import java.util.*;
 import java.util.concurrent.ExecutionException;

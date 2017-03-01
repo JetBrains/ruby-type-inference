@@ -1,4 +1,4 @@
-package ruby.codeInsight.types.storage.server;
+package org.jetbrains.ruby.codeInsight.types.storage.server;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
@@ -9,9 +9,9 @@ import com.google.gson.reflect.TypeToken;
 import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import ruby.codeInsight.types.signature.ParameterInfo;
-import ruby.codeInsight.types.signature.RSignature;
-import ruby.codeInsight.types.signature.RVisibility;
+import org.jetbrains.ruby.codeInsight.types.signature.ParameterInfo;
+import org.jetbrains.ruby.codeInsight.types.signature.RSignature;
+import org.jetbrains.ruby.codeInsight.types.signature.RVisibility;
 
 import java.io.*;
 import java.sql.*;

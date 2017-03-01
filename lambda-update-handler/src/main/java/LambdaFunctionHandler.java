@@ -4,9 +4,9 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.S3Event;
 import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
-import ruby.codeInsight.types.signature.RSignature;
-import ruby.codeInsight.types.storage.server.RSignatureStorageServer;
-import ruby.codeInsight.types.storage.server.RSignatureStorageServerImpl;
+import org.jetbrains.ruby.codeInsight.types.signature.RSignature;
+import org.jetbrains.ruby.codeInsight.types.storage.server.RSignatureStorageServer;
+import org.jetbrains.ruby.codeInsight.types.storage.server.RSignatureStorageServerImpl;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;

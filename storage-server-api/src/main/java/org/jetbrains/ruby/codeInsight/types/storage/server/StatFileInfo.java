@@ -1,4 +1,4 @@
-package ruby.codeInsight.types.storage.server;
+package org.jetbrains.ruby.codeInsight.types.storage.server;
 
 import org.jetbrains.annotations.NotNull;
 

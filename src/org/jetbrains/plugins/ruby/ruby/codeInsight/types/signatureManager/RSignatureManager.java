@@ -17,9 +17,9 @@ import org.jetbrains.plugins.ruby.ruby.codeInsight.types.impl.REmptyType;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.impl.RSymbolTypeImpl;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.ArgumentInfo;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.Visibility;
-import ruby.codeInsight.types.signature.ParameterInfo;
-import ruby.codeInsight.types.signature.RSignature;
-import ruby.codeInsight.types.signature.RVisibility;
+import org.jetbrains.ruby.codeInsight.types.signature.ParameterInfo;
+import org.jetbrains.ruby.codeInsight.types.signature.RSignature;
+import org.jetbrains.ruby.codeInsight.types.signature.RVisibility;
 
 import java.util.*;
 import java.util.stream.Collectors;

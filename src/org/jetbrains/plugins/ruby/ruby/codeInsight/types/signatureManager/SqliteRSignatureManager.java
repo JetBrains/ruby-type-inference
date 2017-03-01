@@ -14,10 +14,10 @@ import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.SymbolUtil;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.v2.ClassModuleSymbol;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.CoreTypes;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.graph.RSignatureDAG;
-import ruby.codeInsight.types.signature.ParameterInfo;
-import ruby.codeInsight.types.signature.RSignature;
-import ruby.codeInsight.types.signature.RSignatureBuilder;
-import ruby.codeInsight.types.signature.RVisibility;
+import org.jetbrains.ruby.codeInsight.types.signature.ParameterInfo;
+import org.jetbrains.ruby.codeInsight.types.signature.RSignature;
+import org.jetbrains.ruby.codeInsight.types.signature.RSignatureBuilder;
+import org.jetbrains.ruby.codeInsight.types.signature.RVisibility;
 
 import java.io.FileNotFoundException;
 import java.net.URL;

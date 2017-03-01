@@ -1,8 +1,8 @@
-package ruby.codeInsight.types.storage.server;
+package org.jetbrains.ruby.codeInsight.types.storage.server;
 
 import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
-import ruby.codeInsight.types.signature.RSignature;
+import org.jetbrains.ruby.codeInsight.types.signature.RSignature;
 
 import java.io.IOException;
 import java.sql.SQLException;

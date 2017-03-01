@@ -1,4 +1,4 @@
-package ruby.codeInsight.types.signature;
+package org.jetbrains.ruby.codeInsight.types.signature;
 
 import org.jetbrains.annotations.NotNull;
 

@@ -9,10 +9,10 @@ import org.jetbrains.plugins.ruby.gem.GemInfo;
 import org.jetbrains.plugins.ruby.gem.GemManager;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signatureManager.RSignatureManager;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signatureManager.SqliteRSignatureManager;
-import ruby.codeInsight.types.signature.RSignature;
-import ruby.codeInsight.types.storage.server.RSignatureStorageServer;
-import ruby.codeInsight.types.storage.server.RSignatureStorageServerImpl;
-import ruby.codeInsight.types.storage.server.StatFileInfo;
+import org.jetbrains.ruby.codeInsight.types.signature.RSignature;
+import org.jetbrains.ruby.codeInsight.types.storage.server.RSignatureStorageServer;
+import org.jetbrains.ruby.codeInsight.types.storage.server.RSignatureStorageServerImpl;
+import org.jetbrains.ruby.codeInsight.types.storage.server.StatFileInfo;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;

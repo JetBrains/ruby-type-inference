@@ -25,9 +25,9 @@ import org.jetbrains.plugins.ruby.ruby.lang.psi.methodCall.RArgumentToBlock;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.methodCall.RArrayToArguments;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.methodCall.RCall;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.references.RReference;
-import ruby.codeInsight.types.signature.ParameterInfo;
-import ruby.codeInsight.types.signature.RSignature;
-import ruby.codeInsight.types.signature.RSignatureBuilder;
+import org.jetbrains.ruby.codeInsight.types.signature.ParameterInfo;
+import org.jetbrains.ruby.codeInsight.types.signature.RSignature;
+import org.jetbrains.ruby.codeInsight.types.signature.RSignatureBuilder;
 
 import java.io.FileNotFoundException;
 import java.sql.SQLException;

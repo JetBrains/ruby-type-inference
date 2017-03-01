@@ -10,8 +10,8 @@ import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.Symbol;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.SymbolUtil;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.v2.ClassModuleSymbol;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.CoreTypes;
-import ruby.codeInsight.types.signature.RSignature;
-import ruby.codeInsight.types.signature.RSignatureBuilder;
+import org.jetbrains.ruby.codeInsight.types.signature.RSignature;
+import org.jetbrains.ruby.codeInsight.types.signature.RSignatureBuilder;
 
 import java.util.*;
 import java.util.function.Consumer;
