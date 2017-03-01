@@ -6,6 +6,7 @@
 
 Beauty and power of Ruby and Rails pays us back when it comes to finding bugs in large codebases. Static analysis is hindered by magic DSLs and patches.
 We may annotate the code with YARD which also enables improved tooling such as code completion. Sadly, the benefits of this process rarely compensate for the effort.
+
 In this session we’ll see a new approach to type annotations generation.
 We'll learn how to obtain this data from runtime, to cope with DSLs and monkey patching, propose some tooling beyond YARD and create contracts like `(String, T) -> T`
 
