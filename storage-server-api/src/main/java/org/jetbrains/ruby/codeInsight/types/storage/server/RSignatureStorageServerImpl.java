@@ -9,6 +9,7 @@ import com.google.gson.reflect.TypeToken;
 import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ruby.codeInsight.types.signature.GemInfo;
 import org.jetbrains.ruby.codeInsight.types.signature.ParameterInfo;
 import org.jetbrains.ruby.codeInsight.types.signature.RSignature;
 import org.jetbrains.ruby.codeInsight.types.signature.RVisibility;
@@ -156,8 +157,8 @@ public class RSignatureStorageServerImpl extends RSignatureStorageServer {
                         RVisibility.valueOf(resultSet.getString("visibility")),
                         parseArgsInfo(resultSet.getString("args_info")),
                         Arrays.asList(resultSet.getString("args_type_name").split(";")),
-                        resultSet.getString("gem_name"),
-                        resultSet.getString("gem_version"),
+                        new GemInfo(resultSet.getString("gem_name"),
+                                resultSet.getString("gem_version")),
                         resultSet.getString("return_type_name"),
                         false);
                 signatures.add(signature);
@@ -187,7 +188,7 @@ public class RSignatureStorageServerImpl extends RSignatureStorageServer {
         return String.format("INSERT INTO rsignature values('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', FALSE) " +
                         "ON CONFLICT DO NOTHING;", signature.getMethodName(), signature.getReceiverName(),
                 signature.getVisibility(), String.join(";", signature.getArgsTypeName()), argsInfoSerialized,
-                signature.getReturnTypeName(), signature.getGemName(), signature.getGemVersion());
+                signature.getReturnTypeName(), signature.getGemInfo().getName(), signature.getGemInfo().getVersion());
 
     }
 

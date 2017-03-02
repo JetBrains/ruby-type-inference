@@ -17,9 +17,7 @@ public class RSignatureBuilder {
     @NotNull
     private List<String> myArgsTypeName = new ArrayList<>();
     @NotNull
-    private String myGemName = "";
-    @NotNull
-    private String myGemVersion = "";
+    private GemInfo myGemInfo = GemInfo.NONE;
     @NotNull
     private String myReturnTypeName = "Object";
     private boolean myIsLocal = true;
@@ -52,15 +50,8 @@ public class RSignatureBuilder {
         return this;
     }
 
-    @NotNull
-    public RSignatureBuilder setGemName(@NotNull final String gemName) {
-        myGemName = gemName;
-        return this;
-    }
-
-    @NotNull
-    public RSignatureBuilder setGemVersion(@NotNull final String gemVersion) {
-        myGemVersion = gemVersion;
+    public RSignatureBuilder setGemInfo(@NotNull GemInfo gemInfo) {
+        myGemInfo = gemInfo;
         return this;
     }
 
@@ -79,6 +70,6 @@ public class RSignatureBuilder {
     @NotNull
     public RSignature build() {
         return new RSignature(myMethodName, myReceiverName, myVisibility, myArgsInfo, myArgsTypeName,
-                              myGemName, myGemVersion, myReturnTypeName, myIsLocal);
+                myGemInfo, myReturnTypeName, myIsLocal);
     }
 }

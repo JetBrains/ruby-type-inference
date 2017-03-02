@@ -16,9 +16,7 @@ public class RSignature {
     @NotNull
     private final List<String> myArgsTypeName;
     @NotNull
-    private final String myGemName;
-    @NotNull
-    private final String myGemVersion;
+    private final GemInfo myGemInfo;
     @NotNull
     private String myReturnTypeName;
     private final boolean myIsLocal;
@@ -28,8 +26,7 @@ public class RSignature {
                       @NotNull final RVisibility visibility,
                       @NotNull final List<ParameterInfo> argsInfo,
                       @NotNull final List<String> argsTypeName,
-                      @NotNull final String gemName,
-                      @NotNull final String gemVersion,
+                      @NotNull final GemInfo gemInfo,
                       @NotNull final String returnTypeName,
                       final boolean isLocal) {
         myMethodName = methodName;
@@ -37,8 +34,7 @@ public class RSignature {
         myVisibility = visibility;
         myArgsInfo = argsInfo;
         myArgsTypeName = argsTypeName;
-        myGemName = gemName;
-        myGemVersion = gemVersion;
+        myGemInfo = gemInfo;
         myReturnTypeName = returnTypeName;
         myIsLocal = isLocal;
     }
@@ -69,13 +65,8 @@ public class RSignature {
     }
 
     @NotNull
-    public String getGemName() {
-        return myGemName;
-    }
-
-    @NotNull
-    public String getGemVersion() {
-        return myGemVersion;
+    public GemInfo getGemInfo() {
+        return myGemInfo;
     }
 
     @NotNull
@@ -103,8 +94,7 @@ public class RSignature {
                myVisibility.equals(that.myVisibility) &&
                myArgsInfo.equals(that.myArgsInfo) &&
                myArgsTypeName.equals(that.myArgsTypeName) &&
-               myGemName.equals(that.myGemName) &&
-               myGemVersion.equals(that.myGemVersion);
+                myGemInfo.equals(that.getGemInfo());
 
     }
 
@@ -115,8 +105,7 @@ public class RSignature {
         result = 31 * result + myVisibility.hashCode();
         result = 31 * result + myArgsInfo.hashCode();
         result = 31 * result + myArgsTypeName.hashCode();
-        result = 31 * result + myGemName.hashCode();
-        result = 31 * result + myGemVersion.hashCode();
+        result = 31 * result + myGemInfo.hashCode();
         return result;
     }
 }

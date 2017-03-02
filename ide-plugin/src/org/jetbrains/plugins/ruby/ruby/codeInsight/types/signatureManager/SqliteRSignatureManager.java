@@ -9,16 +9,12 @@ import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.PluginResourceUtil;
-import org.jetbrains.plugins.ruby.gem.GemInfo;
 import org.jetbrains.plugins.ruby.gem.util.GemSearchUtil;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.SymbolUtil;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.v2.ClassModuleSymbol;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.CoreTypes;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.graph.RSignatureDAG;
-import org.jetbrains.ruby.codeInsight.types.signature.ParameterInfo;
-import org.jetbrains.ruby.codeInsight.types.signature.RSignature;
-import org.jetbrains.ruby.codeInsight.types.signature.RSignatureBuilder;
-import org.jetbrains.ruby.codeInsight.types.signature.RVisibility;
+import org.jetbrains.ruby.codeInsight.types.signature.*;
 
 import java.io.FileNotFoundException;
 import java.sql.*;
@@ -77,7 +73,7 @@ public class SqliteRSignatureManager extends RSignatureManager {
             }};
         }
 
-        final String gemName = signaturesAndDistances.get(0).getFirst().getGemName();
+        final String gemName = signaturesAndDistances.get(0).getFirst().getGemInfo().getName();
         final String moduleGemVersion = getGemVersionByName(module, gemName);
         filterSignaturesByModuleGemVersion(moduleGemVersion, signaturesAndDistances);
 
@@ -107,7 +103,7 @@ public class SqliteRSignatureManager extends RSignatureManager {
                                          "values('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');",
                                          signature.getMethodName(), signature.getReceiverName(),
                                          String.join(";", signature.getArgsTypeName()), argsInfoSerialized,
-                                         signature.getReturnTypeName(), signature.getGemName(), signature.getGemVersion(),
+                signature.getReturnTypeName(), signature.getGemInfo().getName(), signature.getGemInfo().getVersion(),
                                          signature.getVisibility());
         executeUpdate(sql);
     }
@@ -119,14 +115,14 @@ public class SqliteRSignatureManager extends RSignatureManager {
                                          "AND gem_name = '%s' AND gem_version = '%s';",
                                          String.join(";", signature.getArgsTypeName()),
                                          signature.getMethodName(), signature.getReceiverName(),
-                                         signature.getGemName(), signature.getGemVersion());
+                signature.getGemInfo().getName(), signature.getGemInfo().getVersion());
         executeUpdate(sql);
     }
 
     public void deleteSimilarSignatures(@NotNull final RSignature signature) {
         final String sql = String.format("DELETE FROM rsignature WHERE method_name = '%s' AND receiver_name = '%s' " +
                                          "AND gem_name = '%s' AND gem_version = '%s';", signature.getMethodName(),
-                                         signature.getReceiverName(), signature.getGemName(), signature.getGemVersion());
+                signature.getReceiverName(), signature.getGemInfo().getName(), signature.getGemInfo().getVersion());
         executeUpdate(sql);
     }
 
@@ -134,7 +130,7 @@ public class SqliteRSignatureManager extends RSignatureManager {
     public List<RSignature> getSimilarSignatures(@NotNull final RSignature signature) {
         final String sql = String.format("SELECT * FROM rsignature WHERE method_name = '%s' AND receiver_name = '%s' " +
                                          "AND gem_name = '%s' AND gem_version = '%s';", signature.getMethodName(),
-                                         signature.getReceiverName(), signature.getGemName(), signature.getGemVersion());
+                signature.getReceiverName(), signature.getGemInfo().getName(), signature.getGemInfo().getVersion());
         return executeQuery(sql);
     }
 
@@ -208,7 +204,7 @@ public class SqliteRSignatureManager extends RSignatureManager {
     @NotNull
     private static String getGemVersionByName(@Nullable final Module module, @NotNull final String gemName) {
         if (module != null && !gemName.isEmpty()) {
-            final GemInfo gemInfo = GemSearchUtil.findGemEx(module, gemName);
+            final org.jetbrains.plugins.ruby.gem.GemInfo gemInfo = GemSearchUtil.findGemEx(module, gemName);
             if (gemInfo != null) {
                 return StringUtil.notNullize(gemInfo.getRealVersion());
             }
@@ -244,11 +240,11 @@ public class SqliteRSignatureManager extends RSignatureManager {
                                                            @NotNull final List<Pair<RSignature, Integer>> signaturesAndDistances) {
         final List<String> gemVersions = signaturesAndDistances.stream()
                 .map(pair -> pair.getFirst())
-                .map(RSignature::getGemVersion)
+                .map(signature -> signature.getGemInfo().getVersion())
                 .collect(Collectors.toList());
         final String closestGemVersion = getClosestGemVersion(moduleGemVersion, gemVersions);
         signaturesAndDistances.removeIf(signAndDist -> {
-            final String gemVersion = signAndDist.getFirst().getGemVersion();
+            final String gemVersion = signAndDist.getFirst().getGemInfo().getVersion();
             return !gemVersion.equals(closestGemVersion);
         });
     }
@@ -298,7 +294,7 @@ public class SqliteRSignatureManager extends RSignatureManager {
                                          "AND args_type_name = '%s' AND gem_name = '%s' AND gem_version = '%s';",
                                          signature.getMethodName(), signature.getReceiverName(),
                                          String.join(";", signature.getArgsTypeName()),
-                                         signature.getGemName(), signature.getGemVersion());
+                signature.getGemInfo().getName(), signature.getGemInfo().getVersion());
         final List<RSignature> signatures = executeQuery(sql);
         return signatures.stream()
                 .map(RSignature::getReturnTypeName)
@@ -324,8 +320,8 @@ public class SqliteRSignatureManager extends RSignatureManager {
                         .setVisibility(RVisibility.valueOf(resultSet.getString("visibility")))
                         .setArgsInfo(parseArgsInfo(resultSet.getString("args_info")))
                         .setArgsTypeName(StringUtil.splitHonorQuotes(resultSet.getString("args_type_name"), ';'))
-                        .setGemName(resultSet.getString("gem_name"))
-                        .setGemVersion(resultSet.getString("gem_version"))
+                        .setGemInfo(new GemInfo(resultSet.getString("gem_name"),
+                                resultSet.getString("gem_version")))
                         .setReturnTypeName(resultSet.getString("return_type_name"))
                         .build();
                 signatures.add(signature);

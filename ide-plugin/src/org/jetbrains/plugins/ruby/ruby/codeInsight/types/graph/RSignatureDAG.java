@@ -267,8 +267,7 @@ public class RSignatureDAG {
                 .setVisibility(signature1.getVisibility())
                 .setArgsInfo(signature1.getArgsInfo())
                 .setArgsTypeName(mergedArgsTypeName)
-                .setGemName(signature1.getGemName())
-                .setGemVersion(signature1.getGemVersion())
+                .setGemInfo(signature1.getGemInfo())
                 .setReturnTypeName(signature1.getReturnTypeName())
                 .build();
     }
