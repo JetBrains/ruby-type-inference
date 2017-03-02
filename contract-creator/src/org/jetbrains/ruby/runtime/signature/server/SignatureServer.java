@@ -12,10 +12,13 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.logging.Logger;
 
 public class SignatureServer {
+    private static final Logger LOGGER = Logger.getLogger("SignatureServer");
 
     public static void main(String[] args) throws IOException {
+        LOGGER.info("Starting server");
 
         RSignatureContractContainer mainContainer = new RSignatureContractContainer();
 
@@ -44,7 +47,7 @@ public class SignatureServer {
                         }
 
                     } catch (JsonParseException e) {
-                        System.out.println("!" + currString + "!");
+                        LOGGER.severe("!" + currString + "!\n" + e);
                         e.printStackTrace();
                     }
                 }
