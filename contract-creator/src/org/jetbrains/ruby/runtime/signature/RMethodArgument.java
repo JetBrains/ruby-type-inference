@@ -1,8 +1,11 @@
 package org.jetbrains.ruby.runtime.signature;
 
+import org.jetbrains.ruby.codeInsight.types.signature.ParameterInfo;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Created by viuginick on 12/2/16.
@@ -10,26 +13,16 @@ import java.util.List;
 
 public class RMethodArgument {
     private String myName;
-    private ArgModifier myModifier;
+    private ParameterInfo.Type myModifier;
     private String myType;
     private Boolean isGiven;
     private List<String> additionalInfo;
-
-    public enum ArgModifier {
-        req,
-        rest,
-        key,
-        keyreq,
-        keyrest,
-        opt,
-        block
-    }
 
     public RMethodArgument(String argument)
     {
         List<String> parts = Arrays.asList(argument.split("\\s*,\\s*"));
         this.myName = parts.get(1);
-        this.myModifier = ArgModifier.valueOf(parts.get(0));
+        this.myModifier = ParameterInfo.Type.valueOf(parts.get(0).toUpperCase(Locale.US));
         this.myType = parts.get(2);
         this.isGiven = false;
         this.additionalInfo = new ArrayList<>();
@@ -54,7 +47,7 @@ public class RMethodArgument {
         return this.additionalInfo;
     }
 
-    public ArgModifier getArgModifier()
+    public ParameterInfo.Type getArgModifier()
     {
         return this.myModifier;
     }

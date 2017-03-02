@@ -1,5 +1,6 @@
 package org.jetbrains.ruby.runtime.signature;
 
+import org.jetbrains.ruby.codeInsight.types.signature.ParameterInfo.Type;
 import org.jetbrains.ruby.runtime.signature.server.ServerResponseBean;
 
 import java.util.ArrayList;
@@ -120,31 +121,31 @@ public class RSignature {
             RMethodArgument argument = myArgsInfo.get(i);
             String argumentName = argument.getName();
 
-            if(argument.getArgModifier() == RMethodArgument.ArgModifier.block)
+            if (argument.getArgModifier() == Type.BLOCK)
             {
                 if(!argument.getType().equals("NillClass"))
                     argument.setIsGiven(true);
             }
 
-            if(argument.getArgModifier() == RMethodArgument.ArgModifier.keyreq)
+            if (argument.getArgModifier() == Type.KEYREQ)
             {
                 keyreqflag = true;
                 keyflag = true;
             }
 
-            if(argument.getArgModifier() == RMethodArgument.ArgModifier.key)
+            if (argument.getArgModifier() == Type.KEY)
             {
                 keyreqflag = true;
                 keyflag = true;
             }
 
-            if(argument.getArgModifier() == RMethodArgument.ArgModifier.keyrest)
+            if (argument.getArgModifier() == Type.KEYREST)
             {
                 keyrest = true;
                 keyflag = true;
             }
 
-            if(argument.getArgModifier() == RMethodArgument.ArgModifier.rest)
+            if (argument.getArgModifier() == Type.REST)
             {
                 restPosition = i;
             }
@@ -154,7 +155,7 @@ public class RSignature {
             RMethodArgument argument = myArgsInfo.get(i);
             String argumentName = argument.getName();
 
-            if(argument.getArgModifier() == RMethodArgument.ArgModifier.req)
+            if (argument.getArgModifier() == Type.REQ)
             {
                 updateArgExists(i);
             }
@@ -166,7 +167,7 @@ public class RSignature {
                 RMethodArgument argument = myArgsInfo.get(i);
                 String argumentName = argument.getName();
 
-                if(argument.getArgModifier() == RMethodArgument.ArgModifier.opt) {
+                if (argument.getArgModifier() == Type.OPT) {
                     updateArgExists(i);
                 }
             }
@@ -180,7 +181,7 @@ public class RSignature {
                     RMethodArgument argument = myArgsInfo.get(i);
                     String argumentName = argument.getName();
 
-                    if(argument.getArgModifier() == RMethodArgument.ArgModifier.opt) {
+                    if (argument.getArgModifier() == Type.OPT) {
                         updateArgExists(i);
                     }
                 }
@@ -192,7 +193,7 @@ public class RSignature {
                     RMethodArgument argument = myArgsInfo.get(i);
                     String argumentName = argument.getName();
 
-                    if(argument.getArgModifier() == RMethodArgument.ArgModifier.key) {
+                    if (argument.getArgModifier() == Type.KEY) {
                         if(myKeyWords.contains(argumentName)) {
                             argument.setIsGiven(true);
                             myCallArgc--;
@@ -200,14 +201,14 @@ public class RSignature {
                         }
 
                     }
-                    if(argument.getArgModifier() == RMethodArgument.ArgModifier.keyreq) {
+                    if (argument.getArgModifier() == Type.KEYREQ) {
                         if(myKeyWords.contains(argumentName)){
                             argument.setIsGiven(true);
                             myCallArgc--;
                             myKeyWords.remove(argumentName);
                         }
                     }
-                    if(argument.getArgModifier() == RMethodArgument.ArgModifier.keyrest) {
+                    if (argument.getArgModifier() == Type.KEYREST) {
                         for (String kwName : myKeyWords) {
                             argument.setIsGiven(true);
                             myCallArgc--;
@@ -223,7 +224,7 @@ public class RSignature {
             RMethodArgument argument = myArgsInfo.get(i);
             String argumentName = argument.getName();
 
-            if(argument.getArgModifier() == RMethodArgument.ArgModifier.rest)
+            if (argument.getArgModifier() == Type.REST)
             {
                 if(this.getCallArgc() > 0)
                 {
