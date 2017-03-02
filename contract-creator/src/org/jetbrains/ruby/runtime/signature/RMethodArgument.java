@@ -1,7 +1,7 @@
 package org.jetbrains.ruby.runtime.signature;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -32,7 +32,7 @@ public class RMethodArgument {
         this.myModifier = ArgModifier.valueOf(parts.get(0));
         this.myType = parts.get(2);
         this.isGiven = false;
-        this.additionalInfo = new LinkedList<>();
+        this.additionalInfo = new ArrayList<>();
     }
 
     public String getName()

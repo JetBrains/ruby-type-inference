@@ -2,8 +2,8 @@ package org.jetbrains.ruby.runtime.signature;
 
 import org.jetbrains.ruby.runtime.signature.server.ServerResponseBean;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 
 public class RSignature {
@@ -19,6 +19,7 @@ public class RSignature {
     private final Integer myLineNumber;
     private final String myVisibility;
     private int myCallArgc;
+    // TODO why list?
     private final List<String> myKeyWords;
     private String myReturnTypeName;
 
@@ -32,7 +33,7 @@ public class RSignature {
         this.myCallArgc = bean.call_info_argc;
 
         String argsTypeName = bean.args_type_name;
-        this.myArgsTypeName = new LinkedList<>();
+        this.myArgsTypeName = new ArrayList<>();
         if(!argsTypeName.equals("")) {
             for (String argumentName : Arrays.asList(argsTypeName.split("\\s*;\\s*"))) {
                 this.myArgsTypeName.add(argumentName);
@@ -40,7 +41,7 @@ public class RSignature {
         }
 
         String argsInfo = bean.args_info;
-        this.myArgsInfo = new LinkedList<>();
+        this.myArgsInfo = new ArrayList<>();
         if(!argsInfo.equals("")) {
             for (String argument : Arrays.asList(argsInfo.split("\\s*;\\s*"))) {
                 this.myArgsInfo.add(new RMethodArgument(argument));
@@ -48,7 +49,7 @@ public class RSignature {
         }
 
         String kwInfo = bean.call_info_kw_args;
-        this.myKeyWords = new LinkedList<>();
+        this.myKeyWords = new ArrayList<>();
         if(!kwInfo.equals("")){
             for (String kwArg : Arrays.asList(kwInfo.split("\\s*,\\s*"))) {
                 this.myKeyWords.add(kwArg);

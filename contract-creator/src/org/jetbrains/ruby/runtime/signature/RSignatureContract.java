@@ -1,6 +1,6 @@
 package org.jetbrains.ruby.runtime.signature;
 
-import javafx.util.Pair;
+import org.jetbrains.ruby.codeInsight.types.signature.Pair;
 
 import java.util.*;
 
@@ -15,14 +15,14 @@ public class RSignatureContract {
     private List<String> myArgsInfo;
     private RSignatureContractNode startContractNode;
 
-    private Vector<Vector<RSignatureContractNode>> levels;
-    private HashMap<String, RSignatureContractNode> termNodes;
+    private List<List<RSignatureContractNode>> levels;
+    private Map<String, RSignatureContractNode> termNodes;
 
     private RSignatureContractNode createNodeAndAddToLevels(Integer index)
     {
         RSignatureContractNode newNode = new RSignatureContractNode(index);
         while(levels.size() <= index)
-            levels.add(new Vector<>());
+            levels.add(new ArrayList<>());
         levels.get(index).add(newNode);
         return newNode;
     }
@@ -58,7 +58,7 @@ public class RSignatureContract {
         this.myGemName = signature.getGemName();
         this.myGemVersion = signature.getGemVersion();
 
-        this.levels = new Vector<>();
+        this.levels = new ArrayList<>();
         this.termNodes = new HashMap<>();
         this.startContractNode = this.createNodeAndAddToLevels(0);
 
@@ -72,13 +72,13 @@ public class RSignatureContract {
         this.myGemName = gemName;
         this.myGemVersion = gemVersion;
 
-        this.levels = new Vector<>();
+        this.levels = new ArrayList<>();
         this.termNodes = new HashMap<>();
         this.startContractNode = this.createNodeAndAddToLevels(0);
     }
     public RSignatureContract(List<RSignature> signatures) {
 
-        this.levels = new Vector<>();
+        this.levels = new ArrayList<>();
         this.termNodes = new HashMap<>();
         this.startContractNode = this.createNodeAndAddToLevels(0);
 
@@ -186,11 +186,11 @@ public class RSignatureContract {
     {
         for(int i = this.getNumberOfLevels() - 1; i > 0; i--)
         {
-            Vector<RSignatureContractNode> level = levels.get(i);
+            List<RSignatureContractNode> level = levels.get(i);
 
             int sizeOfLevel = level.size();
             HashMap <RSignatureContractNode, RSignatureContractNode> representatives = new HashMap<>();
-            List<Integer> uselessVertexex = new LinkedList<>();
+            List<Integer> uselessVertices = new ArrayList<>();
 
             for (RSignatureContractNode node : level) {
                 representatives.put(node, node);
@@ -221,15 +221,15 @@ public class RSignatureContract {
                     {
                         RSignatureContractNode vertex1presenter = representatives.get(vertex1);
                         representatives.put(vertex2, vertex1presenter);
-                        uselessVertexex.add(v2);
+                        uselessVertices.add(v2);
                     }
                 }
             }
 
-            Vector<RSignatureContractNode> prevLevel = levels.get(i - 1);
+            List<RSignatureContractNode> prevLevel = levels.get(i - 1);
 
 
-            if(uselessVertexex.size() > 0) {
+            if (uselessVertices.size() > 0) {
                 for (RSignatureContractNode node : prevLevel) {
                     for (String type : node.getTransitionKeys()) {
                         RSignatureContractNode child = node.goByTypeSymbol(type);
@@ -237,9 +237,9 @@ public class RSignatureContract {
                     }
                 }
             }
-            for (Integer index : uselessVertexex) {
-                if(this.levels.get(i).size() > index.intValue())
-                    this.levels.get(i).remove(index.intValue());
+            for (int index : uselessVertices) {
+                if (this.levels.get(i).size() > index)
+                    this.levels.get(i).remove(index);
             }
         }
     }
@@ -247,13 +247,13 @@ public class RSignatureContract {
     public List<String> getStringPresentation() {
         List<String> answer = new ArrayList<>();
 
-        Queue<Pair<RSignatureContractNode, String>> tmp = new LinkedList<>();
-        tmp.add(new Pair(this.startContractNode, null));
+        Queue<Pair<RSignatureContractNode, String>> tmp = new ArrayDeque<>();
+        tmp.add(new Pair<>(this.startContractNode, null));
 
         while (!tmp.isEmpty())
         {
-            RSignatureContractNode currNode = tmp.peek().getKey();
-            String currString = tmp.peek().getValue();
+            RSignatureContractNode currNode = tmp.peek().getFirst();
+            String currString = tmp.peek().getSecond();
 
             tmp.remove();
 
@@ -261,6 +261,7 @@ public class RSignatureContract {
             if(currNode == null)
             {
                 System.out.println("bad");
+                // TODO[nick] NPE ahead
             }
 
             if(currNode.getNodeType() != null)
