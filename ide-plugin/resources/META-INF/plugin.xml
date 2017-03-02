@@ -1,5 +1,5 @@
 <idea-plugin>
-    <id>org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyStatTypeInference</id>
+    <id>org.jetbrains.ruby-runtime-stats</id>
     <name>Ruby Stat Type Inference</name>
     <version>1.0</version>
     <vendor email="" url="http://www.jetbrains.com">JetBrains</vendor>

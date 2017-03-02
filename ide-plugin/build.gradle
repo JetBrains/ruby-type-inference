@@ -21,5 +21,13 @@ sourceSets {
 intellij {
     version 'IU-LATEST-TRUNK-SNAPSHOT'
     pluginName 'ruby-runtime-stats'
-    plugins = ['org.jetbrains.plugins.ruby:2017.1.20170301']
+    plugins = ['org.jetbrains.plugins.ruby:2017.1.20170302']
+}
+
+prepareSandbox.doLast {
+    def destDir = "$it.destinationDir/$intellij.pluginName"
+    copy {
+        from sourceSets.main.resources.include("**/*.rb", "**/*.db")
+        into destDir
+    }
 }

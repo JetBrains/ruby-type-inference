@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ruby.PluginResourceUtil;
 import org.jetbrains.plugins.ruby.gem.GemInfo;
 import org.jetbrains.plugins.ruby.gem.util.GemSearchUtil;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.SymbolUtil;
@@ -20,7 +21,6 @@ import org.jetbrains.ruby.codeInsight.types.signature.RSignatureBuilder;
 import org.jetbrains.ruby.codeInsight.types.signature.RVisibility;
 
 import java.io.FileNotFoundException;
-import java.net.URL;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -42,12 +42,8 @@ public class SqliteRSignatureManager extends RSignatureManager {
     public static SqliteRSignatureManager getInstance()
             throws SQLException, ClassNotFoundException, FileNotFoundException {
         if (ourInstance == null) {
-            final URL dbURL = SqliteRSignatureManager.class.getClassLoader().getResource("CallStat.db");
-            if (dbURL == null) {
-                throw new FileNotFoundException("CallStat database not found");
-            }
-
-            ourInstance = new SqliteRSignatureManager(dbURL.getPath());
+            final String dbPath = PluginResourceUtil.getPluginResourcesPath() + "CallStat.db";
+            ourInstance = new SqliteRSignatureManager(dbPath);
         }
 
         return ourInstance;

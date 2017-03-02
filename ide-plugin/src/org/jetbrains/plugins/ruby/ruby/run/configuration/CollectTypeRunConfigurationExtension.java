@@ -12,11 +12,11 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ruby.PluginResourceUtil;
 import org.jetbrains.plugins.ruby.gem.GemInfo;
 import org.jetbrains.plugins.ruby.gem.util.GemSearchUtil;
 import org.jetbrains.plugins.ruby.ruby.RubyUtil;
 
-import java.net.URL;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -55,10 +55,7 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
                                     @Nullable final RunnerSettings runnerSettings,
                                     @NotNull final GeneralCommandLine cmdLine,
                                     @NotNull final String runnerId) throws ExecutionException {
-        final URL typeTrackerScriptURL = this.getClass().getClassLoader().getResource("type_tracker.rb");
-        if (typeTrackerScriptURL == null) {
-            return;
-        }
+        final String typeTrackerPath = PluginResourceUtil.getPluginResourcesPath() + "type_tracker.rb";
 
         final Sdk sdk = configuration.getSdk();
         if (sdk == null) {
@@ -73,7 +70,7 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
 
         final Map<String, String> env = cmdLine.getEnvironment();
         final String rubyOpt = StringUtil.notNullize(env.get(RubyUtil.RUBYOPT));
-        final String newRubyOpt = rubyOpt + includeOptions + " -r" + typeTrackerScriptURL.getPath();
+        final String newRubyOpt = rubyOpt + includeOptions + " -r" + typeTrackerPath;
         //final String newRubyOpt = rubyOpt + " -r" + typeTrackerScriptURL.getPath();
         cmdLine.withEnvironment(RubyUtil.RUBYOPT, newRubyOpt);
     }
