@@ -85,9 +85,8 @@ public class RSignature {
 //             **f,                                # keyword_rest
 //             &g)                                 # block
 
-    private void updateArgExists(int argIndex)
+    private void updateArgExists(RMethodArgument argument)
     {
-        RMethodArgument argument = myArgsInfo.get(argIndex);
         String argumentName = argument.getName();
 
         if(myCallArgc <= 0)
@@ -150,25 +149,20 @@ public class RSignature {
                 restPosition = i;
             }
         }
-        for(int i = 0; i < myArgsInfo.size(); i++)
-        {
-            RMethodArgument argument = myArgsInfo.get(i);
+        for (RMethodArgument argument : myArgsInfo) {
             String argumentName = argument.getName();
 
-            if (argument.getArgModifier() == Type.REQ)
-            {
-                updateArgExists(i);
+            if (argument.getArgModifier() == Type.REQ) {
+                updateArgExists(argument);
             }
         }
 
         if(myKeyWords.size() == 0){
-            for(int i = 0; i < myArgsInfo.size(); i++)
-            {
-                RMethodArgument argument = myArgsInfo.get(i);
+            for (RMethodArgument argument : myArgsInfo) {
                 String argumentName = argument.getName();
 
                 if (argument.getArgModifier() == Type.OPT) {
-                    updateArgExists(i);
+                    updateArgExists(argument);
                 }
             }
         }
@@ -176,25 +170,21 @@ public class RSignature {
         {
             if(!keyflag)
             {
-                for(int i = 0; i < myArgsInfo.size(); i++)
-                {
-                    RMethodArgument argument = myArgsInfo.get(i);
+                for (RMethodArgument argument : myArgsInfo) {
                     String argumentName = argument.getName();
 
                     if (argument.getArgModifier() == Type.OPT) {
-                        updateArgExists(i);
+                        updateArgExists(argument);
                     }
                 }
             }
             else
             {
-                for(int i = 0; i < myArgsInfo.size(); i++)
-                {
-                    RMethodArgument argument = myArgsInfo.get(i);
+                for (RMethodArgument argument : myArgsInfo) {
                     String argumentName = argument.getName();
 
                     if (argument.getArgModifier() == Type.KEY) {
-                        if(myKeyWords.contains(argumentName)) {
+                        if (myKeyWords.contains(argumentName)) {
                             argument.setIsGiven(true);
                             myCallArgc--;
                             myKeyWords.remove(argumentName);
@@ -202,7 +192,7 @@ public class RSignature {
 
                     }
                     if (argument.getArgModifier() == Type.KEYREQ) {
-                        if(myKeyWords.contains(argumentName)){
+                        if (myKeyWords.contains(argumentName)) {
                             argument.setIsGiven(true);
                             myCallArgc--;
                             myKeyWords.remove(argumentName);
@@ -219,15 +209,11 @@ public class RSignature {
             }
         }
 
-        for(int i = 0; i < myArgsInfo.size(); i++)
-        {
-            RMethodArgument argument = myArgsInfo.get(i);
+        for (RMethodArgument argument : myArgsInfo) {
             String argumentName = argument.getName();
 
-            if (argument.getArgModifier() == Type.REST)
-            {
-                if(this.getCallArgc() > 0)
-                {
+            if (argument.getArgModifier() == Type.REST) {
+                if (this.getCallArgc() > 0) {
                     argument.setIsGiven(true);
                     myCallArgc = 0;
                     for (String kwName : myKeyWords) {
