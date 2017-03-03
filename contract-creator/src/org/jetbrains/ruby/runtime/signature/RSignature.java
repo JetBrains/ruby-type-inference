@@ -1,6 +1,6 @@
 package org.jetbrains.ruby.runtime.signature;
 
-import org.jetbrains.ruby.codeInsight.types.signature.ParameterInfo.Type;
+import org.jetbrains.ruby.codeInsight.types.signature.ParameterInfo;
 import org.jetbrains.ruby.runtime.signature.server.ServerResponseBean;
 
 import java.util.ArrayList;
@@ -17,10 +17,10 @@ public class RSignature {
     private List<RMethodArgument> myArgsInfo;
 
     private final String myPath;
+    private final String myCallMid;
     private final Integer myLineNumber;
     private final String myVisibility;
     private int myCallArgc;
-    // TODO why list?
     private final List<String> myKeyWords;
     private String myReturnTypeName;
 
@@ -30,15 +30,29 @@ public class RSignature {
         this.myGemName = bean.gem_name;
         this.myGemVersion = bean.gem_version;
         this.myVisibility = bean.visibility;
+
+        this.myCallMid = bean.call_info_mid;
+
+        if (!myCallMid.equals("nil")) {
+            this.myCallArgc = bean.call_info_argc;
+            String kwInfo = bean.call_info_kw_args;
+
+            this.myKeyWords = new ArrayList<>();
+            if (!kwInfo.equals("")) {
+                this.myKeyWords.addAll(Arrays.asList(kwInfo.split("\\s*,\\s*")));
+            }
+        } else {
+            this.myKeyWords = null;
+        }
+
+
         this.myReturnTypeName = bean.return_type_name;
-        this.myCallArgc = bean.call_info_argc;
+
 
         String argsTypeName = bean.args_type_name;
         this.myArgsTypeName = new ArrayList<>();
         if(!argsTypeName.equals("")) {
-            for (String argumentName : Arrays.asList(argsTypeName.split("\\s*;\\s*"))) {
-                this.myArgsTypeName.add(argumentName);
-            }
+            this.myArgsTypeName.addAll(Arrays.asList(argsTypeName.split("\\s*;\\s*")));
         }
 
         String argsInfo = bean.args_info;
@@ -49,30 +63,8 @@ public class RSignature {
             }
         }
 
-        String kwInfo = bean.call_info_kw_args;
-        this.myKeyWords = new ArrayList<>();
-        if(!kwInfo.equals("")){
-            for (String kwArg : Arrays.asList(kwInfo.split("\\s*,\\s*"))) {
-                this.myKeyWords.add(kwArg);
-            }
-        }
         this.myPath = bean.path;
         this.myLineNumber = bean.lineno;
-    }
-    public RSignature(final String methodName, final String receiverName, final List<String> argsTypeName,
-                      final String gemName, final String gemVersion, final String returnTypeName, final String visibility, final List<RMethodArgument> argsInfo, int argc, final List<String> keyWords, final String path, final Integer lineno) {
-        this.myMethodName = methodName;
-        this.myReceiverName = receiverName;
-        this.myArgsTypeName = argsTypeName;
-        this.myGemName = gemName;
-        this.myGemVersion = gemVersion;
-        this.myReturnTypeName = returnTypeName;
-        this.myVisibility = visibility;
-        this.myArgsInfo = argsInfo;
-        this.myCallArgc = argc;
-        this.myKeyWords = keyWords;
-        this.myPath = path;
-        this.myLineNumber = lineno;
     }
 
 //     parameter information
@@ -87,8 +79,6 @@ public class RSignature {
 
     private void updateArgExists(RMethodArgument argument)
     {
-        String argumentName = argument.getName();
-
         if(myCallArgc <= 0)
             return;
 
@@ -106,62 +96,37 @@ public class RSignature {
     }
 
     public void fetch() {
-        //int argc = this.getCallArgc();
 
-        int restPosition = -1;
-        int kwPosition = -1;
-
-        boolean keyreqflag = false;
         boolean keyflag = false;
-        boolean keyrest = false;
 
-        for(int i = 0; i < myArgsInfo.size(); i++)
-        {
-            RMethodArgument argument = myArgsInfo.get(i);
-            String argumentName = argument.getName();
-
-            if (argument.getArgModifier() == Type.BLOCK)
-            {
+        for (RMethodArgument argument : myArgsInfo) {
+            if (argument.getArgModifier() == ParameterInfo.Type.BLOCK) {
                 if(!argument.getType().equals("NillClass"))
                     argument.setIsGiven(true);
             }
 
-            if (argument.getArgModifier() == Type.KEYREQ)
-            {
-                keyreqflag = true;
+            if (argument.getArgModifier() == ParameterInfo.Type.KEYREQ) {
                 keyflag = true;
             }
 
-            if (argument.getArgModifier() == Type.KEY)
-            {
-                keyreqflag = true;
+            if (argument.getArgModifier() == ParameterInfo.Type.KEY) {
                 keyflag = true;
             }
 
-            if (argument.getArgModifier() == Type.KEYREST)
-            {
-                keyrest = true;
+            if (argument.getArgModifier() == ParameterInfo.Type.KEYREST) {
                 keyflag = true;
-            }
-
-            if (argument.getArgModifier() == Type.REST)
-            {
-                restPosition = i;
             }
         }
-        for (RMethodArgument argument : myArgsInfo) {
-            String argumentName = argument.getName();
 
-            if (argument.getArgModifier() == Type.REQ) {
+        for (RMethodArgument argument : myArgsInfo) {
+            if (argument.getArgModifier() == ParameterInfo.Type.REQ) {
                 updateArgExists(argument);
             }
         }
 
         if(myKeyWords.size() == 0){
             for (RMethodArgument argument : myArgsInfo) {
-                String argumentName = argument.getName();
-
-                if (argument.getArgModifier() == Type.OPT) {
+                if (argument.getArgModifier() == ParameterInfo.Type.OPT) {
                     updateArgExists(argument);
                 }
             }
@@ -171,9 +136,7 @@ public class RSignature {
             if(!keyflag)
             {
                 for (RMethodArgument argument : myArgsInfo) {
-                    String argumentName = argument.getName();
-
-                    if (argument.getArgModifier() == Type.OPT) {
+                    if (argument.getArgModifier() == ParameterInfo.Type.OPT) {
                         updateArgExists(argument);
                     }
                 }
@@ -183,7 +146,7 @@ public class RSignature {
                 for (RMethodArgument argument : myArgsInfo) {
                     String argumentName = argument.getName();
 
-                    if (argument.getArgModifier() == Type.KEY) {
+                    if (argument.getArgModifier() == ParameterInfo.Type.KEY) {
                         if (myKeyWords.contains(argumentName)) {
                             argument.setIsGiven(true);
                             myCallArgc--;
@@ -191,17 +154,17 @@ public class RSignature {
                         }
 
                     }
-                    if (argument.getArgModifier() == Type.KEYREQ) {
+                    if (argument.getArgModifier() == ParameterInfo.Type.KEYREQ) {
                         if (myKeyWords.contains(argumentName)) {
                             argument.setIsGiven(true);
                             myCallArgc--;
                             myKeyWords.remove(argumentName);
                         }
                     }
-                    if (argument.getArgModifier() == Type.KEYREST) {
-                        for (String kwName : myKeyWords) {
+                    if (argument.getArgModifier() == ParameterInfo.Type.KEYREST) {
+                        if (!myKeyWords.isEmpty()) {
                             argument.setIsGiven(true);
-                            myCallArgc--;
+                            myCallArgc -= myKeyWords.size();
                         }
                         myKeyWords.clear();
                     }
@@ -210,39 +173,18 @@ public class RSignature {
         }
 
         for (RMethodArgument argument : myArgsInfo) {
-            String argumentName = argument.getName();
 
-            if (argument.getArgModifier() == Type.REST) {
+            if (argument.getArgModifier() == ParameterInfo.Type.REST) {
                 if (this.getCallArgc() > 0) {
                     argument.setIsGiven(true);
                     myCallArgc = 0;
                     for (String kwName : myKeyWords) {
                         argument.addInfo(kwName);
-                        //this.myCallArgc--;
                     }
                     myKeyWords.clear();
                 }
             }
         }
-
-//        if(myCallArgc != 0 || myKeyWords.size() != 0)
-//        {
-//            System.out.println("Incorrect ArgC");
-//        }
-//        for (RMethodArgument argument : myArgsInfo) {
-//            if(argument.getArgModifier() == RMethodArgument.ArgModifier.req && !argument.getIsGiven())
-//            {
-//                System.out.println("Req not given");
-//                break;
-//            }
-//            if(argument.getArgModifier() == RMethodArgument.ArgModifier.keyreq && !argument.getIsGiven())
-//            {
-//                System.out.println("Keyreq not given");
-//                break;
-//            }
-//        }
-
-        //RMethodArgument argument = myArgsInfo.get(restPosition);
     }
 
     public String getMethodName() {
@@ -255,9 +197,6 @@ public class RSignature {
         return myReceiverName;
     }
 
-    public List<String> getArgsTypeName() {
-        return myArgsTypeName;
-    }
     public List<RMethodArgument> getArgsInfo() {
         return myArgsInfo;
     }
@@ -273,10 +212,6 @@ public class RSignature {
         return myVisibility;
     }
 
-    public List<String> getKeyWords(){
-        return this.myKeyWords;
-    }
-
     public String getGemVersion() {
         return myGemVersion;
     }
@@ -285,8 +220,8 @@ public class RSignature {
         return myReturnTypeName;
     }
 
-    public void setReturnTypeName(final String returnTypeName) {
-        this.myReturnTypeName = returnTypeName;
+    public String getCallMid() {
+        return myCallMid;
     }
 
     @Override
@@ -297,12 +232,12 @@ public class RSignature {
         RSignature that = (RSignature) o;
 
         return myMethodName.equals(that.myMethodName) &&
-               myReceiverName.equals(that.myReceiverName) &&
-               myArgsTypeName.equals(that.myArgsTypeName) &&
-               myVisibility.equals(that.myVisibility) &&
-               myGemName.equals(that.myGemName) &&
-               myReturnTypeName.equals(that.myReturnTypeName) &&
-               myGemVersion.equals(that.myGemVersion);
+                myReceiverName.equals(that.myReceiverName) &&
+                myArgsTypeName.equals(that.myArgsTypeName) &&
+                myVisibility.equals(that.myVisibility) &&
+                myGemName.equals(that.myGemName) &&
+                myReturnTypeName.equals(that.myReturnTypeName) &&
+                myGemVersion.equals(that.myGemVersion);
 
     }
 

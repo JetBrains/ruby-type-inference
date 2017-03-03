@@ -39,11 +39,15 @@ public class SignatureServer {
                         }
 
                         ServerResponseBean result = new Gson().fromJson(currString, ServerResponseBean.class);
-                        RSignature currSignature = new RSignature(result);
 
-                        if (result.call_info_mid.equals(result.method_name)) {
-                            System.out.println(currString);
-                            mainContainer.addSignature(currSignature);
+                        if (result != null) {
+                            RSignature currSignature = new RSignature(result);
+
+                            if (result.method_name.equals("initialize") || result.call_info_mid.equals("send") || result.call_info_mid.equals("nil") || result.call_info_mid.equals(result.method_name)) {
+
+                                mainContainer.addSignature(currSignature);
+                            }
+
                         }
 
                     } catch (JsonParseException e) {

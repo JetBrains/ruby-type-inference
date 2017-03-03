@@ -1,15 +1,21 @@
 package org.jetbrains.ruby.runtime.signature;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Set;
-import java.util.StringJoiner;
 
 public class RSignatureContractNode {
-    private Integer argIndex;
 
-    private Set<String> nodeTypes = new HashSet<>();
-    private String nodeType;
+    private ContractNodeType nodeType;
+
+    public void setMask(int mask) {
+        this.mask = mask;
+    }
+
+    public enum ContractNodeType {
+        argNode,
+        returnNode,
+        returnTypeNode
+    }
 
     private String reachableTerm;
     private int mask = 0;
@@ -21,21 +27,15 @@ public class RSignatureContractNode {
         return typeTransitions.get(typeName);
     }
 
-    public RSignatureContractNode(Integer index) {
+    public RSignatureContractNode(ContractNodeType type) {
 
-        this.argIndex = index;
-        this.typeTransitions = new HashMap();
-    }
-    public String getNodeTypesStringPresentation()
-    {
-        StringJoiner answer = new StringJoiner("|");
-        for (String type : nodeTypes) {
-            answer.add(type);
-        }
-        return answer.toString();
+        this.nodeType = type;
+
+        if (type != ContractNodeType.returnTypeNode)
+            this.typeTransitions = new HashMap<>();
     }
 
-    public String getNodeType()
+    public ContractNodeType getNodeType()
     {
         return this.nodeType;
     }
@@ -44,28 +44,13 @@ public class RSignatureContractNode {
         return this.mask;
     }
 
-    public void setMask(int mask) {
-        this.mask = mask;
-    }
-    public void addNodeType(String type)
-    {
-        if(this.nodeTypes == null)
-            this.nodeTypes = new HashSet<>();
-
-        this.nodeTypes.add(type);
+    public void updateMask(int tempMask) {
+        mask &= tempMask;
     }
 
     public String getReachableTerm()
     {
         return this.reachableTerm;
-    }
-    private void setReachableTerm(String reachableTerm)
-    {
-        this.reachableTerm = reachableTerm;
-    }
-
-    public RSignatureContractNode(String type) {
-        nodeType = type;
     }
 
     public Set<String> getTransitionKeys() {
@@ -83,18 +68,5 @@ public class RSignatureContractNode {
             if(!reachableTerm.equals(returnType))
                 reachableTerm = null;
         }
-    }
-
-    public void updateMask(String type, String returnType) {
-        int tmpMask = goByTypeSymbol(type).getMask();
-        tmpMask <<= 1;
-
-        if (type.equals(returnType))
-            tmpMask |= 1;
-
-        if (typeTransitions.size() == 1)
-            setMask(tmpMask);
-        else
-            setMask(getMask() & tmpMask);
     }
 }

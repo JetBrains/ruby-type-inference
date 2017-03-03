@@ -1,6 +1,6 @@
 package org.jetbrains.ruby.runtime.signature;
 
-import org.jetbrains.ruby.codeInsight.types.signature.Pair;
+import javafx.util.Pair;
 
 import java.util.*;
 
@@ -12,7 +12,7 @@ public class RSignatureContract {
     private String myReceiverName;
     private String myGemName;
     private String myGemVersion;
-    private List<String> myArgsInfo;
+    private List<RMethodArgument> myArgsInfo;
     private RSignatureContractNode startContractNode;
 
     private List<List<RSignatureContractNode>> levels;
@@ -20,7 +20,13 @@ public class RSignatureContract {
 
     private RSignatureContractNode createNodeAndAddToLevels(Integer index)
     {
-        RSignatureContractNode newNode = new RSignatureContractNode(index);
+        RSignatureContractNode newNode;
+
+        if (index < myArgsInfo.size())
+            newNode = new RSignatureContractNode(RSignatureContractNode.ContractNodeType.argNode);
+        else
+            newNode = new RSignatureContractNode(RSignatureContractNode.ContractNodeType.returnNode);
+
         while(levels.size() <= index)
             levels.add(new ArrayList<>());
         levels.get(index).add(newNode);
@@ -35,19 +41,14 @@ public class RSignatureContract {
     private RSignatureContractNode createTermNode(String type)
     {
         if(!termNodes.containsKey(type)) {
-            RSignatureContractNode newNode = new RSignatureContractNode(type);
+            RSignatureContractNode newNode = new RSignatureContractNode(RSignatureContractNode.ContractNodeType.returnTypeNode);
             termNodes.put(type, newNode);
         }
 
         return termNodes.get(type);
     }
 
-    private RSignatureContractNode createJoinTypeTermNode()
-    {
-        return new RSignatureContractNode("join type node");
-    }
-
-    public RSignatureContractNode getTermNode(String type)
+    private RSignatureContractNode getTermNode(String type)
     {
         return termNodes.get(type);
     }
@@ -57,6 +58,7 @@ public class RSignatureContract {
         this.myReceiverName = signature.getReceiverName();
         this.myGemName = signature.getGemName();
         this.myGemVersion = signature.getGemVersion();
+        this.myArgsInfo = signature.getArgsInfo();
 
         this.levels = new ArrayList<>();
         this.termNodes = new HashMap<>();
@@ -65,17 +67,6 @@ public class RSignatureContract {
         this.addRSignature(signature);
     }
 
-    public RSignatureContract(final String methodName, final String receiverName,
-                              final String gemName, final String gemVersion) {
-        this.myMethodName = methodName;
-        this.myReceiverName = receiverName;
-        this.myGemName = gemName;
-        this.myGemVersion = gemVersion;
-
-        this.levels = new ArrayList<>();
-        this.termNodes = new HashMap<>();
-        this.startContractNode = this.createNodeAndAddToLevels(0);
-    }
     public RSignatureContract(List<RSignature> signatures) {
 
         this.levels = new ArrayList<>();
@@ -90,91 +81,68 @@ public class RSignatureContract {
     public RSignatureContractNode getStartNode() {
         return startContractNode;
     }
-    public String getMethodName() {
-        return myMethodName;
-    }
 
-    public String getReceiverName() {
-        return myReceiverName;
-    }
-
-    public String getGemName() {
-        return myGemName;
-    }
-
-    public String getGemVersion() {
-        return myGemVersion;
-    }
 
     public void addRSignature(RSignature signature) {
         this.counter++;
         RSignatureContractNode currNode = this.startContractNode;
         int i = 1;
 
-        signature.fetch();
+        if (signature.getCallMid().equals("nil")) {
+            for (RMethodArgument argument : signature.getArgsInfo()) {
+                argument.setIsGiven(true);
+            }
+        } else
+            signature.fetch();
 
         String returnType = signature.getReturnTypeName();
+
         RSignatureContractNode termNode = getTermNode(returnType);
         if(termNode == null)
         {
             termNode = this.createTermNode(returnType);
         }
 
-        if(signature.getArgsTypeName().size() == 0)
-        {
-            this.startContractNode.addLink("no arguments", termNode, returnType);
-            return;
-        }
-        Stack<RSignatureContractNode> nodes = new Stack<>();
-        nodes.add(currNode);
-
         for (RMethodArgument argument : signature.getArgsInfo()) {
             String type = argument.getType();
             if(!argument.getIsGiven())
                 type = "-";
 
-            if(i == signature.getArgsTypeName().size())
+            //Temp mask configuration
+            int tempMask = 0;
+            for (int j = (i - 1); j < signature.getArgsInfo().size(); j++)
             {
-                if(currNode.goByTypeSymbol(type) != null && currNode.goByTypeSymbol(type) != termNode)
+                tempMask <<= 1;
+                if (signature.getArgsInfo().get(j).getType().equals(type))
                 {
-                    RSignatureContractNode oldTerm = currNode.goByTypeSymbol(type);
-                    if(oldTerm.getNodeType().equals("join type node")){
-                        oldTerm.addNodeType(returnType);
-                    }
-                    else
-                    {
-                        RSignatureContractNode newTerm = createJoinTypeTermNode();
-                        newTerm.addNodeType(oldTerm.getNodeType());
-                        newTerm.addNodeType(returnType);
-                    }
+                    tempMask |= 1;
                 }
-                else
-                    currNode.addLink(type, termNode, returnType);
-                break;
             }
 
+            if (returnType.equals(type)) {
+                tempMask <<= 1;
+                tempMask |= 1;
+            }
+            //---
 
             if(currNode.goByTypeSymbol(type) == null)
             {
-                RSignatureContractNode newNode = this.createNodeAndAddToLevels(i);
+                RSignatureContractNode newNode;
+
+                newNode = this.createNodeAndAddToLevels(i);
+
                 currNode.addLink(type, newNode, returnType);
+
+                newNode.setMask(tempMask);
                 currNode = newNode;
-            }
-            else
+            } else {
                 currNode = currNode.goByTypeSymbol(type);
-
+                currNode.updateMask(tempMask);
+            }
             i++;
-            nodes.add(currNode);
         }
 
-        for (int j = signature.getArgsInfo().size() - 1; j >= 0; j--) {
-            RMethodArgument argument = signature.getArgsInfo().get(j);
-            String type = argument.getType();
-            if (!argument.getIsGiven())
-                type = "-";
-            currNode = nodes.pop();
-            currNode.updateMask(type, returnType);
-        }
+        currNode.addLink(returnType, termNode, returnType);
     }
 
     public Integer getNumberOfLevels()
@@ -188,7 +156,6 @@ public class RSignatureContract {
         {
             List<RSignatureContractNode> level = levels.get(i);
 
-            int sizeOfLevel = level.size();
             HashMap <RSignatureContractNode, RSignatureContractNode> representatives = new HashMap<>();
             List<Integer> uselessVertices = new ArrayList<>();
 
@@ -244,6 +211,7 @@ public class RSignatureContract {
         }
     }
 
+
     public List<String> getStringPresentation() {
         List<String> answer = new ArrayList<>();
 
@@ -252,8 +220,8 @@ public class RSignatureContract {
 
         while (!tmp.isEmpty())
         {
-            RSignatureContractNode currNode = tmp.peek().getFirst();
-            String currString = tmp.peek().getSecond();
+            RSignatureContractNode currNode = tmp.peek().getKey();
+            String currString = tmp.peek().getValue();
 
             tmp.remove();
 
@@ -261,20 +229,20 @@ public class RSignatureContract {
             if(currNode == null)
             {
                 System.out.println("bad");
-                // TODO[nick] NPE ahead
             }
 
-            if(currNode.getNodeType() != null)
+            if (currNode.getNodeType() == RSignatureContractNode.ContractNodeType.returnNode)
             {
-                if(currNode.getNodeType().equals("join type node"))
-                {
-                    answer.add("(" + currString + ")" + " -> " + currNode.getNodeTypesStringPresentation());
-                    continue;
+                StringJoiner joiner = new StringJoiner("|");
+
+                for (String transitionType : currNode.getTransitionKeys()) {
+                    joiner.add(transitionType);
                 }
-                else {
-                    answer.add("(" + currString + ")" + " -> " + currNode.getNodeType());
-                    continue;
-                }
+                if (currString == null)
+                    answer.add("()" + " -> " + joiner.toString());
+                else
+                    answer.add("(" + currString + ")" + " -> " + joiner.toString());
+                continue;
             }
 
             Map <RSignatureContractNode, String> newVertexes = new HashMap<>();

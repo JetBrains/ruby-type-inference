@@ -7,9 +7,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * Created by viuginick on 12/2/16.
- */
 
 public class RMethodArgument {
     private String myName;
@@ -41,10 +38,6 @@ public class RMethodArgument {
     public void addInfo(String additionalInfo)
     {
         this.additionalInfo.add(additionalInfo);
-    }
-    public List<String> getAdditionalInfo()
-    {
-        return this.additionalInfo;
     }
 
     public ParameterInfo.Type getArgModifier()
@@ -87,4 +80,3 @@ public class RMethodArgument {
         return result;
     }
 }
-
