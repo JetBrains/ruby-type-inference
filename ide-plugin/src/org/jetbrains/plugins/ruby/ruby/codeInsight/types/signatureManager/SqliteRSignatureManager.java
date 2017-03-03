@@ -54,8 +54,9 @@ public class SqliteRSignatureManager extends RSignatureManager {
     @Override
     public List<String> findReturnTypeNamesBySignature(@NotNull final Project project, @Nullable final Module module,
                                                        @NotNull final RSignature signature) {
+        final MethodInfo methodInfo = signature.getMethodInfo();
         final String sql = String.format("SELECT * FROM rsignature WHERE method_name = '%s' AND receiver_name = '%s';",
-                                         signature.getMethodName(), signature.getReceiverName());
+                methodInfo.getName(), methodInfo.getClassInfo().getClassFQN());
         final List<RSignature> signatures = executeQuery(sql);
         final List<Pair<RSignature, Integer>> signaturesAndDistances = signatures.stream()
                 .map(sign -> Pair.create(sign, RSignatureDAG.getArgsTypeNamesDistance(project, signature.getArgsTypeName(),
@@ -99,12 +100,13 @@ public class SqliteRSignatureManager extends RSignatureManager {
                 .map(argInfo -> String.join(",", argInfo.getType().toString().toLowerCase(), argInfo.getName(),
                                                  argInfo.getDefaultValueTypeName()))
                 .collect(Collectors.joining(";"));
+        final MethodInfo methodInfo = signature.getMethodInfo();
         final String sql = String.format("INSERT OR REPLACE INTO rsignature " +
                                          "values('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');",
-                                         signature.getMethodName(), signature.getReceiverName(),
+                methodInfo.getName(), methodInfo.getClassInfo().getClassFQN(),
                                          String.join(";", signature.getArgsTypeName()), argsInfoSerialized,
                 signature.getReturnTypeName(), signature.getGemInfo().getName(), signature.getGemInfo().getVersion(),
-                                         signature.getVisibility());
+                methodInfo.getVisibility());
         executeUpdate(sql);
     }
 
@@ -114,23 +116,23 @@ public class SqliteRSignatureManager extends RSignatureManager {
                                          "AND method_name = '%s' AND receiver_name = '%s' " +
                                          "AND gem_name = '%s' AND gem_version = '%s';",
                                          String.join(";", signature.getArgsTypeName()),
-                                         signature.getMethodName(), signature.getReceiverName(),
+                signature.getMethodInfo().getName(), signature.getMethodInfo().getClassInfo().getClassFQN(),
                 signature.getGemInfo().getName(), signature.getGemInfo().getVersion());
         executeUpdate(sql);
     }
 
     public void deleteSimilarSignatures(@NotNull final RSignature signature) {
         final String sql = String.format("DELETE FROM rsignature WHERE method_name = '%s' AND receiver_name = '%s' " +
-                                         "AND gem_name = '%s' AND gem_version = '%s';", signature.getMethodName(),
-                signature.getReceiverName(), signature.getGemInfo().getName(), signature.getGemInfo().getVersion());
+                        "AND gem_name = '%s' AND gem_version = '%s';", signature.getMethodInfo().getName(),
+                signature.getMethodInfo().getClassInfo().getClassFQN(), signature.getGemInfo().getName(), signature.getGemInfo().getVersion());
         executeUpdate(sql);
     }
 
     @NotNull
     public List<RSignature> getSimilarSignatures(@NotNull final RSignature signature) {
         final String sql = String.format("SELECT * FROM rsignature WHERE method_name = '%s' AND receiver_name = '%s' " +
-                                         "AND gem_name = '%s' AND gem_version = '%s';", signature.getMethodName(),
-                signature.getReceiverName(), signature.getGemInfo().getName(), signature.getGemInfo().getVersion());
+                        "AND gem_name = '%s' AND gem_version = '%s';", signature.getMethodInfo().getName(),
+                signature.getMethodInfo().getClassInfo().getClassFQN(), signature.getGemInfo().getName(), signature.getGemInfo().getVersion());
         return executeQuery(sql);
     }
 
@@ -292,7 +294,7 @@ public class SqliteRSignatureManager extends RSignatureManager {
         final String sql = String.format("SELECT * FROM rsignature " +
                                          "WHERE method_name = '%s' AND receiver_name = '%s' " +
                                          "AND args_type_name = '%s' AND gem_name = '%s' AND gem_version = '%s';",
-                                         signature.getMethodName(), signature.getReceiverName(),
+                signature.getMethodInfo().getName(), signature.getMethodInfo().getClassInfo().getClassFQN(),
                                          String.join(";", signature.getArgsTypeName()),
                 signature.getGemInfo().getName(), signature.getGemInfo().getVersion());
         final List<RSignature> signatures = executeQuery(sql);
@@ -317,7 +319,7 @@ public class SqliteRSignatureManager extends RSignatureManager {
             while (resultSet.next()) {
                 final RSignature signature = new RSignatureBuilder(resultSet.getString("method_name"))
                         .setReceiverName(resultSet.getString("receiver_name"))
-                        .setVisibility(RVisibility.valueOf(resultSet.getString("visibility")))
+                        .setVisibility(MethodInfo.RVisibility.valueOf(resultSet.getString("visibility")))
                         .setArgsInfo(parseArgsInfo(resultSet.getString("args_info")))
                         .setArgsTypeName(StringUtil.splitHonorQuotes(resultSet.getString("args_type_name"), ';'))
                         .setGemInfo(new GemInfo(resultSet.getString("gem_name"),

@@ -11,7 +11,7 @@ public class RSignatureBuilder {
     @NotNull
     private String myReceiverName = "Object";
     @NotNull
-    private RVisibility myVisibility = RVisibility.PUBLIC;
+    private MethodInfo.RVisibility myVisibility = MethodInfo.RVisibility.PUBLIC;
     @NotNull
     private List<ParameterInfo> myArgsInfo = new ArrayList<>();
     @NotNull
@@ -33,7 +33,7 @@ public class RSignatureBuilder {
     }
 
     @NotNull
-    public RSignatureBuilder setVisibility(@NotNull final RVisibility visibility) {
+    public RSignatureBuilder setVisibility(@NotNull final MethodInfo.RVisibility visibility) {
         myVisibility = visibility;
         return this;
     }
@@ -69,7 +69,7 @@ public class RSignatureBuilder {
 
     @NotNull
     public RSignature build() {
-        return new RSignature(myMethodName, myReceiverName, myVisibility, myArgsInfo, myArgsTypeName,
-                myGemInfo, myReturnTypeName, myIsLocal);
+        return new RSignature(new MethodInfo(new ClassInfo(myReceiverName), myMethodName, myVisibility),
+                myArgsInfo, myArgsTypeName, myGemInfo, myReturnTypeName, myIsLocal);
     }
 }

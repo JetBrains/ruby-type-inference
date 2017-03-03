@@ -9,10 +9,7 @@ import com.google.gson.reflect.TypeToken;
 import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.ruby.codeInsight.types.signature.GemInfo;
-import org.jetbrains.ruby.codeInsight.types.signature.ParameterInfo;
-import org.jetbrains.ruby.codeInsight.types.signature.RSignature;
-import org.jetbrains.ruby.codeInsight.types.signature.RVisibility;
+import org.jetbrains.ruby.codeInsight.types.signature.*;
 
 import java.io.*;
 import java.sql.*;
@@ -152,9 +149,9 @@ public class RSignatureStorageServerImpl extends RSignatureStorageServer {
             final ResultSet resultSet = statement.executeQuery(sql);
             while (resultSet.next()) {
                 final RSignature signature = new RSignature(
-                        resultSet.getString("method_name"),
-                        resultSet.getString("receiver_name"),
-                        RVisibility.valueOf(resultSet.getString("visibility")),
+                        new MethodInfo(new ClassInfo(resultSet.getString("receiver_name")),
+                                resultSet.getString("method_name"),
+                                MethodInfo.RVisibility.valueOf(resultSet.getString("visibility"))),
                         parseArgsInfo(resultSet.getString("args_info")),
                         Arrays.asList(resultSet.getString("args_type_name").split(";")),
                         new GemInfo(resultSet.getString("gem_name"),
@@ -185,9 +182,12 @@ public class RSignatureStorageServerImpl extends RSignatureStorageServer {
                 .map(argInfo -> String.join(",", argInfo.getType().toString().toLowerCase(), argInfo.getName(),
                         argInfo.getDefaultValueTypeName()))
                 .collect(Collectors.joining(";"));
+
+        final MethodInfo methodInfo = signature.getMethodInfo();
         return String.format("INSERT INTO rsignature values('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', FALSE) " +
-                        "ON CONFLICT DO NOTHING;", signature.getMethodName(), signature.getReceiverName(),
-                signature.getVisibility(), String.join(";", signature.getArgsTypeName()), argsInfoSerialized,
+                        "ON CONFLICT DO NOTHING;",
+                methodInfo.getName(), methodInfo.getClassInfo().getClassFQN(),
+                methodInfo.getVisibility(), String.join(";", signature.getArgsTypeName()), argsInfoSerialized,
                 signature.getReturnTypeName(), signature.getGemInfo().getName(), signature.getGemInfo().getVersion());
 
     }

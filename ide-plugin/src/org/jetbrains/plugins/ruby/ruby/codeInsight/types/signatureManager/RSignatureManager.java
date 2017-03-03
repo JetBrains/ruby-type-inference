@@ -17,9 +17,9 @@ import org.jetbrains.plugins.ruby.ruby.codeInsight.types.impl.REmptyType;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.impl.RSymbolTypeImpl;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.ArgumentInfo;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.Visibility;
+import org.jetbrains.ruby.codeInsight.types.signature.MethodInfo;
 import org.jetbrains.ruby.codeInsight.types.signature.ParameterInfo;
 import org.jetbrains.ruby.codeInsight.types.signature.RSignature;
-import org.jetbrains.ruby.codeInsight.types.signature.RVisibility;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -125,10 +125,10 @@ public abstract class RSignatureManager {
 
         methodSymbols.addAll(classMethodSignatures.stream()
                 .map(signature -> new RMethodSyntheticSymbol(project,
-                                                             signature.getMethodName(),
+                        signature.getMethodInfo().getName(),
                                                              Type.INSTANCE_METHOD,
                                                              classSymbol,
-                                                             castRVisibilityToVisibility(signature.getVisibility()),
+                        castRVisibilityToVisibility(signature.getMethodInfo().getVisibility()),
                                                              signature.getArgsInfo().stream()
                                                                      .map(RSignatureManager::castParameterInfoToArgumentInfo)
                                                                      .collect(Collectors.toList())))
@@ -138,7 +138,7 @@ public abstract class RSignatureManager {
     }
 
     @NotNull
-    private static Visibility castRVisibilityToVisibility(@NotNull final RVisibility visibility) {
+    private static Visibility castRVisibilityToVisibility(@NotNull final MethodInfo.RVisibility visibility) {
         return Visibility.values()[visibility.ordinal()];
     }
 

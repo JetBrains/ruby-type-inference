@@ -262,14 +262,12 @@ public class RSignatureDAG {
             mergedArgsTypeName.add(leastCommonSuperclass != null ? leastCommonSuperclass.getName() : CoreTypes.Object);
         }
 
-        return new RSignatureBuilder(signature1.getMethodName())
-                .setReceiverName(signature1.getReceiverName())
-                .setVisibility(signature1.getVisibility())
-                .setArgsInfo(signature1.getArgsInfo())
-                .setArgsTypeName(mergedArgsTypeName)
-                .setGemInfo(signature1.getGemInfo())
-                .setReturnTypeName(signature1.getReturnTypeName())
-                .build();
+        return new RSignature(signature1.getMethodInfo(),
+                signature1.getArgsInfo(),
+                mergedArgsTypeName,
+                signature1.getGemInfo(),
+                signature1.getReturnTypeName(),
+                true);
     }
 
     private void depthFirstSearch(@NotNull final Node<RSignature> node, @NotNull final Consumer<RSignature> visitor,

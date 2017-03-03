@@ -6,11 +6,7 @@ import java.util.List;
 
 public class RSignature {
     @NotNull
-    private final String myMethodName;
-    @NotNull
-    private final String myReceiverName;
-    @NotNull
-    private final RVisibility myVisibility;
+    private final MethodInfo myMethodInfo;
     @NotNull
     private final List<ParameterInfo> myArgsInfo;
     @NotNull
@@ -19,19 +15,16 @@ public class RSignature {
     private final GemInfo myGemInfo;
     @NotNull
     private String myReturnTypeName;
+
     private final boolean myIsLocal;
 
-    public RSignature(@NotNull final String methodName,
-                      @NotNull final String receiverName,
-                      @NotNull final RVisibility visibility,
+    public RSignature(@NotNull final MethodInfo methodInfo,
                       @NotNull final List<ParameterInfo> argsInfo,
                       @NotNull final List<String> argsTypeName,
                       @NotNull final GemInfo gemInfo,
                       @NotNull final String returnTypeName,
                       final boolean isLocal) {
-        myMethodName = methodName;
-        myReceiverName = receiverName;
-        myVisibility = visibility;
+        myMethodInfo = methodInfo;
         myArgsInfo = argsInfo;
         myArgsTypeName = argsTypeName;
         myGemInfo = gemInfo;
@@ -40,18 +33,8 @@ public class RSignature {
     }
 
     @NotNull
-    public String getMethodName() {
-        return myMethodName;
-    }
-
-    @NotNull
-    public String getReceiverName() {
-        return myReceiverName;
-    }
-
-    @NotNull
-    public RVisibility getVisibility() {
-        return myVisibility;
+    public MethodInfo getMethodInfo() {
+        return myMethodInfo;
     }
 
     @NotNull
@@ -87,25 +70,24 @@ public class RSignature {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        RSignature that = (RSignature) o;
+        final RSignature that = (RSignature) o;
 
-        return myMethodName.equals(that.myMethodName) &&
-               myReceiverName.equals(that.myReceiverName) &&
-               myVisibility.equals(that.myVisibility) &&
-               myArgsInfo.equals(that.myArgsInfo) &&
-               myArgsTypeName.equals(that.myArgsTypeName) &&
-                myGemInfo.equals(that.getGemInfo());
-
+        if (myIsLocal != that.myIsLocal) return false;
+        if (!myMethodInfo.equals(that.myMethodInfo)) return false;
+        if (!myArgsInfo.equals(that.myArgsInfo)) return false;
+        if (!myArgsTypeName.equals(that.myArgsTypeName)) return false;
+        if (!myGemInfo.equals(that.myGemInfo)) return false;
+        return myReturnTypeName.equals(that.myReturnTypeName);
     }
 
     @Override
     public int hashCode() {
-        int result = myMethodName.hashCode();
-        result = 31 * result + myReceiverName.hashCode();
-        result = 31 * result + myVisibility.hashCode();
+        int result = myMethodInfo.hashCode();
         result = 31 * result + myArgsInfo.hashCode();
         result = 31 * result + myArgsTypeName.hashCode();
         result = 31 * result + myGemInfo.hashCode();
+        result = 31 * result + myReturnTypeName.hashCode();
+        result = 31 * result + (myIsLocal ? 1 : 0);
         return result;
     }
 }
