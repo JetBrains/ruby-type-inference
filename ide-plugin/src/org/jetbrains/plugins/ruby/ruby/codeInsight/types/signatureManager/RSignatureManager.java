@@ -125,10 +125,10 @@ public abstract class RSignatureManager {
 
         methodSymbols.addAll(classMethodSignatures.stream()
                 .map(signature -> new RMethodSyntheticSymbol(project,
-                                                             signature.getMethodName(),
+                        signature.getMethodInfo().getMethodName(),
                                                              Type.INSTANCE_METHOD,
                                                              classSymbol,
-                                                             castRVisibilityToVisibility(signature.getVisibility()),
+                        castRVisibilityToVisibility(signature.getMethodInfo().getVisibility()),
                                                              signature.getArgsInfo().stream()
                                                                      .map(RSignatureManager::castParameterInfoToArgumentInfo)
                                                                      .collect(Collectors.toList())))
@@ -144,7 +144,7 @@ public abstract class RSignatureManager {
 
     @NotNull
     private static ArgumentInfo castParameterInfoToArgumentInfo(@NotNull final ParameterInfo param) {
-        return new ArgumentInfo(StringRef.fromString(param.getName()), castParameterTypeToArgumentType(param.getType()));
+        return new ArgumentInfo(StringRef.fromString(param.getName()), castParameterTypeToArgumentType(param.getModifier()));
     }
 
     @NotNull

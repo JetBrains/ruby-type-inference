@@ -9,10 +9,7 @@ import com.google.gson.reflect.TypeToken;
 import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.ruby.codeInsight.types.signature.GemInfo;
-import org.jetbrains.ruby.codeInsight.types.signature.ParameterInfo;
-import org.jetbrains.ruby.codeInsight.types.signature.RSignature;
-import org.jetbrains.ruby.codeInsight.types.signature.RVisibility;
+import org.jetbrains.ruby.codeInsight.types.signature.*;
 
 import java.io.*;
 import java.sql.*;
@@ -152,15 +149,15 @@ public class RSignatureStorageServerImpl extends RSignatureStorageServer {
             final ResultSet resultSet = statement.executeQuery(sql);
             while (resultSet.next()) {
                 final RSignature signature = new RSignature(
-                        resultSet.getString("method_name"),
-                        resultSet.getString("receiver_name"),
-                        RVisibility.valueOf(resultSet.getString("visibility")),
+                        new RMethodInfo(resultSet.getString("method_name"),
+                                resultSet.getString("receiver_name"),
+                                RVisibility.valueOf(resultSet.getString("visibility")),
+                                new GemInfo(resultSet.getString("gem_name"),
+                                        resultSet.getString("gem_version"))
+                        ),
                         parseArgsInfo(resultSet.getString("args_info")),
                         Arrays.asList(resultSet.getString("args_type_name").split(";")),
-                        new GemInfo(resultSet.getString("gem_name"),
-                                resultSet.getString("gem_version")),
-                        resultSet.getString("return_type_name"),
-                        false);
+                        resultSet.getString("return_type_name"));
                 signatures.add(signature);
             }
         }
@@ -174,21 +171,19 @@ public class RSignatureStorageServerImpl extends RSignatureStorageServer {
                 .map(argInfo -> Arrays.asList(argInfo.split(",")))
                 .filter(list -> list.size() == 3)
                 .map(argInfo -> new ParameterInfo(argInfo.get(1),
-                        ParameterInfo.Type.valueOf(argInfo.get(0).toUpperCase()),
-                        argInfo.get(2)))
+                        ParameterInfo.Type.valueOf(argInfo.get(0).toUpperCase())))
                 .collect(Collectors.toList());
     }
 
     @NotNull
     private static String signatureToSqlString(@NotNull final RSignature signature) {
         final String argsInfoSerialized = signature.getArgsInfo().stream()
-                .map(argInfo -> String.join(",", argInfo.getType().toString().toLowerCase(), argInfo.getName(),
-                        argInfo.getDefaultValueTypeName()))
+                .map(argInfo -> String.join(",", argInfo.getModifier().toString().toLowerCase(), argInfo.getName()))
                 .collect(Collectors.joining(";"));
         return String.format("INSERT INTO rsignature values('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', FALSE) " +
-                        "ON CONFLICT DO NOTHING;", signature.getMethodName(), signature.getReceiverName(),
-                signature.getVisibility(), String.join(";", signature.getArgsTypeName()), argsInfoSerialized,
-                signature.getReturnTypeName(), signature.getGemInfo().getName(), signature.getGemInfo().getVersion());
+                        "ON CONFLICT DO NOTHING;", signature.getMethodInfo().getMethodName(), signature.getMethodInfo().getReceiverName(),
+                signature.getMethodInfo().getVisibility(), String.join(";", signature.getArgsTypes()), argsInfoSerialized,
+                signature.getReturnTypeName(), signature.getMethodInfo().getGemInfo().getName(), signature.getMethodInfo().getGemInfo().getVersion());
 
     }
 

@@ -23,6 +23,10 @@ public final class GemInfo {
         return myVersion;
     }
 
+    public String toString() {
+        return this.getName() + this.getVersion();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

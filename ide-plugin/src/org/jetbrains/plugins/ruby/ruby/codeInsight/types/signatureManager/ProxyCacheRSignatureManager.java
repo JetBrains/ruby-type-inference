@@ -187,10 +187,10 @@ public class ProxyCacheRSignatureManager extends RSignatureManager {
 
     @NotNull
     private RSignature getKey(@NotNull final RSignature signature) {
-        return new RSignatureBuilder(signature.getMethodName())
-                .setReceiverName(signature.getReceiverName())
+        return new RSignatureBuilder(signature.getMethodInfo().getMethodName())
+                .setReceiverName(signature.getMethodInfo().getReceiverName())
                 .setArgsInfo(signature.getArgsInfo())
-                .setGemInfo(signature.getGemInfo())
+                .setGemInfo(signature.getMethodInfo().getGemInfo())
                 .build();
     }
 }

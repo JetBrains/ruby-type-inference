@@ -206,11 +206,11 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
         final Deque<List<String>> normalizedArgsTypeNames = new ArrayDeque<>();
         try {
             for (final ParameterInfo argInfo : argsInfo) {
-                switch (argInfo.getType()) {
+                switch (argInfo.getModifier()) {
                     case OPT:
                         if (argsTypeNames.isEmpty()) {
                             final List<String> defaultValueTypeName = new ArrayList<>();
-                            defaultValueTypeName.add(argInfo.getDefaultValueTypeName());
+                            //defaultValueTypeName.add(argInfo.getDefaultValueTypeName());
                             normalizedArgsTypeNames.addLast(defaultValueTypeName);
                             break;
                         }
@@ -226,7 +226,7 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
                     case KEY:
                         if (!kwargsTypeNames.containsKey(argInfo.getName())) {
                             final List<String> defaultValueTypeName = new ArrayList<>();
-                            defaultValueTypeName.add(argInfo.getDefaultValueTypeName());
+                            //defaultValueTypeName.add(argInfo.getDefaultValueTypeName());
                             normalizedArgsTypeNames.addLast(defaultValueTypeName);
                             break;
                         }

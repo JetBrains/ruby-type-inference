@@ -5,53 +5,30 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class RSignature {
+
     @NotNull
-    private final String myMethodName;
-    @NotNull
-    private final String myReceiverName;
-    @NotNull
-    private final RVisibility myVisibility;
+    private final RMethodInfo myMethodInfo;
+
     @NotNull
     private final List<ParameterInfo> myArgsInfo;
     @NotNull
-    private final List<String> myArgsTypeName;
-    @NotNull
-    private final GemInfo myGemInfo;
+    private final List<String> myArgsTypes;
     @NotNull
     private String myReturnTypeName;
-    private final boolean myIsLocal;
 
-    public RSignature(@NotNull final String methodName,
-                      @NotNull final String receiverName,
-                      @NotNull final RVisibility visibility,
+    public RSignature(@NotNull final RMethodInfo methodInfo,
                       @NotNull final List<ParameterInfo> argsInfo,
                       @NotNull final List<String> argsTypeName,
-                      @NotNull final GemInfo gemInfo,
-                      @NotNull final String returnTypeName,
-                      final boolean isLocal) {
-        myMethodName = methodName;
-        myReceiverName = receiverName;
-        myVisibility = visibility;
+                      @NotNull final String returnTypeName) {
+        myMethodInfo = methodInfo;
         myArgsInfo = argsInfo;
-        myArgsTypeName = argsTypeName;
-        myGemInfo = gemInfo;
+        myArgsTypes = argsTypeName;
         myReturnTypeName = returnTypeName;
-        myIsLocal = isLocal;
     }
 
     @NotNull
-    public String getMethodName() {
-        return myMethodName;
-    }
-
-    @NotNull
-    public String getReceiverName() {
-        return myReceiverName;
-    }
-
-    @NotNull
-    public RVisibility getVisibility() {
-        return myVisibility;
+    public RMethodInfo getMethodInfo() {
+        return myMethodInfo;
     }
 
     @NotNull
@@ -60,13 +37,8 @@ public class RSignature {
     }
 
     @NotNull
-    public List<String> getArgsTypeName() {
-        return myArgsTypeName;
-    }
-
-    @NotNull
-    public GemInfo getGemInfo() {
-        return myGemInfo;
+    public List<String> getArgsTypes() {
+        return myArgsTypes;
     }
 
     @NotNull
@@ -78,10 +50,6 @@ public class RSignature {
         this.myReturnTypeName = returnTypeName;
     }
 
-    public boolean isLocal() {
-        return myIsLocal;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -89,23 +57,17 @@ public class RSignature {
 
         RSignature that = (RSignature) o;
 
-        return myMethodName.equals(that.myMethodName) &&
-               myReceiverName.equals(that.myReceiverName) &&
-               myVisibility.equals(that.myVisibility) &&
+        return myMethodInfo.equals(that.myMethodInfo) &&
                myArgsInfo.equals(that.myArgsInfo) &&
-               myArgsTypeName.equals(that.myArgsTypeName) &&
-                myGemInfo.equals(that.getGemInfo());
+                myArgsTypes.equals(that.myArgsTypes);
 
     }
 
     @Override
     public int hashCode() {
-        int result = myMethodName.hashCode();
-        result = 31 * result + myReceiverName.hashCode();
-        result = 31 * result + myVisibility.hashCode();
+        int result = myMethodInfo.hashCode();
         result = 31 * result + myArgsInfo.hashCode();
-        result = 31 * result + myArgsTypeName.hashCode();
-        result = 31 * result + myGemInfo.hashCode();
+        result = 31 * result + myArgsTypes.hashCode();
         return result;
     }
 }

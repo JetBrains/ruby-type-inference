@@ -67,8 +67,8 @@ public class RSignatureDAG {
     public void addAll(@NotNull final List<RSignature> signatures) {
         signatures.stream()
                 .map(signature -> {
-                    final Integer distance = getArgsTypeNamesDistance(myProject, signature.getArgsTypeName(),
-                                                                      myRoot.getVertex().getArgsTypeName());
+                    final Integer distance = getArgsTypeNamesDistance(myProject, signature.getArgsTypes(),
+                            myRoot.getVertex().getArgsTypes());
                     return Pair.create(signature, distance);
                 })
                 .sorted((p1, p2) -> p1.getSecond().compareTo(p2.getSecond()))
@@ -185,8 +185,8 @@ public class RSignatureDAG {
     private void add(@NotNull final Node<RSignature> currentNode, @NotNull final Node<RSignature> newNode) {
         final List<Edge<RSignature>> edges = currentNode.getEdges().stream()
                 .filter(edge -> {
-                    final List<String> argsTypeNameFrom = newNode.getVertex().getArgsTypeName();
-                    final List<String> argsTypeNameTo = edge.getTo().getVertex().getArgsTypeName();
+                    final List<String> argsTypeNameFrom = newNode.getVertex().getArgsTypes();
+                    final List<String> argsTypeNameTo = edge.getTo().getVertex().getArgsTypes();
                     return getArgsTypeNamesDistance(myProject, argsTypeNameFrom, argsTypeNameTo) != null;
                 })
                 .collect(Collectors.toList());
@@ -203,8 +203,8 @@ public class RSignatureDAG {
             return;
         }
 
-        final List<String> argsTypeNameFrom = newNode.getVertex().getArgsTypeName();
-        final List<String> argsTypeNameTo = currentNode.getVertex().getArgsTypeName();
+        final List<String> argsTypeNameFrom = newNode.getVertex().getArgsTypes();
+        final List<String> argsTypeNameTo = currentNode.getVertex().getArgsTypes();
         @SuppressWarnings("ConstantConditions")
         final Integer weight = getArgsTypeNamesDistance(myProject, argsTypeNameFrom, argsTypeNameTo);
         currentNode.addEdgeTo(newNode, weight);
@@ -222,12 +222,12 @@ public class RSignatureDAG {
         for (final Edge<RSignature> edge : edges) {
             final Node<RSignature> childNode = edge.getTo();
             final RSignature mergedSignature = mergeSignatures(newNode.getVertex(), childNode.getVertex());
-            if (!mergedSignature.getArgsTypeName().equals(currentNode.getVertex().getArgsTypeName()) &&
+            if (!mergedSignature.getArgsTypes().equals(currentNode.getVertex().getArgsTypes()) &&
                 !mergedSignature.getReturnTypeName().equals(currentNode.getVertex().getReturnTypeName())) {
                 final Node<RSignature> mergedNode = new Node<>(mergedSignature);
                 copyChildren(childNode, mergedNode);
-                final List<String> currentArgsTypeName = currentNode.getVertex().getArgsTypeName();
-                final List<String> mergedArgsTypeName = mergedNode.getVertex().getArgsTypeName();
+                final List<String> currentArgsTypeName = currentNode.getVertex().getArgsTypes();
+                final List<String> mergedArgsTypeName = mergedNode.getVertex().getArgsTypes();
                 @SuppressWarnings("ConstantConditions")
                 final Integer weight = getArgsTypeNamesDistance(myProject, mergedArgsTypeName, currentArgsTypeName);
                 currentNode.removeEdgeTo(childNode);
@@ -242,8 +242,8 @@ public class RSignatureDAG {
     private void copyChildren(@NotNull final Node<RSignature> from, @NotNull final Node<RSignature> to) {
         for (final Edge<RSignature> edge : from.getEdges()) {
             final Node<RSignature> childNode = edge.getTo();
-            final List<String> fromArgsTypeName = childNode.getVertex().getArgsTypeName();
-            final List<String> toArgsTypeName = to.getVertex().getArgsTypeName();
+            final List<String> fromArgsTypeName = childNode.getVertex().getArgsTypes();
+            final List<String> toArgsTypeName = to.getVertex().getArgsTypes();
             @SuppressWarnings("ConstantConditions")
             final int weight = getArgsTypeNamesDistance(myProject, fromArgsTypeName, toArgsTypeName);
             to.addEdgeTo(childNode, weight);
@@ -251,8 +251,8 @@ public class RSignatureDAG {
     }
 
     private RSignature mergeSignatures(@NotNull final RSignature signature1, @NotNull final RSignature signature2) {
-        final List<String> argsTypeName1 = signature1.getArgsTypeName();
-        final List<String> argsTypeName2 = signature2.getArgsTypeName();
+        final List<String> argsTypeName1 = signature1.getArgsTypes();
+        final List<String> argsTypeName2 = signature2.getArgsTypes();
         final List<String> mergedArgsTypeName = new ArrayList<>();
         for (int i = 0; i < argsTypeName1.size(); i++) {
             final ClassModuleSymbol argClass1 = (ClassModuleSymbol) SymbolUtil.findClassOrModule(myProject, argsTypeName1.get(i));
@@ -262,12 +262,12 @@ public class RSignatureDAG {
             mergedArgsTypeName.add(leastCommonSuperclass != null ? leastCommonSuperclass.getName() : CoreTypes.Object);
         }
 
-        return new RSignatureBuilder(signature1.getMethodName())
-                .setReceiverName(signature1.getReceiverName())
-                .setVisibility(signature1.getVisibility())
+        return new RSignatureBuilder(signature1.getMethodInfo().getMethodName())
+                .setReceiverName(signature1.getMethodInfo().getReceiverName())
+                .setVisibility(signature1.getMethodInfo().getVisibility())
                 .setArgsInfo(signature1.getArgsInfo())
                 .setArgsTypeName(mergedArgsTypeName)
-                .setGemInfo(signature1.getGemInfo())
+                .setGemInfo(signature1.getMethodInfo().getGemInfo())
                 .setReturnTypeName(signature1.getReturnTypeName())
                 .build();
     }
@@ -288,8 +288,8 @@ public class RSignatureDAG {
         final List<Pair<Node<RSignature>, Integer>> signaturesAndDistances = currentNode.getEdges().stream()
                 .map(Edge::getTo)
                 .map(v -> Pair.create(v, RSignatureDAG.getArgsTypeNamesDistance(myProject,
-                                                                                signature.getArgsTypeName(),
-                                                                                v.getVertex().getArgsTypeName())))
+                        signature.getArgsTypes(),
+                        v.getVertex().getArgsTypes())))
                 .filter(p -> p.second != null)
                 .collect(Collectors.toList());
 
