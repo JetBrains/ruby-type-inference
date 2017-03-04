@@ -47,12 +47,14 @@ public class SignatureServer {
                         if (result != null) {
                             RawSignature currRawSignature = new RawSignature(result);
 
-                            currRawSignature.fetch();
+                            if (!result.call_info_mid.equals("nil")) {
+                                currRawSignature.fetch();
 
-                            for (int i = 0; i < currRawSignature.getIsGiven().size(); i++) {
-                                Boolean flag = currRawSignature.getIsGiven().get(i);
-                                if (!flag)
-                                    currRawSignature.changeArgumentType(i, "-");
+                                for (int i = 0; i < currRawSignature.getIsGiven().size(); i++) {
+                                    Boolean flag = currRawSignature.getIsGiven().get(i);
+                                    if (!flag)
+                                        currRawSignature.changeArgumentType(i, "-");
+                                }
                             }
 
                             if (result.method_name.equals("initialize") || result.call_info_mid.equals("send") || result.call_info_mid.equals("nil") || result.call_info_mid.equals(result.method_name)) {

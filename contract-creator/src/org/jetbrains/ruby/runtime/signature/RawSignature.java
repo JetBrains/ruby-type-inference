@@ -18,6 +18,7 @@ public class RawSignature {
 
     private final String myCallMid;
     private int myCallArgc;
+    @NotNull
     private final List<String> myKeyWords;
     private String myReturnTypeName;
 
@@ -39,7 +40,7 @@ public class RawSignature {
                 this.myKeyWords.addAll(Arrays.asList(kwInfo.split("\\s*,\\s*")));
             }
         } else {
-            this.myKeyWords = null;
+            this.myKeyWords = new ArrayList<>();
         }
 
         this.myReturnTypeName = bean.return_type_name;
@@ -191,6 +192,7 @@ public class RawSignature {
         return new RSignature(myMethodInfo, myArgsInfo, myArgsTypes, myReturnTypeName);
     }
 
+    @NotNull
     public List<Boolean> getIsGiven() {
         return isGiven;
     }
