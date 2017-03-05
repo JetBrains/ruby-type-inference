@@ -13,6 +13,7 @@ out/
 **/.idea/shelf/
 **/.idea/libraries/
 **/.idea/modules/
+**/.idea/dataSources*
 **/.idea/.name
 **/.idea/*.png
 
