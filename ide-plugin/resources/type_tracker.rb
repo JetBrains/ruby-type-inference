@@ -99,7 +99,6 @@ class TypeTracker
     @cache = Set.new
     @socket = TCPSocket.new('127.0.0.1', 7777)
     @mutex = Mutex.new
-    p 'init'
 
     TracePoint.trace(:call, :return, :raise) do |tp|
       begin

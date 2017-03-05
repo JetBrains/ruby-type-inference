@@ -6,30 +6,20 @@ public class ParameterInfo {
     @NotNull
     private final String myName;
     @NotNull
-    private final Type myType;
-    @NotNull
-    private final String myDefaultValueTypeName;
+    private final ParameterInfo.Type myModifier;
 
-    public ParameterInfo(@NotNull final String name, @NotNull final Type type,
-                         @NotNull final String defaultValueTypeName) {
+
+    public ParameterInfo(@NotNull final String name, @NotNull final Type modifier) {
         this.myName = name;
-        this.myType = type;
-        this.myDefaultValueTypeName = defaultValueTypeName;
+        this.myModifier = modifier;
     }
 
-    @NotNull
     public String getName() {
-        return myName;
+        return this.myName;
     }
 
-    @NotNull
-    public Type getType() {
-        return myType;
-    }
-
-    @NotNull
-    public String getDefaultValueTypeName() {
-        return myDefaultValueTypeName;
+    public ParameterInfo.Type getModifier() {
+        return this.myModifier;
     }
 
     @Override
@@ -39,17 +29,15 @@ public class ParameterInfo {
 
         ParameterInfo that = (ParameterInfo) o;
 
-        if (!myName.equals(that.myName)) return false;
-        if (myType != that.myType) return false;
-        return myDefaultValueTypeName.equals(that.myDefaultValueTypeName);
-
+        return myName.equals(that.myName) &&
+                myModifier.equals(that.myModifier);
     }
 
     @Override
     public int hashCode() {
         int result = myName.hashCode();
-        result = 31 * result + myType.hashCode();
-        result = 31 * result + myDefaultValueTypeName.hashCode();
+        result = 31 * result + myModifier.hashCode();
+
         return result;
     }
 

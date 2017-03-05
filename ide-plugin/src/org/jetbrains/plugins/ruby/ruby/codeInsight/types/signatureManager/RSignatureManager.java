@@ -127,7 +127,7 @@ public abstract class RSignatureManager {
 
         methodSymbols.addAll(classMethodSignatures.stream()
                 .map(signature -> new RMethodSyntheticSymbol(project,
-                        signature.getMethodInfo().getName(),
+                        signature.getMethodInfo().getMethodName(),
                                                              Type.INSTANCE_METHOD,
                                                              classSymbol,
                         castRVisibilityToVisibility(signature.getMethodInfo().getVisibility()),
@@ -146,7 +146,7 @@ public abstract class RSignatureManager {
 
     @NotNull
     private static ArgumentInfo castParameterInfoToArgumentInfo(@NotNull final ParameterInfo param) {
-        return new ArgumentInfo(StringRef.fromString(param.getName()), castParameterTypeToArgumentType(param.getType()));
+        return new ArgumentInfo(StringRef.fromString(param.getName()), castParameterTypeToArgumentType(param.getModifier()));
     }
 
     @NotNull

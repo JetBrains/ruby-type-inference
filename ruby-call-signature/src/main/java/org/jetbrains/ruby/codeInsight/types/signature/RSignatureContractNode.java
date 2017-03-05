@@ -1,4 +1,4 @@
-package org.jetbrains.ruby.runtime.signature;
+package org.jetbrains.ruby.codeInsight.types.signature;
 
 import java.util.HashMap;
 import java.util.Set;
@@ -17,7 +17,6 @@ public class RSignatureContractNode {
         returnTypeNode
     }
 
-    private String reachableTerm;
     private int mask = 0;
 
     private HashMap<String, RSignatureContractNode> typeTransitions;
@@ -48,25 +47,11 @@ public class RSignatureContractNode {
         mask &= tempMask;
     }
 
-    public String getReachableTerm()
-    {
-        return this.reachableTerm;
-    }
-
     public Set<String> getTransitionKeys() {
         return this.typeTransitions.keySet();
     }
 
-    public void addLink(final String type, RSignatureContractNode arrivalNode, String returnType) {
-
+    public void addLink(final String type, RSignatureContractNode arrivalNode) {
         this.typeTransitions.put(type, arrivalNode);
-
-        if(reachableTerm == null)
-            reachableTerm = returnType;
-        else
-        {
-            if(!reachableTerm.equals(returnType))
-                reachableTerm = null;
-        }
     }
 }

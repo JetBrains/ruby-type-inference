@@ -1,4 +1,4 @@
-package org.jetbrains.ruby.runtime.signature;
+package org.jetbrains.ruby.codeInsight.types.signature;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -22,21 +22,14 @@ public class RSignatureContractContainer {
                     final RMethodInfo key = entry.getKey();
                     final RSignatureContract value = entry.getValue();
 
-                    List<String> lines = new ArrayList();
+                    List<String> lines = new ArrayList<>();
                     lines.add("-----------");
                     lines.add("Number of calls:" + value.getCounter());
                     lines.add(key.toString());
-                    lines.add(key.getPath());
-                    lines.add(Integer.toString(key.getLine()));
                     lines.add("Mask:" + Integer.toString(value.getStartNode().getMask(), 2));
 
                     contracts.get(key).minimization();
                     lines.addAll(value.getStringPresentation());
-
-                    if(lines.size() > 9)
-                    {
-                        lines.add("OurClient");
-                    }
 
                     try {
                         Files.write(file, lines, StandardOpenOption.APPEND);
@@ -50,7 +43,7 @@ public class RSignatureContractContainer {
     }
 
     public void addSignature(RSignature signature){
-        RMethodInfo currInfo = new RMethodInfo(signature);
+        RMethodInfo currInfo = signature.getMethodInfo();
 
         if(contracts.containsKey(currInfo)){
             contracts.get(currInfo).addRSignature(signature);

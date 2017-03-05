@@ -15,12 +15,11 @@ public class RSignatureBuilder {
     @NotNull
     private List<ParameterInfo> myArgsInfo = new ArrayList<>();
     @NotNull
-    private List<String> myArgsTypeName = new ArrayList<>();
+    private List<String> myArgsTypes = new ArrayList<>();
     @NotNull
-    private GemInfo myGemInfo = GemInfo.Companion.getNONE();
+    private GemInfo myGemInfo = GemInfo.NONE;
     @NotNull
     private String myReturnTypeName = "Object";
-    private boolean myIsLocal = true;
 
     public RSignatureBuilder(@NotNull final String methodName) {
         this.myMethodName = methodName;
@@ -46,7 +45,7 @@ public class RSignatureBuilder {
 
     @NotNull
     public RSignatureBuilder setArgsTypeName(@NotNull final List<String> argsTypeName) {
-        myArgsTypeName = argsTypeName;
+        myArgsTypes = argsTypeName;
         return this;
     }
 
@@ -62,14 +61,7 @@ public class RSignatureBuilder {
     }
 
     @NotNull
-    public RSignatureBuilder setIsLocal(final boolean isLocal) {
-        myIsLocal = isLocal;
-        return this;
-    }
-
-    @NotNull
     public RSignature build() {
-        return new RSignature(MethodInfoKt.MethodInfo(ClassInfoKt.ClassInfo(myGemInfo, myReceiverName), myMethodName, myVisibility),
-                myArgsInfo, myArgsTypeName, myGemInfo, myReturnTypeName, myIsLocal);
+        return new RSignature(new RMethodInfo(myMethodName, myReceiverName, myVisibility, myGemInfo), myArgsInfo, myArgsTypes, myReturnTypeName);
     }
 }
