@@ -319,10 +319,10 @@ public class SqliteRSignatureManager extends RSignatureManager {
             while (resultSet.next()) {
                 final RSignature signature = new RSignatureBuilder(resultSet.getString("method_name"))
                         .setReceiverName(resultSet.getString("receiver_name"))
-                        .setVisibility(MethodInfo.RVisibility.valueOf(resultSet.getString("visibility")))
+                        .setVisibility(RVisibility.valueOf(resultSet.getString("visibility")))
                         .setArgsInfo(parseArgsInfo(resultSet.getString("args_info")))
                         .setArgsTypeName(StringUtil.splitHonorQuotes(resultSet.getString("args_type_name"), ';'))
-                        .setGemInfo(new GemInfo(resultSet.getString("gem_name"),
+                        .setGemInfo(GemInfoKt.GemInfo(resultSet.getString("gem_name"),
                                 resultSet.getString("gem_version")))
                         .setReturnTypeName(resultSet.getString("return_type_name"))
                         .build();

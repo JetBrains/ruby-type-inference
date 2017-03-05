@@ -11,13 +11,13 @@ public class RSignatureBuilder {
     @NotNull
     private String myReceiverName = "Object";
     @NotNull
-    private MethodInfo.RVisibility myVisibility = MethodInfo.RVisibility.PUBLIC;
+    private RVisibility myVisibility = RVisibility.PUBLIC;
     @NotNull
     private List<ParameterInfo> myArgsInfo = new ArrayList<>();
     @NotNull
     private List<String> myArgsTypeName = new ArrayList<>();
     @NotNull
-    private GemInfo myGemInfo = GemInfo.NONE;
+    private GemInfo myGemInfo = GemInfo.Companion.getNONE();
     @NotNull
     private String myReturnTypeName = "Object";
     private boolean myIsLocal = true;
@@ -33,7 +33,7 @@ public class RSignatureBuilder {
     }
 
     @NotNull
-    public RSignatureBuilder setVisibility(@NotNull final MethodInfo.RVisibility visibility) {
+    public RSignatureBuilder setVisibility(@NotNull final RVisibility visibility) {
         myVisibility = visibility;
         return this;
     }
@@ -69,7 +69,7 @@ public class RSignatureBuilder {
 
     @NotNull
     public RSignature build() {
-        return new RSignature(new MethodInfo(new ClassInfo(myReceiverName), myMethodName, myVisibility),
+        return new RSignature(MethodInfoKt.MethodInfo(ClassInfoKt.ClassInfo(myGemInfo, myReceiverName), myMethodName, myVisibility),
                 myArgsInfo, myArgsTypeName, myGemInfo, myReturnTypeName, myIsLocal);
     }
 }

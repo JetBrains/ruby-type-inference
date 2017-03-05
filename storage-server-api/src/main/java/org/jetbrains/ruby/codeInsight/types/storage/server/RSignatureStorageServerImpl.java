@@ -148,14 +148,15 @@ public class RSignatureStorageServerImpl extends RSignatureStorageServer {
         try (final Statement statement = myConnection.createStatement()) {
             final ResultSet resultSet = statement.executeQuery(sql);
             while (resultSet.next()) {
+                final GemInfo gemInfo = GemInfoKt.GemInfo(resultSet.getString("gem_name"),
+                        resultSet.getString("gem_version"));
                 final RSignature signature = new RSignature(
-                        new MethodInfo(new ClassInfo(resultSet.getString("receiver_name")),
+                        MethodInfoKt.MethodInfo(ClassInfoKt.ClassInfo(gemInfo, resultSet.getString("receiver_name")),
                                 resultSet.getString("method_name"),
-                                MethodInfo.RVisibility.valueOf(resultSet.getString("visibility"))),
+                                RVisibility.valueOf(resultSet.getString("visibility"))),
                         parseArgsInfo(resultSet.getString("args_info")),
                         Arrays.asList(resultSet.getString("args_type_name").split(";")),
-                        new GemInfo(resultSet.getString("gem_name"),
-                                resultSet.getString("gem_version")),
+                        gemInfo,
                         resultSet.getString("return_type_name"),
                         false);
                 signatures.add(signature);

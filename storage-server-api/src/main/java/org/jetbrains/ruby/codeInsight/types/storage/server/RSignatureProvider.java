@@ -28,14 +28,14 @@ import java.util.Collection;
  * </ul>
  */
 public interface RSignatureProvider {
-    @NotNull
+    @Nullable
     GemInfo getClosestRegisteredGem(@NotNull GemInfo usedGem) throws StorageException;
 
     @NotNull
     Collection<ClassInfo> getRegisteredClasses(@NotNull GemInfo gem) throws StorageException;
 
     @NotNull
-    Collection<MethodInfo> getRegisteredMethods(@NotNull GemInfo gem, @NotNull ClassInfo containerClass)
+    Collection<MethodInfo> getRegisteredMethods(@NotNull ClassInfo containerClass)
             throws StorageException;
 
     @Nullable

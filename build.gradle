@@ -18,6 +18,8 @@ allprojects {
 
     dependencies {
         compile 'org.jetbrains:annotations:15.0'
+        testCompile 'junit:junit:4.12'
+        testCompile 'com.h2database:h2:1.4.193'
     }
 }
 

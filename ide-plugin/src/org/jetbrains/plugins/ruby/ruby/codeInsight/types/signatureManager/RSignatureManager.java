@@ -17,12 +17,14 @@ import org.jetbrains.plugins.ruby.ruby.codeInsight.types.impl.REmptyType;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.impl.RSymbolTypeImpl;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.ArgumentInfo;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.Visibility;
-import org.jetbrains.ruby.codeInsight.types.signature.MethodInfo;
 import org.jetbrains.ruby.codeInsight.types.signature.ParameterInfo;
 import org.jetbrains.ruby.codeInsight.types.signature.RSignature;
+import org.jetbrains.ruby.codeInsight.types.signature.RVisibility;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static org.jetbrains.ruby.codeInsight.types.storage.server.impl.RSignatureProviderImplKt.firstStringCloser;
 
 public abstract class RSignatureManager {
     @NotNull
@@ -138,7 +140,7 @@ public abstract class RSignatureManager {
     }
 
     @NotNull
-    private static Visibility castRVisibilityToVisibility(@NotNull final MethodInfo.RVisibility visibility) {
+    private static Visibility castRVisibilityToVisibility(@NotNull final RVisibility visibility) {
         return Visibility.values()[visibility.ordinal()];
     }
 
@@ -168,23 +170,4 @@ public abstract class RSignatureManager {
         }
     }
 
-    private static boolean firstStringCloser(@NotNull final String gemVersion,
-                                             @NotNull final String firstVersion, @NotNull final String secondVersion) {
-        final int lcpLengthFirst = longestCommonPrefixLength(gemVersion, firstVersion);
-        final int lcpLengthSecond = longestCommonPrefixLength(gemVersion, secondVersion);
-        return (lcpLengthFirst > lcpLengthSecond || lcpLengthFirst > 0 && lcpLengthFirst == lcpLengthSecond &&
-                Math.abs(gemVersion.charAt(lcpLengthFirst) - firstVersion.charAt(lcpLengthFirst)) <
-                        Math.abs(gemVersion.charAt(lcpLengthFirst) - secondVersion.charAt(lcpLengthSecond)));
-    }
-
-    private static int longestCommonPrefixLength(@NotNull final String str1, @NotNull final String str2) {
-        final int minLength = Math.min(str1.length(), str2.length());
-        for (int i = 0; i < minLength; i++) {
-            if (str1.charAt(i) != str2.charAt(i)) {
-                return i;
-            }
-        }
-
-        return minLength;
-    }
 }
