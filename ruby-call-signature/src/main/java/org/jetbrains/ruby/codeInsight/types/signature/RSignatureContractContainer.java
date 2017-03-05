@@ -7,7 +7,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.*;
 
 public class RSignatureContractContainer {
-    private Map<RMethodInfo, RSignatureContract> contracts;
+    private Map<MethodInfo, RSignatureContract> contracts;
 
     public RSignatureContractContainer() {
         contracts = new HashMap<>();
@@ -19,7 +19,7 @@ public class RSignatureContractContainer {
         contracts.entrySet().stream()
                 .sorted(Collections.reverseOrder(Comparator.comparingInt(entry -> entry.getValue().getCounter())))
                 .forEachOrdered(entry -> {
-                    final RMethodInfo key = entry.getKey();
+                    final MethodInfo key = entry.getKey();
                     final RSignatureContract value = entry.getValue();
 
                     List<String> lines = new ArrayList<>();
@@ -43,7 +43,7 @@ public class RSignatureContractContainer {
     }
 
     public void addSignature(RSignature signature){
-        RMethodInfo currInfo = signature.getMethodInfo();
+        MethodInfo currInfo = signature.getMethodInfo();
 
         if(contracts.containsKey(currInfo)){
             contracts.get(currInfo).addRSignature(signature);

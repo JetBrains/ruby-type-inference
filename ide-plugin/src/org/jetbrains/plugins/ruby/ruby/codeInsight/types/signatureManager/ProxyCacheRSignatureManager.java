@@ -190,7 +190,7 @@ public class ProxyCacheRSignatureManager extends RSignatureManager {
         return new RSignatureBuilder(signature.getMethodInfo().getName())
                 .setReceiverName(signature.getMethodInfo().getClassInfo().getClassFQN())
                 .setArgsInfo(signature.getArgsInfo())
-                .setGemInfo(signature.getGemInfo())
+                .setGemInfo(signature.getMethodInfo().getClassInfo().getGemInfo())
                 .build();
     }
 }

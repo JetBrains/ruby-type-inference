@@ -10,6 +10,8 @@ import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.Symbol;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.SymbolUtil;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.v2.ClassModuleSymbol;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.CoreTypes;
+import org.jetbrains.ruby.codeInsight.types.signature.ClassInfo;
+import org.jetbrains.ruby.codeInsight.types.signature.MethodInfo;
 import org.jetbrains.ruby.codeInsight.types.signature.RSignature;
 import org.jetbrains.ruby.codeInsight.types.signature.RSignatureBuilder;
 
@@ -262,12 +264,14 @@ public class RSignatureDAG {
             mergedArgsTypeName.add(leastCommonSuperclass != null ? leastCommonSuperclass.getName() : CoreTypes.Object);
         }
 
-        return new RSignatureBuilder(signature1.getMethodInfo().getMethodName())
-                .setReceiverName(signature1.getMethodInfo().getReceiverName())
-                .setVisibility(signature1.getMethodInfo().getVisibility())
+        final MethodInfo methodInfo = signature1.getMethodInfo();
+        final ClassInfo classInfo = methodInfo.getClassInfo();
+        return new RSignatureBuilder(methodInfo.getName())
+                .setReceiverName(classInfo.getClassFQN())
+                .setVisibility(methodInfo.getVisibility())
                 .setArgsInfo(signature1.getArgsInfo())
                 .setArgsTypeName(mergedArgsTypeName)
-                .setGemInfo(signature1.getMethodInfo().getGemInfo())
+                .setGemInfo(classInfo.getGemInfo())
                 .setReturnTypeName(signature1.getReturnTypeName())
                 .build();
     }

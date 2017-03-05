@@ -7,7 +7,7 @@ import java.util.List;
 public class RSignature {
 
     @NotNull
-    private final RMethodInfo myMethodInfo;
+    private final MethodInfo myMethodInfo;
 
     @NotNull
     private final List<ParameterInfo> myArgsInfo;
@@ -16,7 +16,7 @@ public class RSignature {
     @NotNull
     private String myReturnTypeName;
 
-    public RSignature(@NotNull final RMethodInfo methodInfo,
+    public RSignature(@NotNull final MethodInfo methodInfo,
                       @NotNull final List<ParameterInfo> argsInfo,
                       @NotNull final List<String> argsTypeName,
                       @NotNull final String returnTypeName) {
@@ -27,7 +27,7 @@ public class RSignature {
     }
 
     @NotNull
-    public RMethodInfo getMethodInfo() {
+    public MethodInfo getMethodInfo() {
         return myMethodInfo;
     }
 

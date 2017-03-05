@@ -8,7 +8,7 @@ import java.util.*;
 
 public class RawSignature {
     @NotNull
-    private final RMethodInfo myMethodInfo;
+    private final MethodInfo myMethodInfo;
     @NotNull
     private final List<ParameterInfo> myArgsInfo;
     @NotNull
@@ -24,10 +24,10 @@ public class RawSignature {
 
     public RawSignature(ServerResponseBean bean) {
 
-        this.myMethodInfo = new RMethodInfo(bean.method_name,
-                bean.receiver_name,
-                RVisibility.valueOf(bean.visibility),
-                new GemInfo(bean.gem_name, bean.gem_version));
+        this.myMethodInfo = MethodInfoKt.MethodInfo(
+                ClassInfoKt.ClassInfo(GemInfoKt.GemInfo(bean.gem_name, bean.gem_version), bean.receiver_name),
+                bean.method_name,
+                RVisibility.valueOf(bean.visibility));
 
         this.myCallMid = bean.call_info_mid;
 

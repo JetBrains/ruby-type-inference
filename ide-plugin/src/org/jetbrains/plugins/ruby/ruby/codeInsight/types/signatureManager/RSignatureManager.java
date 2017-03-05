@@ -127,7 +127,7 @@ public abstract class RSignatureManager {
 
         methodSymbols.addAll(classMethodSignatures.stream()
                 .map(signature -> new RMethodSyntheticSymbol(project,
-                        signature.getMethodInfo().getMethodName(),
+                        signature.getMethodInfo().getName(),
                                                              Type.INSTANCE_METHOD,
                                                              classSymbol,
                         castRVisibilityToVisibility(signature.getMethodInfo().getVisibility()),

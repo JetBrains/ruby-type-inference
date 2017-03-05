@@ -179,10 +179,12 @@ public class RSignatureStorageServerImpl extends RSignatureStorageServer {
         final String argsInfoSerialized = signature.getArgsInfo().stream()
                 .map(argInfo -> String.join(",", argInfo.getModifier().toString().toLowerCase(), argInfo.getName()))
                 .collect(Collectors.joining(";"));
+        final MethodInfo methodInfo = signature.getMethodInfo();
+        final ClassInfo classInfo = methodInfo.getClassInfo();
         return String.format("INSERT INTO rsignature values('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', FALSE) " +
-                        "ON CONFLICT DO NOTHING;", signature.getMethodInfo().getMethodName(), signature.getMethodInfo().getReceiverName(),
-                signature.getMethodInfo().getVisibility(), String.join(";", signature.getArgsTypes()), argsInfoSerialized,
-                signature.getReturnTypeName(), signature.getMethodInfo().getGemInfo().getName(), signature.getMethodInfo().getGemInfo().getVersion());
+                        "ON CONFLICT DO NOTHING;", methodInfo.getName(), classInfo.getClassFQN(),
+                methodInfo.getVisibility(), String.join(";", signature.getArgsTypes()), argsInfoSerialized,
+                signature.getReturnTypeName(), classInfo.getGemInfo().getName(), classInfo.getGemInfo().getVersion());
 
     }
 

@@ -17,7 +17,7 @@ public class RSignatureBuilder {
     @NotNull
     private List<String> myArgsTypes = new ArrayList<>();
     @NotNull
-    private GemInfo myGemInfo = GemInfo.NONE;
+    private GemInfo myGemInfo = GemInfo.Companion.getNONE();
     @NotNull
     private String myReturnTypeName = "Object";
 
@@ -62,6 +62,10 @@ public class RSignatureBuilder {
 
     @NotNull
     public RSignature build() {
-        return new RSignature(new RMethodInfo(myMethodName, myReceiverName, myVisibility, myGemInfo), myArgsInfo, myArgsTypes, myReturnTypeName);
+        return new RSignature(
+                MethodInfoKt.MethodInfo(ClassInfoKt.ClassInfo(myGemInfo, myReceiverName), myMethodName, myVisibility),
+                myArgsInfo,
+                myArgsTypes,
+                myReturnTypeName);
     }
 }
