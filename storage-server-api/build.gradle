@@ -10,19 +10,9 @@ buildscript {
     }
 }
 
-repositories {
-    mavenCentral()
-    maven {
-        url 'https://dl.bintray.com/kotlin/exposed'
-    }
-}
-
-apply plugin: 'kotlin'
-
 dependencies {
     compile project(':ruby-call-signature')
 
-    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     compile 'org.jetbrains.exposed:exposed:0.7.6'
 }
 
