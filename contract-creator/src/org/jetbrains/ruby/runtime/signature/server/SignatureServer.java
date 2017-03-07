@@ -2,7 +2,11 @@ package org.jetbrains.ruby.runtime.signature.server;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ruby.codeInsight.types.signature.MethodInfo;
 import org.jetbrains.ruby.codeInsight.types.signature.RSignature;
+import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContract;
 import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContractContainer;
 import org.jetbrains.ruby.runtime.signature.RawSignature;
 
@@ -15,16 +19,41 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.logging.Logger;
 
-//import org.jetbrains.ruby.runtime.signature.RSignature;
-//import org.jetbrains.ruby.runtime.signature.RSignatureContractContainer;
 
 public class SignatureServer {
     private static final Logger LOGGER = Logger.getLogger("SignatureServer");
 
-    public static void main(String[] args) throws IOException {
-        LOGGER.info("Starting server");
+    RSignatureContractContainer mainContainer = new RSignatureContractContainer();
 
-        RSignatureContractContainer mainContainer = new RSignatureContractContainer();
+    @Nullable
+    private static SignatureServer ourInstance;
+
+    @NotNull
+    public static SignatureServer getInstance() {
+        if (ourInstance == null) {
+            ourInstance = new SignatureServer();
+        }
+
+        return ourInstance;
+    }
+
+    @Nullable
+    public RSignatureContract getContract(@NotNull MethodInfo info) {
+        return mainContainer.getSignature(info);
+    }
+
+    @Nullable
+    public RSignatureContract getContractByMethodName(@NotNull String methodName) {
+        for (MethodInfo info : mainContainer.getKeySet()) {
+            if (info.getName().equals(methodName))
+                return mainContainer.getSignature(info);
+        }
+        return null;
+    }
+
+
+    public void runServer() throws IOException {
+        LOGGER.info("Starting server");
 
         Path file = Paths.get("callStatLog.txt");
 
@@ -61,6 +90,7 @@ public class SignatureServer {
 
                                 RSignature currRSignature = currRawSignature.getRSignature();
                                 mainContainer.addSignature(currRSignature);
+
                             }
 
                         }

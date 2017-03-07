@@ -7,12 +7,12 @@ import java.nio.file.StandardOpenOption;
 import java.util.*;
 
 public class RSignatureContractContainer {
+
     private Map<MethodInfo, RSignatureContract> contracts;
 
     public RSignatureContractContainer() {
         contracts = new HashMap<>();
     }
-
 
     public void print(Path file)
     {
@@ -29,6 +29,7 @@ public class RSignatureContractContainer {
                     lines.add("Mask:" + Integer.toString(value.getStartNode().getMask(), 2));
 
                     contracts.get(key).minimization();
+                    //contracts.get(key).compression();
                     lines.addAll(value.getStringPresentation());
 
                     try {
@@ -52,5 +53,13 @@ public class RSignatureContractContainer {
             RSignatureContract contract = new RSignatureContract(signature);
             contracts.put(currInfo, contract);
         }
+    }
+
+    public Set<MethodInfo> getKeySet() {
+        return contracts.keySet();
+    }
+
+    public RSignatureContract getSignature(MethodInfo info) {
+        return contracts.get(info);
     }
 }

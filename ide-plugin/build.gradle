@@ -9,7 +9,7 @@ plugins {
 }
 
 dependencies {
-    compile project(':ruby-call-signature'), project(':storage-server-api')
+    compile project(':ruby-call-signature'), project(':storage-server-api'), project(':contract-creator')
 }
 
 sourceSets {

@@ -2,10 +2,12 @@ package com.intellij.execution.executors;
 
 import com.intellij.execution.Executor;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.SignatureService;
 
 import javax.swing.*;
 
@@ -19,9 +21,13 @@ public class CollectTypeExecutor extends Executor {
     public CollectTypeExecutor() {
 //        final URL iconURL = CollectTypeExecutor.class.getClassLoader().getResource("runCollectType.png");
 //        final Icon icon = IconLoader.findIcon(iconURL);
-//        myIcon = icon != null ? icon : AllIcons.General.Error;
+//        myIcon = icon != null ? icon : AllIcons.General.Error
+
         myIcon = AllIcons.General.Error;
+
+        ServiceManager.getService(SignatureService.class);
     }
+
 
     @Override
     public String getToolWindowId() {

@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.ruby.ruby.codeInsight.types;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
@@ -15,7 +14,6 @@ import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.Symbol;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.SymbolUtil;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.impl.REmptyType;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signatureManager.RSignatureManager;
-import org.jetbrains.plugins.ruby.ruby.codeInsight.types.signatureManager.SqliteRSignatureManager;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RPossibleCall;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RPsiElement;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.assoc.RAssoc;
@@ -27,55 +25,47 @@ import org.jetbrains.plugins.ruby.ruby.lang.psi.methodCall.RCall;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.references.RReference;
 import org.jetbrains.ruby.codeInsight.types.signature.ParameterInfo;
 import org.jetbrains.ruby.codeInsight.types.signature.RSignature;
-import org.jetbrains.ruby.codeInsight.types.signature.RSignatureBuilder;
+import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContract;
+import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContractNode;
+import org.jetbrains.ruby.runtime.signature.server.SignatureServer;
 
-import java.io.FileNotFoundException;
-import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
+
     @Nullable
     @Override
     public RType createTypeByCallAndArgs(@NotNull final RExpression call, @NotNull final List<RPsiElement> callArgs) {
+
         final PsiElement callElement = call instanceof RCall ? ((RCall) call).getPsiCommand() : call;
+
+        SignatureServer callStatServer = SignatureServer.getInstance();
+
+
         final Couple<String> names = getMethodAndReceiverNames(callElement);
         final String methodName = names.getFirst();
         if (methodName != null) {
-            final RSignatureManager signatureManager;
-            try {
-                signatureManager = SqliteRSignatureManager.getInstance();
-            } catch (SQLException | ClassNotFoundException | FileNotFoundException e) {
-                return null;
+
+            //final Module module = ModuleUtilCore.findModuleForPsiElement(call);
+            //final String receiverName = StringUtil.notNullize(names.getSecond(), CoreTypes.Object);
+
+            RSignatureContract contract = callStatServer.getContractByMethodName(methodName);
+            RSignatureContractNode currNode = contract.getStartNode();
+
+            if (contract != null) {
+                for (RPsiElement argument : callArgs) {
+                    final List<String> argTypeNames = getArgTypeNames(argument);
+                    if (argTypeNames.size() == 1)
+                        currNode = currNode.goByTypeSymbol(argTypeNames.get(0));
+                }
             }
 
-//            final RSignatureManager cacheManager = ProxyCacheRSignatureManager.getInstance(call.getProject(),
-//                                                                                           signatureManager);
-            final Module module = ModuleUtilCore.findModuleForPsiElement(call);
-            final String receiverName = StringUtil.notNullize(names.getSecond(), CoreTypes.Object);
-            final List<ParameterInfo> argsInfo = signatureManager.getMethodArgsInfo(methodName, receiverName);
-            final List<List<String>> argsTypeNames;
-            try {
-                argsTypeNames = getAllPossibleNormalizedArgsTypeNames(call.getParent(), argsInfo, callArgs);
-            } catch (IllegalArgumentException e) {
-                return null;
+            if (currNode.getTransitionKeys().size() == 1) {
+                String returnType = currNode.getTransitionKeys().iterator().next();
+                return RTypeFactory.createTypeByFQN(call.getProject(), returnType);
             }
 
-            final List<RType> returnTypes = argsTypeNames.stream()
-                    .map(argsTypeName -> new RSignatureBuilder(methodName)
-                            .setReceiverName(receiverName)
-                            .setArgsInfo(argsInfo)
-                            .setArgsTypeName(argsTypeName)
-                            .build())
-                    .flatMap(signature -> getReturnTypesBySignature(call.getProject(), module, signatureManager, signature).stream())
-                    .distinct()
-                    .collect(Collectors.toList());
-
-            if (returnTypes.size() == 1) {
-                return returnTypes.get(0);
-            } else if (returnTypes.size() <= RType.TYPE_TREE_HEIGHT_LIMIT) {
-                return returnTypes.stream().reduce(REmptyType.INSTANCE, RTypeUtil::union);
-            }
         }
 
         return null;

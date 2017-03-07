@@ -231,4 +231,68 @@ public class RSignatureContract {
 
         return answer;
     }
+
+    public void compression() {
+        compressionDFS(getStartNode());
+    }
+
+    private void compressionDFS(RSignatureContractNode node) {
+        int commonMask = -1;
+        boolean subtreesIsSame = true;
+
+        for (String type : node.getTransitionKeys()) {
+            if (commonMask == -1)
+                commonMask = node.goByTypeSymbol(type).getMask();
+            else {
+                commonMask &= node.goByTypeSymbol(type).getMask();
+            }
+        }
+
+        if (commonMask > 0 && node.getTransitionKeys().size() > 1) {
+            RSignatureContractNode node1 = null;
+            RSignatureContractNode node2 = null;
+
+            for (String type : node.getTransitionKeys()) {
+                if (node1 == null)
+                    node2 = node.goByTypeSymbol(type);
+
+                if (node1 != null && node2 != null) {
+                    if (!checkSameSubtreesDFS(node1, node2, commonMask << 1, type))
+                        subtreesIsSame = false;
+                }
+            }
+            if (subtreesIsSame) {
+                //конденсация собстна
+            }
+        }
+        for (String type : node.getTransitionKeys()) {
+            compressionDFS(node.goByTypeSymbol(type));
+        }
+    }
+
+    private boolean checkSameSubtreesDFS(RSignatureContractNode node1, RSignatureContractNode node2, int mask, String type) {
+        if (mask % 2 == 0) {
+            return checkSameSubtreesDFS(node1.goByTypeSymbol(type), node2.goByTypeSymbol(type), mask << 1, type);
+        } else {
+            if (node1.getTransitionKeys().size() != node2.getTransitionKeys().size()) {
+                return false;
+            } else {
+                for (String typeTransition : node1.getTransitionKeys()) {
+                    if (!node2.getTransitionKeys().contains(typeTransition)) {
+                        return false;
+                    }
+                }
+                Set<RSignatureContractNode> used = new HashSet<>();
+
+                for (String typeTransition : node1.getTransitionKeys()) {
+                    if (!used.contains(node1.goByTypeSymbol(typeTransition))) {
+                        checkSameSubtreesDFS(node1.goByTypeSymbol(typeTransition), node2.goByTypeSymbol(typeTransition), mask << 1, type);
+                        used.add(node1.goByTypeSymbol(typeTransition));
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
 }

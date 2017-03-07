@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 import static org.jetbrains.ruby.codeInsight.types.storage.server.impl.RSignatureProviderImplKt.firstStringCloser;
 
 public abstract class RSignatureManager {
+
     @NotNull
     private static final Map<String, Pair<RType, Set<RSignature>>> ourSyntheticTypes = new HashMap<>();
 

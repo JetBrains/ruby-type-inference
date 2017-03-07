@@ -124,7 +124,7 @@ public class RSignatureDAG {
                     distanceBetweenAllArgs += 1000;
                 } else if (fromArgSymbol != null && toArgSymbol != null) {
                     final Integer distanceBetweenTwoArgs = calcArgTypeSymbolsDistance((ClassModuleSymbol) fromArgSymbol,
-                                                                                      (ClassModuleSymbol) toArgSymbol);
+                            (ClassModuleSymbol) toArgSymbol);
                     if (distanceBetweenTwoArgs == null) {
                         return null;
                     } else {
@@ -225,7 +225,7 @@ public class RSignatureDAG {
             final Node<RSignature> childNode = edge.getTo();
             final RSignature mergedSignature = mergeSignatures(newNode.getVertex(), childNode.getVertex());
             if (!mergedSignature.getArgsTypes().equals(currentNode.getVertex().getArgsTypes()) &&
-                !mergedSignature.getReturnTypeName().equals(currentNode.getVertex().getReturnTypeName())) {
+                    !mergedSignature.getReturnTypeName().equals(currentNode.getVertex().getReturnTypeName())) {
                 final Node<RSignature> mergedNode = new Node<>(mergedSignature);
                 copyChildren(childNode, mergedNode);
                 final List<String> currentArgsTypeName = currentNode.getVertex().getArgsTypes();
