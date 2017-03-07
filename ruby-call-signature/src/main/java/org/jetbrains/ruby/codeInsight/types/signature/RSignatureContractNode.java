@@ -50,6 +50,9 @@ public class RSignatureContractNode {
     public Set<String> getTransitionKeys() {
         return this.typeTransitions.keySet();
     }
+    public boolean containsKey(String key) {
+        return this.typeTransitions.containsKey(key);
+    }
 
     public void addLink(final String type, RSignatureContractNode arrivalNode) {
         this.typeTransitions.put(type, arrivalNode);

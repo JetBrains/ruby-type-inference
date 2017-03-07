@@ -51,19 +51,38 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
             //final String receiverName = StringUtil.notNullize(names.getSecond(), CoreTypes.Object);
 
             RSignatureContract contract = callStatServer.getContractByMethodName(methodName);
-            RSignatureContractNode currNode = contract.getStartNode();
+
+            List <RSignatureContractNode> currNodes = new ArrayList<>();
+            currNodes.add(contract.getStartNode());
 
             if (contract != null) {
                 for (RPsiElement argument : callArgs) {
                     final List<String> argTypeNames = getArgTypeNames(argument);
-                    if (argTypeNames.size() == 1)
-                        currNode = currNode.goByTypeSymbol(argTypeNames.get(0));
+
+                    List <RSignatureContractNode> nodes = new ArrayList<>();
+
+                    for (RSignatureContractNode currNode : currNodes) {
+                        for (String typeName : argTypeNames) {
+                            if(currNode.containsKey(typeName))
+                                nodes.add(currNode.goByTypeSymbol(typeName));
+                        }
+                    }
+                    currNodes = nodes;
                 }
             }
 
-            if (currNode.getTransitionKeys().size() == 1) {
-                String returnType = currNode.getTransitionKeys().iterator().next();
-                return RTypeFactory.createTypeByFQN(call.getProject(), returnType);
+            List<RType> returnTypes = new ArrayList<>();
+
+            for (RSignatureContractNode currNode : currNodes) {
+                for (String type : currNode.getTransitionKeys()) {
+                    returnTypes.add(RTypeFactory.createTypeByFQN(call.getProject(), type));
+                }
+            }
+
+            if (returnTypes.size() == 1) {
+                return returnTypes.get(0);
+            } else if (returnTypes.size() <= RType.TYPE_TREE_HEIGHT_LIMIT) {
+                return returnTypes.stream().reduce(REmptyType.INSTANCE, RTypeUtil::union);
             }
 
         }
