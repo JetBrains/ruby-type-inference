@@ -1,6 +1,12 @@
 package org.jetbrains.ruby.codeInsight.types.signature;
 
-import java.util.*;
+import org.jetbrains.ruby.codeInsight.types.signature.ContractTransition.ContractTransition;
+import org.jetbrains.ruby.codeInsight.types.signature.ContractTransition.ReferenceContractTransition;
+import org.jetbrains.ruby.codeInsight.types.signature.ContractTransition.TypedContractTransition;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 public class RSignatureContract {
 
@@ -10,7 +16,7 @@ public class RSignatureContract {
     private RSignatureContractNode startContractNode;
 
     private List<List<RSignatureContractNode>> levels;
-    private Map<String, RSignatureContractNode> termNodes;
+    private RSignatureContractNode termNode;
 
     private RSignatureContractNode createNodeAndAddToLevels(Integer index)
     {
@@ -32,26 +38,16 @@ public class RSignatureContract {
         return counter;
     }
 
-    private RSignatureContractNode createTermNode(String type)
+    private RSignatureContractNode getTermNode()
     {
-        if(!termNodes.containsKey(type)) {
-            RSignatureContractNode newNode = new RSignatureContractNode(RSignatureContractNode.ContractNodeType.returnTypeNode);
-            termNodes.put(type, newNode);
-        }
-
-        return termNodes.get(type);
-    }
-
-    private RSignatureContractNode getTermNode(String type)
-    {
-        return termNodes.get(type);
+        return termNode;
     }
 
     public RSignatureContract(RSignature signature) {
         this.mySize = signature.getArgsInfo().size();
 
         this.levels = new ArrayList<>();
-        this.termNodes = new HashMap<>();
+        this.termNode = new RSignatureContractNode(RSignatureContractNode.ContractNodeType.returnTypeNode);
         this.startContractNode = this.createNodeAndAddToLevels(0);
 
         this.addRSignature(signature);
@@ -69,11 +65,7 @@ public class RSignatureContract {
 
         String returnType = signature.getReturnTypeName();
 
-        RSignatureContractNode termNode = getTermNode(returnType);
-
-        if (termNode == null) {
-            termNode = this.createTermNode(returnType);
-        }
+        RSignatureContractNode termNode = getTermNode();
 
         for (String type : signature.getArgsTypes()) {
 
@@ -90,24 +82,25 @@ public class RSignatureContract {
                 tempMask |= 1;
             }
 
+            TypedContractTransition transition = new TypedContractTransition(type);
 
-            if (currNode.goByTypeSymbol(type) == null) {
+            if (currNode.goByTypeSymbol(transition) == null) {
                 RSignatureContractNode newNode;
 
                 newNode = this.createNodeAndAddToLevels(currParamId);
 
-                currNode.addLink(type, newNode);
+                currNode.addLink(transition, newNode);
 
                 newNode.setMask(tempMask);
                 currNode = newNode;
             } else {
-                currNode = currNode.goByTypeSymbol(type);
+                currNode = currNode.goByTypeSymbol(transition);
                 currNode.updateMask(tempMask);
             }
             currParamId++;
         }
 
-        currNode.addLink(returnType, termNode);
+        currNode.addLink(new TypedContractTransition(returnType), termNode);
     }
 
     public void minimization()
@@ -130,18 +123,11 @@ public class RSignatureContract {
                     RSignatureContractNode vertex1 = level.get(v1);
                     RSignatureContractNode vertex2 = level.get(v2);
 
-                    boolean isSame = true;
+                    boolean isSame = vertex1.getTypeTransitions().size() == vertex2.getTypeTransitions().size();
 
-                    for (String type : vertex1.getTransitionKeys()) {
-                        if(vertex1.goByTypeSymbol(type) != vertex2.goByTypeSymbol(type))
-                        {
-                            isSame = false;
-                        }
-                    }
+                    for (ContractTransition transition : vertex1.getTransitionKeys()) {
 
-                    for (String type : vertex2.getTransitionKeys()) {
-                        if(vertex1.goByTypeSymbol(type) != vertex2.goByTypeSymbol(type))
-                        {
+                        if (vertex1.goByTypeSymbol(transition) != vertex2.goByTypeSymbol(transition)) {
                             isSame = false;
                         }
                     }
@@ -160,9 +146,9 @@ public class RSignatureContract {
 
             if (uselessVertices.size() > 0) {
                 for (RSignatureContractNode node : prevLevel) {
-                    for (String type : node.getTransitionKeys()) {
-                        RSignatureContractNode child = node.goByTypeSymbol(type);
-                        node.addLink(type, representatives.get(child));
+                    for (ContractTransition transition : node.getTransitionKeys()) {
+                        RSignatureContractNode child = node.goByTypeSymbol(transition);
+                        node.addLink(transition, representatives.get(child));
                     }
                 }
             }
@@ -174,125 +160,104 @@ public class RSignatureContract {
     }
 
 
-    public List<String> getStringPresentation() {
-        List<String> answer = new ArrayList<>();
-
-        Queue<javafx.util.Pair<RSignatureContractNode, String>> tmp = new ArrayDeque<>();
-        tmp.add(new javafx.util.Pair<>(this.startContractNode, null));
-
-        while (!tmp.isEmpty())
-        {
-            RSignatureContractNode currNode = tmp.peek().getKey();
-            String currString = tmp.peek().getValue();
-
-            tmp.remove();
-
-            if (currNode.getNodeType() == RSignatureContractNode.ContractNodeType.returnNode)
-            {
-                StringJoiner joiner = new StringJoiner("|");
-
-                for (String transitionType : currNode.getTransitionKeys()) {
-                    joiner.add(transitionType);
-                }
-                if (currString == null)
-                    answer.add("()" + " -> " + joiner.toString());
-                else
-                    answer.add("(" + currString + ")" + " -> " + joiner.toString());
-                continue;
-            }
-
-            Map <RSignatureContractNode, String> newVertexes = new HashMap<>();
-
-            for (String transitionType : currNode.getTransitionKeys()) {
-                RSignatureContractNode tmpNode = currNode.goByTypeSymbol(transitionType);
-
-                if(newVertexes.containsKey(tmpNode))
-                {
-                    String oldValue = newVertexes.get(tmpNode);
-                    newVertexes.remove(tmpNode);
-                    newVertexes.put(tmpNode, oldValue + "|" + transitionType);
-                }
-                else
-                {
-                    if(transitionType.equals("no arguments"))
-                        newVertexes.put(tmpNode, "");
-                    else {
-                        if (currString == null)
-                            newVertexes.put(tmpNode, transitionType);
-                        else
-                            newVertexes.put(tmpNode, currString + ";" + transitionType);
-                    }
-                }
-            }
-            for (RSignatureContractNode node : newVertexes.keySet()) {
-                tmp.add(new javafx.util.Pair<>(node, newVertexes.get(node)));
-            }
-        }
-
-        return answer;
-    }
+//    public List<String> getStringPresentation() {
+//        List<String> answer = new ArrayList<>();
+//
+//        Queue<javafx.util.Pair<RSignatureContractNode, String>> tmp = new ArrayDeque<>();
+//        tmp.add(new javafx.util.Pair<>(this.startContractNode, null));
+//
+//        while (!tmp.isEmpty())
+//        {
+//            RSignatureContractNode currNode = tmp.peek().getKey();
+//            String currString = tmp.peek().getValue();
+//
+//            tmp.remove();
+//
+//            if (currNode.getNodeType() == RSignatureContractNode.ContractNodeType.returnNode)
+//            {
+//                StringJoiner joiner = new StringJoiner("|");
+//
+//                for (String transitionType : currNode.getTransitionKeys()) {
+//                    joiner.add(transitionType);
+//                }
+//                if (currString == null)
+//                    answer.add("()" + " -> " + joiner.toString());
+//                else
+//                    answer.add("(" + currString + ")" + " -> " + joiner.toString());
+//                continue;
+//            }
+//
+//            Map <RSignatureContractNode, String> newVertexes = new HashMap<>();
+//
+//            for (String transitionType : currNode.getTransitionKeys()) {
+//                RSignatureContractNode tmpNode = currNode.goByTypeSymbol(transitionType);
+//
+//                if(newVertexes.containsKey(tmpNode))
+//                {
+//                    String oldValue = newVertexes.get(tmpNode);
+//                    newVertexes.remove(tmpNode);
+//                    newVertexes.put(tmpNode, oldValue + "|" + transitionType);
+//                }
+//                else
+//                {
+//                    if(transitionType.equals("no arguments"))
+//                        newVertexes.put(tmpNode, "");
+//                    else {
+//                        if (currString == null)
+//                            newVertexes.put(tmpNode, transitionType);
+//                        else
+//                            newVertexes.put(tmpNode, currString + ";" + transitionType);
+//                    }
+//                }
+//            }
+//            for (RSignatureContractNode node : newVertexes.keySet()) {
+//                tmp.add(new javafx.util.Pair<>(node, newVertexes.get(node)));
+//            }
+//        }
+//
+//        return answer;
+//    }
 
     public void compression() {
-        compressionDFS(getStartNode());
+        compressionDFS(getStartNode(), 0);
+        minimization();
     }
 
-    private void compressionDFS(RSignatureContractNode node) {
+    private void compressionDFS(RSignatureContractNode node, int level) {
         int commonMask = -1;
-        boolean subtreesIsSame = true;
 
-        for (String type : node.getTransitionKeys()) {
-            if (commonMask == -1)
-                commonMask = node.goByTypeSymbol(type).getMask();
-            else {
-                commonMask &= node.goByTypeSymbol(type).getMask();
-            }
-        }
-
-        if (commonMask > 0 && node.getTransitionKeys().size() > 1) {
-            RSignatureContractNode node1 = null;
-            RSignatureContractNode node2 = null;
-
-            for (String type : node.getTransitionKeys()) {
-                if (node1 == null)
-                    node2 = node.goByTypeSymbol(type);
-
-                if (node1 != null && node2 != null) {
-                    if (!checkSameSubtreesDFS(node1, node2, commonMask << 1, type))
-                        subtreesIsSame = false;
+        if (node.getTypeTransitions() != null) {
+            for (ContractTransition transition : node.getTransitionKeys()) {
+                if (commonMask == -1)
+                    commonMask = node.goByTypeSymbol(transition).getMask();
+                else {
+                    commonMask &= node.goByTypeSymbol(transition).getMask();
                 }
             }
-            if (subtreesIsSame) {
-                //конденсация собстна
+
+            if (commonMask > 0 && node.getTransitionKeys().size() > 1) {
+                for (ContractTransition transition : node.getTransitionKeys()) {
+                    updateSubtreeTypeDFS(node.goByTypeSymbol(transition), commonMask >> 1, level, level + 1, transition);
+                }
             }
-        }
-        for (String type : node.getTransitionKeys()) {
-            compressionDFS(node.goByTypeSymbol(type));
+            for (ContractTransition transition : node.getTransitionKeys()) {
+                compressionDFS(node.goByTypeSymbol(transition), level + 1);
+            }
         }
     }
 
-    private boolean checkSameSubtreesDFS(RSignatureContractNode node1, RSignatureContractNode node2, int mask, String type) {
-        if (mask % 2 == 0) {
-            return checkSameSubtreesDFS(node1.goByTypeSymbol(type), node2.goByTypeSymbol(type), mask << 1, type);
-        } else {
-            if (node1.getTransitionKeys().size() != node2.getTransitionKeys().size()) {
-                return false;
-            } else {
-                for (String typeTransition : node1.getTransitionKeys()) {
-                    if (!node2.getTransitionKeys().contains(typeTransition)) {
-                        return false;
-                    }
-                }
-                Set<RSignatureContractNode> used = new HashSet<>();
+    private void updateSubtreeTypeDFS(RSignatureContractNode node, int mask, int parentLevel, int level, ContractTransition transition) {
+        ReferenceContractTransition newTransition = new ReferenceContractTransition(parentLevel);
+        if (mask % 2 == 1) {
+            node.setReferenceLinks();
+            node.changeTransitionType(transition, newTransition);
+        }
 
-                for (String typeTransition : node1.getTransitionKeys()) {
-                    if (!used.contains(node1.goByTypeSymbol(typeTransition))) {
-                        checkSameSubtreesDFS(node1.goByTypeSymbol(typeTransition), node2.goByTypeSymbol(typeTransition), mask << 1, type);
-                        used.add(node1.goByTypeSymbol(typeTransition));
-                    }
-                }
+        if (node.getTypeTransitions() != null) {
+            for (ContractTransition typeTransition : node.getTransitionKeys()) {
+                updateSubtreeTypeDFS(node.goByTypeSymbol(typeTransition), mask >> 1, parentLevel, level + 1, transition);
             }
         }
-        return true;
     }
 
 }

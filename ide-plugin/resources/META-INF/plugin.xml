@@ -34,17 +34,10 @@
         <runConfigurationExtension
                 implementation="org.jetbrains.plugins.ruby.ruby.run.configuration.CollectTypeRunConfigurationExtension"/>
 
-        <!--        <rubyLangCoreStructuresTypeProvider
-                        implementation="org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyLangCoreStructuresStatTypeProvider"/> -->
     </extensions>
 
     <actions>
         <!-- Add your actions here -->
     </actions>
 
-    <application-components>
-        <component>
-            <implementation-class>org.jetbrains.plugins.ruby.ruby.codeInsight.types.signatureManager.RSignatureManagerCacheInvalidator</implementation-class>
-        </component>
-    </application-components>
 </idea-plugin>

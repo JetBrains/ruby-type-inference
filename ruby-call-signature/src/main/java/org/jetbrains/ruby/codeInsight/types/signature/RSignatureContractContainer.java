@@ -29,11 +29,11 @@ public class RSignatureContractContainer {
                     lines.add("Mask:" + Integer.toString(value.getStartNode().getMask(), 2));
 
                     contracts.get(key).minimization();
-                    //contracts.get(key).compression();
-                    lines.addAll(value.getStringPresentation());
+                    contracts.get(key).compression();
+                    //lines.addAll(value.getStringPresentation());
 
                     try {
-                        Files.write(file, lines, StandardOpenOption.APPEND);
+                        Files.write(file, lines, StandardOpenOption.CREATE_NEW);
                     } catch (IOException e)
                     {
                         System.out.println("IOException");
@@ -43,13 +43,12 @@ public class RSignatureContractContainer {
         System.out.println("Finished");
     }
 
-    public void addSignature(RSignature signature){
+    public void addSignature(RSignature signature) {
         MethodInfo currInfo = signature.getMethodInfo();
 
-        if(contracts.containsKey(currInfo)){
+        if (contracts.containsKey(currInfo)) {
             contracts.get(currInfo).addRSignature(signature);
-        }
-        else{
+        } else {
             RSignatureContract contract = new RSignatureContract(signature);
             contracts.put(currInfo, contract);
         }

@@ -44,6 +44,7 @@ public class SignatureServer {
 
     @Nullable
     public RSignatureContract getContractByMethodName(@NotNull String methodName) {
+
         for (MethodInfo info : mainContainer.getKeySet()) {
             if (info.getName().equals(methodName))
                 return mainContainer.getSignature(info);
