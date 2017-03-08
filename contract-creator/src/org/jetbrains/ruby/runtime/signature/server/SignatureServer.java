@@ -52,6 +52,11 @@ public class SignatureServer {
         return null;
     }
 
+    @Nullable
+    public RSignatureContract getContractByMethodInfo(@NotNull MethodInfo info) {
+        return mainContainer.getSignature(info);
+    }
+
 
     public void runServer() throws IOException {
         LOGGER.info("Starting server");

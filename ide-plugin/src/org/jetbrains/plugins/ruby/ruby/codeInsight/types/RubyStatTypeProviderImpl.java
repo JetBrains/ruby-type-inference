@@ -1,5 +1,7 @@
 package org.jetbrains.plugins.ruby.ruby.codeInsight.types;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -39,13 +41,13 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
 
         SignatureServer callStatServer = SignatureServer.getInstance();
 
-
         final Couple<String> names = getMethodAndReceiverNames(callElement);
         final String methodName = names.getFirst();
+
         if (methodName != null) {
 
-            //final Module module = ModuleUtilCore.findModuleForPsiElement(call);
-            //final String receiverName = StringUtil.notNullize(names.getSecond(), CoreTypes.Object);
+            final Module module = ModuleUtilCore.findModuleForPsiElement(call);
+            final String receiverName = StringUtil.notNullize(names.getSecond(), CoreTypes.Object);
 
             RSignatureContract contract = callStatServer.getContractByMethodName(methodName);
 

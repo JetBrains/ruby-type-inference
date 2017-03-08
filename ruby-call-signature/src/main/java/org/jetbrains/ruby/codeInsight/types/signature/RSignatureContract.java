@@ -1,5 +1,6 @@
 package org.jetbrains.ruby.codeInsight.types.signature;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ruby.codeInsight.types.signature.ContractTransition.ContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.ContractTransition.ReferenceContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.ContractTransition.TypedContractTransition;
@@ -14,6 +15,8 @@ public class RSignatureContract {
     private int mySize = 0;
 
     private RSignatureContractNode startContractNode;
+    @NotNull
+    private final List<ParameterInfo> myArgsInfo;
 
     private List<List<RSignatureContractNode>> levels;
     private RSignatureContractNode termNode;
@@ -38,6 +41,10 @@ public class RSignatureContract {
         return counter;
     }
 
+    public List<ParameterInfo> getParamInfoList() {
+        return myArgsInfo;
+    }
+
     private RSignatureContractNode getTermNode()
     {
         return termNode;
@@ -49,6 +56,7 @@ public class RSignatureContract {
         this.levels = new ArrayList<>();
         this.termNode = new RSignatureContractNode(RSignatureContractNode.ContractNodeType.returnTypeNode);
         this.startContractNode = this.createNodeAndAddToLevels(0);
+        this.myArgsInfo = signature.getArgsInfo();
 
         this.addRSignature(signature);
     }
@@ -224,15 +232,12 @@ public class RSignatureContract {
     }
 
     private void compressionDFS(RSignatureContractNode node, int level) {
-        int commonMask = -1;
+        int commonMask = 0b11111111;
 
         if (node.getTypeTransitions() != null) {
             for (ContractTransition transition : node.getTransitionKeys()) {
-                if (commonMask == -1)
-                    commonMask = node.goByTypeSymbol(transition).getMask();
-                else {
-                    commonMask &= node.goByTypeSymbol(transition).getMask();
-                }
+
+                commonMask &= node.goByTypeSymbol(transition).getMask();
             }
 
             if (commonMask > 0 && node.getTransitionKeys().size() > 1) {
@@ -247,8 +252,10 @@ public class RSignatureContract {
     }
 
     private void updateSubtreeTypeDFS(RSignatureContractNode node, int mask, int parentLevel, int level, ContractTransition transition) {
-        ReferenceContractTransition newTransition = new ReferenceContractTransition(parentLevel);
+
         if (mask % 2 == 1) {
+            ReferenceContractTransition newTransition = new ReferenceContractTransition(parentLevel);
+
             node.setReferenceLinks();
             node.changeTransitionType(transition, newTransition);
         }
