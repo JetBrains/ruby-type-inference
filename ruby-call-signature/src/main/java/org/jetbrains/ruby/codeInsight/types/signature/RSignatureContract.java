@@ -232,11 +232,10 @@ public class RSignatureContract {
     }
 
     private void compressionDFS(RSignatureContractNode node, int level) {
-        int commonMask = 0b11111111;
+        int commonMask = -1;
 
         if (node.getTypeTransitions() != null) {
             for (ContractTransition transition : node.getTransitionKeys()) {
-
                 commonMask &= node.goByTypeSymbol(transition).getMask();
             }
 
