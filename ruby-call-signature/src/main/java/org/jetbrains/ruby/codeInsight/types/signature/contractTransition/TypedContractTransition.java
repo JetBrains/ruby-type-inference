@@ -1,19 +1,11 @@
-package org.jetbrains.ruby.codeInsight.types.signature.ContractTransition;
+package org.jetbrains.ruby.codeInsight.types.signature.contractTransition;
 
 public class TypedContractTransition implements ContractTransition {
 
-    private String type;
+    public String type;
 
     public TypedContractTransition(String type) {
         this.type = type;
-    }
-
-    public void setType(String newType) {
-        type = newType;
-    }
-
-    public String getType() {
-        return type;
     }
 
     @Override

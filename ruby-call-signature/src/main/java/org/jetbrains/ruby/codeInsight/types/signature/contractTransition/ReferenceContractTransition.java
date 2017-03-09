@@ -1,19 +1,11 @@
-package org.jetbrains.ruby.codeInsight.types.signature.ContractTransition;
+package org.jetbrains.ruby.codeInsight.types.signature.contractTransition;
 
 public class ReferenceContractTransition implements ContractTransition {
 
-    private int link;
+    public int link;
 
     public ReferenceContractTransition(int link) {
         this.link = link;
-    }
-
-    public void setLink(int newLink) {
-        link = newLink;
-    }
-
-    public int getLink() {
-        return link;
     }
 
     @Override

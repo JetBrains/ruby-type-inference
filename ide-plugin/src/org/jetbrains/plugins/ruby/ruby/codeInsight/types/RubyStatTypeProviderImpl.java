@@ -19,11 +19,11 @@ import org.jetbrains.plugins.ruby.ruby.lang.psi.expressions.RExpression;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.methodCall.RArgumentToBlock;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.methodCall.RCall;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.references.RReference;
-import org.jetbrains.ruby.codeInsight.types.signature.ContractTransition.ContractTransition;
-import org.jetbrains.ruby.codeInsight.types.signature.ContractTransition.ReferenceContractTransition;
-import org.jetbrains.ruby.codeInsight.types.signature.ContractTransition.TypedContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContract;
 import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContractNode;
+import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition;
+import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ReferenceContractTransition;
+import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.TypedContractTransition;
 import org.jetbrains.ruby.runtime.signature.server.SignatureServer;
 
 import java.util.ArrayDeque;
@@ -51,14 +51,14 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
 
             RSignatureContract contract = callStatServer.getContractByMethodName(methodName);
 
-            List <RSignatureContractNode> currNodes = new ArrayList<>();
+            List<RSignatureContractNode> currNodes = new ArrayList<>();
             currNodes.add(contract.getStartNode());
 
             if (contract != null) {
                 for (RPsiElement argument : callArgs) {
                     final List<String> argTypeNames = getArgTypeNames(argument);
 
-                    List <RSignatureContractNode> nodes = new ArrayList<>();
+                    List<RSignatureContractNode> nodes = new ArrayList<>();
 
                     for (RSignatureContractNode currNode : currNodes) {
                         for (String typeName : argTypeNames) {
@@ -67,7 +67,7 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
                             if (currNode.getReferenceLinksFlag()) {
                                 ContractTransition transition = currNode.getTransitionKeys().iterator().next();
 
-                                int referenceIndex = ((ReferenceContractTransition) transition).getLink();
+                                int referenceIndex = ((ReferenceContractTransition) transition).link;
 
                                 if (typeName.equals(argTypeNames.get(referenceIndex))) {
                                     nodes.add(currNode.goByTypeSymbol(transition));
@@ -91,9 +91,9 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
             for (RSignatureContractNode currNode : currNodes) {
                 for (ContractTransition transition : currNode.getTransitionKeys()) {
                     if (transition instanceof TypedContractTransition)
-                        returnTypes.add(RTypeFactory.createTypeByFQN(call.getProject(), ((TypedContractTransition) transition).getType()));
+                        returnTypes.add(RTypeFactory.createTypeByFQN(call.getProject(), ((TypedContractTransition) transition).type));
                     else {
-                        int referenceIndex = ((ReferenceContractTransition) transition).getLink();
+                        int referenceIndex = ((ReferenceContractTransition) transition).link;
 
                         final List<String> argTypeNames = getArgTypeNames(callArgs.get(referenceIndex));
 
