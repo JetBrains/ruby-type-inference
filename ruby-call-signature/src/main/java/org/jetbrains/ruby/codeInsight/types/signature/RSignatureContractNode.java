@@ -1,6 +1,6 @@
 package org.jetbrains.ruby.codeInsight.types.signature;
 
-import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition;
+import org.jetbrains.ruby.codeInsight.types.signature.ContractTransition.ContractTransition;
 
 import java.util.HashMap;
 import java.util.Set;
