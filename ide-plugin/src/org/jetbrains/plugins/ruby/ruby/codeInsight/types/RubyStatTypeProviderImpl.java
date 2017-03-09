@@ -19,8 +19,10 @@ import org.jetbrains.plugins.ruby.ruby.lang.psi.expressions.RExpression;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.methodCall.RArgumentToBlock;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.methodCall.RCall;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.references.RReference;
+import org.jetbrains.ruby.codeInsight.types.signature.ParameterInfo;
 import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContract;
 import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContractNode;
+import org.jetbrains.ruby.codeInsight.types.signature.RSignatureFetcher;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.TypedContractTransition;
 import org.jetbrains.ruby.runtime.signature.server.SignatureServer;
@@ -28,6 +30,48 @@ import org.jetbrains.ruby.runtime.signature.server.SignatureServer;
 import java.util.*;
 
 public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
+
+    private Map<RSignatureContractNode, List<Set<String>>> getNextLevel(Map<RSignatureContractNode, List<Set<String>>> currNodesAndReadTypes, Set<String> argTypeNames) {
+
+        //final Set<String> argTypeNames = getArgTypeNames(argument);
+
+        Map<RSignatureContractNode, List<Set<String>>> nextLayer = new HashMap<>();
+        currNodesAndReadTypes.forEach((node, readTypeSets) -> {
+            if (node.getReferenceLinksFlag()) {
+                ContractTransition transition = node.getTransitionKeys().iterator().next();
+
+                if (transition.getValue(readTypeSets).containsAll(argTypeNames)) {
+                    readTypeSets.add(argTypeNames);
+
+                    final RSignatureContractNode to = node.goByTypeSymbol(transition);
+                    addReadTypesList(nextLayer, readTypeSets, to);
+                }
+            } else {
+                for (final String typeName : argTypeNames) {
+                    TypedContractTransition transition = new TypedContractTransition(typeName);
+
+                    if (node.containsKey(transition)) {
+                        final List<Set<String>> newList = new ArrayList<>(readTypeSets);
+                        newList.add(ContainerUtil.newHashSet(typeName));
+
+                        addReadTypesList(nextLayer, newList, node.goByTypeSymbol(transition));
+                    }
+                }
+            }
+
+
+        });
+
+        return nextLayer;
+    }
+
+    private Map<RSignatureContractNode, List<Set<String>>> getNextLevelByString(Map<RSignatureContractNode, List<Set<String>>> currNodesAndReadTypes, String argName) {
+
+        Set<String> tmpSet = new HashSet<>();
+        tmpSet.add(argName);
+
+        return getNextLevel(currNodesAndReadTypes, tmpSet);
+    }
 
     public RType createTypeByCallAndArgs(@NotNull final RExpression call, @NotNull final List<RPsiElement> callArgs) {
 
@@ -37,6 +81,18 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
 
         final Couple<String> names = getMethodAndReceiverNames(callElement);
         final String methodName = names.getFirst();
+
+        HashMap<String, RPsiElement> kwArgs = new HashMap<>();
+        LinkedList<RPsiElement> simpleArgs = new LinkedList<>();
+
+        for (RPsiElement arg : callArgs) {
+            if (arg instanceof RAssoc)
+                kwArgs.put(((RAssoc) arg).getKeyText(), arg);
+            else
+                simpleArgs.add(arg);
+        }
+
+        RSignatureFetcher fetcher = new RSignatureFetcher(callArgs.size(), kwArgs.keySet());
 
         if (methodName != null) {
 
@@ -50,37 +106,23 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
             currNodesAndReadTypes.put(contract.getStartNode(), new ArrayList<>());
 
             if (contract != null) {
-                for (RPsiElement argument : callArgs) {
-                    final Set<String> argTypeNames = getArgTypeNames(argument);
+                List<ParameterInfo> paramInfos = contract.getParamInfoList();
+                List<Boolean> flags = fetcher.fetch(paramInfos);
 
-                    Map<RSignatureContractNode, List<Set<String>>> nextLayer = new HashMap<>();
-                    currNodesAndReadTypes.forEach((node, readTypeSets) -> {
-                        if (node.getReferenceLinksFlag()) {
-                            ContractTransition transition = node.getTransitionKeys().iterator().next();
+                for (int i = 0; i < flags.size(); i++) {
+                    if (flags.get(i)) {
+                        if (paramInfos.get(i).getModifier() == ParameterInfo.Type.KEY ||
+                                paramInfos.get(i).getModifier() == ParameterInfo.Type.KEYREQ) {
+                            RPsiElement currElement = kwArgs.get(paramInfos.get(i).getName());
 
-                            if (transition.getValue(readTypeSets).containsAll(argTypeNames)) {
-                                readTypeSets.add(argTypeNames);
-
-                                final RSignatureContractNode to = node.goByTypeSymbol(transition);
-                                addReadTypesList(nextLayer, readTypeSets, to);
-                            }
+                            currNodesAndReadTypes = getNextLevel(currNodesAndReadTypes, getArgTypeNames(currElement));
                         } else {
-                            for (final String typeName : argTypeNames) {
-                                TypedContractTransition transition = new TypedContractTransition(typeName);
-
-                                if (node.containsKey(transition)) {
-                                    final List<Set<String>> newList = new ArrayList<>(readTypeSets);
-                                    newList.add(ContainerUtil.newHashSet(typeName));
-
-                                    addReadTypesList(nextLayer, newList, node.goByTypeSymbol(transition));
-                                }
-                            }
+                            RPsiElement currElement = simpleArgs.poll();
+                            currNodesAndReadTypes = getNextLevel(currNodesAndReadTypes, getArgTypeNames(currElement));
                         }
-
-
-                    });
-
-                    currNodesAndReadTypes = nextLayer;
+                    } else {
+                        currNodesAndReadTypes = getNextLevelByString(currNodesAndReadTypes, "-");
+                    }
                 }
             }
 

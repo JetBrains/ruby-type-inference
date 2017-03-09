@@ -9,7 +9,7 @@ public final class RSignatureFetcher {
 
     public RSignatureFetcher(int argc, Set<String> kwArgs) {
         this.argc = argc;
-        this.kwArgs = kwArgs;
+        this.kwArgs = new HashSet<>(kwArgs);
     }
 
     //     parameter information
@@ -22,7 +22,7 @@ public final class RSignatureFetcher {
     //             **f,                                # keyword_rest
     //             &g)                                 # block
 
-    private List<Boolean> updateArgExists(ParameterInfo argument, int i, List<Boolean> flags) {
+    private List<Boolean> updateArgExists(int i, List<Boolean> flags) {
 
         if (argc <= 0)
             return flags;
@@ -43,7 +43,7 @@ public final class RSignatureFetcher {
         for (int i = 0; i < info.size(); i++) {
             ParameterInfo parameterInfo = info.get(i);
             if (parameterInfo.getModifier() == type) {
-                flags = updateArgExists(parameterInfo, i, flags);
+                flags = updateArgExists(i, flags);
             }
         }
 
@@ -52,13 +52,12 @@ public final class RSignatureFetcher {
 
     public List<Boolean> fetch(List<ParameterInfo> info) {
 
-        List<Boolean> result = new ArrayList(Arrays.asList(new Boolean[info.size()]));
+        List<Boolean> result = new ArrayList<>(Arrays.asList(new Boolean[info.size()]));
         Collections.fill(result, Boolean.FALSE);
 
         boolean keyflag = false;
 
-        for (int i = 0; i < info.size(); i++) {
-            ParameterInfo argument = info.get(i);
+        for (ParameterInfo argument : info) {
 
             if (argument.getModifier() == ParameterInfo.Type.KEYREQ) {
                 keyflag = true;
