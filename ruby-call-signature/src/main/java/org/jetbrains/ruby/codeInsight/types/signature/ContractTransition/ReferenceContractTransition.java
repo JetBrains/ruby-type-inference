@@ -1,38 +1,21 @@
 package org.jetbrains.ruby.codeInsight.types.signature.ContractTransition;
 
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+import java.util.Set;
+
 public class ReferenceContractTransition implements ContractTransition {
 
-    private int link;
+    private final int myLink;
 
     public ReferenceContractTransition(int link) {
-        this.link = link;
+        myLink = link;
     }
 
-    public void setLink(int newLink) {
-        link = newLink;
-    }
-
-    public int getLink() {
-        return link;
-    }
-
+    @NotNull
     @Override
-    public int hashCode() {
-        int hash = 1;
-        hash = hash * 17 + link;
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object aThat) {
-        if (this == aThat)
-            return true;
-
-        if (!(aThat instanceof ReferenceContractTransition))
-            return false;
-
-        ReferenceContractTransition that = (ReferenceContractTransition) aThat;
-
-        return that.link == this.link;
+    public Set<String> getValue(@NotNull List<Set<String>> readTypes) {
+        return readTypes.get(myLink);
     }
 }

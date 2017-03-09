@@ -5,6 +5,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.resolve.ResolveUtil;
@@ -20,16 +21,12 @@ import org.jetbrains.plugins.ruby.ruby.lang.psi.methodCall.RArgumentToBlock;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.methodCall.RCall;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.references.RReference;
 import org.jetbrains.ruby.codeInsight.types.signature.ContractTransition.ContractTransition;
-import org.jetbrains.ruby.codeInsight.types.signature.ContractTransition.ReferenceContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.ContractTransition.TypedContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContract;
 import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContractNode;
 import org.jetbrains.ruby.runtime.signature.server.SignatureServer;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.List;
+import java.util.*;
 
 public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
 
@@ -50,69 +47,70 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
             final String receiverName = StringUtil.notNullize(names.getSecond(), CoreTypes.Object);
 
             RSignatureContract contract = callStatServer.getContractByMethodName(methodName);
+            // TODO fix npe
 
-            List <RSignatureContractNode> currNodes = new ArrayList<>();
-            currNodes.add(contract.getStartNode());
+            Map<RSignatureContractNode, List<Set<String>>> currNodesAndReadTypes = new HashMap<>();
+            currNodesAndReadTypes.put(contract.getStartNode(), new ArrayList<>());
 
             if (contract != null) {
                 for (RPsiElement argument : callArgs) {
-                    final List<String> argTypeNames = getArgTypeNames(argument);
+                    final Set<String> argTypeNames = getArgTypeNames(argument);
 
-                    List <RSignatureContractNode> nodes = new ArrayList<>();
+                    Map<RSignatureContractNode, List<Set<String>>> nextLayer = new HashMap<>();
+                    currNodesAndReadTypes.forEach((node, readTypeSets) -> {
+                        if (node.getReferenceLinksFlag()) {
+                            ContractTransition transition = node.getTransitionKeys().iterator().next();
 
-                    for (RSignatureContractNode currNode : currNodes) {
-                        for (String typeName : argTypeNames) {
+                            if (transition.getValue(readTypeSets).containsAll(argTypeNames)) {
+                                readTypeSets.add(argTypeNames);
 
-
-                            if (currNode.getReferenceLinksFlag()) {
-                                ContractTransition transition = currNode.getTransitionKeys().iterator().next();
-
-                                int referenceIndex = ((ReferenceContractTransition) transition).getLink();
-
-                                if (typeName.equals(argTypeNames.get(referenceIndex))) {
-                                    nodes.add(currNode.goByTypeSymbol(transition));
-                                }
-
-                            } else {
+                                final RSignatureContractNode to = node.goByTypeSymbol(transition);
+                                addReadTypesList(nextLayer, readTypeSets, to);
+                            }
+                        } else {
+                            for (final String typeName : argTypeNames) {
                                 TypedContractTransition transition = new TypedContractTransition(typeName);
 
-                                if (currNode.containsKey(transition))
-                                    nodes.add(currNode.goByTypeSymbol(transition));
+                                if (node.containsKey(transition)) {
+                                    final List<Set<String>> newList = new ArrayList<>(readTypeSets);
+                                    newList.add(ContainerUtil.newHashSet(typeName));
+
+                                    addReadTypesList(nextLayer, newList, node.goByTypeSymbol(transition));
+                                }
                             }
-
                         }
-                    }
-                    currNodes = nodes;
+
+
+                    });
+
+                    currNodesAndReadTypes = nextLayer;
                 }
             }
 
-            List<RType> returnTypes = new ArrayList<>();
-
-            for (RSignatureContractNode currNode : currNodes) {
-                for (ContractTransition transition : currNode.getTransitionKeys()) {
-                    if (transition instanceof TypedContractTransition)
-                        returnTypes.add(RTypeFactory.createTypeByFQN(call.getProject(), ((TypedContractTransition) transition).getType()));
-                    else {
-                        int referenceIndex = ((ReferenceContractTransition) transition).getLink();
-
-                        final List<String> argTypeNames = getArgTypeNames(callArgs.get(referenceIndex));
-
-                        for (String argTypeName : argTypeNames) {
-                            returnTypes.add(RTypeFactory.createTypeByFQN(call.getProject(), argTypeName));
-                        }
-                    }
+            final Set<String> returnTypes = new HashSet<>();
+            currNodesAndReadTypes.forEach((node, readTypeSets) -> {
+                for (final ContractTransition transition : node.getTransitionKeys()) {
+                    returnTypes.addAll(transition.getValue(readTypeSets));
                 }
-            }
+            });
 
-            if (returnTypes.size() == 1) {
-                return returnTypes.get(0);
-            } else if (returnTypes.size() <= RType.TYPE_TREE_HEIGHT_LIMIT) {
-                return returnTypes.stream().reduce(REmptyType.INSTANCE, RTypeUtil::union);
-            }
+            return returnTypes.stream()
+                    .map(name -> RTypeFactory.createTypeByFQN(call.getProject(), name))
+                    .reduce(REmptyType.INSTANCE, RTypeUtil::union);
 
         }
 
         return null;
+    }
+
+    private void addReadTypesList(Map<RSignatureContractNode, List<Set<String>>> nextLayer, List<Set<String>> readTypeSets, RSignatureContractNode to) {
+        nextLayer.computeIfPresent(to, (rSignatureContractNode, sets) -> {
+            for (int i = 0; i < sets.size(); i++) {
+                sets.get(i).addAll(readTypeSets.get(i));
+            }
+            return sets;
+        });
+        nextLayer.putIfAbsent(to, readTypeSets);
     }
 
 
@@ -147,12 +145,12 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
 
 
     @NotNull
-    private static List<String> getArgTypeNames(@NotNull RPsiElement arg) {
+    private static Set<String> getArgTypeNames(@NotNull RPsiElement arg) {
         if (arg instanceof RAssoc) {
             arg = ((RAssoc) arg).getValue();
         }
 
-        final List<String> argTypeNames = new ArrayList<>();
+        final Set<String> argTypeNames = new HashSet<>();
         if (arg instanceof RExpression) {
             RType type = ((RExpression) arg).getType();
             if (type instanceof RUnionType) {
