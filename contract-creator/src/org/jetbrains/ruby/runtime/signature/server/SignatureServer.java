@@ -86,7 +86,7 @@ public class SignatureServer {
                                 List<Boolean> flags = fetcher.fetch(currRSignature.getArgsInfo());
 
                                 for (int i = 0; i < flags.size(); i++) {
-                                    Boolean flag = currRawSignature.getIsGiven().get(i);
+                                    Boolean flag = flags.get(i);
                                     if (!flag)
                                         currRawSignature.changeArgumentType(i, "-");
                                 }

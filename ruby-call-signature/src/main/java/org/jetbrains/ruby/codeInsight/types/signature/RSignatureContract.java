@@ -65,45 +65,32 @@ public class RSignatureContract {
 
 
     public void addRSignature(RSignature signature) {
-        this.myNumberOfCalls++;
+        myNumberOfCalls++;
         RSignatureContractNode currNode = this.startContractNode;
-        int currParamId = 1;
 
         String returnType = signature.getReturnTypeName();
 
         RSignatureContractNode termNode = getTermNode();
 
-        for (String type : signature.getArgsTypes()) {
+        final List<String> argsTypes = signature.getArgsTypes();
+        for (int argIndex = 0; argIndex < argsTypes.size(); argIndex++) {
+            final String type = argsTypes.get(argIndex);
 
-            int tempMask = 0;
-            for (int j = (currParamId - 1); j < signature.getArgsInfo().size(); j++) {
-                tempMask <<= 1;
-                if (signature.getArgsTypes().get(j).equals(type)) {
-                    tempMask |= 1;
-                }
-            }
-
-            if (returnType.equals(type)) {
-                tempMask <<= 1;
-                tempMask |= 1;
-            }
-
-            TypedContractTransition transition = new TypedContractTransition(type);
+            final int mask = getNewMask(signature.getArgsTypes(), argIndex, returnType, type);
+            final TypedContractTransition transition = new TypedContractTransition(type);
 
             if (currNode.goByTypeSymbol(transition) == null) {
-                RSignatureContractNode newNode;
-
-                newNode = this.createNodeAndAddToLevels(currParamId);
+                final RSignatureContractNode newNode = createNodeAndAddToLevels(argIndex + 1);
 
                 currNode.addLink(transition, newNode);
 
-                newNode.setMask(tempMask);
+                newNode.setMask(mask);
                 currNode = newNode;
             } else {
                 currNode = currNode.goByTypeSymbol(transition);
-                currNode.updateMask(tempMask);
+                currNode.updateMask(mask);
             }
-            currParamId++;
+            argIndex++;
         }
 
         currNode.addLink(new TypedContractTransition(returnType), termNode);
