@@ -36,10 +36,6 @@ public class RSignatureContract {
         return newNode;
     }
 
-    public int getNumberOfCalls() {
-        return myNumberOfCalls;
-    }
-
     public List<ParameterInfo> getParamInfoList() {
         return myArgsInfo;
     }
@@ -97,7 +93,7 @@ public class RSignatureContract {
 
     private int getNewMask(@NotNull List<String> argsTypes, int argIndex, String returnType, String addedType) {
         int tempMask = 0;
-        for (int j = argIndex; j < argsTypes.size(); j++) {
+        for (int j = argIndex + 1; j < argsTypes.size(); j++) {
             tempMask <<= 1;
             if (argsTypes.get(j).equals(addedType)) {
                 tempMask |= 1;
@@ -114,19 +110,18 @@ public class RSignatureContract {
     public void minimization() {
         int numberOfLevels = levels.size();
 
-        for (int i = numberOfLevels - 1; i > 0; i--)
-        {
+        for (int i = numberOfLevels - 1; i > 0; i--) {
             List<RSignatureContractNode> level = levels.get(i);
 
-            HashMap <RSignatureContractNode, RSignatureContractNode> representatives = new HashMap<>();
+            HashMap<RSignatureContractNode, RSignatureContractNode> representatives = new HashMap<>();
             List<Integer> uselessVertices = new ArrayList<>();
 
             for (RSignatureContractNode node : level) {
                 representatives.put(node, node);
             }
 
-            for(int v1 = 0; v1 < level.size(); v1++){
-                for(int v2 = v1 + 1; v2 < level.size(); v2++){
+            for (int v1 = 0; v1 < level.size(); v1++) {
+                for (int v2 = v1 + 1; v2 < level.size(); v2++) {
                     RSignatureContractNode vertex1 = level.get(v1);
                     RSignatureContractNode vertex2 = level.get(v2);
 
@@ -139,8 +134,7 @@ public class RSignatureContract {
                         }
                     }
 
-                    if(isSame)
-                    {
+                    if (isSame) {
                         RSignatureContractNode vertex1presenter = representatives.get(vertex1);
                         representatives.put(vertex2, vertex1presenter);
                         uselessVertices.add(v2);
@@ -174,19 +168,18 @@ public class RSignatureContract {
     private void compressionDFS(RSignatureContractNode node, int level) {
         int commonMask = -1;
 
-        if (node.getTypeTransitions() != null) {
-            for (ContractTransition transition : node.getTransitionKeys()) {
-                commonMask &= node.goByTypeSymbol(transition).getMask();
-            }
 
-            if (commonMask > 0 && node.getTransitionKeys().size() > 1) {
-                for (ContractTransition transition : node.getTransitionKeys()) {
-                    updateSubtreeTypeDFS(node.goByTypeSymbol(transition), commonMask >> 1, level, level + 1, transition);
-                }
-            }
+        for (ContractTransition transition : node.getTransitionKeys()) {
+            commonMask &= node.goByTypeSymbol(transition).getMask();
+        }
+
+        if (commonMask > 0 && node.getTransitionKeys().size() > 1) {
             for (ContractTransition transition : node.getTransitionKeys()) {
-                compressionDFS(node.goByTypeSymbol(transition), level + 1);
+                updateSubtreeTypeDFS(node.goByTypeSymbol(transition), commonMask, level, level + 1, transition);
             }
+        }
+        for (ContractTransition transition : node.getTransitionKeys()) {
+            compressionDFS(node.goByTypeSymbol(transition), level + 1);
         }
     }
 
@@ -199,10 +192,8 @@ public class RSignatureContract {
             node.changeTransitionType(transition, newTransition);
         }
 
-        if (node.getTypeTransitions() != null) {
-            for (ContractTransition typeTransition : node.getTransitionKeys()) {
-                updateSubtreeTypeDFS(node.goByTypeSymbol(typeTransition), mask >> 1, parentLevel, level + 1, transition);
-            }
+        for (ContractTransition typeTransition : node.getTransitionKeys()) {
+            updateSubtreeTypeDFS(node.goByTypeSymbol(typeTransition), mask >> 1, parentLevel, level + 1, transition);
         }
     }
 
