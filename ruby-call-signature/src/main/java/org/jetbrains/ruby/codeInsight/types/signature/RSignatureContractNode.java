@@ -1,41 +1,46 @@
 package org.jetbrains.ruby.codeInsight.types.signature;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 public class RSignatureContractNode {
 
     private boolean hasReferenceLinks = false;
-    private ContractNodeType nodeType;
 
-    public void setMask(int mask) {
+    private int mask = 0;
+
+    @NotNull
+    private final Map<ContractTransition, RSignatureContractNode> typeTransitions;
+
+    RSignatureContractNode(@NotNull ContractNodeType type) {
+
+        if (type != ContractNodeType.returnTypeNode) {
+            typeTransitions = new HashMap<>();
+        } else {
+            typeTransitions = Collections.emptyMap();
+        }
+    }
+
+    void setMask(int mask) {
         this.mask = mask;
     }
 
-    public void changeTransitionType(ContractTransition oldTransition, ContractTransition newTransition) {
+    void changeTransitionType(ContractTransition oldTransition, ContractTransition newTransition) {
         RSignatureContractNode node = typeTransitions.get(oldTransition);
         typeTransitions.remove(oldTransition);
         typeTransitions.put(newTransition, node);
     }
 
-    public enum ContractNodeType {
-        argNode,
-        returnNode,
-        returnTypeNode
-    }
-
-    private int mask = 0;
-
-    private HashMap<ContractTransition, RSignatureContractNode> typeTransitions;
-
-    public RSignatureContractNode goByTypeSymbol(ContractTransition typeName)
-    {
+    public RSignatureContractNode goByTypeSymbol(ContractTransition typeName) {
         return typeTransitions.get(typeName);
     }
 
-    public void setReferenceLinks() {
+    void setReferenceLinks() {
         hasReferenceLinks = true;
     }
 
@@ -43,24 +48,11 @@ public class RSignatureContractNode {
         return hasReferenceLinks;
     }
 
-    public RSignatureContractNode(ContractNodeType type) {
-
-        this.nodeType = type;
-
-        if (type != ContractNodeType.returnTypeNode)
-            this.typeTransitions = new HashMap<>();
-    }
-
-    public ContractNodeType getNodeType()
-    {
-        return this.nodeType;
-    }
-
-    public int getMask() {
+    int getMask() {
         return this.mask;
     }
 
-    public void updateMask(int tempMask) {
+    void updateMask(int tempMask) {
         mask &= tempMask;
     }
 
@@ -72,11 +64,18 @@ public class RSignatureContractNode {
         return this.typeTransitions.containsKey(key);
     }
 
-    public void addLink(final ContractTransition transition, RSignatureContractNode arrivalNode) {
+    void addLink(final ContractTransition transition, RSignatureContractNode arrivalNode) {
         this.typeTransitions.put(transition, arrivalNode);
     }
 
-    public HashMap<ContractTransition, RSignatureContractNode> getTypeTransitions() {
+    @NotNull
+    Map<ContractTransition, RSignatureContractNode> getTypeTransitions() {
         return typeTransitions;
+    }
+
+    public enum ContractNodeType {
+        argNode,
+        returnNode,
+        returnTypeNode
     }
 }

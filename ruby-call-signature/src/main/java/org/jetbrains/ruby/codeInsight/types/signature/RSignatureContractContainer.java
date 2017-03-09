@@ -17,14 +17,14 @@ public class RSignatureContractContainer {
     public void print(Path file)
     {
         contracts.entrySet().stream()
-                .sorted(Collections.reverseOrder(Comparator.comparingInt(entry -> entry.getValue().getCounter())))
+                .sorted(Collections.reverseOrder(Comparator.comparingInt(entry -> entry.getValue().getNumberOfCalls())))
                 .forEachOrdered(entry -> {
                     final MethodInfo key = entry.getKey();
                     final RSignatureContract value = entry.getValue();
 
                     List<String> lines = new ArrayList<>();
                     lines.add("-----------");
-                    lines.add("Number of calls:" + value.getCounter());
+                    lines.add("Number of calls:" + value.getNumberOfCalls());
                     lines.add(key.toString());
                     lines.add("Mask:" + Integer.toString(value.getStartNode().getMask(), 2));
 

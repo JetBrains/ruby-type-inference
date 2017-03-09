@@ -5,6 +5,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.resolve.ResolveUtil;
@@ -19,6 +20,8 @@ import org.jetbrains.plugins.ruby.ruby.lang.psi.expressions.RExpression;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.methodCall.RArgumentToBlock;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.methodCall.RCall;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.references.RReference;
+import org.jetbrains.ruby.codeInsight.types.signature.ContractTransition.ContractTransition;
+import org.jetbrains.ruby.codeInsight.types.signature.ContractTransition.TypedContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContract;
 import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContractNode;
 import org.jetbrains.ruby.codeInsight.types.signature.RSignatureFetcher;
@@ -27,7 +30,10 @@ import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.Referen
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.TypedContractTransition;
 import org.jetbrains.ruby.runtime.signature.server.SignatureServer;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
 
 public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
 
@@ -57,6 +63,7 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
             final String receiverName = StringUtil.notNullize(names.getSecond(), CoreTypes.Object);
 
             RSignatureContract contract = callStatServer.getContractByMethodName(methodName);
+            // TODO fix npe
 
             List<RSignatureContractNode> currNodes = new ArrayList<>();
             currNodes.add(contract.getStartNode());
@@ -120,6 +127,16 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
         }
 
         return null;
+    }
+
+    private void addReadTypesList(Map<RSignatureContractNode, List<Set<String>>> nextLayer, List<Set<String>> readTypeSets, RSignatureContractNode to) {
+        nextLayer.computeIfPresent(to, (rSignatureContractNode, sets) -> {
+            for (int i = 0; i < sets.size(); i++) {
+                sets.get(i).addAll(readTypeSets.get(i));
+            }
+            return sets;
+        });
+        nextLayer.putIfAbsent(to, readTypeSets);
     }
 
 
