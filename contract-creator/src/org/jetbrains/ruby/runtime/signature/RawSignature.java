@@ -71,8 +71,8 @@ public class RawSignature {
     }
 
     @NotNull
-    public List<Boolean> getIsGiven() {
-        return isGiven;
+    public List<ParameterInfo> getArgsInfo() {
+        return myArgsInfo;
     }
 
     public void changeArgumentType(int index, String newType) {
