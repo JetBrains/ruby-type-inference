@@ -1,9 +1,9 @@
 package org.jetbrains.ruby.codeInsight.types.signature;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.ruby.codeInsight.types.signature.ContractTransition.ContractTransition;
-import org.jetbrains.ruby.codeInsight.types.signature.ContractTransition.ReferenceContractTransition;
-import org.jetbrains.ruby.codeInsight.types.signature.ContractTransition.TypedContractTransition;
+import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition;
+import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ReferenceContractTransition;
+import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.TypedContractTransition;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,6 +14,7 @@ public class RSignatureContract {
     private int myNumberOfCalls = 0;
     private int mySize = 0;
 
+    @NotNull
     private RSignatureContractNode startContractNode;
     @NotNull
     private final List<ParameterInfo> myArgsInfo;
@@ -58,6 +59,7 @@ public class RSignatureContract {
         this.addRSignature(signature);
     }
 
+    @NotNull
     public RSignatureContractNode getStartNode() {
         return startContractNode;
     }

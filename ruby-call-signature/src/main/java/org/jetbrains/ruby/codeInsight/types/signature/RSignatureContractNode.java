@@ -1,7 +1,7 @@
 package org.jetbrains.ruby.codeInsight.types.signature;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.ruby.codeInsight.types.signature.ContractTransition.ContractTransition;
+import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition;
 
 import java.util.Collections;
 import java.util.HashMap;

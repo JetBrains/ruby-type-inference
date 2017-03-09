@@ -1,4 +1,4 @@
-package org.jetbrains.ruby.codeInsight.types.signature.ContractTransition;
+package org.jetbrains.ruby.codeInsight.types.signature.contractTransition;
 
 import org.jetbrains.annotations.NotNull;
 
