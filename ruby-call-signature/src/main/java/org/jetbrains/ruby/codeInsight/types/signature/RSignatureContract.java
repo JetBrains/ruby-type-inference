@@ -90,7 +90,6 @@ public class RSignatureContract {
                 currNode = currNode.goByTypeSymbol(transition);
                 currNode.updateMask(mask);
             }
-            argIndex++;
         }
 
         currNode.addLink(new TypedContractTransition(returnType), termNode);
