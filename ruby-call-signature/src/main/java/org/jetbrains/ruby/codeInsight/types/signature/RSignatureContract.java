@@ -65,7 +65,7 @@ public class RSignatureContract {
 
 
     public void addRSignature(RSignature signature) {
-        this.counter++;
+        this.myNumberOfCalls++;
         RSignatureContractNode currNode = this.startContractNode;
         int currParamId = 1;
 
