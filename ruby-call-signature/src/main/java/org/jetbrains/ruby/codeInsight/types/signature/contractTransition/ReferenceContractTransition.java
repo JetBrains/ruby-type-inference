@@ -18,4 +18,19 @@ public class ReferenceContractTransition implements ContractTransition {
     public Set<String> getValue(@NotNull List<Set<String>> readTypes) {
         return readTypes.get(myLink);
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        final ReferenceContractTransition that = (ReferenceContractTransition) o;
+
+        return myLink == that.myLink;
+    }
+
+    @Override
+    public int hashCode() {
+        return myLink;
+    }
 }
