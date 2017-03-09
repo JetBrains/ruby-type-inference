@@ -66,16 +66,17 @@ public class RSignatureContract {
     public void addRSignature(RSignature signature) {
         this.counter++;
         RSignatureContractNode currNode = this.startContractNode;
-        int currParamId = 1;
 
         String returnType = signature.getReturnTypeName();
 
         RSignatureContractNode termNode = getTermNode();
 
-        for (String type : signature.getArgsTypes()) {
+        final List<String> argsTypes = signature.getArgsTypes();
+        for (int argIndex = 0; argIndex < argsTypes.size(); argIndex++) {
+            final String type = argsTypes.get(argIndex);
 
             int tempMask = 0;
-            for (int j = (currParamId - 1); j < signature.getArgsInfo().size(); j++) {
+            for (int j = argIndex; j < signature.getArgsInfo().size(); j++) {
                 tempMask <<= 1;
                 if (signature.getArgsTypes().get(j).equals(type)) {
                     tempMask |= 1;
@@ -92,7 +93,7 @@ public class RSignatureContract {
             if (currNode.goByTypeSymbol(transition) == null) {
                 RSignatureContractNode newNode;
 
-                newNode = this.createNodeAndAddToLevels(currParamId);
+                newNode = this.createNodeAndAddToLevels(argIndex + 1);
 
                 currNode.addLink(transition, newNode);
 
@@ -102,7 +103,7 @@ public class RSignatureContract {
                 currNode = currNode.goByTypeSymbol(transition);
                 currNode.updateMask(tempMask);
             }
-            currParamId++;
+            argIndex++;
         }
 
         currNode.addLink(new TypedContractTransition(returnType), termNode);
