@@ -11,7 +11,7 @@ import java.util.List;
 
 public class RSignatureContract {
 
-    private int counter = 0;
+    private int myNumberOfCalls = 0;
     private int mySize = 0;
 
     private RSignatureContractNode startContractNode;
@@ -35,8 +35,8 @@ public class RSignatureContract {
         return newNode;
     }
 
-    public int getCounter() {
-        return counter;
+    public int getNumberOfCalls() {
+        return myNumberOfCalls;
     }
 
     public List<ParameterInfo> getParamInfoList() {
@@ -64,7 +64,7 @@ public class RSignatureContract {
 
 
     public void addRSignature(RSignature signature) {
-        this.counter++;
+        myNumberOfCalls++;
         RSignatureContractNode currNode = this.startContractNode;
 
         String returnType = signature.getReturnTypeName();
