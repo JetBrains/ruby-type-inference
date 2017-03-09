@@ -4,10 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.ruby.codeInsight.types.signature.MethodInfo;
-import org.jetbrains.ruby.codeInsight.types.signature.RSignature;
-import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContract;
-import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContractContainer;
+import org.jetbrains.ruby.codeInsight.types.signature.*;
 import org.jetbrains.ruby.runtime.signature.RawSignature;
 
 import java.io.BufferedReader;
@@ -17,6 +14,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.logging.Logger;
 
 
@@ -81,11 +79,13 @@ public class SignatureServer {
 
                         if (result != null) {
                             RawSignature currRawSignature = new RawSignature(result);
+                            RSignature currRSignature = currRawSignature.getRSignature();
 
                             if (!result.call_info_mid.equals("nil")) {
-                                currRawSignature.fetch();
+                                RSignatureFetcher fetcher = new RSignatureFetcher(currRawSignature.argc, currRawSignature.kwArgs);
+                                List<Boolean> flags = fetcher.fetch(currRSignature.getArgsInfo());
 
-                                for (int i = 0; i < currRawSignature.getIsGiven().size(); i++) {
+                                for (int i = 0; i < flags.size(); i++) {
                                     Boolean flag = currRawSignature.getIsGiven().get(i);
                                     if (!flag)
                                         currRawSignature.changeArgumentType(i, "-");
@@ -93,10 +93,7 @@ public class SignatureServer {
                             }
 
                             if (result.method_name.equals("initialize") || result.call_info_mid.equals("send") || result.call_info_mid.equals("nil") || result.call_info_mid.equals(result.method_name)) {
-
-                                RSignature currRSignature = currRawSignature.getRSignature();
                                 mainContainer.addSignature(currRSignature);
-
                             }
 
                         }

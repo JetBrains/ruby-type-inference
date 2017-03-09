@@ -6,6 +6,7 @@ import org.jetbrains.ruby.runtime.signature.server.ServerResponseBean;
 
 import java.util.*;
 
+
 public class RawSignature {
     @NotNull
     private final MethodInfo myMethodInfo;
@@ -17,9 +18,9 @@ public class RawSignature {
     private List<String> myArgsTypes;
 
     private final String myCallMid;
-    private int myCallArgc;
+    public int argc;
     @NotNull
-    private final List<String> myKeyWords;
+    public final Set<String> kwArgs;
     private String myReturnTypeName;
 
     public RawSignature(ServerResponseBean bean) {
@@ -31,16 +32,15 @@ public class RawSignature {
 
         this.myCallMid = bean.call_info_mid;
 
+
+        this.kwArgs = new HashSet<>();
         if (!myCallMid.equals("nil")) {
-            this.myCallArgc = bean.call_info_argc;
+            this.argc = bean.call_info_argc;
             String kwInfo = bean.call_info_kw_args;
 
-            this.myKeyWords = new ArrayList<>();
             if (!kwInfo.equals("")) {
-                this.myKeyWords.addAll(Arrays.asList(kwInfo.split("\\s*,\\s*")));
+                this.kwArgs.addAll(Arrays.asList(kwInfo.split("\\s*,\\s*")));
             }
-        } else {
-            this.myKeyWords = new ArrayList<>();
         }
 
         this.myReturnTypeName = bean.return_type_name;
@@ -65,128 +65,6 @@ public class RawSignature {
         Collections.fill(isGiven, Boolean.FALSE);
     }
 
-//     parameter information
-//
-//      def m(a1, a2, ..., aM,                    # mandatory
-//             b1=(...), b2=(...), ..., bN=(...),  # optional
-//             *c,                                 # rest
-//             d1, d2, ..., dO,                    # post
-//             e1:(...), e2:(...), ..., eK:(...),  # keyword
-//             **f,                                # keyword_rest
-//             &g)                                 # block
-
-    private void updateArgExists(ParameterInfo argument, int i) {
-        if (myCallArgc <= 0)
-            return;
-
-        if (myCallArgc > myKeyWords.size()) {
-            myCallArgc--;
-        } else {
-            for (String kwName : myKeyWords) {
-                //argument.addInfo(kwName);
-                myCallArgc--;
-            }
-            myKeyWords.clear();
-        }
-        isGiven.set(i, Boolean.TRUE);
-    }
-
-    public void fetch() {
-
-        boolean keyflag = false;
-
-        for (int i = 0; i < myArgsTypes.size(); i++) {
-            ParameterInfo argument = myArgsInfo.get(i);
-            String type = myArgsTypes.get(i);
-
-            if (argument.getModifier() == ParameterInfo.Type.BLOCK) {
-                if (!type.equals("NillClass"))
-                    isGiven.set(i, Boolean.TRUE);
-            }
-
-            if (argument.getModifier() == ParameterInfo.Type.KEYREQ) {
-                keyflag = true;
-            }
-
-            if (argument.getModifier() == ParameterInfo.Type.KEY) {
-                keyflag = true;
-            }
-
-            if (argument.getModifier() == ParameterInfo.Type.KEYREST) {
-                keyflag = true;
-            }
-        }
-
-        for (int i = 0; i < myArgsInfo.size(); i++) {
-            ParameterInfo argument = myArgsInfo.get(i);
-            if (argument.getModifier() == ParameterInfo.Type.REQ) {
-                updateArgExists(argument, i);
-            }
-        }
-
-        if (myKeyWords.size() == 0) {
-
-            for (int i = 0; i < myArgsInfo.size(); i++) {
-                ParameterInfo argument = myArgsInfo.get(i);
-                if (argument.getModifier() == ParameterInfo.Type.OPT) {
-                    updateArgExists(argument, i);
-                }
-            }
-        } else {
-            if (!keyflag) {
-                for (int i = 0; i < myArgsInfo.size(); i++) {
-                    ParameterInfo argument = myArgsInfo.get(i);
-                    if (argument.getModifier() == ParameterInfo.Type.OPT) {
-                        updateArgExists(argument, i);
-                    }
-                }
-            } else {
-                for (int i = 0; i < myArgsInfo.size(); i++) {
-                    ParameterInfo argument = myArgsInfo.get(i);
-                    String argumentName = argument.getName();
-
-                    if (argument.getModifier() == ParameterInfo.Type.KEY) {
-                        if (myKeyWords.contains(argumentName)) {
-                            isGiven.set(i, Boolean.TRUE);
-                            myCallArgc--;
-                            myKeyWords.remove(argumentName);
-                        }
-
-                    }
-                    if (argument.getModifier() == ParameterInfo.Type.KEYREQ) {
-                        if (myKeyWords.contains(argumentName)) {
-                            isGiven.set(i, Boolean.TRUE);
-                            myCallArgc--;
-                            myKeyWords.remove(argumentName);
-                        }
-                    }
-                    if (argument.getModifier() == ParameterInfo.Type.KEYREST) {
-                        if (!myKeyWords.isEmpty()) {
-                            isGiven.set(i, Boolean.TRUE);
-                            myCallArgc -= myKeyWords.size();
-                        }
-                        myKeyWords.clear();
-                    }
-                }
-            }
-        }
-
-        for (int i = 0; i < myArgsInfo.size(); i++) {
-
-            ParameterInfo argument = myArgsInfo.get(i);
-            if (argument.getModifier() == ParameterInfo.Type.REST) {
-                if (this.getCallArgc() > 0) {
-                    isGiven.set(i, Boolean.TRUE);
-                    myCallArgc = 0;
-                    //for (String kwName : myKeyWords) {
-                    //    argument.addInfo(kwName);
-                    //}
-                    myKeyWords.clear();
-                }
-            }
-        }
-    }
-
     public RSignature getRSignature() {
 
         return new RSignature(myMethodInfo, myArgsInfo, myArgsTypes, myReturnTypeName);
@@ -199,9 +77,5 @@ public class RawSignature {
 
     public void changeArgumentType(int index, String newType) {
         myArgsTypes.set(index, newType);
-    }
-
-    private int getCallArgc() {
-        return myCallArgc;
     }
 }

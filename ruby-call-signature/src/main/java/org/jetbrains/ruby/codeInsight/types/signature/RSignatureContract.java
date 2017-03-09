@@ -21,8 +21,7 @@ public class RSignatureContract {
     private List<List<RSignatureContractNode>> levels;
     private RSignatureContractNode termNode;
 
-    private RSignatureContractNode createNodeAndAddToLevels(Integer index)
-    {
+    private RSignatureContractNode createNodeAndAddToLevels(Integer index) {
         RSignatureContractNode newNode;
 
         if (index < mySize)
@@ -30,14 +29,13 @@ public class RSignatureContract {
         else
             newNode = new RSignatureContractNode(RSignatureContractNode.ContractNodeType.returnNode);
 
-        while(levels.size() <= index)
+        while (levels.size() <= index)
             levels.add(new ArrayList<>());
         levels.get(index).add(newNode);
         return newNode;
     }
 
-    public int getCounter()
-    {
+    public int getCounter() {
         return counter;
     }
 
@@ -45,8 +43,7 @@ public class RSignatureContract {
         return myArgsInfo;
     }
 
-    private RSignatureContractNode getTermNode()
-    {
+    private RSignatureContractNode getTermNode() {
         return termNode;
     }
 
@@ -111,23 +108,21 @@ public class RSignatureContract {
         currNode.addLink(new TypedContractTransition(returnType), termNode);
     }
 
-    public void minimization()
-    {
+    public void minimization() {
         int numberOfLevels = levels.size();
 
-        for (int i = numberOfLevels - 1; i > 0; i--)
-        {
+        for (int i = numberOfLevels - 1; i > 0; i--) {
             List<RSignatureContractNode> level = levels.get(i);
 
-            HashMap <RSignatureContractNode, RSignatureContractNode> representatives = new HashMap<>();
+            HashMap<RSignatureContractNode, RSignatureContractNode> representatives = new HashMap<>();
             List<Integer> uselessVertices = new ArrayList<>();
 
             for (RSignatureContractNode node : level) {
                 representatives.put(node, node);
             }
 
-            for(int v1 = 0; v1 < level.size(); v1++){
-                for(int v2 = v1 + 1; v2 < level.size(); v2++){
+            for (int v1 = 0; v1 < level.size(); v1++) {
+                for (int v2 = v1 + 1; v2 < level.size(); v2++) {
                     RSignatureContractNode vertex1 = level.get(v1);
                     RSignatureContractNode vertex2 = level.get(v2);
 
@@ -140,8 +135,7 @@ public class RSignatureContract {
                         }
                     }
 
-                    if(isSame)
-                    {
+                    if (isSame) {
                         RSignatureContractNode vertex1presenter = representatives.get(vertex1);
                         representatives.put(vertex2, vertex1presenter);
                         uselessVertices.add(v2);

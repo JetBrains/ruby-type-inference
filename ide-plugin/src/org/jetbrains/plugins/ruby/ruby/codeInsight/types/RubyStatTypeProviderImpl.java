@@ -21,15 +21,13 @@ import org.jetbrains.plugins.ruby.ruby.lang.psi.methodCall.RCall;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.references.RReference;
 import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContract;
 import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContractNode;
+import org.jetbrains.ruby.codeInsight.types.signature.RSignatureFetcher;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ReferenceContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.TypedContractTransition;
 import org.jetbrains.ruby.runtime.signature.server.SignatureServer;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.List;
+import java.util.*;
 
 public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
 
@@ -40,6 +38,15 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
         final PsiElement callElement = call instanceof RCall ? ((RCall) call).getPsiCommand() : call;
 
         SignatureServer callStatServer = SignatureServer.getInstance();
+
+        Set<String> kwArgs = new HashSet<>();
+        for (RPsiElement argument : callArgs) {
+            if (argument instanceof RAssoc)
+                kwArgs.add(((RAssoc) argument).getKeyText());
+        }
+
+        RSignatureFetcher fetcher = new RSignatureFetcher(callArgs.size(), kwArgs);
+
 
         final Couple<String> names = getMethodAndReceiverNames(callElement);
         final String methodName = names.getFirst();
