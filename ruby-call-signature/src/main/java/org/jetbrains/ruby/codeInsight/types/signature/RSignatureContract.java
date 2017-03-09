@@ -75,38 +75,40 @@ public class RSignatureContract {
         for (int argIndex = 0; argIndex < argsTypes.size(); argIndex++) {
             final String type = argsTypes.get(argIndex);
 
-            int tempMask = 0;
-            for (int j = argIndex; j < signature.getArgsInfo().size(); j++) {
-                tempMask <<= 1;
-                if (signature.getArgsTypes().get(j).equals(type)) {
-                    tempMask |= 1;
-                }
-            }
-
-            if (returnType.equals(type)) {
-                tempMask <<= 1;
-                tempMask |= 1;
-            }
-
-            TypedContractTransition transition = new TypedContractTransition(type);
+            final int mask = getNewMask(signature.getArgsTypes(), argIndex, returnType, type);
+            final TypedContractTransition transition = new TypedContractTransition(type);
 
             if (currNode.goByTypeSymbol(transition) == null) {
-                RSignatureContractNode newNode;
-
-                newNode = this.createNodeAndAddToLevels(argIndex + 1);
+                final RSignatureContractNode newNode = createNodeAndAddToLevels(argIndex + 1);
 
                 currNode.addLink(transition, newNode);
 
-                newNode.setMask(tempMask);
+                newNode.setMask(mask);
                 currNode = newNode;
             } else {
                 currNode = currNode.goByTypeSymbol(transition);
-                currNode.updateMask(tempMask);
+                currNode.updateMask(mask);
             }
             argIndex++;
         }
 
         currNode.addLink(new TypedContractTransition(returnType), termNode);
+    }
+
+    private int getNewMask(@NotNull List<String> argsTypes, int argIndex, String returnType, String addedType) {
+        int tempMask = 0;
+        for (int j = argIndex; j < argsTypes.size(); j++) {
+            tempMask <<= 1;
+            if (argsTypes.get(j).equals(addedType)) {
+                tempMask |= 1;
+            }
+        }
+
+        if (returnType.equals(addedType)) {
+            tempMask <<= 1;
+            tempMask |= 1;
+        }
+        return tempMask;
     }
 
     public void minimization() {
