@@ -221,4 +221,7 @@ public class RSignatureContract implements SignatureContract {
         }
     }
 
+    public int getNumberOfCalls() {
+        return myNumberOfCalls;
+    }
 }
