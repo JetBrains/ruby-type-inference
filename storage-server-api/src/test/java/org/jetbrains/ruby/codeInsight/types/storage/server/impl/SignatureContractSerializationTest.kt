@@ -17,7 +17,13 @@ class SignatureContractSerializationTest : TestCase() {
         assertEquals(normalizedInput, serialized)
     }
 
-    fun testSimple() = doTest("""
+    fun testSimple() {
+        doTest(SignatureTestData.simpleContract)
+    }
+}
+
+object SignatureTestData {
+    val simpleContract = """
 1 arg 0
 4
 3
@@ -29,5 +35,14 @@ class SignatureContractSerializationTest : TestCase() {
 1
 3 1 0
 0
-        """)
+            """
+
+    val trivialContract = """
+0
+2
+1
+1 0 a
+0
+"""
+
 }

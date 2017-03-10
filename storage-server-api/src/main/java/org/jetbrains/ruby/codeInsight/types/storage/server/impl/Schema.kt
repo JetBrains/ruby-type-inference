@@ -4,10 +4,8 @@ import org.jetbrains.exposed.dao.EntityID
 import org.jetbrains.exposed.dao.IntEntity
 import org.jetbrains.exposed.dao.IntEntityClass
 import org.jetbrains.exposed.dao.IntIdTable
-import org.jetbrains.ruby.codeInsight.types.signature.ClassInfo
-import org.jetbrains.ruby.codeInsight.types.signature.GemInfo
-import org.jetbrains.ruby.codeInsight.types.signature.MethodInfo
-import org.jetbrains.ruby.codeInsight.types.signature.RVisibility
+import org.jetbrains.ruby.codeInsight.types.signature.*
+import java.sql.Blob
 
 object GemInfoTable : IntIdTable() {
     val name = varchar("name", 50).index()
@@ -49,7 +47,15 @@ class MethodInfoData(id: EntityID<Int>) : IntEntity(id), MethodInfo {
 }
 
 object SignatureTable : IntIdTable() {
-    val gemInfo = reference("gem_info", GemInfoTable.id)
     val methodInfo = reference("method_info", MethodInfoTable.id)
-    val returnType = varchar("return_type", 100)
+    val contract = blob("contract")
+}
+
+class SignatureContractData(id: EntityID<Int>) : IntEntity(id), SignatureInfo {
+    companion object : IntEntityClass<SignatureContractData>(SignatureTable)
+
+    override val methodInfo: MethodInfo by MethodInfoData referencedOn SignatureTable.methodInfo
+    override val contract: SignatureContract by BlobDeserializer()
+
+    val contractRaw: Blob by SignatureTable.contract
 }

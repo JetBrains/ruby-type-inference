@@ -10,7 +10,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.ruby.codeInsight.types.signature.ClassInfo
 import org.jetbrains.ruby.codeInsight.types.signature.GemInfo
 import org.jetbrains.ruby.codeInsight.types.signature.MethodInfo
-import org.jetbrains.ruby.codeInsight.types.signature.RSignature
+import org.jetbrains.ruby.codeInsight.types.signature.SignatureInfo
 import org.jetbrains.ruby.codeInsight.types.storage.server.RSignatureProvider
 
 class RSignatureProviderImpl : RSignatureProvider {
@@ -66,15 +66,7 @@ class RSignatureProviderImpl : RSignatureProvider {
             if (containerClass is ClassInfoData) {
                 classId = containerClass.id
             } else {
-                val selectGemClause: SqlExpressionBuilder.() -> Op<Boolean> = if (containerClass.gemInfo == null) {
-                    { ClassInfoTable.gemInfo.isNull() }
-                } else {
-                    {
-                        GemInfoTable.name.eq(containerClass.gemInfo!!.name) and
-                                GemInfoTable.version.eq(containerClass.gemInfo!!.version)
-                    }
-                }
-
+                val selectGemClause = getGemWhereClause(containerClass)
                 classId = (ClassInfoTable leftJoin GemInfoTable).slice(ClassInfoTable.id)
                         .select { ClassInfoTable.fqn.eq(containerClass.classFQN) and selectGemClause() }
                         .firstOrNull()
@@ -88,8 +80,39 @@ class RSignatureProviderImpl : RSignatureProvider {
         }
     }
 
-    override fun getSignature(method: MethodInfo): RSignature? {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    override fun getSignature(method: MethodInfo): SignatureInfo? {
+        return transaction {
+            val methodId: EntityID<Int>
+            if (method is MethodInfoData) {
+                methodId = method.id
+            } else {
+                val selectGemClause = getGemWhereClause(method.classInfo)
+                methodId = (MethodInfoTable innerJoin ClassInfoTable leftJoin GemInfoTable).slice(MethodInfoTable.id)
+                        .select {
+                            MethodInfoTable.name.eq(method.name) and
+                                    ClassInfoTable.fqn.eq(method.classInfo.classFQN) and
+                                    selectGemClause()
+                        }.firstOrNull()
+                        ?.let {
+                            it[MethodInfoTable.id]
+                        }
+                        ?: return@transaction null
+            }
+
+            SignatureContractData.find { SignatureTable.methodInfo.eq(methodId) }.firstOrNull()
+        }
+    }
+
+    private fun getGemWhereClause(containerClass: ClassInfo): SqlExpressionBuilder.() -> Op<Boolean> {
+        val gemInfo = containerClass.gemInfo
+        if (gemInfo == null) {
+            return { ClassInfoTable.gemInfo.isNull() }
+        } else {
+            return {
+                GemInfoTable.name.eq(gemInfo.name) and
+                        GemInfoTable.version.eq(gemInfo.version)
+            }
+        }
     }
 
 }

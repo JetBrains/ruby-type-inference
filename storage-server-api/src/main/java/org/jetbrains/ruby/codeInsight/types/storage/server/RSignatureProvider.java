@@ -5,7 +5,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ruby.codeInsight.types.signature.ClassInfo;
 import org.jetbrains.ruby.codeInsight.types.signature.GemInfo;
 import org.jetbrains.ruby.codeInsight.types.signature.MethodInfo;
-import org.jetbrains.ruby.codeInsight.types.signature.RSignature;
+import org.jetbrains.ruby.codeInsight.types.signature.SignatureInfo;
 
 import java.util.Collection;
 
@@ -39,6 +39,6 @@ public interface RSignatureProvider {
             throws StorageException;
 
     @Nullable
-    RSignature getSignature(@NotNull MethodInfo method) throws StorageException;
+    SignatureInfo getSignature(@NotNull MethodInfo method) throws StorageException;
 
 }

@@ -5,10 +5,14 @@ import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.Contrac
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ReferenceContractTransition
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.TypedContractTransition
 import java.io.DataInput
+import java.io.DataInputStream
 import java.io.DataOutput
+import java.io.DataOutputStream
+import java.sql.Blob
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
+import kotlin.reflect.KProperty
 
 fun ContractTransition.serialize(stream: DataOutput) {
     stream.writeBoolean(this is ReferenceContractTransition)
@@ -94,4 +98,24 @@ fun SignatureContract(stream: DataInput): SignatureContract {
 
     return RSignatureContract(argsInfo, nodes.first(), nodes.last(), levels)
 
+}
+
+class BlobDeserializer {
+    operator fun getValue(signatureContractData: SignatureContractData, property: KProperty<*>): SignatureContract {
+        val blob = signatureContractData.contractRaw
+        try {
+            return SignatureContract(DataInputStream(blob.binaryStream))
+        } finally {
+            blob.free()
+        }
+    }
+}
+
+object BlobSerializer {
+    fun writeToBlob(signatureContract: SignatureContract, blob: Blob): Blob {
+        val binaryStream = blob.setBinaryStream(1)
+        signatureContract.serialize(DataOutputStream(binaryStream))
+        binaryStream.close()
+        return blob
+    }
 }

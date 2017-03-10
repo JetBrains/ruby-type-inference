@@ -5,7 +5,9 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.ruby.codeInsight.types.signature.ClassInfo
 import org.jetbrains.ruby.codeInsight.types.signature.GemInfo
+import org.jetbrains.ruby.codeInsight.types.signature.MethodInfo
 import org.jetbrains.ruby.codeInsight.types.signature.RVisibility
+import org.jetbrains.ruby.codeInsight.types.storage.server.StringDataInput
 import org.junit.Test
 
 class RSignatureProviderTest : TestCase() {
@@ -16,12 +18,12 @@ class RSignatureProviderTest : TestCase() {
 
         Database.connect("jdbc:h2:mem:test", driver = "org.h2.Driver")
         transaction = TransactionManager.manager.newTransaction()
-        SchemaUtils.create(GemInfoTable, ClassInfoTable, MethodInfoTable)
+        SchemaUtils.create(GemInfoTable, ClassInfoTable, MethodInfoTable, SignatureTable)
     }
 
     override fun tearDown() {
         try {
-            SchemaUtils.drop(GemInfoTable, ClassInfoTable, MethodInfoTable)
+            SchemaUtils.drop(GemInfoTable, ClassInfoTable, MethodInfoTable, SignatureTable)
         } finally {
             transaction?.commit()
         }
@@ -106,5 +108,42 @@ class RSignatureProviderTest : TestCase() {
         val methodsWithGivenGem = provider.getRegisteredMethods(ClassInfo(GemInfo("test_gem", "1.2.3"), "Test::Fqn"))
         assertEquals(1, methodsWithGivenGem.size)
         assertEquals(setOf("met4"), methodsWithGivenGem.map { it.name }.toSet())
+    }
+
+    @Test
+    fun testSignatures() {
+        val gem = GemInfoTable.insertAndGetId { it[name] = "test_gem"; it[version] = "1.2.3" }
+        val clazz = ClassInfoTable.insertAndGetId { it[fqn] = "Test::Fqn"; it[gemInfo] = gem }
+        val method1 = MethodInfoTable.insertAndGetId {
+            it[name] = "met1"
+            it[visibility] = RVisibility.PUBLIC
+            it[classInfo] = clazz
+        }
+        val method2 = MethodInfoTable.insertAndGetId {
+            it[name] = "met2"
+            it[visibility] = RVisibility.PUBLIC
+            it[classInfo] = clazz
+        }
+
+        val contract1 = SignatureContract(StringDataInput(SignatureTestData.simpleContract))
+        val contract2 = SignatureContract(StringDataInput(SignatureTestData.trivialContract))
+
+        val blob1 = TransactionManager.current().connection.createBlob()
+        SignatureTable.insert { it[contract] = BlobSerializer.writeToBlob(contract1, blob1); it[methodInfo] = method1 }
+        blob1.free()
+
+        val blob2 = TransactionManager.current().connection.createBlob()
+        SignatureTable.insert { it[contract] = BlobSerializer.writeToBlob(contract2, blob2); it[methodInfo] = method2 }
+        blob2.free()
+
+        val provider = RSignatureProviderImpl()
+        val signatureInfo1 = provider.getSignature(MethodInfo(ClassInfo(GemInfo("test_gem", "1.2.3"), "Test::Fqn"), "met1", RVisibility.PUBLIC))
+        val signatureInfo2 = provider.getSignature(MethodInfo(ClassInfo(GemInfo("test_gem", "1.2.3"), "Test::Fqn"), "met2", RVisibility.PUBLIC))
+
+        assertNotNull(signatureInfo1)
+        assertEquals(4, signatureInfo1!!.contract.nodeCount)
+
+        assertNotNull(signatureInfo2)
+        assertEquals(2, signatureInfo2!!.contract.nodeCount)
     }
 }
