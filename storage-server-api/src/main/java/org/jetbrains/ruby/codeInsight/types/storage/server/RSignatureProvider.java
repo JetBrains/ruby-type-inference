@@ -21,9 +21,9 @@ import java.util.Collection;
  * <li>3. In order to get the registered classes available upon requiring the given gem one may use
  * {@link #getRegisteredClasses(GemInfo)}
  * <li>4. Given a class of a receiver object one may get the registered methods available for sending
- * via {@link #getRegisteredMethods(GemInfo, ClassInfo)}
+ * via {@link #getRegisteredMethods(ClassInfo)}
  * <li>5. Given a call, which is represented as a method of a particular class in a particular gem one may
- * get Signature contract via {@link #getSignature(GemInfo, MethodInfo)}. It allows for getting params
+ * get Signature contract via {@link #getSignature(MethodInfo)}. It allows for getting params
  * information, deducing return type from given input types, etc.
  * </ul>
  */
@@ -39,6 +39,6 @@ public interface RSignatureProvider {
             throws StorageException;
 
     @Nullable
-    RSignature getSignature(@NotNull GemInfo gem, @NotNull MethodInfo method) throws StorageException;
+    RSignature getSignature(@NotNull MethodInfo method) throws StorageException;
 
 }

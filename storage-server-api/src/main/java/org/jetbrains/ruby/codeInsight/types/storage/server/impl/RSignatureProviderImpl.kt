@@ -1,5 +1,8 @@
 package org.jetbrains.ruby.codeInsight.types.storage.server.impl
 
+import org.jetbrains.exposed.dao.EntityID
+import org.jetbrains.exposed.sql.Op
+import org.jetbrains.exposed.sql.SqlExpressionBuilder
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.TransactionManager
@@ -40,13 +43,18 @@ class RSignatureProviderImpl : RSignatureProvider {
 
     override fun getRegisteredClasses(gem: GemInfo): Collection<ClassInfo> {
         return transaction {
-            val gemId = GemInfoTable.slice(GemInfoTable.id)
-                    .select { GemInfoTable.name.eq(gem.name) and GemInfoTable.version.eq(gem.version) }
-                    .firstOrNull()
-                    ?.let {
-                        it[GemInfoTable.id]
-                    }
-                    ?: return@transaction emptyList()
+            val gemId: EntityID<Int>
+            if (gem is GemInfoData) {
+                gemId = gem.id
+            } else {
+                gemId = GemInfoTable.slice(GemInfoTable.id)
+                        .select { GemInfoTable.name.eq(gem.name) and GemInfoTable.version.eq(gem.version) }
+                        .firstOrNull()
+                        ?.let {
+                            it[GemInfoTable.id]
+                        }
+                        ?: return@transaction emptyList()
+            }
 
             ClassInfoData.find { ClassInfoTable.gemInfo.eq(gemId) }.toList()
         }
@@ -54,19 +62,33 @@ class RSignatureProviderImpl : RSignatureProvider {
 
     override fun getRegisteredMethods(containerClass: ClassInfo): Collection<MethodInfo> {
         return transaction {
-            val classId = ClassInfoTable.slice(ClassInfoTable.id)
-                    .select { ClassInfoTable.fqn.eq(containerClass.classFQN) }
-                    .firstOrNull()
-                    ?.let {
-                        it[ClassInfoTable.id]
+            val classId: EntityID<Int>
+            if (containerClass is ClassInfoData) {
+                classId = containerClass.id
+            } else {
+                val selectGemClause: SqlExpressionBuilder.() -> Op<Boolean> = if (containerClass.gemInfo == null) {
+                    { ClassInfoTable.gemInfo.isNull() }
+                } else {
+                    {
+                        GemInfoTable.name.eq(containerClass.gemInfo!!.name) and
+                                GemInfoTable.version.eq(containerClass.gemInfo!!.version)
                     }
-                    ?: return@transaction emptyList()
+                }
+
+                classId = (ClassInfoTable leftJoin GemInfoTable).slice(ClassInfoTable.id)
+                        .select { ClassInfoTable.fqn.eq(containerClass.classFQN) and selectGemClause() }
+                        .firstOrNull()
+                        ?.let {
+                            it[ClassInfoTable.id]
+                        }
+                        ?: return@transaction emptyList()
+            }
 
             MethodInfoData.find { MethodInfoTable.classInfo.eq(classId) }.toList()
         }
     }
 
-    override fun getSignature(gem: GemInfo, method: MethodInfo): RSignature? {
+    override fun getSignature(method: MethodInfo): RSignature? {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 

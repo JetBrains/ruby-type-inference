@@ -89,15 +89,22 @@ class RSignatureProviderTest : TestCase() {
 
     @Test
     fun testRegisteredMethods() {
+        val gem = GemInfoTable.insertAndGetId { it[name] = "test_gem"; it[version] = "1.2.3" }
         val class1 = ClassInfoTable.insertAndGetId { it[fqn] = "Test::Fqn" }
         val class2 = ClassInfoTable.insertAndGetId { it[fqn] = "Test2::Fqn" }
+        val class3 = ClassInfoTable.insertAndGetId { it[fqn] = "Test::Fqn"; it[gemInfo] = gem }
         MethodInfoTable.insert { it[name] = "met1"; it[visibility] = RVisibility.PUBLIC; it[classInfo] = class1 }
         MethodInfoTable.insert { it[name] = "met2"; it[visibility] = RVisibility.PUBLIC; it[classInfo] = class1 }
         MethodInfoTable.insert { it[name] = "met3"; it[visibility] = RVisibility.PUBLIC; it[classInfo] = class2 }
+        MethodInfoTable.insert { it[name] = "met4"; it[visibility] = RVisibility.PUBLIC; it[classInfo] = class3 }
 
         val provider = RSignatureProviderImpl()
-        val methods = provider.getRegisteredMethods(ClassInfo("Test::Fqn"))
-        assertEquals(2, methods.size)
-        assertEquals(setOf("met1", "met2"), methods.map { it.name }.toSet())
+        val methodsWithNullGem = provider.getRegisteredMethods(ClassInfo("Test::Fqn"))
+        assertEquals(2, methodsWithNullGem.size)
+        assertEquals(setOf("met1", "met2"), methodsWithNullGem.map { it.name }.toSet())
+
+        val methodsWithGivenGem = provider.getRegisteredMethods(ClassInfo(GemInfo("test_gem", "1.2.3"), "Test::Fqn"))
+        assertEquals(1, methodsWithGivenGem.size)
+        assertEquals(setOf("met4"), methodsWithGivenGem.map { it.name }.toSet())
     }
 }
