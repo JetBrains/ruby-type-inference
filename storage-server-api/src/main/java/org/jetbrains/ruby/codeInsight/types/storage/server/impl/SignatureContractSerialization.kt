@@ -4,13 +4,13 @@ import org.jetbrains.ruby.codeInsight.types.signature.*
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ReferenceContractTransition
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.TypedContractTransition
-import java.io.DataInputStream
-import java.io.DataOutputStream
+import java.io.DataInput
+import java.io.DataOutput
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
-fun ContractTransition.serialize(stream: DataOutputStream) {
+fun ContractTransition.serialize(stream: DataOutput) {
     stream.writeBoolean(this is ReferenceContractTransition)
     when (this) {
         is ReferenceContractTransition -> stream.writeInt(link)
@@ -19,7 +19,7 @@ fun ContractTransition.serialize(stream: DataOutputStream) {
     }
 }
 
-fun ContractTransition(stream: DataInputStream): ContractTransition {
+fun ContractTransition(stream: DataInput): ContractTransition {
     val type = stream.readBoolean()
     return when (type) {
         true -> ReferenceContractTransition(stream.readInt())
@@ -27,16 +27,16 @@ fun ContractTransition(stream: DataInputStream): ContractTransition {
     }
 }
 
-fun ParameterInfo.serialize(stream: DataOutputStream) {
+fun ParameterInfo.serialize(stream: DataOutput) {
     stream.writeUTF(name)
     stream.writeByte(modifier.ordinal)
 }
 
-fun ParameterInfo(stream: DataInputStream): ParameterInfo {
+fun ParameterInfo(stream: DataInput): ParameterInfo {
     return ParameterInfo(stream.readUTF(), ParameterInfo.Type.values()[stream.readByte().toInt()])
 }
 
-fun SignatureContract.serialize(stream: DataOutputStream) {
+fun SignatureContract.serialize(stream: DataOutput) {
     stream.writeInt(argsInfo.size)
     argsInfo.forEach { it.serialize(stream) }
 
@@ -50,12 +50,12 @@ fun SignatureContract.serialize(stream: DataOutputStream) {
 
     while (q.isNotEmpty()) {
         val v = q.poll()
-        v.transitions.values
-                .filterNot { visited.containsKey(it) }
-                .forEach {
-                    visited[it] = visited.size
-                    q.push(it)
-                }
+        for (it in v.transitions.values) {
+            if (!visited.containsKey(it)) {
+                visited[it] = visited.size
+                q.add(it)
+            }
+        }
 
         stream.writeInt(v.transitions.size)
         v.transitions.forEach { transition, u ->
@@ -65,7 +65,7 @@ fun SignatureContract.serialize(stream: DataOutputStream) {
     }
 }
 
-fun SignatureContract(stream: DataInputStream): SignatureContract {
+fun SignatureContract(stream: DataInput): SignatureContract {
     val argsSize = stream.readInt()
     val argsInfo = List(argsSize) { ParameterInfo(stream) }
 
@@ -75,7 +75,7 @@ fun SignatureContract(stream: DataInputStream): SignatureContract {
 
     val distance = IntArray(nodesSize, { 0 })
 
-    repeat(argsSize) { currentNodeIndex ->
+    repeat(nodesSize) { currentNodeIndex ->
         val transitionsN = stream.readInt()
 
         repeat(transitionsN) {
@@ -87,7 +87,7 @@ fun SignatureContract(stream: DataInputStream): SignatureContract {
         }
     }
 
-    val levels = List(argsSize + 1) { ArrayList<RSignatureContractNode>() }
+    val levels = List(argsSize + 2) { ArrayList<RSignatureContractNode>() }
     nodes.indices.forEach {
         levels[distance[it]].add(nodes[it])
     }
