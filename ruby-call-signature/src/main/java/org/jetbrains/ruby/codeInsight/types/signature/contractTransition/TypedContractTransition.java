@@ -21,6 +21,11 @@ public class TypedContractTransition implements ContractTransition {
         return Collections.singleton(myType);
     }
 
+    @NotNull
+    public String getType() {
+        return myType;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

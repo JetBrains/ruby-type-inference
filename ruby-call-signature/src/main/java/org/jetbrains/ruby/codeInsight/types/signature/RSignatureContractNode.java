@@ -8,16 +8,16 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class RSignatureContractNode {
+public class RSignatureContractNode implements SignatureNode {
 
     private boolean hasReferenceLinks = false;
 
     private int mask = 0;
 
     @NotNull
-    private final Map<ContractTransition, RSignatureContractNode> typeTransitions;
+    private final Map<ContractTransition, SignatureNode> typeTransitions;
 
-    RSignatureContractNode(@NotNull ContractNodeType type) {
+    public RSignatureContractNode(@NotNull ContractNodeType type) {
 
         if (type != ContractNodeType.returnTypeNode) {
             typeTransitions = new HashMap<>();
@@ -31,13 +31,13 @@ public class RSignatureContractNode {
     }
 
     void changeTransitionType(ContractTransition oldTransition, ContractTransition newTransition) {
-        RSignatureContractNode node = typeTransitions.get(oldTransition);
+        SignatureNode node = typeTransitions.get(oldTransition);
         typeTransitions.remove(oldTransition);
         typeTransitions.put(newTransition, node);
     }
 
     public RSignatureContractNode goByTypeSymbol(ContractTransition typeName) {
-        return typeTransitions.get(typeName);
+        return ((RSignatureContractNode) typeTransitions.get(typeName));
     }
 
     void setReferenceLinks() {
@@ -64,12 +64,13 @@ public class RSignatureContractNode {
         return this.typeTransitions.containsKey(key);
     }
 
-    void addLink(final ContractTransition transition, RSignatureContractNode arrivalNode) {
+    public void addLink(final ContractTransition transition, RSignatureContractNode arrivalNode) {
         this.typeTransitions.put(transition, arrivalNode);
     }
 
     @NotNull
-    Map<ContractTransition, RSignatureContractNode> getTypeTransitions() {
+    @Override
+    public Map<ContractTransition, SignatureNode> getTransitions() {
         return typeTransitions;
     }
 

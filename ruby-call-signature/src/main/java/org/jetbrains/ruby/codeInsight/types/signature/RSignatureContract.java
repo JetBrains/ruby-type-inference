@@ -9,23 +9,22 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class RSignatureContract {
+public class RSignatureContract implements SignatureContract {
 
     private int myNumberOfCalls = 0;
-    private int mySize = 0;
 
     @NotNull
-    private RSignatureContractNode startContractNode;
+    private final RSignatureContractNode startContractNode;
     @NotNull
     private final List<ParameterInfo> myArgsInfo;
 
-    private List<List<RSignatureContractNode>> levels;
-    private RSignatureContractNode termNode;
+    private final List<List<RSignatureContractNode>> levels;
+    private final RSignatureContractNode termNode;
 
     private RSignatureContractNode createNodeAndAddToLevels(Integer index) {
         RSignatureContractNode newNode;
 
-        if (index < mySize)
+        if (index < getSize())
             newNode = new RSignatureContractNode(RSignatureContractNode.ContractNodeType.argNode);
         else
             newNode = new RSignatureContractNode(RSignatureContractNode.ContractNodeType.returnNode);
@@ -45,8 +44,6 @@ public class RSignatureContract {
     }
 
     public RSignatureContract(RSignature signature) {
-        this.mySize = signature.getArgsInfo().size();
-
         this.levels = new ArrayList<>();
         this.termNode = new RSignatureContractNode(RSignatureContractNode.ContractNodeType.returnTypeNode);
         this.startContractNode = this.createNodeAndAddToLevels(0);
@@ -55,10 +52,37 @@ public class RSignatureContract {
         this.addRSignature(signature);
     }
 
+    public RSignatureContract(@NotNull List<ParameterInfo> argsInfo,
+                              @NotNull RSignatureContractNode startContractNode,
+                              @NotNull RSignatureContractNode termNode,
+                              @NotNull List<List<RSignatureContractNode>> levels) {
+        this.startContractNode = startContractNode;
+        myArgsInfo = argsInfo;
+        this.levels = levels;
+        this.termNode = termNode;
+
+        // TODO recalculate mask
+    }
+
+    @NotNull
+    @Override
     public RSignatureContractNode getStartNode() {
         return startContractNode;
     }
 
+    @NotNull
+    @Override
+    public List<ParameterInfo> getArgsInfo() {
+        return myArgsInfo;
+    }
+
+    private int getSize() {
+        return myArgsInfo.size();
+    }
+
+    public int getNodeCount() {
+        return levels.stream().map(List::size).reduce(0, (a, b) -> a + b);
+    }
 
     public void addRSignature(RSignature signature) {
         myNumberOfCalls++;
@@ -125,7 +149,7 @@ public class RSignatureContract {
                     RSignatureContractNode vertex1 = level.get(v1);
                     RSignatureContractNode vertex2 = level.get(v2);
 
-                    boolean isSame = vertex1.getTypeTransitions().size() == vertex2.getTypeTransitions().size();
+                    boolean isSame = vertex1.getTransitions().size() == vertex2.getTransitions().size();
 
                     for (ContractTransition transition : vertex1.getTransitionKeys()) {
 

@@ -19,6 +19,10 @@ public class ReferenceContractTransition implements ContractTransition {
         return readTypes.get(myLink);
     }
 
+    public int getLink() {
+        return myLink;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
