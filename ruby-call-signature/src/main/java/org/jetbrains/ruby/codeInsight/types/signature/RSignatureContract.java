@@ -46,8 +46,8 @@ public class RSignatureContract implements SignatureContract {
     public RSignatureContract(RSignature signature) {
         this.levels = new ArrayList<>();
         this.termNode = new RSignatureContractNode(RSignatureContractNode.ContractNodeType.returnTypeNode);
-        this.startContractNode = this.createNodeAndAddToLevels(0);
         this.myArgsInfo = signature.getArgsInfo();
+        this.startContractNode = this.createNodeAndAddToLevels(0);
 
         this.addRSignature(signature);
     }

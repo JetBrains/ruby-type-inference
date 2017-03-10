@@ -27,13 +27,11 @@ class RSignature
                              :return_type_name => @return_type_name.to_s,
                              :gem_name => @gem_name.to_s,
                              :gem_version => @gem_version.to_s,
-                             :visibility => @visibility.to_s,
-                             :path => @path.to_s,
-                             :lineno => @lineno.to_s
+                             :visibility => @visibility.to_s
                          })
   end
 
-  def initialize(method_name, receiver_name, args_type_name, args_info, return_type_name, gem_name, gem_version, visibility, call_info_mid, call_info_argc, call_info_kw_args, path, lineno)
+  def initialize(method_name, receiver_name, args_type_name, args_info, return_type_name, gem_name, gem_version, visibility, call_info_mid, call_info_argc, call_info_kw_args)
     @method_name = method_name
     @receiver_name = receiver_name
     @args_type_name = args_type_name
@@ -45,8 +43,6 @@ class RSignature
     @call_info_mid = call_info_mid
     @call_info_argc = call_info_argc
     @call_info_kw_args = call_info_kw_args
-    @path = path
-    @lineno = lineno
   end
 
 end
@@ -133,9 +129,6 @@ class TypeTracker
 
     method = tp.defined_class.instance_method(tp.method_id)
 
-    path = tp.path
-    lineno = tp.lineno
-
     args_type_name = method.parameters.inject([]) do |pt, p|
       pt << (p[1] ? binding.local_variable_get(p[1]).class : NilClass)
     end.join(';')
@@ -158,21 +151,21 @@ class TypeTracker
     end
 
 
-    signatures.push([method, args_type_name, args_info, call_info_mid, call_info_argc, call_info_kw_args, path, lineno])
+    signatures.push([method, args_type_name, args_info, call_info_mid, call_info_argc, call_info_kw_args])
 
 
   end
 
   private
   def handle_return(tp)
-    method, args_type_name, args_info, call_info_mid, call_info_argc, call_info_kw_args, path, lineno = signatures.pop
+    method, args_type_name, args_info, call_info_mid, call_info_argc, call_info_kw_args = signatures.pop
 
     if method
       method_name = tp.method_id
       receiver_name = tp.defined_class.name ? tp.defined_class : tp.defined_class.superclass
       return_type_name = tp.return_value.class.to_s
 
-      key = [method, args_type_name, call_info_mid, return_type_name, call_info_argc, call_info_kw_args, path, lineno].hash
+      key = [method, args_type_name, call_info_mid, return_type_name, call_info_argc, call_info_kw_args].hash
 
       if cache.add?(key)
         matches = tp.path.scan(/\w+-\d+(?:\.\d+)+/)
@@ -186,11 +179,11 @@ class TypeTracker
           visibility = 'PRIVATE'
         end
 
-        message = RSignature.new(method_name, receiver_name, args_type_name, args_info, return_type_name, gem_name, gem_version, visibility, call_info_mid, call_info_argc, call_info_kw_args, path, lineno)
+        message = RSignature.new(method_name, receiver_name, args_type_name, args_info, return_type_name, gem_name, gem_version, visibility, call_info_mid, call_info_argc, call_info_kw_args)
 
         @mutex.synchronize{
           json_mes = message.to_json
-          #puts json_mes
+          puts json_mes
           socket.puts(json_mes)
         }
       end
