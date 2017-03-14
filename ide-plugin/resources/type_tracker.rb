@@ -162,7 +162,7 @@ class TypeTracker
         message = RSignature.new(method_name, receiver_name, args_type_name, args_info, return_type_name, gem_name, gem_version, visibility, call_info_mid, call_info_argc, call_info_kw_args)
 
         json_mes = message.to_json
-        puts Thread.current.object_id.to_s + json_mes
+        #puts Thread.current.object_id.to_s + json_mes
         putToSocket(json_mes)
 
       end
