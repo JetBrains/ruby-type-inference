@@ -12,6 +12,7 @@ require 'arg_scanner'
 
 include ArgScanner
 
+
 class RSignature
 
   def to_json
@@ -52,12 +53,12 @@ class TypeTracker
 
   def initialize
 
-    @socketQueue = Queue.new
-    @tempQueue = Queue.new
+
     @signatures = Array.new
     @cache = Set.new
     @socket = TCPSocket.new('127.0.0.1', 7777)
     @mutex = Mutex.new
+
 
     TracePoint.trace(:call, :return, :raise) do |tp|
       begin
@@ -73,16 +74,31 @@ class TypeTracker
         signatures.push([nil, nil, nil]) if tp.event == :call
       end
     end
+
+
   end
 
-  attr_reader :socketQueue
-  attr_reader :signatures
-  attr_reader :cache
-  attr_reader :socket
+  def with_mutex
+    @mutex.synchronize { yield }
+  end
 
-  at_exit do
-    socket = TCPSocket.new('127.0.0.1', 7777)
-    socket.puts('break connection')
+  def signatures
+    with_mutex { @signatures }
+  end
+
+  def cache
+    with_mutex { @cache }
+  end
+
+  def socket
+    with_mutex { @socket }
+  end
+
+  def putToSocket(messege)
+    with_mutex do
+      @socket.puts(messege)
+      #@socket.flush
+    end
   end
 
   private
@@ -100,7 +116,7 @@ class TypeTracker
       pt << "#{p[0]},#{p[1]},#{p[1] ? (binding.local_variable_get(p[1]).class.to_s) : NilClass}"
     end.join(';')
 
-    if((args_info.include? 'opt,') || (args_info.include? 'key,'))
+    if ((args_info.include? 'opt,') || (args_info.include? 'key,'))
       call_info = getCallinfo
 
       call_info_mid = call_info[/\S*:/].chop
@@ -116,11 +132,11 @@ class TypeTracker
 
     signatures.push([method, args_type_name, args_info, call_info_mid, call_info_argc, call_info_kw_args])
 
-
   end
 
   private
   def handle_return(tp)
+
     method, args_type_name, args_info, call_info_mid, call_info_argc, call_info_kw_args = signatures.pop
 
     if method
@@ -129,6 +145,7 @@ class TypeTracker
       return_type_name = tp.return_value.class.to_s
 
       key = [method, args_type_name, call_info_mid, return_type_name, call_info_argc, call_info_kw_args].hash
+
 
       if cache.add?(key)
         matches = tp.path.scan(/\w+-\d+(?:\.\d+)+/)
@@ -144,17 +161,17 @@ class TypeTracker
 
         message = RSignature.new(method_name, receiver_name, args_type_name, args_info, return_type_name, gem_name, gem_version, visibility, call_info_mid, call_info_argc, call_info_kw_args)
 
-        @mutex.synchronize{
-            json_mes = message.to_json
-            puts json_mes
-            socket.puts(json_mes)
-            socket.flush
-        }
+        json_mes = message.to_json
+        puts Thread.current.object_id.to_s + json_mes
+        putToSocket(json_mes)
+
       end
 
     end
+
   end
 
 end
+
 
 type_tracker = TypeTracker.instance

@@ -1,9 +1,5 @@
 package org.jetbrains.ruby.codeInsight.types.signature;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.*;
 
 public class RSignatureContractContainer {
@@ -14,31 +10,14 @@ public class RSignatureContractContainer {
         contracts = new HashMap<>();
     }
 
-    public void print(Path file)
+    public void reduction()
     {
         contracts.entrySet().stream()
                 .sorted(Collections.reverseOrder(Comparator.comparingInt(entry -> entry.getValue().getNumberOfCalls())))
                 .forEachOrdered(entry -> {
                     final MethodInfo key = entry.getKey();
-                    final RSignatureContract value = entry.getValue();
-
-                    List<String> lines = new ArrayList<>();
-                    lines.add("-----------");
-                    lines.add("Number of calls:" + value.getNumberOfCalls());
-                    lines.add(key.toString());
-                    lines.add("Mask:" + Integer.toString(value.getStartNode().getMask(), 2));
-
                     contracts.get(key).minimization();
                     contracts.get(key).compression();
-                    //lines.addAll(value.getStringPresentation());
-
-                    try {
-                        Files.write(file, lines, StandardOpenOption.CREATE_NEW);
-                    } catch (IOException e)
-                    {
-                        System.out.println("IOException");
-                    }
-
                 });
         System.out.println("Finished");
     }

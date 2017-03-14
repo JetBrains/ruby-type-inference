@@ -56,24 +56,23 @@ public class SignatureServer {
     }
 
 
-    public void runServer() throws IOException {
-        LOGGER.info("Starting server");
+    private static class SignatureHandler extends Thread {
+        private Socket socket;
+        private int handlerNumber;
 
-        Path file = Paths.get("callStatLog.txt");
+        public SignatureHandler(Socket socket, int handlerNumber) {
+            this.socket = socket;
+            this.handlerNumber = handlerNumber;
+        }
 
-        try (ServerSocket listener = new ServerSocket(7777)) {
-            //noinspection InfiniteLoopStatement
-            while (true) {
-                Socket socket = listener.accept();
+        public void run() {
+            try {
+
                 BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 String currString;
 
                 while ((currString = br.readLine()) != null) {
                     try {
-                        if (currString.equals("break connection")) {
-                            mainContainer.print(file);
-                            break;
-                        }
 
                         ServerResponseBean result = new Gson().fromJson(currString, ServerResponseBean.class);
 
@@ -94,7 +93,7 @@ public class SignatureServer {
                             RSignature currRSignature = currRawSignature.getRSignature();
 
                             if (result.method_name.equals("initialize") || result.call_info_mid.equals("send") || result.call_info_mid.equals("nil") || result.call_info_mid.equals(result.method_name)) {
-                                mainContainer.addSignature(currRSignature);
+                                SignatureServer.getInstance().mainContainer.addSignature(currRSignature);
                             }
 
                         }
@@ -104,7 +103,37 @@ public class SignatureServer {
                         e.printStackTrace();
                     }
                 }
+            } catch (IOException e) {
+                LOGGER.info("Error handling client# " + handlerNumber + ": " + e);
+            } finally {
+                try {
+                    socket.close();
+                } catch (IOException e) {
+                    LOGGER.info("Can't close a socket");
+                }
+                LOGGER.info("Connection with client# " + handlerNumber + " closed");
             }
+        }
+
+    }
+
+
+    public void runServer() throws IOException {
+        LOGGER.info("Starting server");
+
+        Path file = Paths.get("callStatLog.txt");
+
+        int handlersCounter = 0;
+
+        ServerSocket listener = new ServerSocket(7777);
+
+        try {
+            while (true) {
+                new SignatureHandler(listener.accept(), handlersCounter++).start();
+            }
+        } finally {
+            listener.close();
+            SignatureServer.getInstance().mainContainer.reduction();
         }
     }
 }
