@@ -50,43 +50,6 @@ end
 class TypeTracker
   include Singleton
 
-  # def start_control(host, port)
-  #   socket_thread = Thread.new do
-  #     begin
-  #       host ||= '127.0.0.1'
-  #       socket = TCPSocket.new(host, port)
-  #
-  #       while (true) do
-  #
-  #         @mutex.synchronize {
-  #           if(@socketQueue.size() > 0)
-  #             @tempQueue = @socketQueue
-  #             @socketQueue = Queue.new
-  #           end
-  #         }
-  #
-  #         with_mutex do
-  #           flag = @tempQueue.empty?
-  #         end
-  #
-  #         while(!flag)
-  #           with_mutex{ val = @tempQueue.pop }
-  #           socket.puts(val);
-  #           with_mutex{ flag = @tempQueue.empty? }
-  #
-  #         end
-  #
-  #         sleep(0.3)
-  #       end
-  #
-  #     rescue Exception => e
-  #       puts e.message
-  #       p 'Error'
-  #     end
-  #   end
-  #   socket_thread
-  # end
-
   def initialize
 
     @socketQueue = Queue.new
@@ -182,9 +145,10 @@ class TypeTracker
         message = RSignature.new(method_name, receiver_name, args_type_name, args_info, return_type_name, gem_name, gem_version, visibility, call_info_mid, call_info_argc, call_info_kw_args)
 
         @mutex.synchronize{
-          json_mes = message.to_json
-          puts json_mes
-          socket.puts(json_mes)
+            json_mes = message.to_json
+            puts json_mes
+            socket.puts(json_mes)
+            socket.flush
         }
       end
 
