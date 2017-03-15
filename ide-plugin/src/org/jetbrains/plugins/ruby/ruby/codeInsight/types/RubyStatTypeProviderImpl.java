@@ -80,6 +80,7 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
         SignatureServer callStatServer = SignatureServer.getInstance();
 
         final Couple<String> names = getMethodAndReceiverNames(callElement);
+
         final String methodName = names.getFirst();
 
         HashMap<String, RPsiElement> kwArgs = new HashMap<>();
@@ -100,7 +101,10 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
             final String receiverName = StringUtil.notNullize(names.getSecond(), CoreTypes.Object);
 
             RSignatureContract contract = callStatServer.getContractByMethodName(methodName);
-            // TODO fix npe
+            // TODO fix npe (done)
+
+            if (contract == null)
+                return null;
 
             Map<RSignatureContractNode, List<Set<String>>> currNodesAndReadTypes = new HashMap<>();
             currNodesAndReadTypes.put(contract.getStartNode(), new ArrayList<>());

@@ -1,5 +1,7 @@
 package org.jetbrains.ruby.codeInsight.types.signature;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.*;
 
 public class RSignatureContractContainer {
@@ -22,7 +24,7 @@ public class RSignatureContractContainer {
         System.out.println("Finished");
     }
 
-    public void addSignature(RSignature signature) {
+    public void addSignature(@NotNull RSignature signature) {
         MethodInfo currInfo = signature.getMethodInfo();
 
         if (contracts.containsKey(currInfo)) {

@@ -74,8 +74,8 @@ fun SignatureContract(stream: DataInput): SignatureContract {
     val argsInfo = List(argsSize) { ParameterInfo(stream) }
 
     val nodesSize = stream.readInt()
-    // todo remove node type
-    val nodes = List(nodesSize) { RSignatureContractNode(RSignatureContractNode.ContractNodeType.argNode) }
+
+    val nodes = List(nodesSize) { RSignatureContractNode() }
 
     val distance = IntArray(nodesSize, { 0 })
 
