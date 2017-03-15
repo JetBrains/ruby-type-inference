@@ -63,6 +63,7 @@ public class SignatureServer {
         public SignatureHandler(Socket socket, int handlerNumber) {
             this.socket = socket;
             this.handlerNumber = handlerNumber;
+            LOGGER.info("New connection with client# " + handlerNumber + " at " + socket);
         }
 
         public void run() {
@@ -104,12 +105,12 @@ public class SignatureServer {
                     }
                 }
             } catch (IOException e) {
-                LOGGER.info("Error handling client# " + handlerNumber + ": " + e);
+                LOGGER.severe("Error handling client# " + handlerNumber + ": " + e);
             } finally {
                 try {
                     socket.close();
                 } catch (IOException e) {
-                    LOGGER.info("Can't close a socket");
+                    LOGGER.severe("Can't close a socket");
                 }
                 LOGGER.info("Connection with client# " + handlerNumber + " closed");
             }
