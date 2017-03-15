@@ -78,6 +78,10 @@ class TypeTracker
 
   end
 
+  def at_exit
+    socket.close
+  end
+
   def with_mutex
     @mutex.synchronize { yield }
   end
@@ -100,6 +104,7 @@ class TypeTracker
       #@socket.flush
     end
   end
+
 
   private
   def handle_call(tp)
