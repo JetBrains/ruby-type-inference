@@ -100,7 +100,7 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
             final Module module = ModuleUtilCore.findModuleForPsiElement(call);
             final String receiverName = StringUtil.notNullize(names.getSecond(), CoreTypes.Object);
 
-            RSignatureContract contract = callStatServer.getContractByMethodName(methodName);
+            RSignatureContract contract = callStatServer.getContractByMethodAndReceiverName(methodName, receiverName);
             // TODO fix npe (done)
 
             if (contract == null)

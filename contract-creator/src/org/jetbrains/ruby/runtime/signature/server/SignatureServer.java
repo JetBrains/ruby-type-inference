@@ -51,6 +51,16 @@ public class SignatureServer {
     }
 
     @Nullable
+    public RSignatureContract getContractByMethodAndReceiverName(@NotNull String methodName, @NotNull String receiverName) {
+
+        for (MethodInfo info : mainContainer.getKeySet()) {
+            if (info.getName().equals(methodName) && info.getClassInfo().getClassFQN().equals(receiverName))
+                return mainContainer.getSignature(info);
+        }
+        return null;
+    }
+
+    @Nullable
     public RSignatureContract getContractByMethodInfo(@NotNull MethodInfo info) {
         return mainContainer.getSignature(info);
     }
@@ -94,6 +104,7 @@ public class SignatureServer {
                             RSignature currRSignature = currRawSignature.getRSignature();
 
                             if (result.method_name.equals("initialize") || result.call_info_mid.equals("send") || result.call_info_mid.equals("nil") || result.call_info_mid.equals(result.method_name)) {
+
                                 SignatureServer.getInstance().mainContainer.addSignature(currRSignature);
                             }
 
