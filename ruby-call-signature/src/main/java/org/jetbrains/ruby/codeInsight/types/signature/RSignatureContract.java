@@ -13,6 +13,8 @@ public class RSignatureContract implements SignatureContract {
 
     private int myNumberOfCalls = 0;
 
+    public boolean locked = false;
+
     @NotNull
     private final RSignatureContractNode startContractNode;
     @NotNull
@@ -24,7 +26,10 @@ public class RSignatureContract implements SignatureContract {
     private RSignatureContractNode createNodeAndAddToLevels(Integer index) {
         RSignatureContractNode newNode;
 
-        newNode = new RSignatureContractNode();
+        if (index < getSize())
+            newNode = new RSignatureContractNode(RSignatureContractNode.ContractNodeType.argNode);
+        else
+            newNode = new RSignatureContractNode(RSignatureContractNode.ContractNodeType.returnNode);
 
         while (levels.size() <= index)
             levels.add(new ArrayList<>());
@@ -42,7 +47,7 @@ public class RSignatureContract implements SignatureContract {
 
     public RSignatureContract(RSignature signature) {
         this.levels = new ArrayList<>();
-        this.termNode = new RSignatureContractNode();
+        this.termNode = new RSignatureContractNode(RSignatureContractNode.ContractNodeType.returnTypeNode);
         this.myArgsInfo = signature.getArgsInfo();
         this.startContractNode = this.createNodeAndAddToLevels(0);
 

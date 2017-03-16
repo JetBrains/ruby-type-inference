@@ -3,6 +3,7 @@ package org.jetbrains.ruby.codeInsight.types.signature;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -10,15 +11,20 @@ import java.util.Set;
 public class RSignatureContractNode implements SignatureNode {
 
     private boolean hasReferenceLinks = false;
-
+    private ContractNodeType type;
     private int mask = 0;
 
     @NotNull
     private final Map<ContractTransition, SignatureNode> typeTransitions;
 
-    public RSignatureContractNode() {
+    public RSignatureContractNode(ContractNodeType type) {
 
-        typeTransitions = new HashMap<>();
+        this.type = type;
+        if (type != ContractNodeType.returnTypeNode) {
+            typeTransitions = new HashMap<>();
+        } else {
+            typeTransitions = Collections.emptyMap();
+        }
     }
 
     void setMask(int mask) {

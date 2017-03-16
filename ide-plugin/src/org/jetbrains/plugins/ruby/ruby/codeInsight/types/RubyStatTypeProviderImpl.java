@@ -109,7 +109,7 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
             Map<RSignatureContractNode, List<Set<String>>> currNodesAndReadTypes = new HashMap<>();
             currNodesAndReadTypes.put(contract.getStartNode(), new ArrayList<>());
 
-            if (contract != null) {
+            if (contract != null && contract.locked == false) {
                 List<ParameterInfo> paramInfos = contract.getParamInfoList();
                 List<Boolean> flags = fetcher.fetch(paramInfos);
 
