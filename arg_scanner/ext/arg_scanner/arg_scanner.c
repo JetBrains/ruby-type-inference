@@ -13,12 +13,14 @@
 VALUE mArgScanner = Qnil;
 
 void Init_arg_scanner();
-VALUE method_test(VALUE self);
+VALUE get_args_info(VALUE self);
+VALUE get_call_info(VALUE self);
 
 
 void Init_arg_scanner() {
   mArgScanner = rb_define_module("ArgScanner");
-  rb_define_module_function(mArgScanner, "getCallinfo", method_test, 0);
+  rb_define_module_function(mArgScanner, "get_call_info", get_call_info, 0);
+  rb_define_module_function(mArgScanner, "get_args_info", get_args_info, 0);
 }
 
 rb_control_frame_t *
@@ -67,14 +69,12 @@ my_rb_vm_get_ruby_level_next_cfp(const rb_thread_t *th, const rb_control_frame_t
     return 0;
 }
 
-VALUE method_test(VALUE self)
+VALUE get_call_info(VALUE self)
 {
     rb_thread_t *thread;
 
     thread = ruby_current_thread;
     rb_control_frame_t *cfp = thread->cfp;
-
-    int cnt = 0;
 
     cfp += 4;
     cfp = my_rb_vm_get_binding_creatable_next_cfp(thread, cfp);
@@ -108,19 +108,94 @@ VALUE method_test(VALUE self)
                 struct rb_call_info *ci = (struct rb_call_info *)iseq_original[pc - indent + 1];
 
 
+                VALUE ans = rb_ary_new();
+                rb_ary_push(ans, rb_id2str(ci->mid));
+                rb_ary_push(ans, INT2NUM(ci->orig_argc));
+
                 if (ci->flag & VM_CALL_KWARG)
                 {
                     struct rb_call_info_kw_arg *kw_args = ((struct rb_call_info_with_kwarg *)ci)->kw_arg;
 
                     VALUE kw_ary = rb_ary_new_from_values(kw_args->keyword_len, kw_args->keywords);
 
-                    return rb_sprintf("%"PRIsVALUE":%d, kw:[%"PRIsVALUE"]", rb_id2str(ci->mid), ci->orig_argc, rb_ary_join(kw_ary, rb_str_new2(",")));
+                    rb_ary_push(ans, kw_ary);
                 }
-
-                return rb_sprintf("%"PRIsVALUE":%d", rb_id2str(ci->mid), ci->orig_argc);
+                return ans;
             }
         }
     }
 
     return Qnil;
+}
+
+
+VALUE get_args_info(VALUE self)
+{
+    rb_thread_t *thread;
+
+    thread = ruby_current_thread;
+    rb_control_frame_t *cfp = thread->cfp;
+
+
+    cfp += 3;
+
+    VALUE *ep = cfp->ep;
+    //ep -= 2;
+
+    int param_size = cfp->iseq->body->param.size;
+
+    int lead_num = cfp->iseq->body->param.lead_num;
+    int opt_num = cfp->iseq->body->param.opt_num;
+    int rest_start = cfp->iseq->body->param.rest_start;
+    int post_start = cfp->iseq->body->param.post_start;
+    int post_num = cfp->iseq->body->param.post_num;
+    int block_start = cfp->iseq->body->param.block_start;
+
+    int kw_num = 0;
+
+    if(cfp->iseq->body->param.keyword != NULL)
+    {
+        const ID *keywords = cfp->iseq->body->param.keyword->table;
+        kw_num = cfp->iseq->body->param.keyword->num;
+    }
+
+
+    VALUE ans = rb_ary_new();
+
+//    for(int i = 0; i < cfp->iseq->body->param.keyword->num; i++)
+//    {
+//        ID key = keywords[i];
+//        VALUE kwName = rb_id2str(key);
+//        rb_ary_push(ans, kwName);
+//    }
+
+//    return ans;
+//
+    unsigned int has_lead = cfp->iseq->body->param.flags.has_lead;
+    unsigned int has_opt = cfp->iseq->body->param.flags.has_opt;
+    unsigned int has_rest = cfp->iseq->body->param.flags.has_rest;
+    unsigned int has_post = cfp->iseq->body->param.flags.has_post;
+    unsigned int has_kw = cfp->iseq->body->param.flags.has_kw;
+    unsigned int has_kwrest = cfp->iseq->body->param.flags.has_kwrest;
+    unsigned int has_block = cfp->iseq->body->param.flags.has_block;
+
+    unsigned int ambiguous_param0 = cfp->iseq->body->param.flags.has_lead;
+
+    //fprintf(stdout, "param_size:%d\nlead_num:%d\n opt_num:%d\n rest_start:%d\n post_start:%d\n post_num:%d\n block_start:%d\n kw_num:%d\n", param_size, lead_num, opt_num, rest_start, post_start, post_num, block_start, kw_num);
+    //fprintf(stdout, "has_lead:%d\nhas_opt:%d\n has_rest:%d\n has_post:%d\n has_kw:%d\n has_kwrestd\n has_block:%d\n ambiguous_param0:%d\n", has_lead, has_opt, has_rest, has_post, has_kw, has_kwrest, has_block, ambiguous_param0);
+    //fflush(stdout);
+
+    if(has_kw)
+        param_size--;
+
+    for(int i = param_size - 1; i >= 0; i--)
+    {
+        //VALUE klass = rb_any_to_s(ep);//rb_class_real(CLASS_OF(ep));
+        VALUE klass = rb_class_real(CLASS_OF(*(ep - i - 2)));
+        rb_ary_push(ans, klass);
+
+        //ep--;
+    }
+
+    return ans;
 }

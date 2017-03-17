@@ -1,16 +1,11 @@
 #!/usr/bin/env ruby
 
-require 'logger'
 require 'set'
 require 'socket'
 require 'json'
-require 'json'
-require 'thread'
 require 'singleton'
 
 require 'arg_scanner'
-
-include ArgScanner
 
 
 class RSignature
@@ -57,8 +52,6 @@ class TypeTracker
     @signatures = Array.new
     @cache = Set.new
     @socket = TCPSocket.new('127.0.0.1', 7777)
-    @mutex = Mutex.new
-
 
     TracePoint.trace(:call, :return, :raise) do |tp|
       begin
@@ -68,10 +61,10 @@ class TypeTracker
           when :return
             handle_return(tp)
           else
-            signatures.pop
+            @signatures.pop
         end
       rescue NameError, NoMethodError
-        signatures.push([nil, nil, nil]) if tp.event == :call
+        @signatures.push([nil, nil, nil, nil, nil, nil]) if tp.event == :call
       end
     end
 
@@ -79,82 +72,72 @@ class TypeTracker
   end
 
   def at_exit
-    socket.close
-  end
-
-  def with_mutex
-    @mutex.synchronize { yield }
-  end
-
-  def signatures
-    with_mutex { @signatures }
-  end
-
-  def cache
-    with_mutex { @cache }
-  end
-
-  def socket
-    with_mutex { @socket }
+    @socket.close
   end
 
   def putToSocket(messege)
-    with_mutex do
-      @socket.puts(messege)
-      #@socket.flush
-    end
+    @socket.puts(messege)
   end
 
 
   private
   def handle_call(tp)
 
-    binding = tp.binding
+    #binding = tp.binding
 
-    method = tp.defined_class.instance_method(tp.method_id)
+    #method = tp.defined_class.instance_method(tp.method_id)
+    method_name = tp.method_id
 
-    args_type_name = method.parameters.inject([]) do |pt, p|
-      pt << (p[1] ? binding.local_variable_get(p[1]).class : NilClass)
-    end.join(';')
+    # args_type_name = method.parameters.inject([]) do |pt, p|
+    #   pt << (p[1] ? binding.local_variable_get(p[1]).class : NilClass)
+    # end.join(';')
+    #
+    # args_info = method.parameters.inject([]) do |pt, p|
+    #   pt << "#{p[0]},#{p[1]},#{p[1] ? (binding.local_variable_get(p[1]).class.to_s) : NilClass}"
+    # end.join(';')
 
-    args_info = method.parameters.inject([]) do |pt, p|
-      pt << "#{p[0]},#{p[1]},#{p[1] ? (binding.local_variable_get(p[1]).class.to_s) : NilClass}"
-    end.join(';')
+    my_args_info = ArgScanner.get_args_info
+    #p method_name
 
     if ((args_info.include? 'opt,') || (args_info.include? 'key,'))
-      call_info = getCallinfo
+      call_info = ArgScanner.get_call_info
+      call_info_kw_args = nil
 
+      if (call_info.count > 2)
+        call_info_kw_args = call_info[3]
+      end
 
-      call_info_mid = call_info[/\S*:/].chop
-
-      call_info_argc = call_info[/\:\d*/]
-      call_info_argc[0] = ''
-      call_info_kw_args = call_info.partition('kw:[').last.chomp(']')
+      call_info_mid = call_info[1]
+      call_info_argc = call_info[2]
     else
-      call_info_mid = 'nil'
-      call_info_argc = 0
-      call_info_kw_args = 'nil'
+      call_info_mid = nil
+      call_info_argc = nil
+      call_info_kw_args = nil
     end
 
+    key = [method_name, args_type_name, call_info_mid, call_info_argc, call_info_kw_args].hash
 
-    signatures.push([method, args_type_name, args_info, call_info_mid, call_info_argc, call_info_kw_args])
-
+    if @cache.add?(key)
+      @signatures.push([method_name, args_type_name, args_info, call_info_mid, call_info_argc, call_info_kw_args])
+    else
+      @signatures.push([nil, nil, nil, nil, nil, nil])
+    end
   end
 
   private
   def handle_return(tp)
 
-    method, args_type_name, args_info, call_info_mid, call_info_argc, call_info_kw_args = signatures.pop
+    method_name, args_type_name, args_info, call_info_mid, call_info_argc, call_info_kw_args = @signatures.pop
 
-    if method
-      method_name = tp.method_id
+    if method_name
+
       receiver_name = tp.defined_class.name ? tp.defined_class : tp.defined_class.superclass
       return_type_name = tp.return_value.class.to_s
 
-      key = [method, args_type_name, call_info_mid, return_type_name, call_info_argc, call_info_kw_args].hash
+      #key = [method, args_type_name, call_info_mid, return_type_name, call_info_argc, call_info_kw_args].hash
 
 
-      if cache.add?(key)
+      #if cache.add?(key)
         matches = tp.path.scan(/\w+-\d+(?:\.\d+)+/)
         gem_name, gem_version = matches[0] ? matches[0].split('-') : ['', '']
 
@@ -169,10 +152,9 @@ class TypeTracker
         message = RSignature.new(method_name, receiver_name, args_type_name, args_info, return_type_name, gem_name, gem_version, visibility, call_info_mid, call_info_argc, call_info_kw_args)
 
         json_mes = message.to_json
-        #puts Thread.current.object_id.to_s + json_mes
         putToSocket(json_mes)
 
-      end
+      #end
 
     end
 
