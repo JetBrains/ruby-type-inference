@@ -104,7 +104,7 @@ public class SignatureServer {
 
                             RSignature currRSignature = currRawSignature.getRSignature();
 
-                            if (result.method_name.equals("initialize") || result.call_info_mid.equals("send") || result.call_info_mid.equals("__send__") || result.call_info_mid.equals("nil") || result.call_info_mid.equals(result.method_name)) {
+                            if (result.method_name.equals("initialize") || result.call_info_mid.equals("nil") || result.call_info_mid.equals(result.method_name)) {
 
                                 SignatureServer.getInstance().mainContainer.addSignature(currRSignature);
                             }
