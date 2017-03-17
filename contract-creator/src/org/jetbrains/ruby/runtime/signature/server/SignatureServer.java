@@ -82,9 +82,9 @@ public class SignatureServer {
                 BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 String currString;
 
+
                 while ((currString = br.readLine()) != null) {
                     try {
-
                         ServerResponseBean result = new Gson().fromJson(currString, ServerResponseBean.class);
 
                         if (result != null) {
@@ -99,11 +99,12 @@ public class SignatureServer {
                                     if (!flag)
                                         currRawSignature.changeArgumentType(i, "-");
                                 }
+
                             }
 
                             RSignature currRSignature = currRawSignature.getRSignature();
 
-                            if (result.method_name.equals("initialize") || result.call_info_mid.equals("send") || result.call_info_mid.equals("nil") || result.call_info_mid.equals(result.method_name)) {
+                            if (result.method_name.equals("initialize") || result.call_info_mid.equals("send") || result.call_info_mid.equals("__send__") || result.call_info_mid.equals("nil") || result.call_info_mid.equals(result.method_name)) {
 
                                 SignatureServer.getInstance().mainContainer.addSignature(currRSignature);
                             }

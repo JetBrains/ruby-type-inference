@@ -124,7 +124,9 @@ class TypeTracker
     if ((args_info.include? 'opt,') || (args_info.include? 'key,'))
       call_info = getCallinfo
 
+
       call_info_mid = call_info[/\S*:/].chop
+
       call_info_argc = call_info[/\:\d*/]
       call_info_argc[0] = ''
       call_info_kw_args = call_info.partition('kw:[').last.chomp(']')
