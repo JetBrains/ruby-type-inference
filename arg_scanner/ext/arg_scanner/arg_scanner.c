@@ -116,6 +116,8 @@ VALUE get_call_info(VALUE self)
                 {
                     struct rb_call_info_kw_arg *kw_args = ((struct rb_call_info_with_kwarg *)ci)->kw_arg;
 
+                    int kwArgSize = kw_args->keyword_len;
+
                     VALUE kw_ary = rb_ary_new_from_values(kw_args->keyword_len, kw_args->keywords);
 
                     rb_ary_push(ans, kw_ary);

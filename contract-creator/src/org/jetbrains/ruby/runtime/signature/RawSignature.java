@@ -33,24 +33,22 @@ public class RawSignature {
         this.myCallMid = bean.call_info_mid;
 
 
-        this.kwArgs = new HashSet<>();
-        if (!myCallMid.equals("nil")) {
-            this.argc = bean.call_info_argc;
-            String kwInfo = bean.call_info_kw_args;
-
-            if (!kwInfo.equals("")) {
-                this.kwArgs.addAll(Arrays.asList(kwInfo.split("\\s*,\\s*")));
-            }
+        if (!bean.call_info_argc.equals("")) {
+            this.argc = Integer.parseInt(bean.call_info_argc);
+        } else {
+            this.argc = 0;
         }
+
+        String kwInfo = bean.call_info_kw_args;
+        this.kwArgs = new HashSet<>();
+        this.kwArgs.addAll(Arrays.asList(kwInfo.split("\\s*,\\s*")));
 
         this.myReturnTypeName = bean.return_type_name;
 
-
         String argsTypeName = bean.args_type_name;
         this.myArgsTypes = new ArrayList<>();
-        if (!argsTypeName.equals("")) {
-            this.myArgsTypes.addAll(Arrays.asList(argsTypeName.split("\\s*;\\s*")));
-        }
+        this.myArgsTypes.addAll(Arrays.asList(argsTypeName.split("\\s*;\\s*")));
+
 
         String argsInfo = bean.args_info;
         this.myArgsInfo = new ArrayList<>();

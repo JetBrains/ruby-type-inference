@@ -88,27 +88,30 @@ class TypeTracker
     #method = tp.defined_class.instance_method(tp.method_id)
     method_name = tp.method_id
 
-    # args_type_name = method.parameters.inject([]) do |pt, p|
-    #   pt << (p[1] ? binding.local_variable_get(p[1]).class : NilClass)
-    # end.join(';')
-    #
-    # args_info = method.parameters.inject([]) do |pt, p|
-    #   pt << "#{p[0]},#{p[1]},#{p[1] ? (binding.local_variable_get(p[1]).class.to_s) : NilClass}"
-    # end.join(';')
+    args_type_name = method.parameters.inject([]) do |pt, p|
+      pt << (p[1] ? binding.local_variable_get(p[1]).class : NilClass)
+    end.join(';')
+
+    args_info = method.parameters.inject([]) do |pt, p|
+      pt << "#{p[0]},#{p[1]},#{p[1] ? (binding.local_variable_get(p[1]).class.to_s) : NilClass}"
+    end.join(';')
 
     my_args_info = ArgScanner.get_args_info
-    #p method_name
 
     if ((args_info.include? 'opt,') || (args_info.include? 'key,'))
       call_info = ArgScanner.get_call_info
-      call_info_kw_args = nil
 
-      if (call_info.count > 2)
-        call_info_kw_args = call_info[3]
+      if (call_info.count >= 2)
+        call_info_kw_args = call_info[2].inject([]) do |pt, p|
+          pt << p
+        end.join(';')
+        #p call_info_kw_args
+      else
+        call_info_kw_args = nil
       end
 
-      call_info_mid = call_info[1]
-      call_info_argc = call_info[2]
+      call_info_mid = call_info[0]
+      call_info_argc = call_info[1]
     else
       call_info_mid = nil
       call_info_argc = nil
@@ -152,6 +155,7 @@ class TypeTracker
         message = RSignature.new(method_name, receiver_name, args_type_name, args_info, return_type_name, gem_name, gem_version, visibility, call_info_mid, call_info_argc, call_info_kw_args)
 
         json_mes = message.to_json
+      #puts json_mes
         putToSocket(json_mes)
 
       #end

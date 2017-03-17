@@ -90,7 +90,7 @@ public class SignatureServer {
                         if (result != null) {
                             RawSignature currRawSignature = new RawSignature(result);
 
-                            if (!result.call_info_mid.equals("nil")) {
+                            if (!result.call_info_mid.equals("")) {
                                 RSignatureFetcher fetcher = new RSignatureFetcher(currRawSignature.argc, currRawSignature.kwArgs);
                                 List<Boolean> flags = fetcher.fetch(currRawSignature.getArgsInfo());
 
@@ -104,7 +104,7 @@ public class SignatureServer {
 
                             RSignature currRSignature = currRawSignature.getRSignature();
 
-                            if (result.method_name.equals("initialize") || result.call_info_mid.equals("nil") || result.call_info_mid.equals(result.method_name)) {
+                            if (result.method_name.equals("initialize") || result.call_info_mid.equals("") || result.call_info_mid.equals(result.method_name)) {
 
                                 SignatureServer.getInstance().mainContainer.addSignature(currRSignature);
                             }
