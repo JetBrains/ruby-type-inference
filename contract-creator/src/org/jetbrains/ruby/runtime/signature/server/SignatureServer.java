@@ -137,4 +137,8 @@ public class SignatureServer {
             SignatureServer.getInstance().mainContainer.reduction();
         }
     }
+
+    public static void main(String[] args) throws IOException {
+        getInstance().runServer();
+    }
 }

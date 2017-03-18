@@ -1,7 +1,55 @@
-'ruby-type-inference'
-===================
+Automated Type Contracts Generation 
+===================================
 
-SSH clone URL: ssh://git@git-hosting.labs.intellij.net/ruby-type-inference.git
-HTTPS clone URL: https://git-hosting.labs.intellij.net/ruby-type-inference.git
+`ruby-type-inference` project is a completely new approach to
+tackle the problems Ruby dynamic nature by providing more reliable
+symbol resolution and type inference.
 
-Develop with pleasure!
+## Architecture
+ 
+The planned structure consists of the following parts:
+* **Ruby Type Tracker** which collects the raw type data for all ruby calls in runtime.
+  Currently consists of [type tracker script](ide-plugin/resources/type_tracker.rb) and
+  [arg_scanner gem] to intercept ruby calls and obtain lowlevel data from VM,
+  respectively;
+
+* [**Type contract producer**](contract-creator) server which listens for incoming raw data and transforms it
+  to a compact format;
+
+* Code analysis clients (a RubyMine/IJ+Ruby plugin [example](ide-plugin)) which use the contract data
+  to provide features for the users such as code completion, better resolving, etc.
+
+* (_todo_) Signature server which receives contracts anonymously from the users and provides
+  a compiled contract collections for popular gems.
+
+## Usage
+
+1. The [arg scanner gem] is required for collecting type information. It should be installed to the
+target SDK manually and requires MRI Ruby at least 2.3.
+
+1. In order to collect the data for the script needs a contract server to be up and running;
+   it could be run by running
+  
+   ```sh
+   ./gradlew contract-creator:runServer
+   ```
+   
+   If you're using RubyMine plugin, there is no need to run server manually since it will
+   be run as a plugin service.
+
+1. Require [type tracker](ide-plugin/resources/type_tracker.rb) script when running your ruby process and it will
+   start collecting information during that run.
+
+1. Use the data collected by the contract server.
+
+Currently the only way to try it is using RubyMine plugin (`./gradlew ide-plugin:runIde`); there is no need in running anything manually in that case.
+
+Other usages are to be added in the future.
+
+## Contributions
+
+Any kind of ideas, use cases, contributions and questions are very welcome
+as the project is just incubating.
+Please feel free to create issues for any sensible request.
+
+[arg scanner gem]: arg_scanner
