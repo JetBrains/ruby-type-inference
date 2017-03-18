@@ -1,5 +1,6 @@
 package org.jetbrains.ruby.codeInsight.types.storage.server.impl
 
+import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.ruby.codeInsight.types.signature.*
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ReferenceContractTransition
@@ -108,6 +109,13 @@ class BlobDeserializer {
         } finally {
             blob.free()
         }
+    }
+
+    operator fun setValue(signatureContractData: SignatureContractData, property: KProperty<*>, signatureContract: SignatureContract) {
+        val blob = TransactionManager.current().connection.createBlob()
+        BlobSerializer.writeToBlob(signatureContract, blob)
+        signatureContractData.contractRaw = blob
+        blob.free()
     }
 }
 

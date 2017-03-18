@@ -5,29 +5,37 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.Range;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.paramHints.RubyParameterHintsProvider;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.resolve.ResolveUtil;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.Type;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.fqn.FQN;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.RMethodSyntheticSymbol;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.Symbol;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.SymbolUtil;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.impl.REmptyType;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RPossibleCall;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RPsiElement;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.assoc.RAssoc;
+import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.ArgumentInfo;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.expressions.RExpression;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.methodCall.RArgumentToBlock;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.methodCall.RCall;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.references.RReference;
+import org.jetbrains.ruby.codeInsight.types.signature.MethodInfo;
 import org.jetbrains.ruby.codeInsight.types.signature.ParameterInfo;
 import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContract;
 import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContractNode;
-import org.jetbrains.ruby.codeInsight.types.signature.RSignatureFetcher;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.TypedContractTransition;
 import org.jetbrains.ruby.runtime.signature.server.SignatureServer;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
 
@@ -73,6 +81,35 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
         return getNextLevel(currNodesAndReadTypes, tmpSet);
     }
 
+    @Override
+    @Nullable
+    public Symbol findMethodForType(@NotNull RType type, @NotNull String name) {
+        if (!(type instanceof RSymbolType)) {
+            return null;
+        }
+        final String typeName = type.getName();
+        if (typeName == null) {
+            return null;
+        }
+        SignatureServer callStatServer = SignatureServer.getInstance();
+        final MethodInfo methodInfo = callStatServer.getMethodByClass(typeName, name);
+        if (methodInfo == null) {
+            return null;
+        }
+        final RSignatureContract contract = callStatServer.getContract(methodInfo);
+        if (contract == null) {
+            return null;
+        }
+        return new RMethodSyntheticSymbol(((RSymbolType) type).getSymbol().getProject(),
+                methodInfo,
+                Type.INSTANCE_METHOD,
+                ((RSymbolType) type).getSymbol(),
+                contract.getArgsInfo().stream().map(RubyStatTypeProviderImpl::toArgInfo).collect(Collectors.toList())
+        );
+    }
+
+    @Override
+    @NotNull
     public RType createTypeByCallAndArgs(@NotNull final RExpression call, @NotNull final List<RPsiElement> callArgs) {
 
         final PsiElement callElement = call instanceof RCall ? ((RCall) call).getPsiCommand() : call;
@@ -80,7 +117,6 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
         SignatureServer callStatServer = SignatureServer.getInstance();
 
         final Couple<String> names = getMethodAndReceiverNames(callElement);
-
         final String methodName = names.getFirst();
 
         HashMap<String, RPsiElement> kwArgs = new HashMap<>();
@@ -93,8 +129,6 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
                 simpleArgs.add(arg);
         }
 
-        RSignatureFetcher fetcher = new RSignatureFetcher(callArgs.size(), kwArgs.keySet());
-
         if (methodName != null) {
 
             final Module module = ModuleUtilCore.findModuleForPsiElement(call);
@@ -104,30 +138,24 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
             // TODO fix npe (done)
 
             if (contract == null)
-                return null;
+                return REmptyType.INSTANCE;
 
             Map<RSignatureContractNode, List<Set<String>>> currNodesAndReadTypes = new HashMap<>();
             currNodesAndReadTypes.put(contract.getStartNode(), new ArrayList<>());
 
-            if (contract != null) {
-                List<ParameterInfo> paramInfos = contract.getParamInfoList();
-                List<Boolean> flags = fetcher.fetch(paramInfos);
-
-                for (int i = 0; i < flags.size(); i++) {
-                    if (flags.get(i)) {
-                        if (paramInfos.get(i).getModifier() == ParameterInfo.Type.KEY ||
-                                paramInfos.get(i).getModifier() == ParameterInfo.Type.KEYREQ) {
-                            RPsiElement currElement = kwArgs.get(paramInfos.get(i).getName());
-
-                            currNodesAndReadTypes = getNextLevel(currNodesAndReadTypes, getArgTypeNames(currElement));
-                        } else {
-                            RPsiElement currElement = simpleArgs.poll();
-                            currNodesAndReadTypes = getNextLevel(currNodesAndReadTypes, getArgTypeNames(currElement));
-                        }
-                    } else {
-                        currNodesAndReadTypes = getNextLevelByString(currNodesAndReadTypes, "-");
-                    }
+            final List<ParameterInfo> paramInfos = contract.getParamInfoList();
+            final Map<ArgumentInfo, Range<Integer>> mapping = RubyParameterHintsProvider.Companion.getArgsMapping(paramInfos.stream().map(RubyStatTypeProviderImpl::toArgInfo).collect(Collectors.toList()), callArgs);
+            for (final ParameterInfo paramInfo : paramInfos) {
+                final Set<String> type;
+                final Range<Integer> range = mapping.get(toArgInfo(paramInfo));
+                if (paramInfo.getModifier() == ParameterInfo.Type.REST) {
+                    type = Collections.singleton(range != null && range.getFrom() <= range.getTo() ? "Array" : "EmptyArray");
+                } else if (range == null) {
+                    type = Collections.singleton("-");
+                } else {
+                    type = getArgTypeNames(callArgs.get(range.getFrom()));
                 }
+                currNodesAndReadTypes = getNextLevel(currNodesAndReadTypes, type);
             }
 
             final Set<String> returnTypes = new HashSet<>();
@@ -143,7 +171,7 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
 
         }
 
-        return null;
+        return REmptyType.INSTANCE;
     }
 
     private void addReadTypesList(Map<RSignatureContractNode, List<Set<String>>> nextLayer, List<Set<String>> readTypeSets, RSignatureContractNode to) {
@@ -216,5 +244,34 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
         }
 
         return argTypeNames;
+    }
+
+    private static ArgumentInfo toArgInfo(@NotNull ParameterInfo info) {
+        ArgumentInfo.Type type = null;
+        switch (info.getModifier()) {
+
+            case REQ:
+                type = ArgumentInfo.Type.NAMED;
+                break;
+            case OPT:
+                type = ArgumentInfo.Type.PREDEFINED;
+                break;
+            case REST:
+                type = ArgumentInfo.Type.ARRAY;
+                break;
+            case KEYREQ:
+                type = ArgumentInfo.Type.NAMED;
+                break;
+            case KEY:
+                type = ArgumentInfo.Type.NAMED;
+                break;
+            case KEYREST:
+                type = ArgumentInfo.Type.HASH;
+                break;
+            case BLOCK:
+                type = ArgumentInfo.Type.BLOCK;
+                break;
+        }
+        return new ArgumentInfo(StringRef.fromString(info.getName()), type);
     }
 }

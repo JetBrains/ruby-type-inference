@@ -27,6 +27,9 @@ public class RSignatureContractNode implements SignatureNode {
 
     void changeTransitionType(ContractTransition oldTransition, ContractTransition newTransition) {
         SignatureNode node = typeTransitions.get(oldTransition);
+        if (node == null) {
+            return;
+        }
         typeTransitions.remove(oldTransition);
         typeTransitions.put(newTransition, node);
     }

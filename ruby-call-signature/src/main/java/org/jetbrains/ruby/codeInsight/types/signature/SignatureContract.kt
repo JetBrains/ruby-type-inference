@@ -27,6 +27,8 @@ interface SignatureContract {
     val nodeCount: Int
     val startNode: SignatureNode
     val argsInfo: List<ParameterInfo>
+
+    fun merge(that: SignatureContract): SignatureContract
 }
 
 interface SignatureNode {

@@ -1,6 +1,7 @@
 package org.jetbrains.ruby.codeInsight.types.signature;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ReferenceContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.TypedContractTransition;
@@ -186,12 +187,18 @@ public class RSignatureContract implements SignatureContract {
         minimization();
     }
 
-    private void compressionDFS(RSignatureContractNode node, int level) {
+    private void compressionDFS(@Nullable RSignatureContractNode node, int level) {
+        if (node == null) {
+            return;
+        }
+
         int commonMask = -1;
 
 
         for (ContractTransition transition : node.getTransitionKeys()) {
-            commonMask &= node.goByTypeSymbol(transition).getMask();
+            final RSignatureContractNode to = node.goByTypeSymbol(transition);
+            if (to != null)
+                commonMask &= to.getMask();
         }
 
         if (commonMask > 0 && node.getTransitionKeys().size() > 1) {
@@ -204,7 +211,10 @@ public class RSignatureContract implements SignatureContract {
         }
     }
 
-    private void updateSubtreeTypeDFS(RSignatureContractNode node, int mask, int parentLevel, int level, ContractTransition transition) {
+    private void updateSubtreeTypeDFS(@Nullable RSignatureContractNode node, int mask, int parentLevel, int level, ContractTransition transition) {
+        if (node == null) {
+            return;
+        }
 
         if (mask % 2 == 1) {
             ReferenceContractTransition newTransition = new ReferenceContractTransition(parentLevel);
@@ -220,5 +230,11 @@ public class RSignatureContract implements SignatureContract {
 
     public int getNumberOfCalls() {
         return myNumberOfCalls;
+    }
+
+    @NotNull
+    @Override
+    public SignatureContract merge(@NotNull SignatureContract that) {
+        return null;
     }
 }

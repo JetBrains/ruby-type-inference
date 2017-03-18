@@ -28,11 +28,13 @@ class RSignature
                              :return_type_name => @return_type_name.to_s,
                              :gem_name => @gem_name.to_s,
                              :gem_version => @gem_version.to_s,
-                             :visibility => @visibility.to_s
+                             :visibility => @visibility.to_s,
+                             :path => @path.to_s,
+                             :lineno => @lineno.to_s
                          })
   end
 
-  def initialize(method_name, receiver_name, args_type_name, args_info, return_type_name, gem_name, gem_version, visibility, call_info_mid, call_info_argc, call_info_kw_args)
+  def initialize(method_name, receiver_name, args_type_name, args_info, return_type_name, gem_name, gem_version, visibility, call_info_mid, call_info_argc, call_info_kw_args, path, lineno)
     @method_name = method_name
     @receiver_name = receiver_name
     @args_type_name = args_type_name
@@ -44,6 +46,8 @@ class RSignature
     @call_info_mid = call_info_mid
     @call_info_argc = call_info_argc
     @call_info_kw_args = call_info_kw_args
+    @path = path
+    @lineno = lineno
   end
 
 end
@@ -105,6 +109,13 @@ class TypeTracker
     end
   end
 
+  private
+  def get_class_name(binding, p0, p1)
+    return NilClass unless p1
+    value = binding.local_variable_get(p1)
+    return 'EmptyArray' if p0 == :rest && value.empty?
+    value.class
+  end
 
   private
   def handle_call(tp)
@@ -113,12 +124,15 @@ class TypeTracker
 
     method = tp.defined_class.instance_method(tp.method_id)
 
+    path = tp.path
+    lineno = tp.lineno
+
     args_type_name = method.parameters.inject([]) do |pt, p|
-      pt << (p[1] ? binding.local_variable_get(p[1]).class : NilClass)
+      pt << get_class_name(binding, p[0], p[1])
     end.join(';')
 
     args_info = method.parameters.inject([]) do |pt, p|
-      pt << "#{p[0]},#{p[1]},#{p[1] ? (binding.local_variable_get(p[1]).class.to_s) : NilClass}"
+      pt << "#{p[0]},#{p[1]},#{get_class_name binding, p[0], p[1]}"
     end.join(';')
 
     if ((args_info.include? 'opt,') || (args_info.include? 'key,'))
@@ -135,14 +149,14 @@ class TypeTracker
     end
 
 
-    signatures.push([method, args_type_name, args_info, call_info_mid, call_info_argc, call_info_kw_args])
+    signatures.push([method, args_type_name, args_info, call_info_mid, call_info_argc, call_info_kw_args, path, lineno])
 
   end
 
   private
   def handle_return(tp)
 
-    method, args_type_name, args_info, call_info_mid, call_info_argc, call_info_kw_args = signatures.pop
+    method, args_type_name, args_info, call_info_mid, call_info_argc, call_info_kw_args, path, lineno = signatures.pop
 
     if method
       method_name = tp.method_id
@@ -164,10 +178,10 @@ class TypeTracker
           visibility = 'PRIVATE'
         end
 
-        message = RSignature.new(method_name, receiver_name, args_type_name, args_info, return_type_name, gem_name, gem_version, visibility, call_info_mid, call_info_argc, call_info_kw_args)
+        message = RSignature.new(method_name, receiver_name, args_type_name, args_info, return_type_name, gem_name, gem_version, visibility, call_info_mid, call_info_argc, call_info_kw_args, path, lineno)
 
         json_mes = message.to_json
-        #puts Thread.current.object_id.to_s + json_mes
+        # puts Thread.current.object_id.to_s + json_mes
         putToSocket(json_mes)
 
       end

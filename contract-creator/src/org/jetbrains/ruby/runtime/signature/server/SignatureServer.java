@@ -51,6 +51,15 @@ public class SignatureServer {
     }
 
     @Nullable
+    public MethodInfo getMethodByClass(@NotNull String className, @NotNull String methodName) {
+        for (MethodInfo info : mainContainer.getKeySet()) {
+            if (info.getName().equals(methodName) && info.getClassInfo().getClassFQN().equals(className))
+                return info;
+        }
+        return null;
+    }
+
+    @Nullable
     public RSignatureContract getContractByMethodInfo(@NotNull MethodInfo info) {
         return mainContainer.getSignature(info);
     }
@@ -113,6 +122,7 @@ public class SignatureServer {
                     LOGGER.severe("Can't close a socket");
                 }
                 LOGGER.info("Connection with client# " + handlerNumber + " closed");
+                SignatureServer.getInstance().mainContainer.reduction();
             }
         }
 
