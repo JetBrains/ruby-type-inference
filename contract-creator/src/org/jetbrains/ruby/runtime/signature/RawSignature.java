@@ -47,7 +47,7 @@ public class RawSignature {
 
         String argsTypeName = bean.args_type_name;
         this.myArgsTypes = new ArrayList<>();
-        this.myArgsTypes.addAll(Arrays.asList(argsTypeName.split("\\s*;\\s*")));
+        //this.myArgsTypes.addAll(Arrays.asList(argsTypeName.split("\\s*;\\s*")));
 
 
         String argsInfo = bean.args_info;
@@ -55,7 +55,14 @@ public class RawSignature {
         if (!argsInfo.equals("")) {
             for (String argument : Arrays.asList(argsInfo.split("\\s*;\\s*"))) {
                 List<String> parts = Arrays.asList(argument.split("\\s*,\\s*"));
-                this.myArgsInfo.add(new ParameterInfo(parts.get(1), ParameterInfo.Type.valueOf(parts.get(0).toUpperCase(Locale.US))));
+
+                String name = null;
+
+                if (!parts.get(2).equals("nil"))
+                    name = parts.get(2);
+
+                this.myArgsInfo.add(new ParameterInfo(name, ParameterInfo.Type.valueOf(parts.get(0))));
+                this.myArgsTypes.add(parts.get(1));
             }
         }
 
