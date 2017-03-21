@@ -122,23 +122,8 @@ VALUE get_call_info(VALUE self)
                     int kwArgSize = kw_args->keyword_len;
 
                     VALUE kw_ary = rb_ary_new_from_values(kw_args->keyword_len, kw_args->keywords);
-                    VALUE kw_str_ary = rb_ary_new();
-                    VALUE str_presentation = rb_str_new(0, 0);
 
-                    for(int i = 0; i < kwArgSize; i++)
-                        rb_ary_push(kw_str_ary, rb_sym_to_s(rb_ary_pop(kw_ary)));
-
-                    bool flag = false;
-
-                    for(int i = 0; i < kwArgSize; i++)
-                    {
-                        if(flag)
-                            rb_str_concat(str_presentation, rb_str_new_cstr(","));
-                        rb_str_concat(str_presentation, rb_ary_pop(kw_str_ary));
-                        flag = true;
-                    }
-
-                    rb_ary_push(ans, str_presentation);
+                    rb_ary_push(ans, kw_ary);
                 }
                 return ans;
             }
@@ -305,11 +290,6 @@ VALUE is_call_info_needed(VALUE self)
     unsigned int has_kw = cfp->iseq->body->param.flags.has_kw;
 
     int required_num = 0;
-
-//    if(cfp->iseq->body->param.keyword != NULL)
-//    {
-//        fprintf(stderr, "req_num: %d\n", cfp->iseq->body->param.keyword->required_num);
-//    }
 
     if(has_opt || (cfp->iseq->body->param.keyword != NULL && cfp->iseq->body->param.keyword->required_num == 0))
         return Qtrue;

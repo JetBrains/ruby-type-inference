@@ -97,7 +97,7 @@ class TypeTracker
 
       call_info_mid = call_info[0]
       call_info_argc = call_info[1]
-      call_info_kw_args = call_info[2]
+      call_info_kw_args = call_info[2].join(',')
     else
       call_info_mid = nil
       call_info_argc = nil
@@ -105,21 +105,13 @@ class TypeTracker
     end
 
 
-    #key = [method_name, args_info, call_info_mid, call_info_argc, call_info_kw_args].hash
-
-    #if @cache.add?(key)
     @signatures.push([method_name, args_info, call_info_mid, call_info_argc, call_info_kw_args, path, lineno])
-    #else
-    #  @signatures.push([nil, nil, nil, nil, nil, nil, nil])
-    #end
   end
 
   private
   def handle_return(tp)
 
     method_name, args_info, call_info_mid, call_info_argc, call_info_kw_args, path, lineno = @signatures.pop
-
-    p method_name.to_s + ':' + args_info.to_s
 
     if method_name
 
@@ -144,7 +136,6 @@ class TypeTracker
         message = RSignature.new(method_name, receiver_name, args_info, return_type_name, gem_name, gem_version, visibility, call_info_mid, call_info_argc, call_info_kw_args, path, lineno)
 
         json_mes = message.to_json
-        p json_mes
         putToSocket(json_mes)
 
       end
