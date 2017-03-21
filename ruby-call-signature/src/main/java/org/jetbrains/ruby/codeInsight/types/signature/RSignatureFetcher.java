@@ -59,6 +59,10 @@ public final class RSignatureFetcher {
 
         for (ParameterInfo argument : info) {
 
+            if (argument.getModifier() == ParameterInfo.Type.KEYREQ) {
+                keyflag = true;
+            }
+
             if (argument.getModifier() == ParameterInfo.Type.KEY) {
                 keyflag = true;
             }
@@ -86,7 +90,13 @@ public final class RSignatureFetcher {
                     }
 
                 }
-
+                if (parameterInfo.getModifier() == ParameterInfo.Type.KEYREQ) {
+                    if (kwArgs.contains(argumentName)) {
+                        result.set(i, Boolean.TRUE);
+                        argc--;
+                        kwArgs.remove(argumentName);
+                    }
+                }
                 if (parameterInfo.getModifier() == ParameterInfo.Type.KEYREST) {
                     if (!kwArgs.isEmpty()) {
                         result.set(i, Boolean.TRUE);
