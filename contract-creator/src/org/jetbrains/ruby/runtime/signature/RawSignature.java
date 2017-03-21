@@ -58,7 +58,7 @@ public class RawSignature {
 
                 String name = null;
 
-                if (!parts.get(2).equals("nil"))
+                if (parts.size() > 2 && !parts.get(2).equals("nil"))
                     name = parts.get(2);
 
                 this.myArgsInfo.add(new ParameterInfo(name, ParameterInfo.Type.valueOf(parts.get(0))));

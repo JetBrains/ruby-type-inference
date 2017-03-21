@@ -122,8 +122,23 @@ VALUE get_call_info(VALUE self)
                     int kwArgSize = kw_args->keyword_len;
 
                     VALUE kw_ary = rb_ary_new_from_values(kw_args->keyword_len, kw_args->keywords);
+                    VALUE kw_str_ary = rb_ary_new();
+                    VALUE str_presentation = rb_str_new(0, 0);
 
-                    rb_ary_push(ans, kw_ary);
+                    for(int i = 0; i < kwArgSize; i++)
+                        rb_ary_push(kw_str_ary, rb_sym_to_s(rb_ary_pop(kw_ary)));
+
+                    bool flag = false;
+
+                    for(int i = 0; i < kwArgSize; i++)
+                    {
+                        if(flag)
+                            rb_str_concat(str_presentation, rb_str_new_cstr(","));
+                        rb_str_concat(str_presentation, rb_ary_pop(kw_str_ary));
+                        flag = true;
+                    }
+
+                    rb_ary_push(ans, str_presentation);
                 }
                 return ans;
             }
@@ -164,21 +179,21 @@ VALUE get_args_info(VALUE self)
 
     unsigned int ambiguous_param0 = cfp->iseq->body->param.flags.has_lead;
 
-    if(has_kw)
-        param_size--;
-
     VALUE ans = rb_str_new(0, 0);
     VALUE types = rb_ary_new();
 
     bool flag = false;
 
-    for(int i = param_size - 1; i >= 0; i--)
+    for(int i = 0; i < param_size; i++)
     {
         VALUE klass = rb_class_real(CLASS_OF(*(ep - i - 2)));
         char* klass_name = rb_class2name(klass);
 
         rb_ary_push(types, rb_str_new_cstr(klass_name));
     }
+
+    if(has_kw)
+        param_size--;
 
     for(int i = 0; i < lead_num; i++)
     {
@@ -252,7 +267,10 @@ VALUE get_args_info(VALUE self)
         if(flag)
             ans = rb_str_concat(ans, rb_str_new_cstr(";"));
 
-        ans = rb_str_concat(ans, rb_str_new_cstr("KWREST,"));
+        ans = rb_str_concat(ans, rb_str_new_cstr("KEYREST,"));
+
+        if(has_kw)
+            rb_ary_pop(types);
         ans = rb_str_concat(ans, rb_ary_pop(types));
 
         flag = true;
@@ -286,7 +304,14 @@ VALUE is_call_info_needed(VALUE self)
     unsigned int has_opt = cfp->iseq->body->param.flags.has_opt;
     unsigned int has_kw = cfp->iseq->body->param.flags.has_kw;
 
-    if(has_opt || has_kw)
+    int required_num = 0;
+
+//    if(cfp->iseq->body->param.keyword != NULL)
+//    {
+//        fprintf(stderr, "req_num: %d\n", cfp->iseq->body->param.keyword->required_num);
+//    }
+
+    if(has_opt || (cfp->iseq->body->param.keyword != NULL && cfp->iseq->body->param.keyword->required_num == 0))
         return Qtrue;
     else
         return Qfalse;
