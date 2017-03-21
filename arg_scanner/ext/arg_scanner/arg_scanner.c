@@ -165,10 +165,8 @@ VALUE get_args_info(VALUE self)
 
     unsigned int ambiguous_param0 = cfp->iseq->body->param.flags.has_lead;
 
-    VALUE ans = rb_str_new(0, 0);
+    VALUE ans = rb_ary_new();
     VALUE types = rb_ary_new();
-
-    bool flag = false;
 
     for(int i = 0; i < param_size; i++)
     {
@@ -183,46 +181,38 @@ VALUE get_args_info(VALUE self)
 
     for(int i = 0; i < lead_num; i++)
     {
-        if(flag)
-            ans = rb_str_concat(ans, rb_str_new_cstr(";"));
+        VALUE tmp = rb_ary_new();
+        rb_ary_push(tmp, rb_str_new_cstr("REQ"));
+        rb_ary_push(tmp, rb_ary_pop(types));
 
-        ans = rb_str_concat(ans, rb_str_new_cstr("REQ,"));
-        ans = rb_str_concat(ans, rb_ary_pop(types));
-
-        flag = true;
+        rb_ary_push(ans, rb_ary_join(tmp, rb_str_new_cstr(",")));
     }
 
     for(int i = 0; i < opt_num; i++)
     {
-        if(flag)
-            ans = rb_str_concat(ans, rb_str_new_cstr(";"));
+        VALUE tmp = rb_ary_new();
+        rb_ary_push(tmp, rb_str_new_cstr("OPT"));
+        rb_ary_push(tmp, rb_ary_pop(types));
 
-        ans = rb_str_concat(ans, rb_str_new_cstr("OPT,"));
-        ans = rb_str_concat(ans, rb_ary_pop(types));
-
-        flag = true;
+        rb_ary_push(ans, rb_ary_join(tmp, rb_str_new_cstr(",")));
     }
 
     for(int i = 0; i < has_rest; i++)
     {
-        if(flag)
-            ans = rb_str_concat(ans, rb_str_new_cstr(";"));
+        VALUE tmp = rb_ary_new();
+        rb_ary_push(tmp, rb_str_new_cstr("REST"));
+        rb_ary_push(tmp, rb_ary_pop(types));
 
-        ans = rb_str_concat(ans, rb_str_new_cstr("REST,"));
-        ans = rb_str_concat(ans, rb_ary_pop(types));
-
-        flag = true;
+        rb_ary_push(ans, rb_ary_join(tmp, rb_str_new_cstr(",")));
     }
 
     for(int i = 0; i < post_num; i++)
     {
-        if(flag)
-            ans = rb_str_concat(ans, rb_str_new_cstr(";"));
+        VALUE tmp = rb_ary_new();
+        rb_ary_push(tmp, rb_str_new_cstr("POST"));
+        rb_ary_push(tmp, rb_ary_pop(types));
 
-        ans = rb_str_concat(ans, rb_str_new_cstr("POST,"));
-        ans = rb_str_concat(ans, rb_ary_pop(types));
-
-        flag = true;
+        rb_ary_push(ans, rb_ary_join(tmp, rb_str_new_cstr(",")));
     }
 
 
@@ -236,61 +226,48 @@ VALUE get_args_info(VALUE self)
 
         for(int i = 0; i < required_num; i++)
         {
-            if(flag)
-                ans = rb_str_concat(ans, rb_str_new_cstr(";"));
+            VALUE tmp = rb_ary_new();
+            rb_ary_push(tmp, rb_str_new_cstr("KEYREQ"));
+            rb_ary_push(tmp, rb_ary_pop(types));
 
-            ans = rb_str_concat(ans, rb_str_new_cstr("KEYREQ,"));
-
-            ans = rb_str_concat(ans, rb_ary_pop(types));
-            ans = rb_str_concat(ans, rb_str_new_cstr(","));
             ID key = keywords[i];
             VALUE kwName = rb_id2str(key);
 
-            ans = rb_str_concat(ans, kwName);
+            rb_ary_push(tmp, kwName);
 
-            flag = true;
+            rb_ary_push(ans, rb_ary_join(tmp, rb_str_new_cstr(",")));
         }
         for(int i = required_num; i < kw_num; i++)
         {
-            if(flag)
-                ans = rb_str_concat(ans, rb_str_new_cstr(";"));
+            VALUE tmp = rb_ary_new();
+            rb_ary_push(tmp, rb_str_new_cstr("KEY"));
+            rb_ary_push(tmp, rb_ary_pop(types));
 
-            ans = rb_str_concat(ans, rb_str_new_cstr("KEY,"));
-
-            ans = rb_str_concat(ans, rb_ary_pop(types));
-            ans = rb_str_concat(ans, rb_str_new_cstr(","));
             ID key = keywords[i];
             VALUE kwName = rb_id2str(key);
 
-            ans = rb_str_concat(ans, kwName);
+            rb_ary_push(tmp, kwName);
 
-            flag = true;
+            rb_ary_push(ans, rb_ary_join(tmp, rb_str_new_cstr(",")));
         }
     }
 
     for(int i = 0; i < has_kwrest; i++)
     {
-        if(flag)
-            ans = rb_str_concat(ans, rb_str_new_cstr(";"));
+        VALUE tmp = rb_ary_new();
+        rb_ary_push(tmp, rb_str_new_cstr("KEYREST"));
+        rb_ary_push(tmp, rb_ary_pop(types));
 
-        ans = rb_str_concat(ans, rb_str_new_cstr("KEYREST,"));
-
-        if(has_kw)
-            rb_ary_pop(types);
-        ans = rb_str_concat(ans, rb_ary_pop(types));
-
-        flag = true;
+        rb_ary_push(ans, rb_ary_join(tmp, rb_str_new_cstr(",")));
     }
 
     for(int i = 0; i < has_block; i++)
     {
-        if(flag)
-            ans = rb_str_concat(ans, rb_str_new_cstr(";"));
+        VALUE tmp = rb_ary_new();
+        rb_ary_push(tmp, rb_str_new_cstr("BLOCK"));
+        rb_ary_push(tmp, rb_ary_pop(types));
 
-        ans = rb_str_concat(ans, rb_str_new_cstr("BLOCK,"));
-        ans = rb_str_concat(ans, rb_ary_pop(types));
-
-        flag = true;
+        rb_ary_push(ans, rb_ary_join(tmp, rb_str_new_cstr(",")));
     }
 
     return ans;

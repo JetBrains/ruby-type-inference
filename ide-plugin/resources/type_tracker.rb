@@ -94,7 +94,7 @@ class TypeTracker
     lineno = tp.lineno
     path = tp.path
 
-    args_info = ArgScanner.get_args_info
+    args_info = ArgScanner.get_args_info.join(';')
 
     if (ArgScanner.is_call_info_needed)
       call_info = ArgScanner.get_call_info
