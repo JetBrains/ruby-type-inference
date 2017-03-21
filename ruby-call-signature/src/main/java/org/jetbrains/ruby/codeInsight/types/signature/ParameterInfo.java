@@ -1,19 +1,21 @@
 package org.jetbrains.ruby.codeInsight.types.signature;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ParameterInfo {
-    @NotNull
+    @Nullable
     private final String myName;
     @NotNull
     private final ParameterInfo.Type myModifier;
 
 
-    public ParameterInfo(@NotNull final String name, @NotNull final Type modifier) {
+    public ParameterInfo(@Nullable final String name, @NotNull final Type modifier) {
         this.myName = name;
         this.myModifier = modifier;
     }
 
+    @Nullable
     public String getName() {
         return this.myName;
     }

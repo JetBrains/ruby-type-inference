@@ -125,6 +125,7 @@ public class SignatureServer {
                     LOGGER.severe("Can't close a socket");
                 }
                 LOGGER.info("Connection with client# " + handlerNumber + " closed");
+                SignatureServer.getInstance().mainContainer.reduction();
             }
         }
 
