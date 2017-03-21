@@ -63,22 +63,26 @@ class TypeTracker
           when :return
             handle_return(tp)
           else
-            @signatures.pop
+            signatures.pop
         end
       rescue NameError, NoMethodError
-        @signatures.push([nil, nil, nil, nil, nil, nil, nil]) if tp.event == :call
+        signatures.push([nil, nil, nil, nil, nil, nil, nil]) if tp.event == :call
       end
     end
 
 
   end
 
+  attr_accessor :cache
+  attr_accessor :socket
+  attr_accessor :signatures
+
   def at_exit
-    @socket.close
+    socket.close
   end
 
   def putToSocket(messege)
-    @socket.puts(messege)
+    socket.puts(messege)
   end
 
 
@@ -105,13 +109,13 @@ class TypeTracker
     end
 
 
-    @signatures.push([method_name, args_info, call_info_mid, call_info_argc, call_info_kw_args, path, lineno])
+    signatures.push([method_name, args_info, call_info_mid, call_info_argc, call_info_kw_args, path, lineno])
   end
 
   private
   def handle_return(tp)
 
-    method_name, args_info, call_info_mid, call_info_argc, call_info_kw_args, path, lineno = @signatures.pop
+    method_name, args_info, call_info_mid, call_info_argc, call_info_kw_args, path, lineno = signatures.pop
 
     if method_name
 
@@ -121,7 +125,7 @@ class TypeTracker
       key = [method_name, args_info, call_info_mid, call_info_argc, call_info_kw_args, return_type_name].hash
 
 
-      if @cache.add?(key)
+      if cache.add?(key)
         matches = tp.path.scan(/\w+-\d+(?:\.\d+)+/)
         gem_name, gem_version = matches[0] ? matches[0].split('-') : ['', '']
 
