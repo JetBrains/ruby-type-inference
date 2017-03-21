@@ -124,6 +124,7 @@ VALUE get_call_info(VALUE self)
                     VALUE kw_ary = rb_ary_new_from_values(kw_args->keyword_len, kw_args->keywords);
 
                     rb_ary_push(ans, kw_ary);
+
                 }
                 return ans;
             }
@@ -229,13 +230,33 @@ VALUE get_args_info(VALUE self)
     {
         const ID *keywords = cfp->iseq->body->param.keyword->table;
         int kw_num = cfp->iseq->body->param.keyword->num;
+        int required_num = cfp->iseq->body->param.keyword->required_num;
 
-        for(int i = 0; i < kw_num; i++)
+        const VALUE * const default_values = cfp->iseq->body->param.keyword->default_values;
+
+        for(int i = 0; i < required_num; i++)
+        {
+            if(flag)
+                ans = rb_str_concat(ans, rb_str_new_cstr(";"));
+
+            ans = rb_str_concat(ans, rb_str_new_cstr("KEYREQ,"));
+
+            ans = rb_str_concat(ans, rb_ary_pop(types));
+            ans = rb_str_concat(ans, rb_str_new_cstr(","));
+            ID key = keywords[i];
+            VALUE kwName = rb_id2str(key);
+
+            ans = rb_str_concat(ans, kwName);
+
+            flag = true;
+        }
+        for(int i = required_num; i < kw_num; i++)
         {
             if(flag)
                 ans = rb_str_concat(ans, rb_str_new_cstr(";"));
 
             ans = rb_str_concat(ans, rb_str_new_cstr("KEY,"));
+
             ans = rb_str_concat(ans, rb_ary_pop(types));
             ans = rb_str_concat(ans, rb_str_new_cstr(","));
             ID key = keywords[i];
@@ -271,7 +292,6 @@ VALUE get_args_info(VALUE self)
 
         flag = true;
     }
-
 
     return ans;
 }
