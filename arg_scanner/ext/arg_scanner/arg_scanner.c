@@ -285,10 +285,12 @@ VALUE is_call_info_needed(VALUE self)
 
     unsigned int has_opt = cfp->iseq->body->param.flags.has_opt;
     unsigned int has_kw = cfp->iseq->body->param.flags.has_kw;
+    unsigned int has_kwrest = cfp->iseq->body->param.flags.has_kwrest;
+    unsigned int has_rest = cfp->iseq->body->param.flags.has_rest;
 
     int required_num = 0;
 
-    if(has_opt || (cfp->iseq->body->param.keyword != NULL && cfp->iseq->body->param.keyword->required_num == 0))
+    if(has_opt || has_kwrest || has_rest || (cfp->iseq->body->param.keyword != NULL && cfp->iseq->body->param.keyword->required_num == 0))
         return Qtrue;
     else
         return Qfalse;
