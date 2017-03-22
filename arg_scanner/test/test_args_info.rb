@@ -31,6 +31,7 @@ class TestArgsInfoWrapper
 
   end
 
+
   attr_accessor :args_info
   attr_accessor :trace
 
@@ -103,5 +104,27 @@ class TestArgsInfo < Test::Unit::TestCase
 
   end
 
-end
+  def test_reqkw_and_kwrest
+    @args_info_wrapper.foo5(kw: Date.new, aa: 1, bb: '1')
+    @args_info_wrapper.trace.disable
 
+    assert_not_nil @args_info_wrapper.args_info
+    p @args_info_wrapper.args_info
+    assert @args_info_wrapper.args_info.size == 2
+    assert @args_info_wrapper.args_info[0] == "KEYREQ,Date,kw"
+    assert @args_info_wrapper.args_info[1] = "KEYREST,Hash"
+
+  end
+
+  def test_optkw_and_kwrest
+    @args_info_wrapper.foo4(aa: 1, bb: '1')
+    @args_info_wrapper.trace.disable
+
+    assert_not_nil @args_info_wrapper.args_info
+    assert @args_info_wrapper.args_info.size == 2
+    assert @args_info_wrapper.args_info[0] == "KEY,Fixnum,kw"
+    assert @args_info_wrapper.args_info[1] = "KEYREST,Hash"
+
+  end
+
+end
