@@ -23,16 +23,20 @@ class TestArgsInfoWrapper
 
   end
 
+  def foo4(kw: 1, **rest)
+
+  end
+
+  def foo5(kw:, **rest)
+
+  end
+
   attr_accessor :args_info
   attr_accessor :trace
 
   def handle_call(tp)
 
-    if ArgScanner.is_call_info_needed
-      ArgScanner.get_args_info
-    else
-      nil
-    end
+    ArgScanner.get_args_info
   end
 
   def initialize
@@ -56,17 +60,11 @@ class TestArgsInfo < Test::Unit::TestCase
 
   end
 
-  def test_simple_req_arg
-    @args_info_wrapper.foo(Date.new)
-    @args_info_wrapper.trace.disable
-
-    assert @args_info_wrapper.args_info == nil
-  end
-
   def test_simple_kwrest
     @args_info_wrapper.foo3(a: Date.new, kkw: 'hi')
     @args_info_wrapper.trace.disable
 
+    assert_not_nil @args_info_wrapper.args_info
     assert @args_info_wrapper.args_info.size == 1
     assert @args_info_wrapper.args_info[0] == "KEYREST,Hash"
 
@@ -76,9 +74,32 @@ class TestArgsInfo < Test::Unit::TestCase
     @args_info_wrapper.foo2(Date.new)
     @args_info_wrapper.trace.disable
 
+    assert_not_nil @args_info_wrapper.args_info
     assert @args_info_wrapper.args_info.size == 2
     assert @args_info_wrapper.args_info[0] == "REQ,Date"
     assert @args_info_wrapper.args_info[1] = "OPT,Fixnum"
+
+  end
+
+  def test_optkw_and_empty_kwrest
+    @args_info_wrapper.foo4(kw: Date.new)
+    @args_info_wrapper.trace.disable
+
+    assert_not_nil @args_info_wrapper.args_info
+    assert @args_info_wrapper.args_info.size == 2
+    assert @args_info_wrapper.args_info[0] == "KEY,Date,kw"
+    assert @args_info_wrapper.args_info[1] = "KEYREST,Nil"
+
+  end
+
+  def test_reqkw_and_empty_kwrest
+    @args_info_wrapper.foo5(kw: Date.new)
+    @args_info_wrapper.trace.disable
+
+    assert_not_nil @args_info_wrapper.args_info
+    assert @args_info_wrapper.args_info.size == 2
+    assert @args_info_wrapper.args_info[0] == "KEYREQ,Date,kw"
+    assert @args_info_wrapper.args_info[1] = "KEYREST,Nil"
 
   end
 

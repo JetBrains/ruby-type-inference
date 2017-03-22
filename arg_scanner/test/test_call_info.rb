@@ -33,11 +33,19 @@ class TestCallInfoWrapper
 
   end
 
+  def foo5(b)
+
+  end
+
   attr_accessor :call_info
   attr_accessor :trace
 
   def handle_call(tp)
-    ArgScanner.get_call_info
+    if ArgScanner.is_call_info_needed
+      ArgScanner.get_call_info
+    else
+      nil
+    end
   end
 
   def initialize
@@ -64,15 +72,24 @@ class TestCallInfo < Test::Unit::TestCase
     @call_info_wrapper.sqr2(10, 11)
     @call_info_wrapper.trace.disable
 
+    assert_not_nil @call_info_wrapper.call_info
     assert @call_info_wrapper.call_info.size == 2
     assert @call_info_wrapper.call_info[0] == "sqr2"
     assert @call_info_wrapper.call_info[1] == 2
+  end
+
+  def test_simple_req_arg
+    @call_info_wrapper.foo5(10)
+    @call_info_wrapper.trace.disable
+
+    assert @call_info_wrapper.call_info == nil
   end
 
   def test_simple_kw
     @call_info_wrapper.sqr2(10, 11, x: 10, y: 1)
     @call_info_wrapper.trace.disable
 
+    assert_not_nil @call_info_wrapper.call_info
     assert @call_info_wrapper.call_info.size == 3
     assert @call_info_wrapper.call_info[0] == "sqr2"
     assert @call_info_wrapper.call_info[1] == 4
@@ -83,6 +100,7 @@ class TestCallInfo < Test::Unit::TestCase
     @call_info_wrapper.foo2(1, 2, 3, 4, 5, 6, 7, 8)
     @call_info_wrapper.trace.disable
 
+    assert_not_nil @call_info_wrapper.call_info
     assert @call_info_wrapper.call_info.size == 2
     assert @call_info_wrapper.call_info[0] == "foo2"
     assert @call_info_wrapper.call_info[1] == 8
@@ -92,6 +110,7 @@ class TestCallInfo < Test::Unit::TestCase
     @call_info_wrapper.foo(1, 2, 3, 4, 5, 6, 7, 8)
     @call_info_wrapper.trace.disable
 
+    assert_not_nil @call_info_wrapper.call_info
     assert @call_info_wrapper.call_info.size == 2
     assert @call_info_wrapper.call_info[0] == "foo"
     assert @call_info_wrapper.call_info[1] == 8
@@ -101,6 +120,7 @@ class TestCallInfo < Test::Unit::TestCase
     @call_info_wrapper.foo3(a: 1, b: 2, c: 3, d: 4)
     @call_info_wrapper.trace.disable
 
+    assert_not_nil @call_info_wrapper.call_info
     assert @call_info_wrapper.call_info.size == 3
     assert @call_info_wrapper.call_info[0] == "foo3"
     assert @call_info_wrapper.call_info[1] == 4
@@ -111,6 +131,7 @@ class TestCallInfo < Test::Unit::TestCase
     @call_info_wrapper.foo4(b: "hello", c: 'world', e: 1, f: "not")
     @call_info_wrapper.trace.disable
 
+    assert_not_nil @call_info_wrapper.call_info
     assert @call_info_wrapper.call_info.size == 3
     assert @call_info_wrapper.call_info[0] == "foo4"
     assert @call_info_wrapper.call_info[1] == 4
