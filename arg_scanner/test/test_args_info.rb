@@ -31,6 +31,9 @@ class TestArgsInfoWrapper
 
   end
 
+  def foo6(a, *rest, b)
+
+  end
 
   attr_accessor :args_info
   attr_accessor :trace
@@ -127,4 +130,27 @@ class TestArgsInfo < Test::Unit::TestCase
 
   end
 
+  def test_rest
+    @args_info_wrapper.foo6(1, 'hi', Date.new, '1')
+    @args_info_wrapper.trace.disable
+
+    assert_not_nil @args_info_wrapper.args_info
+    assert @args_info_wrapper.args_info.size == 3
+    assert @args_info_wrapper.args_info[0] == "REQ,Fixnum"
+    assert @args_info_wrapper.args_info[1] = "REST,Array"
+    assert @args_info_wrapper.args_info[1] = "POST,String"
+
+  end
+
+  def test_empty_rest
+    @args_info_wrapper.foo6(1, '1')
+    @args_info_wrapper.trace.disable
+
+    assert_not_nil @args_info_wrapper.args_info
+    assert @args_info_wrapper.args_info.size == 3
+    assert @args_info_wrapper.args_info[0] == "REQ,Fixnum"
+    assert @args_info_wrapper.args_info[1] = "REST,Nil"
+    assert @args_info_wrapper.args_info[1] = "POST,String"
+
+  end
 end
