@@ -4,11 +4,6 @@ require 'date'
 
 include ArgScanner
 
-#!/usr/bin/env ruby
-require File.expand_path("helper", File.dirname(__FILE__))
-
-include ArgScanner
-
 class TestArgsInfoWrapper
 
   def foo(a)
