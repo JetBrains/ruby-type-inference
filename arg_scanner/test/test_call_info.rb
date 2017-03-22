@@ -34,6 +34,7 @@ class TestCallInfoWrapper
   end
 
   attr_accessor :call_info
+  attr_accessor :trace
 
   def handle_call(tp)
     ArgScanner.get_call_info
@@ -44,69 +45,76 @@ class TestCallInfoWrapper
       case tp.event
         when :call
           @call_info = handle_call(tp)
-          @trace.disable
       end
     end
   end
 
 end
 
-class TestArgScanner < Test::Unit::TestCase
-  def test_simple
-    wrapper = TestCallInfoWrapper.new
-    wrapper.sqr2(10, 11)
+class TestCallInfo < Test::Unit::TestCase
+  def setup
+    @call_info_wrapper = TestCallInfoWrapper.new
+  end
 
-    assert wrapper.call_info.size == 2
-    assert wrapper.call_info[0] == "sqr2"
-    assert wrapper.call_info[1] == 2
+  def teardown
+
+  end
+
+  def test_simple
+    @call_info_wrapper.sqr2(10, 11)
+    @call_info_wrapper.trace.disable
+
+    assert @call_info_wrapper.call_info.size == 2
+    assert @call_info_wrapper.call_info[0] == "sqr2"
+    assert @call_info_wrapper.call_info[1] == 2
   end
 
   def test_simple_kw
-    wrapper = TestCallInfoWrapper.new
-    wrapper.sqr2(10, 11, x: 10, y: 1)
+    @call_info_wrapper.sqr2(10, 11, x: 10, y: 1)
+    @call_info_wrapper.trace.disable
 
-    assert wrapper.call_info.size == 3
-    assert wrapper.call_info[0] == "sqr2"
-    assert wrapper.call_info[1] == 4
-    assert wrapper.call_info[2].join(',') == "x,y"
+    assert @call_info_wrapper.call_info.size == 3
+    assert @call_info_wrapper.call_info[0] == "sqr2"
+    assert @call_info_wrapper.call_info[1] == 4
+    assert @call_info_wrapper.call_info[2].join(',') == "x,y"
   end
 
   def test_rest
-    wrapper = TestCallInfoWrapper.new
-    wrapper.foo2(1, 2, 3, 4, 5, 6, 7, 8)
+    @call_info_wrapper.foo2(1, 2, 3, 4, 5, 6, 7, 8)
+    @call_info_wrapper.trace.disable
 
-    assert wrapper.call_info.size == 2
-    assert wrapper.call_info[0] == "foo2"
-    assert wrapper.call_info[1] == 8
+    assert @call_info_wrapper.call_info.size == 2
+    assert @call_info_wrapper.call_info[0] == "foo2"
+    assert @call_info_wrapper.call_info[1] == 8
   end
 
   def test_post_and_rest
-    wrapper = TestCallInfoWrapper.new
-    wrapper.foo(1, 2, 3, 4, 5, 6, 7, 8)
+    @call_info_wrapper.foo(1, 2, 3, 4, 5, 6, 7, 8)
+    @call_info_wrapper.trace.disable
 
-    assert wrapper.call_info.size == 2
-    assert wrapper.call_info[0] == "foo"
-    assert wrapper.call_info[1] == 8
+    assert @call_info_wrapper.call_info.size == 2
+    assert @call_info_wrapper.call_info[0] == "foo"
+    assert @call_info_wrapper.call_info[1] == 8
   end
 
   def test_kwrest
-    wrapper = TestCallInfoWrapper.new
-    wrapper.foo3(a: 1, b: 2, c: 3, d: 4)
+    @call_info_wrapper.foo3(a: 1, b: 2, c: 3, d: 4)
+    @call_info_wrapper.trace.disable
 
-    assert wrapper.call_info.size == 3
-    assert wrapper.call_info[0] == "foo3"
-    assert wrapper.call_info[1] == 4
-    assert wrapper.call_info[2].join(',') == "a,b,c,d"
+    assert @call_info_wrapper.call_info.size == 3
+    assert @call_info_wrapper.call_info[0] == "foo3"
+    assert @call_info_wrapper.call_info[1] == 4
+    assert @call_info_wrapper.call_info[2].join(',') == "a,b,c,d"
   end
 
   def test_rest_and_reqkw_args
-    wrapper = TestCallInfoWrapper.new
-    wrapper.foo4(b: "hello", c: 'world', e: 1, f: "not")
+    @call_info_wrapper.foo4(b: "hello", c: 'world', e: 1, f: "not")
+    @call_info_wrapper.trace.disable
 
-    assert wrapper.call_info.size == 3
-    assert wrapper.call_info[0] == "foo4"
-    assert wrapper.call_info[1] == 4
-    assert wrapper.call_info[2].join(',') == "b,c,e,f"
+    assert @call_info_wrapper.call_info.size == 3
+    assert @call_info_wrapper.call_info[0] == "foo4"
+    assert @call_info_wrapper.call_info[1] == 4
+    assert @call_info_wrapper.call_info[2].join(',') == "b,c,e,f"
 
   end
 end

@@ -15,11 +15,12 @@ class TestArgsInfoWrapper
 
   end
 
-  def foo2(a = 1)
+  def foo2(a, b = 1)
 
   end
 
   attr_accessor :args_info
+  attr_accessor :trace
 
   def handle_call(tp)
 
@@ -36,29 +37,38 @@ class TestArgsInfoWrapper
       case tp.event
         when :call
           @args_info = handle_call(tp)
-          @trace.disable
       end
     end
   end
 
 end
 
-class TestArgScanner < Test::Unit::TestCase
-  def test_simple_req_arg
-    wrapper = TestArgsInfoWrapper.new
-    wrapper.foo(Date.new)
-    ans = wrapper.args_info
-
-    assert ans == nil
+class TestArgsInfo < Test::Unit::TestCase
+  def setup
+    @args_info_wrapper = TestArgsInfoWrapper.new
   end
 
-  def test_simple_opt_arg
-    wrapper = TestArgsInfoWrapper.new
-    wrapper.foo2(Date.new)
-    ans = wrapper.args_info
+  def teardown
 
-    assert ans.size == 1
-    assert ans[0] == "OPT,Date"
+  end
+
+  def test_simple_req_arg
+    @args_info_wrapper.foo(Date.new)
+    @args_info_wrapper.trace.disable
+
+    assert @args_info_wrapper.args_info == nil
+  end
+
+  def test_req_and_opt_arg
+    @args_info_wrapper.foo2(Date.new)
+    @args_info_wrapper.trace.disable
+
+    p @args_info_wrapper.args_info
+
+    assert @args_info_wrapper.args_info.size == 2
+    assert @args_info_wrapper.args_info[0] == "REQ,Date"
+    assert @args_info_wrapper.args_info[1] = "OPT,Fixnum"
+
   end
 
 end
