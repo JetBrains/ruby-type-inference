@@ -15,6 +15,7 @@ dependencies {
 sourceSets {
     main.java.srcDirs = ['src']
     main.resources.srcDirs = ['resources']
+    test.java.srcDirs = ['src/test/java']
 }
 
 intellij {
