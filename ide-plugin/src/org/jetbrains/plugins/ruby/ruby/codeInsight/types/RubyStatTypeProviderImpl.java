@@ -104,7 +104,7 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
             // TODO fix npe (done)
 
             if (contract == null)
-                return null;
+                return REmptyType.INSTANCE;
 
             Map<RSignatureContractNode, List<Set<String>>> currNodesAndReadTypes = new HashMap<>();
             currNodesAndReadTypes.put(contract.getStartNode(), new ArrayList<>());
@@ -143,7 +143,7 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
 
         }
 
-        return null;
+        return REmptyType.INSTANCE;
     }
 
     private void addReadTypesList(Map<RSignatureContractNode, List<Set<String>>> nextLayer, List<Set<String>> readTypeSets, RSignatureContractNode to) {
