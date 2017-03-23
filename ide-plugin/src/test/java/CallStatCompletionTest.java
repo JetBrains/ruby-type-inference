@@ -1,6 +1,5 @@
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionModes;
-import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
@@ -33,12 +32,10 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
 
         final Module module = myFixture.getModule();
 
-        ProcessOutput output;
-
         String scriptPath = getTestDataPath() + "/sample_test_to_run.rb";
 
         try {
-            output = RubyScriptRunner.runRubyScript(rubySdk, module, scriptPath, myFixture.getTestDataPath(), new ExecutionModes.SameThreadMode(30), null, null, "");
+            RubyScriptRunner.runRubyScript(rubySdk, module, scriptPath, myFixture.getTestDataPath(), new ExecutionModes.SameThreadMode(30), null, null, "");
         } catch (ExecutionException e) {
             LOGGER.severe(e.getMessage());
             e.printStackTrace();
