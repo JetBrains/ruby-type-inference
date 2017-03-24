@@ -8,8 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ruby.ruby.run.RubyScriptRunner;
 import org.jetbrains.plugins.ruby.ruby.sdk.RubySdkType;
 import org.jetbrains.plugins.ruby.ruby.sdk.RubySdkUtil;
-import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContract;
-import org.jetbrains.ruby.runtime.signature.server.SignatureServer;
 
 import java.util.Collections;
 import java.util.logging.Logger;
@@ -23,10 +21,14 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
         return "src/test/testData";
     }
 
-    public void testCompletion() {
-
+    public void testSimple() {
         doTest("sample_test", "foo", "test1", "test2");
     }
+
+    public void testKW() {
+        doTest("sample_kw_test", "foo1", "test1", "test2");
+    }
+
 
     private void doTest(@NotNull String name, @NotNull String method_name, String... items) {
 
@@ -49,21 +51,6 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
         } catch (ExecutionException e) {
             LOGGER.severe(e.getMessage());
             e.printStackTrace();
-        }
-
-        SignatureServer callStatServer = SignatureServer.getInstance();
-
-        RSignatureContract contract = null;
-
-        while (contract == null) {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                LOGGER.severe(e.getMessage());
-                e.printStackTrace();
-            }
-
-            contract = callStatServer.getContractByMethodName(method_name);
         }
 
         String text = myFixture.getEditor().getDocument().getText();
