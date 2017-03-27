@@ -21,7 +21,7 @@ sourceSets {
 intellij {
     version 'IU-LATEST-TRUNK-SNAPSHOT'
     pluginName 'ruby-runtime-stats'
-    plugins = ['org.jetbrains.plugins.ruby:2017.1.20170302']
+    plugins = ['org.jetbrains.plugins.ruby:2017.2.20170327']
 }
 
 prepareSandbox.doLast {
