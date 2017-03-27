@@ -73,6 +73,10 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
         return getNextLevel(currNodesAndReadTypes, tmpSet);
     }
 
+    public Symbol findMethodForType(@NotNull RType var1, @NotNull String var2) {
+        return null;
+    }
+
     public RType createTypeByCallAndArgs(@NotNull final RExpression call, @NotNull final List<RPsiElement> callArgs) {
 
         final PsiElement callElement = call instanceof RCall ? ((RCall) call).getPsiCommand() : call;
