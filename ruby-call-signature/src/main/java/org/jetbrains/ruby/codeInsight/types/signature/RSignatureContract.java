@@ -8,6 +8,7 @@ import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.TypedCo
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 public class RSignatureContract implements SignatureContract {
 
@@ -191,7 +192,7 @@ public class RSignatureContract implements SignatureContract {
         minimization();
     }
 
-    private void compressionDFS(RSignatureContractNode node, int level) {
+    private void compressionDFS(@NotNull RSignatureContractNode node, int level) {
         int commonMask = -1;
 
 
@@ -209,16 +210,18 @@ public class RSignatureContract implements SignatureContract {
         }
     }
 
-    private void updateSubtreeTypeDFS(RSignatureContractNode node, int mask, int parentLevel, int level, ContractTransition transition) {
+    private void updateSubtreeTypeDFS(@NotNull RSignatureContractNode node, int mask, int parentLevel, int level, @NotNull ContractTransition transition) {
 
-        if (mask % 2 == 1) {
+        if (mask % 2 == 1 && node.getTransitionKeys().contains(transition)) {
             ReferenceContractTransition newTransition = new ReferenceContractTransition(parentLevel);
 
             node.setReferenceLinks();
             node.changeTransitionType(transition, newTransition);
         }
 
-        for (ContractTransition typeTransition : node.getTransitionKeys()) {
+        Set<ContractTransition> transitions = node.getTransitionKeys();
+
+        for (ContractTransition typeTransition : transitions) {
             updateSubtreeTypeDFS(node.goByTypeSymbol(typeTransition), mask >> 1, parentLevel, level + 1, transition);
         }
     }
