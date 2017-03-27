@@ -8,6 +8,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ruby.ruby.run.RubyScriptRunner;
 import org.jetbrains.plugins.ruby.ruby.sdk.RubySdkType;
 import org.jetbrains.plugins.ruby.ruby.sdk.RubySdkUtil;
+import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContract;
+import org.jetbrains.ruby.runtime.signature.server.SignatureServer;
 
 import java.util.Collections;
 import java.util.logging.Logger;
@@ -53,7 +55,19 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
             e.printStackTrace();
         }
 
-        String text = myFixture.getEditor().getDocument().getText();
+        SignatureServer callStatServer = SignatureServer.getInstance();
+        RSignatureContract contract = null;
+
+
+        while (contract == null) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                LOGGER.severe(e.getMessage());
+                e.printStackTrace();
+            }
+            contract = callStatServer.getContractByMethodName(method_name);
+        }
 
         myFixture.testCompletionVariants(scriptName, items);
     }

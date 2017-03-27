@@ -21,7 +21,6 @@ end
 
 A.class_eval <<Foo
 def foo(a)
-  p '!'
   B.new
 end
 Foo
