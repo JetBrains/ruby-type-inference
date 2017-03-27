@@ -37,6 +37,7 @@ public class RSignatureContractNode implements SignatureNode {
         typeTransitions.put(newTransition, node);
     }
 
+    @NotNull
     public RSignatureContractNode goByTypeSymbol(ContractTransition typeName) {
         return ((RSignatureContractNode) typeTransitions.get(typeName));
     }
@@ -57,6 +58,7 @@ public class RSignatureContractNode implements SignatureNode {
         mask &= tempMask;
     }
 
+    @NotNull
     public Set<ContractTransition> getTransitionKeys() {
         return this.typeTransitions.keySet();
     }
