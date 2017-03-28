@@ -25,4 +25,5 @@ def foo2(a)
 end
 Foo
 
+x = A.new.foo2(Date.new)
 x = A.new.foo2(B.new)

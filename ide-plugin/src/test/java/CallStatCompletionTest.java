@@ -34,7 +34,10 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
 
     public void testMultipleExecution() {
         executeScript("multiple_execution_test1.rb");
-        doTest("multiple_execution_test2", "foo2", "test1", "test2");
+        RSignatureContract contract = doTest("multiple_execution_test2", "foo2", "test1", "test2");
+
+        Assert.assertEquals(contract.getLevels().size(), 2);
+        Assert.assertEquals(contract.getLevels().get(1).size(), 1);
     }
 
 
@@ -56,7 +59,7 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
         }
     }
 
-    private void doTest(@NotNull String name, @NotNull String method_name, String... items) {
+    private RSignatureContract doTest(@NotNull String name, @NotNull String method_name, String... items) {
 
         final String scriptName = name + ".rb";
         final String runnableScriptName = name + "_to_run.rb";
@@ -70,21 +73,25 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
 
         int cnt = 0;
 
-        while (contract == null && cnt < 10) {
+        while (contract == null && cnt < 20) {
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
                 LOGGER.severe(e.getMessage());
                 e.printStackTrace();
             }
-            contract = callStatServer.getContractByMethodName(method_name);
+            RSignatureContract currContract = callStatServer.getContractByMethodName(method_name);
+
+            if (currContract != null && !currContract.locked)
+                contract = currContract;
+
             cnt++;
         }
 
-        Assert.assertEquals(contract.getLevels().size(), 2);
-        Assert.assertEquals(contract.getLevels().get(1).size(), 1);
+        Assert.assertNotNull(contract);
 
         myFixture.testCompletionVariants(scriptName, items);
+        return contract;
     }
 
 }

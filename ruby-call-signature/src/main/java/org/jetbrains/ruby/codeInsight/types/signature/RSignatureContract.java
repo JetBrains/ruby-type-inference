@@ -141,7 +141,7 @@ public class RSignatureContract implements SignatureContract {
             List<RSignatureContractNode> level = levels.get(i);
 
             HashMap<RSignatureContractNode, RSignatureContractNode> representatives = new HashMap<>();
-            List<Integer> uselessVertices = new ArrayList<>();
+            List<RSignatureContractNode> uselessVertices = new ArrayList<>();
 
             for (RSignatureContractNode node : level) {
                 representatives.put(node, node);
@@ -164,7 +164,7 @@ public class RSignatureContract implements SignatureContract {
                     if (isSame) {
                         RSignatureContractNode vertex1presenter = representatives.get(vertex1);
                         representatives.put(vertex2, vertex1presenter);
-                        uselessVertices.add(v2);
+                        uselessVertices.add(vertex2);
                     }
                 }
             }
@@ -180,9 +180,8 @@ public class RSignatureContract implements SignatureContract {
                     }
                 }
             }
-            for (int index : uselessVertices) {
-                if (this.levels.get(i).size() > index)
-                    this.levels.get(i).remove(index);
+            for (RSignatureContractNode node : uselessVertices) {
+                this.levels.get(i).remove(node);
             }
         }
     }

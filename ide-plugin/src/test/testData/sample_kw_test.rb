@@ -26,4 +26,4 @@ def foo1(kw: a)
 end
 Foo
 
-x = A.new.foo1(kw: C.new).< caret>
+x = A.new.foo1(kw: C.new).<caret>

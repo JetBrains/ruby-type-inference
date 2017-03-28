@@ -25,4 +25,4 @@ def foo(a)
 end
 Foo
 
-x = A.new.foo(C.new).< caret>
+x = A.new.foo(C.new).<caret>
