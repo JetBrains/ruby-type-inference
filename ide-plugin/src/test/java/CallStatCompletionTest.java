@@ -10,6 +10,7 @@ import org.jetbrains.plugins.ruby.ruby.sdk.RubySdkType;
 import org.jetbrains.plugins.ruby.ruby.sdk.RubySdkUtil;
 import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContract;
 import org.jetbrains.ruby.runtime.signature.server.SignatureServer;
+import org.junit.Assert;
 
 import java.util.Collections;
 import java.util.logging.Logger;
@@ -31,14 +32,13 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
         doTest("sample_kw_test", "foo1", "test1", "test2");
     }
 
+    public void testMultipleExecution() {
+        executeScript("multiple_execution_test1.rb");
+        doTest("multiple_execution_test2", "foo2", "test1", "test2");
+    }
 
-    private void doTest(@NotNull String name, @NotNull String method_name, String... items) {
 
-        final String scriptName = name + ".rb";
-        final String runnableScriptName = name + "_to_run.rb";
-
-        myFixture.configureByFiles(scriptName, runnableScriptName);
-
+    private void executeScript(@NotNull String runnableScriptName) {
         final String scriptPath = PathManager.getAbsolutePath(getTestDataPath() + "/" + runnableScriptName);
 
         final String versionName = "2.3.0";
@@ -54,12 +54,23 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
             LOGGER.severe(e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    private void doTest(@NotNull String name, @NotNull String method_name, String... items) {
+
+        final String scriptName = name + ".rb";
+        final String runnableScriptName = name + "_to_run.rb";
+
+        myFixture.configureByFiles(scriptName, runnableScriptName);
+
+        executeScript(runnableScriptName);
 
         SignatureServer callStatServer = SignatureServer.getInstance();
         RSignatureContract contract = null;
 
+        int cnt = 0;
 
-        while (contract == null) {
+        while (contract == null && cnt < 10) {
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
@@ -67,7 +78,11 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
                 e.printStackTrace();
             }
             contract = callStatServer.getContractByMethodName(method_name);
+            cnt++;
         }
+
+        Assert.assertEquals(contract.getLevels().size(), 2);
+        Assert.assertEquals(contract.getLevels().get(1).size(), 1);
 
         myFixture.testCompletionVariants(scriptName, items);
     }

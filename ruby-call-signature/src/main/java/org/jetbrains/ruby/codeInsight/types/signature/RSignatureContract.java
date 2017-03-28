@@ -226,6 +226,9 @@ public class RSignatureContract implements SignatureContract {
         }
     }
 
+    public List<List<RSignatureContractNode>> getLevels() {
+        return levels;
+    }
     public int getNumberOfCalls() {
         return myNumberOfCalls;
     }

@@ -37,7 +37,6 @@ public class RSignatureContractNode implements SignatureNode {
         typeTransitions.put(newTransition, node);
     }
 
-    @NotNull
     public RSignatureContractNode goByTypeSymbol(ContractTransition typeName) {
         return ((RSignatureContractNode) typeTransitions.get(typeName));
     }
