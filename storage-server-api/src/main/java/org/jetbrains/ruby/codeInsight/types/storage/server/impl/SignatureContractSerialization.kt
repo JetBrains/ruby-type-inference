@@ -17,7 +17,7 @@ import kotlin.reflect.KProperty
 fun ContractTransition.serialize(stream: DataOutput) {
     stream.writeBoolean(this is ReferenceContractTransition)
     when (this) {
-        is ReferenceContractTransition -> stream.writeInt(link)
+        is ReferenceContractTransition -> stream.writeInt(mask)
         is TypedContractTransition -> stream.writeUTF(type)
         else -> throw IllegalStateException("ContractTransition should be sealed in these classes")
     }

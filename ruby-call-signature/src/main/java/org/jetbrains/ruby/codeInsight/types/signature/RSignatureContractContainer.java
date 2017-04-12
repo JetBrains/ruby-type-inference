@@ -20,7 +20,6 @@ public class RSignatureContractContainer {
                     final MethodInfo key = entry.getKey();
                     contracts.get(key).locked = true;
                     contracts.get(key).minimization();
-                    contracts.get(key).compression();
                     contracts.get(key).locked = false;
                 });
         System.out.println("Finished");

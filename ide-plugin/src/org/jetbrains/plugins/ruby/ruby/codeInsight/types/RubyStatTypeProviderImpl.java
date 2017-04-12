@@ -24,6 +24,7 @@ import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContract;
 import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContractNode;
 import org.jetbrains.ruby.codeInsight.types.signature.RSignatureFetcher;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition;
+import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ReferenceContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.TypedContractTransition;
 import org.jetbrains.ruby.runtime.signature.server.SignatureServer;
 
@@ -31,46 +32,58 @@ import java.util.*;
 
 public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
 
-    private Map<RSignatureContractNode, List<Set<String>>> getNextLevel(Map<RSignatureContractNode, List<Set<String>>> currNodesAndReadTypes, Set<String> argTypeNames) {
+    private int countMask(List<Set<String>> readTypes, String type, int currPosition) {
+        int ans = 0;
 
-        //final Set<String> argTypeNames = getArgTypeNames(argument);
+        for (int i = currPosition - 1; i >= 0; i--) {
+            ans <<= 1;
+
+            if (readTypes.get(i).contains(type)) {
+                ans |= 1;
+            }
+        }
+
+        return ans;
+    }
+
+    private Map<RSignatureContractNode, List<Set<String>>> getNextLevel(Map<RSignatureContractNode, List<Set<String>>> currNodesAndReadTypes, Set<String> argTypeNames, int pos) {
 
         Map<RSignatureContractNode, List<Set<String>>> nextLayer = new HashMap<>();
         currNodesAndReadTypes.forEach((node, readTypeSets) -> {
-            if (node.getReferenceLinksFlag()) {
-                ContractTransition transition = node.getTransitionKeys().iterator().next();
 
-                if (transition.getValue(readTypeSets).containsAll(argTypeNames)) {
-                    readTypeSets.add(argTypeNames);
+            for (final String typeName : argTypeNames) {
+                TypedContractTransition transition = new TypedContractTransition(typeName);
 
-                    final RSignatureContractNode to = node.goByTypeSymbol(transition);
-                    addReadTypesList(nextLayer, readTypeSets, to);
-                }
-            } else {
-                for (final String typeName : argTypeNames) {
-                    TypedContractTransition transition = new TypedContractTransition(typeName);
+                if (node.containsKey(transition)) {
+                    final List<Set<String>> newList = new ArrayList<>(readTypeSets);
+                    newList.add(ContainerUtil.newHashSet(typeName));
 
-                    if (node.containsKey(transition)) {
+                    addReadTypesList(nextLayer, newList, node.goByTransition(transition));
+                } else {
+                    int mask = countMask(readTypeSets, typeName, pos);
+
+                    ReferenceContractTransition transition1 = new ReferenceContractTransition(mask);
+
+                    if (node.containsKey(transition1)) {
                         final List<Set<String>> newList = new ArrayList<>(readTypeSets);
                         newList.add(ContainerUtil.newHashSet(typeName));
 
-                        addReadTypesList(nextLayer, newList, node.goByTypeSymbol(transition));
+                        addReadTypesList(nextLayer, newList, node.goByTransition(transition1));
                     }
                 }
             }
-
 
         });
 
         return nextLayer;
     }
 
-    private Map<RSignatureContractNode, List<Set<String>>> getNextLevelByString(Map<RSignatureContractNode, List<Set<String>>> currNodesAndReadTypes, String argName) {
+    private Map<RSignatureContractNode, List<Set<String>>> getNextLevelByString(Map<RSignatureContractNode, List<Set<String>>> currNodesAndReadTypes, String argName, int pos) {
 
         Set<String> tmpSet = new HashSet<>();
         tmpSet.add(argName);
 
-        return getNextLevel(currNodesAndReadTypes, tmpSet);
+        return getNextLevel(currNodesAndReadTypes, tmpSet, pos);
     }
 
     public Symbol findMethodForType(@NotNull RType var1, @NotNull String var2) {
@@ -105,7 +118,6 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
             final String receiverName = StringUtil.notNullize(names.getSecond(), CoreTypes.Object);
 
             RSignatureContract contract = callStatServer.getContractByMethodAndReceiverName(methodName, receiverName);
-            // TODO fix npe (done)
 
             if (contract == null)
                 return REmptyType.INSTANCE;
@@ -123,13 +135,13 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
                                 paramInfos.get(i).getModifier() == ParameterInfo.Type.KEYREQ) {
                             RPsiElement currElement = kwArgs.get(paramInfos.get(i).getName());
 
-                            currNodesAndReadTypes = getNextLevel(currNodesAndReadTypes, getArgTypeNames(currElement));
+                            currNodesAndReadTypes = getNextLevel(currNodesAndReadTypes, getArgTypeNames(currElement), i);
                         } else {
                             RPsiElement currElement = simpleArgs.poll();
-                            currNodesAndReadTypes = getNextLevel(currNodesAndReadTypes, getArgTypeNames(currElement));
+                            currNodesAndReadTypes = getNextLevel(currNodesAndReadTypes, getArgTypeNames(currElement), i);
                         }
                     } else {
-                        currNodesAndReadTypes = getNextLevelByString(currNodesAndReadTypes, "-");
+                        currNodesAndReadTypes = getNextLevelByString(currNodesAndReadTypes, "-", i);
                     }
                 }
             }

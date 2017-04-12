@@ -11,69 +11,47 @@ import java.util.Set;
 public class RSignatureContractNode implements SignatureNode {
 
     private boolean hasReferenceLinks = false;
-    private ContractNodeType type;
-    private int mask = 0;
 
     @NotNull
-    private final Map<ContractTransition, SignatureNode> typeTransitions;
+    private final Map<ContractTransition, SignatureNode> transitions;
 
     public RSignatureContractNode(ContractNodeType type) {
 
-        this.type = type;
         if (type != ContractNodeType.returnTypeNode) {
-            typeTransitions = new HashMap<>();
+            transitions = new HashMap<>();
         } else {
-            typeTransitions = Collections.emptyMap();
+            transitions = Collections.emptyMap();
         }
     }
 
-    void setMask(int mask) {
-        this.mask = mask;
-    }
 
-    void changeTransitionType(ContractTransition oldTransition, ContractTransition newTransition) {
-        SignatureNode node = typeTransitions.get(oldTransition);
-        typeTransitions.remove(oldTransition);
-        typeTransitions.put(newTransition, node);
-    }
+    public RSignatureContractNode goByTransition(ContractTransition transition) {
 
-    public RSignatureContractNode goByTypeSymbol(ContractTransition typeName) {
-        return ((RSignatureContractNode) typeTransitions.get(typeName));
-    }
-
-    void setReferenceLinks() {
-        hasReferenceLinks = true;
+        return ((RSignatureContractNode) transitions.get(transition));
     }
 
     public boolean getReferenceLinksFlag() {
         return hasReferenceLinks;
     }
 
-    int getMask() {
-        return this.mask;
-    }
-
-    void updateMask(int tempMask) {
-        mask &= tempMask;
-    }
-
     @NotNull
     public Set<ContractTransition> getTransitionKeys() {
-        return this.typeTransitions.keySet();
-    }
-
-    public boolean containsKey(ContractTransition key) {
-        return this.typeTransitions.containsKey(key);
+        return this.transitions.keySet();
     }
 
     public void addLink(final @NotNull ContractTransition transition, @NotNull RSignatureContractNode arrivalNode) {
-        this.typeTransitions.put(transition, arrivalNode);
+        this.transitions.put(transition, arrivalNode);
     }
+
+    public boolean containsKey(final @NotNull ContractTransition transition) {
+        return this.transitions.keySet().contains(transition);
+    }
+
 
     @NotNull
     @Override
     public Map<ContractTransition, SignatureNode> getTransitions() {
-        return typeTransitions;
+        return transitions;
     }
 
     public enum ContractNodeType {

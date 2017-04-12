@@ -31,7 +31,7 @@ public class TypedContractTransition implements ContractTransition {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        final TypedContractTransition that = (TypedContractTransition) o;
+        TypedContractTransition that = (TypedContractTransition) o;
 
         return myType.equals(that.myType);
     }

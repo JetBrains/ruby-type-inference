@@ -8,7 +8,6 @@ import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.TypedCo
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 
 public class RSignatureContract implements SignatureContract {
 
@@ -99,38 +98,45 @@ public class RSignatureContract implements SignatureContract {
         for (int argIndex = 0; argIndex < argsTypes.size(); argIndex++) {
             final String type = argsTypes.get(argIndex);
 
-            final int mask = getNewMask(signature.getArgsTypes(), argIndex, returnType, type);
-            final TypedContractTransition transition = new TypedContractTransition(type);
+            final int mask = getNewMask(signature.getArgsTypes(), argIndex, type);
 
-            if (currNode.goByTypeSymbol(transition) == null) {
+            ContractTransition transition = null;
+
+            if (mask > 0)
+                transition = new ReferenceContractTransition(mask);
+            else
+                transition = new TypedContractTransition(type);
+
+            if (currNode.goByTransition(transition) == null) {
                 final RSignatureContractNode newNode = createNodeAndAddToLevels(argIndex + 1);
 
                 currNode.addLink(transition, newNode);
 
-                newNode.setMask(mask);
                 currNode = newNode;
             } else {
-                currNode = currNode.goByTypeSymbol(transition);
-                currNode.updateMask(mask);
+                currNode = currNode.goByTransition(transition);
             }
         }
 
-        currNode.addLink(new TypedContractTransition(returnType), termNode);
+        final int mask = getNewMask(signature.getArgsTypes(), signature.getArgsTypes().size(), returnType);
+        if (mask > 0) {
+            currNode.addLink(new ReferenceContractTransition(mask), termNode);
+        } else {
+            currNode.addLink(new TypedContractTransition(returnType), termNode);
+        }
     }
 
-    private int getNewMask(@NotNull List<String> argsTypes, int argIndex, String returnType, String addedType) {
+    private int getNewMask(@NotNull List<String> argsTypes, int argIndex, @NotNull String type) {
         int tempMask = 0;
-        for (int j = argIndex + 1; j < argsTypes.size(); j++) {
+
+        for (int i = argIndex - 1; i >= 0; i--) {
             tempMask <<= 1;
-            if (argsTypes.get(j).equals(addedType)) {
+
+            if (argsTypes.get(i).equals(type)) {
                 tempMask |= 1;
             }
         }
 
-        if (returnType.equals(addedType)) {
-            tempMask <<= 1;
-            tempMask |= 1;
-        }
         return tempMask;
     }
 
@@ -156,7 +162,7 @@ public class RSignatureContract implements SignatureContract {
 
                     for (ContractTransition transition : vertex1.getTransitionKeys()) {
 
-                        if (vertex1.goByTypeSymbol(transition) != vertex2.goByTypeSymbol(transition)) {
+                        if (vertex1.goByTransition(transition) != vertex2.goByTransition(transition)) {
                             isSame = false;
                         }
                     }
@@ -175,7 +181,7 @@ public class RSignatureContract implements SignatureContract {
             if (uselessVertices.size() > 0) {
                 for (RSignatureContractNode node : prevLevel) {
                     for (ContractTransition transition : node.getTransitionKeys()) {
-                        RSignatureContractNode child = node.goByTypeSymbol(transition);
+                        RSignatureContractNode child = node.goByTransition(transition);
                         node.addLink(transition, representatives.get(child));
                     }
                 }
@@ -186,48 +192,11 @@ public class RSignatureContract implements SignatureContract {
         }
     }
 
-    public void compression() {
-        compressionDFS(getStartNode(), 0);
-        minimization();
-    }
-
-    private void compressionDFS(@NotNull RSignatureContractNode node, int level) {
-        int commonMask = -1;
-
-
-        for (ContractTransition transition : node.getTransitionKeys()) {
-            commonMask &= node.goByTypeSymbol(transition).getMask();
-        }
-
-        if (commonMask > 0 && node.getTransitionKeys().size() > 1) {
-            for (ContractTransition transition : node.getTransitionKeys()) {
-                updateSubtreeTypeDFS(node.goByTypeSymbol(transition), commonMask, level, level + 1, transition);
-            }
-        }
-        for (ContractTransition transition : node.getTransitionKeys()) {
-            compressionDFS(node.goByTypeSymbol(transition), level + 1);
-        }
-    }
-
-    private void updateSubtreeTypeDFS(@NotNull RSignatureContractNode node, int mask, int parentLevel, int level, @NotNull ContractTransition transition) {
-
-        if (mask % 2 == 1 && node.getTransitionKeys().contains(transition)) {
-            ReferenceContractTransition newTransition = new ReferenceContractTransition(parentLevel);
-
-            node.setReferenceLinks();
-            node.changeTransitionType(transition, newTransition);
-        }
-
-        Set<ContractTransition> transitions = node.getTransitionKeys();
-
-        for (ContractTransition typeTransition : transitions) {
-            updateSubtreeTypeDFS(node.goByTypeSymbol(typeTransition), mask >> 1, parentLevel, level + 1, transition);
-        }
-    }
 
     public List<List<RSignatureContractNode>> getLevels() {
         return levels;
     }
+
     public int getNumberOfCalls() {
         return myNumberOfCalls;
     }

@@ -2,25 +2,45 @@ package org.jetbrains.ruby.codeInsight.types.signature.contractTransition;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 public class ReferenceContractTransition implements ContractTransition {
 
-    private final int myLink;
+    private final int myMask;
 
-    public ReferenceContractTransition(int link) {
-        myLink = link;
+    public ReferenceContractTransition(int mask) {
+        myMask = mask;
     }
 
     @NotNull
     @Override
     public Set<String> getValue(@NotNull List<Set<String>> readTypes) {
-        return readTypes.get(myLink);
+        int tmpMask = myMask;
+        int cnt = 0;
+
+        Set<String> ans = null;
+
+        while (tmpMask > 0) {
+            if (tmpMask % 2 == 1) {
+                if (ans == null) {
+                    ans = new HashSet<>();
+                    ans.addAll(readTypes.get(cnt));
+                } else {
+                    ans.retainAll(readTypes.get(cnt));
+                }
+            }
+
+            tmpMask /= 2;
+            cnt++;
+        }
+
+        return ans;
     }
 
-    public int getLink() {
-        return myLink;
+    public int getMask() {
+        return myMask;
     }
 
     @Override
@@ -28,13 +48,13 @@ public class ReferenceContractTransition implements ContractTransition {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        final ReferenceContractTransition that = (ReferenceContractTransition) o;
+        ReferenceContractTransition that = (ReferenceContractTransition) o;
 
-        return myLink == that.myLink;
+        return myMask == that.myMask;
     }
 
     @Override
     public int hashCode() {
-        return myLink;
+        return myMask;
     }
 }
