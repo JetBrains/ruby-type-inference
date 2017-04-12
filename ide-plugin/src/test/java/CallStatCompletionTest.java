@@ -1,5 +1,6 @@
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionModes;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -40,6 +41,14 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
         Assert.assertEquals(contract.getLevels().get(1).size(), 1);
     }
 
+    public void testRefLinks() {
+        RSignatureContract contract = doTest("ref_links_test", "doo", "test1", "test2");
+
+        Assert.assertEquals(contract.getLevels().size(), 4);
+        Assert.assertEquals(contract.getLevels().get(1).size(), 3);
+        Assert.assertEquals(contract.getLevels().get(2).size(), 2);
+        Assert.assertEquals(contract.getLevels().get(3).size(), 2);
+    }
 
     private void executeScript(@NotNull String runnableScriptName) {
         final String scriptPath = PathManager.getAbsolutePath(getTestDataPath() + "/" + runnableScriptName);
@@ -51,12 +60,16 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
 
         final Module module = myFixture.getModule();
 
+        ProcessOutput output = null;
+
         try {
-            RubyScriptRunner.runRubyScript(rubySdk, module, scriptPath, myFixture.getTestDataPath(), new ExecutionModes.SameThreadMode(30), null, null, "");
+            output = RubyScriptRunner.runRubyScript(rubySdk, module, scriptPath, myFixture.getTestDataPath(), new ExecutionModes.SameThreadMode(30), null, null, "");
         } catch (ExecutionException e) {
             LOGGER.severe(e.getMessage());
             e.printStackTrace();
         }
+
+        Assert.assertNotNull(output);
     }
 
     private RSignatureContract doTest(@NotNull String name, @NotNull String method_name, String... items) {
@@ -73,7 +86,7 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
 
         int cnt = 0;
 
-        while (contract == null && cnt < 20) {
+        while (contract == null && cnt < 10) {
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
