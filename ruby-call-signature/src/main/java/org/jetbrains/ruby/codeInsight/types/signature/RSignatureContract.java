@@ -200,4 +200,19 @@ public class RSignatureContract implements SignatureContract {
     public int getNumberOfCalls() {
         return myNumberOfCalls;
     }
+
+    void mergeDFS(RSignatureContractNode node1, RSignatureContractNode node2) {
+        for (ContractTransition transition : node2.getTransitionKeys()) {
+            if (node1.getTransitionKeys().contains(transition)) {
+                mergeDFS(node1.goByTransition(transition), node2.goByTransition(transition));
+            } else {
+                node1.addLink(transition, node2.goByTransition(transition));
+            }
+        }
+    }
+
+    public void merge(RSignatureContract additive) {
+        mergeDFS(startContractNode, additive.getStartNode());
+        minimization();
+    }
 }

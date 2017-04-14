@@ -25,6 +25,10 @@ public class RSignatureContractContainer {
         System.out.println("Finished");
     }
 
+    public void addContract(@NotNull MethodInfo info, @NotNull RSignatureContract contract) {
+        contracts.put(info, contract);
+    }
+
     public void addSignature(@NotNull RSignature signature) {
         MethodInfo currInfo = signature.getMethodInfo();
 
@@ -44,6 +48,17 @@ public class RSignatureContractContainer {
             contract.locked = true;
             contracts.put(currInfo, contract);
             contract.locked = false;
+        }
+    }
+
+    public void merge(RSignatureContractContainer additive) {
+
+        for (MethodInfo methodInfo : additive.getKeySet()) {
+            if (getKeySet().contains(methodInfo)) {
+                contracts.get(methodInfo).merge(additive.getSignature(methodInfo));
+            } else {
+                addContract(methodInfo, additive.getSignature(methodInfo));
+            }
         }
     }
 
