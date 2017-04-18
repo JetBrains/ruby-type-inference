@@ -24,7 +24,7 @@ public class RSignatureContractNode implements SignatureNode {
         }
     }
 
-
+    @NotNull
     public RSignatureContractNode goByTransition(ContractTransition transition) {
 
         return ((RSignatureContractNode) transitions.get(transition));

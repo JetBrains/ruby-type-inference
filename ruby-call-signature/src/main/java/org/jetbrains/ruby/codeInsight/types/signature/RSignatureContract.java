@@ -110,7 +110,7 @@ public class RSignatureContract implements SignatureContract {
 
             final ContractTransition transition = calculateTransition(signature.getArgsTypes(), argIndex, type);
 
-            if (currNode.goByTransition(transition) == null) {
+            if (!currNode.containsKey(transition)) {
                 final RSignatureContractNode newNode = createNodeAndAddToLevels(argIndex + 1);
 
                 currNode.addLink(transition, newNode);
@@ -162,7 +162,7 @@ public class RSignatureContract implements SignatureContract {
 
                     for (ContractTransition transition : vertex1.getTransitionKeys()) {
 
-                        if (vertex1.goByTransition(transition) != vertex2.goByTransition(transition)) {
+                        if (!vertex2.containsKey(transition) || vertex1.goByTransition(transition) != vertex2.goByTransition(transition)) {
                             isSame = false;
                         }
                     }
