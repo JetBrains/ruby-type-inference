@@ -25,8 +25,7 @@ public class ReferenceContractTransition implements ContractTransition {
         while (tmpMask > 0) {
             if (tmpMask % 2 == 1) {
                 if (ans == null) {
-                    ans = new HashSet<>();
-                    ans.addAll(readTypes.get(cnt));
+                    ans = new HashSet<>(readTypes.get(cnt));
                 } else {
                     ans.retainAll(readTypes.get(cnt));
                 }

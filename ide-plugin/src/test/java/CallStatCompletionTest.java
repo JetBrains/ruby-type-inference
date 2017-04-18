@@ -1,6 +1,5 @@
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionModes;
-import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -72,16 +71,12 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
 
         final Module module = myFixture.getModule();
 
-        ProcessOutput output = null;
-
         try {
-            output = RubyScriptRunner.runRubyScript(rubySdk, module, scriptPath, myFixture.getTestDataPath(), new ExecutionModes.SameThreadMode(30), null, null, "");
+            RubyScriptRunner.runRubyScript(rubySdk, module, scriptPath, myFixture.getTestDataPath(), new ExecutionModes.SameThreadMode(30), null, null, "");
         } catch (ExecutionException e) {
             LOGGER.severe(e.getMessage());
             e.printStackTrace();
         }
-
-        Assert.assertNotNull(output);
     }
 
     private RSignatureContract doTest(@NotNull String name, @NotNull String method_name, String... items) {

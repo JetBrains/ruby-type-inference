@@ -86,6 +86,16 @@ public class RSignatureContract implements SignatureContract {
         return levels.stream().map(List::size).reduce(0, (a, b) -> a + b);
     }
 
+    @NotNull
+    ContractTransition calculateTransition(@NotNull List<String> argTypes, int argIndex, String type) {
+        final int mask = getNewMask(argTypes, argIndex, type);
+
+        if (mask > 0)
+            return new ReferenceContractTransition(mask);
+        else
+            return new TypedContractTransition(type);
+    }
+
     public void addRSignature(RSignature signature) {
         myNumberOfCalls++;
         RSignatureContractNode currNode = this.startContractNode;
@@ -98,14 +108,7 @@ public class RSignatureContract implements SignatureContract {
         for (int argIndex = 0; argIndex < argsTypes.size(); argIndex++) {
             final String type = argsTypes.get(argIndex);
 
-            final int mask = getNewMask(signature.getArgsTypes(), argIndex, type);
-
-            ContractTransition transition = null;
-
-            if (mask > 0)
-                transition = new ReferenceContractTransition(mask);
-            else
-                transition = new TypedContractTransition(type);
+            final ContractTransition transition = calculateTransition(signature.getArgsTypes(), argIndex, type);
 
             if (currNode.goByTransition(transition) == null) {
                 final RSignatureContractNode newNode = createNodeAndAddToLevels(argIndex + 1);
@@ -118,12 +121,9 @@ public class RSignatureContract implements SignatureContract {
             }
         }
 
-        final int mask = getNewMask(signature.getArgsTypes(), signature.getArgsTypes().size(), returnType);
-        if (mask > 0) {
-            currNode.addLink(new ReferenceContractTransition(mask), termNode);
-        } else {
-            currNode.addLink(new TypedContractTransition(returnType), termNode);
-        }
+        final ContractTransition transition = calculateTransition(signature.getArgsTypes(), signature.getArgsTypes().size(), returnType);
+
+        currNode.addLink(transition, termNode);
     }
 
     private int getNewMask(@NotNull List<String> argsTypes, int argIndex, @NotNull String type) {

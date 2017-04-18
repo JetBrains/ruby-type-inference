@@ -52,23 +52,23 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
         currNodesAndReadTypes.forEach((node, readTypeSets) -> {
 
             for (final String typeName : argTypeNames) {
-                TypedContractTransition transition = new TypedContractTransition(typeName);
+                TypedContractTransition typedTransition = new TypedContractTransition(typeName);
 
-                if (node.containsKey(transition)) {
+                if (node.containsKey(typedTransition)) {
                     final List<Set<String>> newList = new ArrayList<>(readTypeSets);
                     newList.add(ContainerUtil.newHashSet(typeName));
 
-                    addReadTypesList(nextLayer, newList, node.goByTransition(transition));
+                    addReadTypesList(nextLayer, newList, node.goByTransition(typedTransition));
                 } else {
                     int mask = countMask(readTypeSets, typeName, pos);
 
-                    ReferenceContractTransition transition1 = new ReferenceContractTransition(mask);
+                    ReferenceContractTransition refTransition = new ReferenceContractTransition(mask);
 
-                    if (node.containsKey(transition1)) {
+                    if (node.containsKey(refTransition)) {
                         final List<Set<String>> newList = new ArrayList<>(readTypeSets);
                         newList.add(ContainerUtil.newHashSet(typeName));
 
-                        addReadTypesList(nextLayer, newList, node.goByTransition(transition1));
+                        addReadTypesList(nextLayer, newList, node.goByTransition(refTransition));
                     }
                 }
             }
