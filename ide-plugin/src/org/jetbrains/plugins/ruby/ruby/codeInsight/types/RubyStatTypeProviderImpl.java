@@ -35,10 +35,12 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
     private int countMask(List<Set<String>> readTypes, String type, int currPosition) {
         int ans = 0;
 
-        for (int i = currPosition - 1; i >= 0; i--) {
+        List<Set<String>> readTypesReversed = ContainerUtil.reverse(readTypes.subList(0, currPosition));
+
+        for (Set<String> strings : readTypesReversed) {
             ans <<= 1;
 
-            if (readTypes.get(i).contains(type)) {
+            if (strings.contains(type)) {
                 ans |= 1;
             }
         }
