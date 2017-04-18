@@ -34,14 +34,14 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
 
     public void testMultipleExecution() {
         executeScript("multiple_execution_test1.rb");
-        RSignatureContract contract = doTest("multiple_execution_test2", "foo2", "test1", "test2");
+        RSignatureContract contract = doTestContract("multiple_execution_test2", "foo2");
 
         Assert.assertEquals(contract.getLevels().size(), 2);
         Assert.assertEquals(contract.getLevels().get(1).size(), 1);
     }
 
     public void testRefLinks() {
-        RSignatureContract contract = doTest("ref_links_test", "doo", "test1", "test2");
+        RSignatureContract contract = doTestContract("ref_links_test", "doo");
 
         Assert.assertEquals(contract.getLevels().size(), 4);
         Assert.assertEquals(contract.getLevels().get(1).size(), 3);
@@ -50,8 +50,8 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
     }
 
     public void testMerge() {
-        RSignatureContract contract1 = doTest("merge_test1", "doo1", "test1", "test2");
-        RSignatureContract contract2 = doTest("merge_test2", "doo2", "test3", "test4");
+        RSignatureContract contract1 = doTestContract("merge_test1", "doo1");
+        RSignatureContract contract2 = doTestContract("merge_test2", "doo2");
 
         contract1.merge(contract2);
 
@@ -79,8 +79,7 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
         }
     }
 
-    private RSignatureContract doTest(@NotNull String name, @NotNull String method_name, String... items) {
-
+    private RSignatureContract run(@NotNull String name, @NotNull String method_name) {
         final String scriptName = name + ".rb";
         final String runnableScriptName = name + "_to_run.rb";
 
@@ -108,10 +107,19 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
             cnt++;
         }
 
-        Assert.assertNotNull(contract);
+        return contract;
+    }
+
+    private void doTest(@NotNull String name, @NotNull String method_name, String... items) {
+
+        final String scriptName = name + ".rb";
+        run(name, method_name);
 
         myFixture.testCompletionVariants(scriptName, items);
-        return contract;
+    }
+
+    private RSignatureContract doTestContract(@NotNull String name, @NotNull String method_name) {
+        return run(name, method_name);
     }
 
 }
