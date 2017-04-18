@@ -46,12 +46,12 @@ public class RSignatureContract implements SignatureContract {
     }
 
     public RSignatureContract(RSignature signature) {
-        this.levels = new ArrayList<>();
-        this.termNode = new RSignatureContractNode(RSignatureContractNode.ContractNodeType.returnTypeNode);
-        this.myArgsInfo = signature.getArgsInfo();
-        this.startContractNode = this.createNodeAndAddToLevels(0);
+        levels = new ArrayList<>();
+        termNode = new RSignatureContractNode(RSignatureContractNode.ContractNodeType.returnTypeNode);
+        myArgsInfo = signature.getArgsInfo();
+        startContractNode = this.createNodeAndAddToLevels(0);
 
-        this.addRSignature(signature);
+        addRSignature(signature);
     }
 
     public RSignatureContract(@NotNull List<ParameterInfo> argsInfo,
@@ -98,7 +98,7 @@ public class RSignatureContract implements SignatureContract {
 
     public void addRSignature(RSignature signature) {
         myNumberOfCalls++;
-        RSignatureContractNode currNode = this.startContractNode;
+        RSignatureContractNode currNode = startContractNode;
 
         String returnType = signature.getReturnTypeName();
 
@@ -186,9 +186,8 @@ public class RSignatureContract implements SignatureContract {
                     }
                 }
             }
-            for (RSignatureContractNode node : uselessVertices) {
-                this.levels.get(i).remove(node);
-            }
+
+            level.removeAll(uselessVertices);
         }
     }
 
