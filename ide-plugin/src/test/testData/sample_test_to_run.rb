@@ -1,5 +1,5 @@
 require 'date'
-require '/home/viuginick/Soft/ruby-type-inference/ide-plugin/resources/type_tracker.rb'
+require '../../../resources/type_tracker.rb'
 
 class A
 
