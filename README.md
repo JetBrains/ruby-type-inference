@@ -24,16 +24,25 @@ The planned structure consists of the following parts:
 
 ## Usage
 
-1. The [arg scanner gem] is required for collecting type information. It should be installed to the
+#### Prerequisites
+
+The [arg scanner gem] is required for collecting type information. It should be installed to the
 target SDK manually and requires MRI Ruby at least 2.3.
 
-   **At the moment only Ruby 2.3 is supported**
+**At the moment only Ruby 2.3 is supported**
    
-   In order to build plugin:
-   * Select the appropriate ruby SDK if rvm is used
-   * `cd arg_scanner`
-   * `bundle install`
-   * `bundle exec rake install`
+In order to build plugin:
+* Select the appropriate ruby SDK if rvm is used
+* `cd arg_scanner`
+* `bundle install`
+* `bundle exec rake install`
+
+#### Running type tracker
+
+There are two possibilities to use the type tracker:
+_(i)_ requiring it from Ruby code and _(ii)_ using IJ/RubyMine plugin.
+
+##### Using in ruby code
 
 1. In order to collect the data for the script needs a contract server to be up and running;
    it could be run by running
@@ -50,9 +59,28 @@ target SDK manually and requires MRI Ruby at least 2.3.
 
 1. Use the data collected by the contract server.
 
-Currently the only way to try it is using RubyMine plugin (`./gradlew ide-plugin:runIde`); there is no need in running anything manually in that case.
+##### Using RubyMine plugin
 
-Other usages are to be added in the future.
+The easiest way to run the plugin (and the most convenient for its development) is
+running it with special gradle task against IJ Ultimate snapshot:
+ 
+```
+./gradlew ide-plugin:runIde
+```
+
+The task will compile the plugin, run IJ Ultimate with plugin "installed" in it.
+There is no need in running anything manually in that case.
+
+If you want to try it with existing RubyMine instance,
+you should:
+
+1. Build it via `./gradlew ide-plugin:buildPlugin`
+2. Install plugin in the IDE
+    * Navigate to `File | Settings | Plugins | Install plugin from disk...`
+    * Locate plugin in `ide-plugin/build/distributions` and select.
+    * Restart IDE.
+
+Note that due to API changes the plugin may be incompatible with older RM instances.
 
 ## Contributions
 
