@@ -10,7 +10,7 @@ symbol resolution and type inference.
 The planned structure consists of the following parts:
 * **Ruby Type Tracker** which collects the raw type data for all ruby calls in runtime.
   Currently consists of [type tracker script](ide-plugin/resources/type_tracker.rb) and
-  [arg_scanner gem] to intercept ruby calls and obtain lowlevel data from VM,
+  [arg scanner gem] to intercept ruby calls and obtain lowlevel data from VM,
   respectively;
 
 * [**Type contract producer**](contract-creator) server which listens for incoming raw data and transforms it
