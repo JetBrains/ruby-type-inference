@@ -29,8 +29,7 @@ The planned structure consists of the following parts:
 The [arg scanner gem] is required for collecting type information. It should be installed to the
 target SDK manually and requires MRI Ruby at least 2.3.
 
-**At the moment only Ruby 2.3 is supported**
-   
+
 In order to build plugin:
 * Select the appropriate ruby SDK if rvm is used
 * `cd arg_scanner`
