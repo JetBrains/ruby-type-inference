@@ -38,40 +38,6 @@ my_rb_vm_get_binding_creatable_next_cfp(const rb_thread_t *th, const rb_control_
     return 0;
 }
 
-static rb_control_frame_t *
-my_vm_get_ruby_level_caller_cfp(const rb_thread_t *th, const rb_control_frame_t *cfp)
-{
-    if (RUBY_VM_NORMAL_ISEQ_P(cfp->iseq)) {
-	return (rb_control_frame_t *)cfp;
-    }
-
-    cfp = RUBY_VM_PREVIOUS_CONTROL_FRAME(cfp);
-
-    while (!RUBY_VM_CONTROL_FRAME_STACK_OVERFLOW_P(th, cfp)) {
-	if (RUBY_VM_NORMAL_ISEQ_P(cfp->iseq)) {
-	    return (rb_control_frame_t *)cfp;
-	}
-
-	if ((cfp->flag & VM_FRAME_FLAG_PASSED) == 0) {
-	    break;
-	}
-	cfp = RUBY_VM_PREVIOUS_CONTROL_FRAME(cfp);
-    }
-    return 0;
-}
-
-rb_control_frame_t *
-my_rb_vm_get_ruby_level_next_cfp(const rb_thread_t *th, const rb_control_frame_t *cfp)
-{
-    while (!RUBY_VM_CONTROL_FRAME_STACK_OVERFLOW_P(th, cfp)) {
-	if (RUBY_VM_NORMAL_ISEQ_P(cfp->iseq)) {
-	    return (rb_control_frame_t *)cfp;
-	}
-	cfp = RUBY_VM_PREVIOUS_CONTROL_FRAME(cfp);
-    }
-    return 0;
-}
-
 VALUE get_call_info(VALUE self)
 {
     rb_thread_t *thread;
