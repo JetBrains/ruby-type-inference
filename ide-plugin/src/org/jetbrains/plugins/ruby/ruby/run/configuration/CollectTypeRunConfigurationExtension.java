@@ -3,8 +3,8 @@ package org.jetbrains.plugins.ruby.ruby.run.configuration;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -56,14 +56,13 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
                                     @NotNull final GeneralCommandLine cmdLine,
                                     @NotNull final String runnerId) throws ExecutionException {
         final String typeTrackerPath = PluginResourceUtil.getPluginResourcesPath() + "type_tracker.rb";
-
-        final Sdk sdk = configuration.getSdk();
-        if (sdk == null) {
+        final Module module = configuration.getModule();
+        if (module == null) {
             return;
         }
 
         final String includeOptions = Stream.of("sqlite3", "arg_scanner")
-                .map(gem -> getRequireKeyForGem(sdk, gem))
+                .map(gem -> getRequireKeyForGem(module, gem))
                 .filter(Objects::nonNull)
                 .reduce(String::concat)
                 .orElseGet(String::new);
@@ -76,8 +75,8 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
     }
 
     @Nullable
-    private String getRequireKeyForGem(@Nullable Sdk sdk, @NotNull String gemName) {
-        final GemInfo gemInfo = GemSearchUtil.findGem(sdk, gemName);
+    private String getRequireKeyForGem(@NotNull Module module, @NotNull String gemName) {
+        final GemInfo gemInfo = GemSearchUtil.findGem(module, gemName);
         if (gemInfo == null) {
             return null;
         }
