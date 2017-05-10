@@ -108,10 +108,13 @@ VALUE get_args_info(VALUE self)
     thread = ruby_current_thread;
     rb_control_frame_t *cfp = thread->cfp;
 
-
     cfp += 3;
 
+    VALUE ans = rb_ary_new();
+    VALUE types = rb_ary_new();
+
     VALUE *ep = cfp->ep;
+    ep -= cfp->iseq->body->local_table_size;
 
     int param_size = cfp->iseq->body->param.size;
     int lead_num = cfp->iseq->body->param.lead_num;
@@ -131,12 +134,11 @@ VALUE get_args_info(VALUE self)
 
     unsigned int ambiguous_param0 = cfp->iseq->body->param.flags.has_lead;
 
-    VALUE ans = rb_ary_new();
-    VALUE types = rb_ary_new();
+    int i;
 
-    for(int i = 0; i < param_size; i++)
+    for(i = param_size - 1; i >= 0; i--)
     {
-        VALUE klass = rb_class_real(CLASS_OF(*(ep - i - 2)));
+        VALUE klass = rb_class_real(CLASS_OF(*(ep + i - 1)));
         char* klass_name = rb_class2name(klass);
 
         rb_ary_push(types, rb_str_new_cstr(klass_name));
@@ -145,7 +147,7 @@ VALUE get_args_info(VALUE self)
     if(has_kw)
         param_size--;
 
-    for(int i = 0; i < lead_num; i++)
+    for(i = 0; i < lead_num; i++)
     {
         VALUE tmp = rb_ary_new();
         rb_ary_push(tmp, rb_str_new_cstr("REQ"));
@@ -154,7 +156,7 @@ VALUE get_args_info(VALUE self)
         rb_ary_push(ans, rb_ary_join(tmp, rb_str_new_cstr(",")));
     }
 
-    for(int i = 0; i < opt_num; i++)
+    for(i = 0; i < opt_num; i++)
     {
         VALUE tmp = rb_ary_new();
         rb_ary_push(tmp, rb_str_new_cstr("OPT"));
@@ -163,7 +165,7 @@ VALUE get_args_info(VALUE self)
         rb_ary_push(ans, rb_ary_join(tmp, rb_str_new_cstr(",")));
     }
 
-    for(int i = 0; i < has_rest; i++)
+    for(i = 0; i < has_rest; i++)
     {
         VALUE tmp = rb_ary_new();
         rb_ary_push(tmp, rb_str_new_cstr("REST"));
@@ -172,7 +174,7 @@ VALUE get_args_info(VALUE self)
         rb_ary_push(ans, rb_ary_join(tmp, rb_str_new_cstr(",")));
     }
 
-    for(int i = 0; i < post_num; i++)
+    for(i = 0; i < post_num; i++)
     {
         VALUE tmp = rb_ary_new();
         rb_ary_push(tmp, rb_str_new_cstr("POST"));
@@ -190,7 +192,7 @@ VALUE get_args_info(VALUE self)
 
         const VALUE * const default_values = cfp->iseq->body->param.keyword->default_values;
 
-        for(int i = 0; i < required_num; i++)
+        for(i = 0; i < required_num; i++)
         {
             VALUE tmp = rb_ary_new();
             rb_ary_push(tmp, rb_str_new_cstr("KEYREQ"));
@@ -203,7 +205,7 @@ VALUE get_args_info(VALUE self)
 
             rb_ary_push(ans, rb_ary_join(tmp, rb_str_new_cstr(",")));
         }
-        for(int i = required_num; i < kw_num; i++)
+        for(i = required_num; i < kw_num; i++)
         {
             VALUE tmp = rb_ary_new();
             rb_ary_push(tmp, rb_str_new_cstr("KEY"));
@@ -218,7 +220,7 @@ VALUE get_args_info(VALUE self)
         }
     }
 
-    for(int i = 0; i < has_kwrest; i++)
+    for(i = 0; i < has_kwrest; i++)
     {
         VALUE tmp = rb_ary_new();
         rb_ary_push(tmp, rb_str_new_cstr("KEYREST"));
@@ -227,7 +229,7 @@ VALUE get_args_info(VALUE self)
         rb_ary_push(ans, rb_ary_join(tmp, rb_str_new_cstr(",")));
     }
 
-    for(int i = 0; i < has_block; i++)
+    for(i = 0; i < has_block; i++)
     {
         VALUE tmp = rb_ary_new();
         rb_ary_push(tmp, rb_str_new_cstr("BLOCK"));
