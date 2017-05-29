@@ -129,7 +129,6 @@ handle_call(VALUE self)
     sign->method_name = c_method_name;
     sign->path = c_path;
 
-    //fprintf(stderr, "%s:%d\n", c_path, c_lineno);
     sign->args_info = get_args_info();
 
     if (is_call_info_needed())
@@ -159,7 +158,7 @@ handle_return(VALUE self, VALUE signature, VALUE receiver_name, VALUE return_typ
     sign->visibility = "PUBLIC";
 
     char* json_mes[100];
-    //\"gem_name\":\"%s\",\"gem_version\":\"%s\",
+
     sprintf(json_mes,
     "{\"method_name\":\"%s\",\"call_info_argc\":\"%d\",\"call_info_kw_args\":\"%s\",\"receiver_name\":\"%s\",\"args_info\":\"%s\",\"return_type_name\":\"%s\",\"visibility\":\"%s\",\"path\":\"%s\",\"lineno\":\"%d\",",
     sign->method_name,
@@ -168,8 +167,6 @@ handle_return(VALUE self, VALUE signature, VALUE receiver_name, VALUE return_typ
     sign->receiver_name,
     sign->args_info,
     sign->return_type_name,
-    //sign->gem_name,
-    //sign->gem_version,
     sign->visibility,
     sign->path,
     sign->lineno);
@@ -334,7 +331,6 @@ get_args_info()
         char* name = rb_id2name(cfp->iseq->body->local_table[ans_iterator]);
         if(name)
         {
-            //fprintf(stderr, "%s\n", name);
             ans[ans_iterator] = (char*)malloc(sizeof(char) * (6 + strlen(types[types_iterator])) + strlen(name));
 
             strcpy(ans[ans_iterator], "REQ,");
@@ -359,7 +355,6 @@ get_args_info()
         char* name = rb_id2name(cfp->iseq->body->local_table[ans_iterator]);
         if(name)
         {
-            //fprintf(stderr, "%s\n", name);
             ans[ans_iterator] = (char*)malloc(sizeof(char) * (6 + strlen(types[types_iterator])) + strlen(name));
 
             strcpy(ans[ans_iterator], "OPT,");
@@ -384,7 +379,6 @@ get_args_info()
         char* name = rb_id2name(cfp->iseq->body->local_table[ans_iterator]);
         if(name)
         {
-            //fprintf(stderr, "%s\n", name);
             ans[ans_iterator] = (char*)malloc(sizeof(char) * (7 + strlen(types[types_iterator]) + strlen(name)));
 
             strcpy(ans[ans_iterator], "REST,");
@@ -408,7 +402,6 @@ get_args_info()
         char* name = rb_id2name(cfp->iseq->body->local_table[ans_iterator]);
         if(name)
         {
-            //fprintf(stderr, "%s\n", name);
             ans[ans_iterator] = (char*)malloc(sizeof(char) * (7 + strlen(types[types_iterator]) + strlen(name)));
 
             strcpy(ans[ans_iterator], "POST,");
@@ -465,7 +458,6 @@ get_args_info()
         char* name = rb_id2name(cfp->iseq->body->local_table[ans_iterator]);
         if(name)
         {
-            //fprintf(stderr, "%s\n", name);
             ans[ans_iterator] = (char*)malloc(sizeof(char) * (10 + strlen(types[types_iterator]) + strlen(name)));
 
             strcpy(ans[ans_iterator], "KEYREST,");
@@ -489,7 +481,6 @@ get_args_info()
         char* name = rb_id2name(cfp->iseq->body->local_table[ans_iterator]);
         if(name)
         {
-            //fprintf(stderr, "%s\n", name);
             ans[ans_iterator] = (char*)malloc(sizeof(char) * (8 + strlen(types[types_iterator]) + strlen(name)));
 
             strcpy(ans[ans_iterator], "BLOCK,");
