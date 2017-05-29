@@ -1,49 +1,194 @@
-#include <stdio.h>
-#include <stddef.h>
-#include <stdint.h>
 #include "arg_scanner.h"
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
 
-#define MAX_POSBUF 128
 #define ruby_current_thread ((rb_thread_t *)RTYPEDDATA_DATA(rb_thread_current()))
-
-typedef enum { false, true } bool;
-
-#define VM_CFP_CNT(th, cfp) \
-  ((rb_control_frame_t *)((th)->stack + (th)->stack_size) - (rb_control_frame_t *)(cfp))
+typedef struct rb_trace_arg_struct rb_trace_arg_t;
 
 VALUE mArgScanner = Qnil;
 
-void Init_arg_scanner();
-VALUE get_args_info(VALUE self);
-VALUE get_call_info(VALUE self);
-VALUE is_call_info_needed(VALUE self);
+static VALUE c_signature;
 
+typedef struct
+{
+    int call_info_argc;
+    char* call_info_kw_args;
+} call_info_t;
+
+typedef struct
+{
+    char* method_name;
+    char* args_info;
+    char* path;
+    int call_info_argc;
+    char* call_info_kw_args;
+    int lineno;
+    char* receiver_name;
+    char* return_type_name;
+    char* visibility;
+
+    char* gem_name;
+    char* gem_version;
+} signature_t;
+
+static void signature_t_free(void *s)
+{
+    free(s);
+}
+
+static void
+fill_path_and_lineno(rb_trace_arg_t *trace_arg)
+{
+    if (trace_arg->path == Qundef) {
+        rb_control_frame_t *cfp = rb_vm_get_ruby_level_next_cfp(trace_arg->th, trace_arg->cfp);
+
+        if (cfp) {
+            trace_arg->path = cfp->iseq->body->location.path;
+            trace_arg->lineno = rb_vm_get_sourceline(cfp);
+        }
+        else {
+            trace_arg->path = Qnil;
+            trace_arg->lineno = 0;
+        }
+    }
+}
+
+int
+my_rb_tracearg_lineno(rb_trace_arg_t *trace_arg)
+{
+    fill_path_and_lineno(trace_arg);
+    return trace_arg->lineno;
+}
+
+VALUE
+rb_tracearg_path(rb_trace_arg_t *trace_arg)
+{
+    fill_path_and_lineno(trace_arg);
+    return trace_arg->path;
+}
+
+static rb_trace_arg_t *
+get_trace_arg(void)
+{
+    rb_trace_arg_t *trace_arg = GET_THREAD()->trace_arg;
+    if (trace_arg == 0) {
+        fprintf(stderr, "access from outside\n");
+	    rb_raise(rb_eRuntimeError, "access from outside");
+    }
+    return trace_arg;
+}
+
+void Init_arg_scanner();
+static call_info_t* get_call_info();
+static char* get_args_info();
+static bool is_call_info_needed();
+static VALUE handle_call(VALUE self);
+static VALUE handle_return(VALUE self, VALUE signature, VALUE receiver_name, VALUE return_type_name);
 
 void Init_arg_scanner() {
-  mArgScanner = rb_define_module("ArgScanner");
-  rb_define_module_function(mArgScanner, "get_call_info", get_call_info, 0);
-  rb_define_module_function(mArgScanner, "get_args_info", get_args_info, 0);
-  rb_define_module_function(mArgScanner, "is_call_info_needed", is_call_info_needed, 0);
+    mArgScanner = rb_define_module("ArgScanner");
+    rb_define_module_function(mArgScanner, "handle_call", handle_call, 0);
+    rb_define_module_function(mArgScanner, "handle_return", handle_return, 3);
 }
 
 rb_control_frame_t *
 my_rb_vm_get_binding_creatable_next_cfp(const rb_thread_t *th, const rb_control_frame_t *cfp)
 {
     while (!RUBY_VM_CONTROL_FRAME_STACK_OVERFLOW_P(th, cfp)) {
-	if (cfp->iseq) {
-	    return (rb_control_frame_t *)cfp;
-	}
-	cfp = RUBY_VM_PREVIOUS_CONTROL_FRAME(cfp);
+        if (cfp->iseq) {
+            return (rb_control_frame_t *)cfp;
+        }
+	    cfp = RUBY_VM_PREVIOUS_CONTROL_FRAME(cfp);
     }
     return 0;
 }
 
-VALUE get_call_info(VALUE self)
+static VALUE
+handle_call(VALUE self)
+{
+    rb_trace_arg_t* tp = get_trace_arg();
+
+    VALUE method_sym = rb_tracearg_method_id(tp);
+    ID method_id = SYM2ID(method_sym);
+    VALUE path = rb_tracearg_path(tp);
+    char* c_method_name = rb_id2name(method_id);
+    char* c_path = StringValuePtr(path);
+    int c_lineno = my_rb_tracearg_lineno(tp);
+
+    signature_t *sign;
+    sign = ALLOC(signature_t);
+
+    sign->lineno = c_lineno;
+    sign->method_name = c_method_name;
+    sign->path = c_path;
+
+    //fprintf(stderr, "%s:%d\n", c_path, c_lineno);
+    sign->args_info = get_args_info();
+
+    if (is_call_info_needed())
+    {
+        call_info_t *info = get_call_info();
+
+        sign->call_info_argc = info->call_info_argc;
+        sign->call_info_kw_args = info->call_info_kw_args;
+
+    } else {
+        sign->call_info_argc = -1;
+        sign->call_info_kw_args = "";
+    }
+
+    return Data_Wrap_Struct(c_signature, NULL, signature_t_free, sign);
+}
+
+
+static VALUE
+handle_return(VALUE self, VALUE signature, VALUE receiver_name, VALUE return_type_name)
+{
+    signature_t *sign;
+    Data_Get_Struct(signature, signature_t, sign);
+
+    sign->receiver_name = StringValuePtr(receiver_name);
+    sign->return_type_name = StringValuePtr(return_type_name);
+    sign->visibility = "PUBLIC";
+
+    char* json_mes[100];
+    //\"gem_name\":\"%s\",\"gem_version\":\"%s\",
+    sprintf(json_mes,
+    "{\"method_name\":\"%s\",\"call_info_argc\":\"%d\",\"call_info_kw_args\":\"%s\",\"receiver_name\":\"%s\",\"args_info\":\"%s\",\"return_type_name\":\"%s\",\"visibility\":\"%s\",\"path\":\"%s\",\"lineno\":\"%d\",",
+    sign->method_name,
+    sign->call_info_argc,
+    sign->call_info_kw_args,
+    sign->receiver_name,
+    sign->args_info,
+    sign->return_type_name,
+    //sign->gem_name,
+    //sign->gem_version,
+    sign->visibility,
+    sign->path,
+    sign->lineno);
+
+    return rb_str_new_cstr(json_mes);
+}
+
+static call_info_t*
+get_call_info()
 {
     rb_thread_t *thread;
 
     thread = ruby_current_thread;
     rb_control_frame_t *cfp = thread->cfp;
+    call_info_t *info;
+    info = ALLOC(call_info_t);
+
+    info->call_info_argc = -1;
+    info->call_info_kw_args = "";
 
     cfp += 4;
     cfp = my_rb_vm_get_binding_creatable_next_cfp(thread, cfp);
@@ -52,7 +197,7 @@ VALUE get_call_info(VALUE self)
     {
         if(cfp->pc == NULL || cfp->iseq->body == NULL)
         {
-            return Qnil;
+            return info;
         }
 
         const rb_iseq_t *iseq = cfp->iseq;
@@ -72,14 +217,11 @@ VALUE get_call_info(VALUE self)
             if(0 < tmp && tmp < 256)
             {
                 if(indent < 3)
-                    return Qnil;
+                    return info;
 
                 struct rb_call_info *ci = (struct rb_call_info *)iseq_original[pc - indent + 1];
 
-
-                VALUE ans = rb_ary_new();
-                rb_ary_push(ans, rb_id2str(ci->mid));
-                rb_ary_push(ans, INT2NUM(ci->orig_argc));
+                info->call_info_argc = ci->orig_argc;
 
                 if (ci->flag & VM_CALL_KWARG)
                 {
@@ -88,20 +230,52 @@ VALUE get_call_info(VALUE self)
                     int kwArgSize = kw_args->keyword_len;
 
                     VALUE kw_ary = rb_ary_new_from_values(kw_args->keyword_len, kw_args->keywords);
+                    char **c_kw_ary = (char**)malloc(kwArgSize * sizeof(char*));
 
-                    rb_ary_push(ans, kw_ary);
+                    int ans_size = 0;
+                    int j;
 
+                    for(j = kwArgSize - 1; j >= 0; j--)
+                    {
+                        VALUE kw = rb_ary_pop(kw_ary);
+                        char* kw_name = rb_id2name(SYM2ID(kw));
+
+                        c_kw_ary[j] = kw_name;
+                        ans_size += strlen(kw_name);
+
+                        if(j + 1 < kwArgSize)
+                            ans_size++;
+                    }
+
+                    info->call_info_kw_args = (char*)malloc(ans_size + 1);
+
+                    if(kwArgSize > 0)
+                    {
+                        strcpy(info->call_info_kw_args, c_kw_ary[0]);
+
+                        if(kwArgSize > 1)
+                            strcat(info->call_info_kw_args, ",");
+                    }
+
+                    for(j = 1; j < kwArgSize; j++)
+                    {
+                        strcat(info->call_info_kw_args, c_kw_ary[j]);
+
+                        if(j + 1 < kwArgSize)
+                            strcat(info->call_info_kw_args, ",");
+                    }
+                    free(c_kw_ary);
                 }
-                return ans;
+                return info;
             }
         }
     }
-
-    return Qnil;
+    return info;
 }
 
 
-VALUE get_args_info(VALUE self)
+static char*
+get_args_info()
 {
     rb_thread_t *thread;
 
@@ -109,9 +283,6 @@ VALUE get_args_info(VALUE self)
     rb_control_frame_t *cfp = thread->cfp;
 
     cfp += 3;
-
-    VALUE ans = rb_ary_new();
-    VALUE types = rb_ary_new();
 
     VALUE *ep = cfp->ep;
     ep -= cfp->iseq->body->local_table_size;
@@ -134,53 +305,126 @@ VALUE get_args_info(VALUE self)
 
     unsigned int ambiguous_param0 = cfp->iseq->body->param.flags.has_lead;
 
-    int i;
+    if(param_size == 0)
+    {
+        return "";
+    }
 
-    for(i = param_size - 1; i >= 0; i--)
+    char **types = (char** )malloc(param_size * sizeof(char*));
+
+    int i, types_iterator = 0, ans_iterator = 0;
+
+    for(i = param_size - 1; i >= 0; i--, types_iterator++)
     {
         VALUE klass = rb_class_real(CLASS_OF(*(ep + i - 1)));
-        char* klass_name = rb_class2name(klass);
+        const char* klass_name = rb_class2name(klass);
 
-        rb_ary_push(types, rb_str_new_cstr(klass_name));
+        types[types_iterator] = klass_name;
     }
 
     if(has_kw)
         param_size--;
 
-    for(i = 0; i < lead_num; i++)
-    {
-        VALUE tmp = rb_ary_new();
-        rb_ary_push(tmp, rb_str_new_cstr("REQ"));
-        rb_ary_push(tmp, rb_ary_pop(types));
+    char **ans = (char** )malloc(param_size * sizeof(char*));
 
-        rb_ary_push(ans, rb_ary_join(tmp, rb_str_new_cstr(",")));
+    types_iterator--;
+
+    for(i = 0; i < lead_num; i++, ans_iterator++)
+    {
+        char* name = rb_id2name(cfp->iseq->body->local_table[ans_iterator]);
+        if(name)
+        {
+            //fprintf(stderr, "%s\n", name);
+            ans[ans_iterator] = (char*)malloc(sizeof(char) * (6 + strlen(types[types_iterator])) + strlen(name));
+
+            strcpy(ans[ans_iterator], "REQ,");
+            strcat(ans[ans_iterator], types[types_iterator]);
+
+            strcat(ans[ans_iterator], ",");
+            strcat(ans[ans_iterator], name);
+        }
+        else
+        {
+            ans[ans_iterator] = (char*)malloc(sizeof(char) * (5 + strlen(types[types_iterator])));
+
+            strcpy(ans[ans_iterator], "REQ,");
+            strcat(ans[ans_iterator], types[types_iterator]);
+        }
+
+        types_iterator--;
     }
 
-    for(i = 0; i < opt_num; i++)
+    for(i = 0; i < opt_num; i++, ans_iterator++)
     {
-        VALUE tmp = rb_ary_new();
-        rb_ary_push(tmp, rb_str_new_cstr("OPT"));
-        rb_ary_push(tmp, rb_ary_pop(types));
+        char* name = rb_id2name(cfp->iseq->body->local_table[ans_iterator]);
+        if(name)
+        {
+            //fprintf(stderr, "%s\n", name);
+            ans[ans_iterator] = (char*)malloc(sizeof(char) * (6 + strlen(types[types_iterator])) + strlen(name));
 
-        rb_ary_push(ans, rb_ary_join(tmp, rb_str_new_cstr(",")));
+            strcpy(ans[ans_iterator], "OPT,");
+            strcat(ans[ans_iterator], types[types_iterator]);
+
+            strcat(ans[ans_iterator], ",");
+            strcat(ans[ans_iterator], name);
+        }
+        else
+        {
+            ans[ans_iterator] = (char*)malloc(sizeof(char) * (5 + strlen(types[types_iterator])));
+
+            strcpy(ans[ans_iterator], "OPT,");
+            strcat(ans[ans_iterator], types[types_iterator]);
+        }
+
+        types_iterator--;
     }
 
-    for(i = 0; i < has_rest; i++)
+    for(i = 0; i < has_rest; i++, ans_iterator++)
     {
-        VALUE tmp = rb_ary_new();
-        rb_ary_push(tmp, rb_str_new_cstr("REST"));
-        rb_ary_push(tmp, rb_ary_pop(types));
+        char* name = rb_id2name(cfp->iseq->body->local_table[ans_iterator]);
+        if(name)
+        {
+            //fprintf(stderr, "%s\n", name);
+            ans[ans_iterator] = (char*)malloc(sizeof(char) * (7 + strlen(types[types_iterator]) + strlen(name)));
 
-        rb_ary_push(ans, rb_ary_join(tmp, rb_str_new_cstr(",")));
+            strcpy(ans[ans_iterator], "REST,");
+            strcat(ans[ans_iterator], types[types_iterator]);
+            strcat(ans[ans_iterator], ",");
+            strcat(ans[ans_iterator], name);
+        }
+        else
+        {
+            ans[ans_iterator] = (char*)malloc(sizeof(char) * (6 + strlen(types[types_iterator])));
+
+            strcpy(ans[ans_iterator], "REST,");
+            strcat(ans[ans_iterator], types[types_iterator]);
+        }
+
+        types_iterator--;
     }
 
-    for(i = 0; i < post_num; i++)
+    for(i = 0; i < post_num; i++, ans_iterator++)
     {
-        VALUE tmp = rb_ary_new();
-        rb_ary_push(tmp, rb_str_new_cstr("POST"));
-        rb_ary_push(tmp, rb_ary_pop(types));
+        char* name = rb_id2name(cfp->iseq->body->local_table[ans_iterator]);
+        if(name)
+        {
+            //fprintf(stderr, "%s\n", name);
+            ans[ans_iterator] = (char*)malloc(sizeof(char) * (7 + strlen(types[types_iterator]) + strlen(name)));
 
-        rb_ary_push(ans, rb_ary_join(tmp, rb_str_new_cstr(",")));
+            strcpy(ans[ans_iterator], "POST,");
+            strcat(ans[ans_iterator], types[types_iterator]);
+            strcat(ans[ans_iterator], ",");
+            strcat(ans[ans_iterator], name);
+        }
+        else
+        {
+            ans[ans_iterator] = (char*)malloc(sizeof(char) * (6 + strlen(types[types_iterator])));
+
+            strcpy(ans[ans_iterator], "POST,");
+            strcat(ans[ans_iterator], types[types_iterator]);
+        }
+
+        types_iterator--;
     }
 
 
@@ -192,56 +436,109 @@ VALUE get_args_info(VALUE self)
 
         const VALUE * const default_values = cfp->iseq->body->param.keyword->default_values;
 
-        for(i = 0; i < required_num; i++)
+        for(i = 0; i < required_num; i++, ans_iterator++)
         {
-            VALUE tmp = rb_ary_new();
-            rb_ary_push(tmp, rb_str_new_cstr("KEYREQ"));
-            rb_ary_push(tmp, rb_ary_pop(types));
-
             ID key = keywords[i];
-            VALUE kwName = rb_id2str(key);
 
-            rb_ary_push(tmp, kwName);
+            ans[ans_iterator] = (char*)malloc(sizeof(char) * (9 + strlen(types[types_iterator] + strlen(rb_id2name(key)))));
 
-            rb_ary_push(ans, rb_ary_join(tmp, rb_str_new_cstr(",")));
+            strcpy(ans[ans_iterator], "KEYREQ,");
+            strcat(ans[ans_iterator], types[types_iterator--]);
+            strcat(ans[ans_iterator], ",");
+            strcat(ans[ans_iterator], rb_id2name(key));
         }
-        for(i = required_num; i < kw_num; i++)
+        for(i = required_num; i < kw_num; i++, ans_iterator++)
         {
-            VALUE tmp = rb_ary_new();
-            rb_ary_push(tmp, rb_str_new_cstr("KEY"));
-            rb_ary_push(tmp, rb_ary_pop(types));
-
             ID key = keywords[i];
-            VALUE kwName = rb_id2str(key);
 
-            rb_ary_push(tmp, kwName);
+            ans[ans_iterator] = (char*)malloc(sizeof(char) * (6 + strlen(types[types_iterator] + strlen(rb_id2name(key)))));
 
-            rb_ary_push(ans, rb_ary_join(tmp, rb_str_new_cstr(",")));
+            strcpy(ans[ans_iterator], "KEY,");
+            strcat(ans[ans_iterator], types[types_iterator--]);
+            strcat(ans[ans_iterator], ",");
+            strcat(ans[ans_iterator], rb_id2name(key));
         }
     }
 
-    for(i = 0; i < has_kwrest; i++)
+    for(i = 0; i < has_kwrest; i++, ans_iterator++)
     {
-        VALUE tmp = rb_ary_new();
-        rb_ary_push(tmp, rb_str_new_cstr("KEYREST"));
-        rb_ary_push(tmp, rb_ary_pop(types));
+        char* name = rb_id2name(cfp->iseq->body->local_table[ans_iterator]);
+        if(name)
+        {
+            //fprintf(stderr, "%s\n", name);
+            ans[ans_iterator] = (char*)malloc(sizeof(char) * (10 + strlen(types[types_iterator]) + strlen(name)));
 
-        rb_ary_push(ans, rb_ary_join(tmp, rb_str_new_cstr(",")));
+            strcpy(ans[ans_iterator], "KEYREST,");
+            strcat(ans[ans_iterator], types[types_iterator]);
+            strcat(ans[ans_iterator], ",");
+            strcat(ans[ans_iterator], name);
+        }
+        else
+        {
+            ans[ans_iterator] = (char*)malloc(sizeof(char) * (9 + strlen(types[types_iterator])));
+
+            strcpy(ans[ans_iterator], "KEYREST,");
+            strcat(ans[ans_iterator], types[types_iterator]);
+        }
+
+        types_iterator--;
     }
 
-    for(i = 0; i < has_block; i++)
+    for(i = 0; i < has_block; i++, ans_iterator++)
     {
-        VALUE tmp = rb_ary_new();
-        rb_ary_push(tmp, rb_str_new_cstr("BLOCK"));
-        rb_ary_push(tmp, rb_ary_pop(types));
+        char* name = rb_id2name(cfp->iseq->body->local_table[ans_iterator]);
+        if(name)
+        {
+            //fprintf(stderr, "%s\n", name);
+            ans[ans_iterator] = (char*)malloc(sizeof(char) * (8 + strlen(types[types_iterator]) + strlen(name)));
 
-        rb_ary_push(ans, rb_ary_join(tmp, rb_str_new_cstr(",")));
+            strcpy(ans[ans_iterator], "BLOCK,");
+            strcat(ans[ans_iterator], types[types_iterator]);
+            strcat(ans[ans_iterator], ",");
+            strcat(ans[ans_iterator], name);
+        }
+        else
+        {
+            ans[ans_iterator] = (char*)malloc(sizeof(char) * (7 + strlen(types[types_iterator])));
+
+            strcpy(ans[ans_iterator], "BLOCK,");
+            strcat(ans[ans_iterator], types[types_iterator]);
+        }
+
+        types_iterator--;
     }
 
-    return ans;
+    int answer_size = 0;
+
+    for(i = 0; i < ans_iterator; i++)
+    {
+        answer_size += strlen(ans[i]);
+        if(i + 1 < ans_iterator)
+            answer_size++;
+    }
+
+    char *answer = (char*)malloc(answer_size + 1);
+
+    if(ans_iterator > 0)
+        strcpy(answer, ans[0]);
+
+    for(i = 1; i < ans_iterator; i++)
+    {
+        strcat(answer, ";");
+        strcat(answer, ans[i]);
+    }
+
+    for(i = 0; i < ans_iterator; i++)
+        free(ans[i]);
+
+    free(types);
+    free(ans);
+
+    return answer;
 }
 
-VALUE is_call_info_needed(VALUE self)
+static bool
+is_call_info_needed()
 {
     rb_thread_t *thread;
 
@@ -258,8 +555,5 @@ VALUE is_call_info_needed(VALUE self)
 
     int required_num = 0;
 
-    if(has_opt || has_kwrest || has_rest || (cfp->iseq->body->param.keyword != NULL && cfp->iseq->body->param.keyword->required_num == 0))
-        return Qtrue;
-    else
-        return Qfalse;
+    return (has_opt || has_kwrest || has_rest || (cfp->iseq->body->param.keyword != NULL && cfp->iseq->body->param.keyword->required_num == 0));
 }
