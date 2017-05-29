@@ -1,7 +1,11 @@
 package org.jetbrains.ruby.codeInsight.types.signature;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.*;
 
 public class RSignatureContractContainer {
@@ -10,6 +14,45 @@ public class RSignatureContractContainer {
 
     public RSignatureContractContainer() {
         contracts = new HashMap<>();
+    }
+
+    private int dfs(RSignatureContractNode node, Set<RSignatureContractNode> used, int ans) {
+        int answer = ans;
+        if (!used.contains(node))
+            answer++;
+        used.add(node);
+        for (ContractTransition transition : node.getTransitionKeys()) {
+            answer = dfs(node.goByTransition(transition), used, answer);
+        }
+        return answer;
+    }
+
+    public void printInfo() {
+        try {
+            File file = new File("/home/viuginick/Soft/ruby-type-inference/ide-plugin/resources/log.txt");
+            PrintWriter writer = new PrintWriter(file);
+
+            contracts.entrySet().stream()
+                    .sorted(Collections.reverseOrder(Comparator.comparingInt(entry -> entry.getValue().getNumberOfCalls())))
+                    .forEachOrdered(entry -> {
+                        final MethodInfo key = entry.getKey();
+                        Set used = new HashSet<RSignatureContractNode>();
+                        //railties 5.0.1 & Rails::Initializable::Initializer & initialize & 22 & 7 \\
+                        //writer.println(key.getName() + "(" + entry.getValue().getNumberOfCalls() + ")");
+                        //writer.println(key.getClassInfo().getClassFQN());
+                        writer.println(key.getClassInfo().getGemInfo().getName() + " " +
+                                key.getClassInfo().getGemInfo().getVersion() + " & " +
+                                key.getClassInfo().getClassFQN() + " & " +
+                                key.getName() + " & " + entry.getValue().getNumberOfCalls() + " & " + dfs(contracts.get(key).getStartNode(), used, 0)
+                        );
+                        //"(" + key.getLocation().getPath() + key.getLocation().getLineno() + ")"
+                        //writer.println(dfs(contracts.get(key).getStartNode(), used, 0));
+
+                    });
+
+        } catch (IOException e) {
+            // do something
+        }
     }
 
     public void reduction()

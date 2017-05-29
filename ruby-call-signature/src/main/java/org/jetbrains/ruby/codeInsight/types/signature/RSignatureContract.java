@@ -26,10 +26,7 @@ public class RSignatureContract implements SignatureContract {
     private RSignatureContractNode createNodeAndAddToLevels(Integer index) {
         RSignatureContractNode newNode;
 
-        if (index < getSize())
-            newNode = new RSignatureContractNode(RSignatureContractNode.ContractNodeType.argNode);
-        else
-            newNode = new RSignatureContractNode(RSignatureContractNode.ContractNodeType.returnNode);
+        newNode = new RSignatureContractNode();
 
         while (levels.size() <= index)
             levels.add(new ArrayList<>());
@@ -47,7 +44,7 @@ public class RSignatureContract implements SignatureContract {
 
     public RSignatureContract(RSignature signature) {
         levels = new ArrayList<>();
-        termNode = new RSignatureContractNode(RSignatureContractNode.ContractNodeType.returnTypeNode);
+        termNode = new RSignatureContractNode();
         myArgsInfo = signature.getArgsInfo();
         startContractNode = this.createNodeAndAddToLevels(0);
 

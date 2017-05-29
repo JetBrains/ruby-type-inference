@@ -6,6 +6,7 @@ import org.jetbrains.exposed.dao.IntEntityClass
 import org.jetbrains.exposed.dao.IntIdTable
 import org.jetbrains.ruby.codeInsight.types.signature.*
 import java.sql.Blob
+import kotlin.reflect.KProperty
 
 object GemInfoTable : IntIdTable() {
     val name = varchar("name", 50).index()
@@ -15,8 +16,8 @@ object GemInfoTable : IntIdTable() {
 class GemInfoData(id: EntityID<Int>) : IntEntity(id), GemInfo {
     companion object : IntEntityClass<GemInfoData>(GemInfoTable)
 
-    override val name: String by GemInfoTable.name
-    override val version: String by GemInfoTable.version
+    override var name: String by GemInfoTable.name
+    override var version: String by GemInfoTable.version
 }
 
 object ClassInfoTable : IntIdTable() {
@@ -27,23 +28,35 @@ object ClassInfoTable : IntIdTable() {
 class ClassInfoData(id: EntityID<Int>) : IntEntity(id), ClassInfo {
     companion object : IntEntityClass<ClassInfoData>(ClassInfoTable)
 
-    override val gemInfo: GemInfo? by GemInfoData optionalReferencedOn ClassInfoTable.gemInfo
-    override val classFQN: String by ClassInfoTable.fqn
+    override var gemInfo: GemInfoData? by GemInfoData optionalReferencedOn ClassInfoTable.gemInfo
+    override var classFQN: String by ClassInfoTable.fqn
 }
 
 object MethodInfoTable : IntIdTable() {
     val classInfo = reference("class_info", ClassInfoTable)
     val name = varchar("name", 50)
     val visibility = enumeration("visibility", RVisibility::class.java)
+    val locationFile = varchar("location_file", 100).nullable()
+    val locationLineno = integer("location_lineno").default(0)
 }
 
 class MethodInfoData(id: EntityID<Int>) : IntEntity(id), MethodInfo {
     companion object : IntEntityClass<MethodInfoData>(MethodInfoTable)
 
-    override val classInfo: ClassInfo by ClassInfoData referencedOn MethodInfoTable.classInfo
-    override val name: String by MethodInfoTable.name
-    override val visibility: RVisibility by MethodInfoTable.visibility
+    override var classInfo: ClassInfoData by ClassInfoData referencedOn MethodInfoTable.classInfo
+    override var name: String by MethodInfoTable.name
+    override var visibility: RVisibility by MethodInfoTable.visibility
+    override var location: Location? by object {
+        operator fun getValue(methodInfoData: MethodInfoData, property: KProperty<*>): Location? {
+            val file = MethodInfoTable.locationFile.getValue(methodInfoData, property)
+            return file?.let { Location(it, MethodInfoTable.locationLineno.getValue(methodInfoData, property)) }
+        }
 
+        operator fun setValue(methodInfoData: MethodInfoData, property: KProperty<*>, location: Location?) {
+            MethodInfoTable.locationFile.setValue(methodInfoData, property, location?.path)
+            MethodInfoTable.locationLineno.setValue(methodInfoData, property, location?.lineno ?: 0)
+        }
+    }
 }
 
 object SignatureTable : IntIdTable() {
@@ -54,8 +67,8 @@ object SignatureTable : IntIdTable() {
 class SignatureContractData(id: EntityID<Int>) : IntEntity(id), SignatureInfo {
     companion object : IntEntityClass<SignatureContractData>(SignatureTable)
 
-    override val methodInfo: MethodInfo by MethodInfoData referencedOn SignatureTable.methodInfo
-    override val contract: SignatureContract by BlobDeserializer()
+    override var methodInfo: MethodInfoData by MethodInfoData referencedOn SignatureTable.methodInfo
+    override var contract: SignatureContract by BlobDeserializer()
 
-    val contractRaw: Blob by SignatureTable.contract
+    var contractRaw: Blob by SignatureTable.contract
 }

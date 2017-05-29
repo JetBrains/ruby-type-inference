@@ -64,6 +64,15 @@ public class SignatureServer {
     }
 
     @Nullable
+    public MethodInfo getMethodByClass(@NotNull String className, @NotNull String methodName) {
+        for (MethodInfo info : mainContainer.getKeySet()) {
+            if (info.getName().equals(methodName) && info.getClassInfo().getClassFQN().equals(className))
+                return info;
+        }
+        return null;
+    }
+
+    @Nullable
     public RSignatureContract getContractByMethodInfo(@NotNull MethodInfo info) {
         return mainContainer.getSignature(info);
     }
@@ -93,7 +102,7 @@ public class SignatureServer {
                         if (result != null) {
                             RawSignature currRawSignature = new RawSignature(result);
 
-                            if (!result.call_info_mid.equals("")) {
+                            if (currRawSignature.argc != -1) {
                                 RSignatureFetcher fetcher = new RSignatureFetcher(currRawSignature.argc, currRawSignature.kwArgs);
                                 List<Boolean> flags = fetcher.fetch(currRawSignature.getArgsInfo());
 
@@ -102,16 +111,10 @@ public class SignatureServer {
                                     if (!flag)
                                         currRawSignature.changeArgumentType(i, "-");
                                 }
-
                             }
-
                             RSignature currRSignature = currRawSignature.getRSignature();
 
-                            if (result.method_name.equals("initialize") || result.call_info_mid.equals("") || result.call_info_mid.equals(result.method_name)) {
-
-                                SignatureServer.getInstance().mainContainer.addSignature(currRSignature);
-                            }
-
+                            SignatureServer.getInstance().mainContainer.addSignature(currRSignature);
                         }
 
                     } catch (JsonParseException e) {
@@ -129,6 +132,7 @@ public class SignatureServer {
                 }
                 LOGGER.info("Connection with client# " + handlerNumber + " closed");
                 SignatureServer.getInstance().mainContainer.reduction();
+                SignatureServer.getInstance().mainContainer.printInfo();
             }
         }
 

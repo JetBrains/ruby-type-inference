@@ -28,16 +28,16 @@ public class RawSignature {
         this.myMethodInfo = MethodInfoKt.MethodInfo(
                 ClassInfoKt.ClassInfo(GemInfoKt.GemInfo(bean.gem_name, bean.gem_version), bean.receiver_name),
                 bean.method_name,
-                RVisibility.valueOf(bean.visibility));
+                RVisibility.valueOf(bean.visibility),
+                new Location(bean.path, bean.lineno));
 
         this.myCallMid = bean.call_info_mid;
 
 
-        if (!bean.call_info_argc.equals("")) {
+        if (!bean.call_info_argc.equals(""))
             this.argc = Integer.parseInt(bean.call_info_argc);
-        } else {
+        else
             this.argc = 0;
-        }
 
         String kwInfo = bean.call_info_kw_args;
         this.kwArgs = new HashSet<>();

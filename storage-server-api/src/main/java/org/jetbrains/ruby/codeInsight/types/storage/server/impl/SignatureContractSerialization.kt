@@ -1,5 +1,6 @@
 package org.jetbrains.ruby.codeInsight.types.storage.server.impl
 
+import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.ruby.codeInsight.types.signature.*
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ReferenceContractTransition
@@ -75,7 +76,7 @@ fun SignatureContract(stream: DataInput): SignatureContract {
 
     val nodesSize = stream.readInt()
 
-    val nodes = List(nodesSize) { RSignatureContractNode(RSignatureContractNode.ContractNodeType.argNode) }
+    val nodes = List(nodesSize) { RSignatureContractNode() }
 
     val distance = IntArray(nodesSize, { 0 })
 
@@ -108,6 +109,13 @@ class BlobDeserializer {
         } finally {
             blob.free()
         }
+    }
+
+    operator fun setValue(signatureContractData: SignatureContractData, property: KProperty<*>, signatureContract: SignatureContract) {
+        val blob = TransactionManager.current().connection.createBlob()
+        BlobSerializer.writeToBlob(signatureContract, blob)
+        signatureContractData.contractRaw = blob
+        blob.free()
     }
 }
 

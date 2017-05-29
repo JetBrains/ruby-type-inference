@@ -113,7 +113,7 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
     private void doTest(@NotNull String name, @NotNull String method_name, String... items) {
 
         final String scriptName = name + ".rb";
-        run(name, method_name);
+        Assert.assertNotNull(run(name, method_name));
 
         myFixture.testCompletionVariants(scriptName, items);
     }

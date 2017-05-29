@@ -12,11 +12,13 @@ public class SignatureService {
             @Override
             public void run() {
                 SignatureServer server = SignatureServer.getInstance();
-                try {
-                    server.runServer();
-                } catch (Exception e) {
-                    LOGGER.severe(e.getMessage());
-                    e.printStackTrace();
+                while (true) {
+                    try {
+                        server.runServer();
+                    } catch (Exception e) {
+                        LOGGER.severe(e.getMessage());
+                        e.printStackTrace();
+                    }
                 }
 
             }

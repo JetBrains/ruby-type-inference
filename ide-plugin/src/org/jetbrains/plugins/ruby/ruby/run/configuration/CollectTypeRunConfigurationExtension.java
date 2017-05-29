@@ -71,6 +71,7 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
         final String rubyOpt = StringUtil.notNullize(env.get(RubyUtil.RUBYOPT));
         final String newRubyOpt = rubyOpt + includeOptions + " -r" + typeTrackerPath;
         //final String newRubyOpt = rubyOpt + " -r" + typeTrackerScriptURL.getPath();
+
         cmdLine.withEnvironment(RubyUtil.RUBYOPT, newRubyOpt);
     }
 

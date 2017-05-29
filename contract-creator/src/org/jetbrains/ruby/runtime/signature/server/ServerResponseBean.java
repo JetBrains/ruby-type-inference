@@ -12,4 +12,6 @@ public class ServerResponseBean {
     public String args_type_name;
     public String args_info;
     public String call_info_kw_args;
+    public String path;
+    public int lineno;
 }

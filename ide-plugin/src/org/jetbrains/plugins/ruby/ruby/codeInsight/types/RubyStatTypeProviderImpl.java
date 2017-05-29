@@ -6,29 +6,32 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.resolve.ResolveUtil;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.Type;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.fqn.FQN;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.RMethodSyntheticSymbol;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.Symbol;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.SymbolUtil;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.impl.REmptyType;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RPossibleCall;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RPsiElement;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.assoc.RAssoc;
+import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.ArgumentInfo;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.expressions.RExpression;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.methodCall.RArgumentToBlock;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.methodCall.RCall;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.references.RReference;
-import org.jetbrains.ruby.codeInsight.types.signature.ParameterInfo;
-import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContract;
-import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContractNode;
-import org.jetbrains.ruby.codeInsight.types.signature.RSignatureFetcher;
+import org.jetbrains.ruby.codeInsight.types.signature.*;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ReferenceContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.TypedContractTransition;
 import org.jetbrains.ruby.runtime.signature.server.SignatureServer;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
 
@@ -88,8 +91,31 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
         return getNextLevel(currNodesAndReadTypes, tmpSet, pos);
     }
 
-    public Symbol findMethodForType(@NotNull RType var1, @NotNull String var2) {
-        return null;
+    @Override
+    @Nullable
+    public Symbol findMethodForType(@NotNull RType type, @NotNull String name) {
+        if (!(type instanceof RSymbolType)) {
+            return null;
+        }
+        final String typeName = type.getName();
+        if (typeName == null) {
+            return null;
+        }
+        SignatureServer callStatServer = SignatureServer.getInstance();
+        final MethodInfo methodInfo = callStatServer.getMethodByClass(typeName, name);
+        if (methodInfo == null) {
+            return null;
+        }
+        final RSignatureContract contract = callStatServer.getContract(methodInfo);
+        if (contract == null) {
+            return null;
+        }
+        return new RMethodSyntheticSymbol(((RSymbolType) type).getSymbol().getProject(),
+                methodInfo,
+                Type.INSTANCE_METHOD,
+                ((RSymbolType) type).getSymbol(),
+                contract.getArgsInfo().stream().map(RubyStatTypeProviderImpl::toArgInfo).collect(Collectors.toList())
+        );
     }
 
     public RType createTypeByCallAndArgs(@NotNull final RExpression call, @NotNull final List<RPsiElement> callArgs) {
@@ -234,5 +260,34 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
         }
 
         return argTypeNames;
+    }
+
+    private static ArgumentInfo toArgInfo(@NotNull ParameterInfo info) {
+        ArgumentInfo.Type type = null;
+        switch (info.getModifier()) {
+
+            case REQ:
+                type = ArgumentInfo.Type.NAMED;
+                break;
+            case OPT:
+                type = ArgumentInfo.Type.PREDEFINED;
+                break;
+            case REST:
+                type = ArgumentInfo.Type.ARRAY;
+                break;
+            case KEYREQ:
+                type = ArgumentInfo.Type.NAMED;
+                break;
+            case KEY:
+                type = ArgumentInfo.Type.NAMED;
+                break;
+            case KEYREST:
+                type = ArgumentInfo.Type.HASH;
+                break;
+            case BLOCK:
+                type = ArgumentInfo.Type.BLOCK;
+                break;
+        }
+        return new ArgumentInfo(StringRef.fromString(info.getName()), type);
     }
 }
