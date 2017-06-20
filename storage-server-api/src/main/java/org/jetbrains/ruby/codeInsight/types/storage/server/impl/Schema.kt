@@ -60,7 +60,7 @@ class MethodInfoData(id: EntityID<Int>) : IntEntity(id), MethodInfo {
 }
 
 object SignatureTable : IntIdTable() {
-    val methodInfo = reference("method_info", MethodInfoTable.id)
+    val methodInfo = reference("method_info", MethodInfoTable)
     val contract = blob("contract")
 }
 

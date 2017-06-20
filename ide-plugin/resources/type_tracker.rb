@@ -61,6 +61,8 @@ class TypeTracker
 
         json = ArgScanner.handle_return(signature, receiver_name, return_type_name)
 
+        puts json
+
         if cache.add?(json)
             matches = tp.path.scan(/\w+-\d+(?:\.\d+)+/)
             gem_name, gem_version = matches[0] ? matches[0].split('-') : ['', '']

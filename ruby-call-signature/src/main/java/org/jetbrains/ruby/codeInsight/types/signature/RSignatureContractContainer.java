@@ -72,6 +72,23 @@ public class RSignatureContractContainer {
         contracts.put(info, contract);
     }
 
+    public boolean acceptSignature(@NotNull RSignature signature) {
+        MethodInfo currInfo = signature.getMethodInfo();
+
+        if (contracts.containsKey(currInfo)) {
+            RSignatureContract contract = contracts.get(currInfo);
+
+            if (signature.getArgsInfo().equals(contract.getArgsInfo()))
+                return contracts.get(currInfo).accept(signature);
+            else {
+                return false;
+            }
+
+        } else {
+            return false;
+        }
+    }
+
     public void addSignature(@NotNull RSignature signature) {
         MethodInfo currInfo = signature.getMethodInfo();
 

@@ -9,8 +9,6 @@ import java.util.Set;
 
 public class RSignatureContractNode implements SignatureNode {
 
-    private boolean hasReferenceLinks = false;
-
     @NotNull
     private final Map<ContractTransition, SignatureNode> transitions;
 
@@ -19,14 +17,18 @@ public class RSignatureContractNode implements SignatureNode {
         transitions = new HashMap<>();
     }
 
+    public RSignatureContractNode(SignatureNode node) {
+
+        transitions = new HashMap<>();
+        for (ContractTransition transition : node.getTransitions().keySet()) {
+            transitions.put(transition, node.getTransitions().get(transition));
+        }
+    }
+
     @NotNull
     public RSignatureContractNode goByTransition(ContractTransition transition) {
 
         return ((RSignatureContractNode) transitions.get(transition));
-    }
-
-    public boolean getReferenceLinksFlag() {
-        return hasReferenceLinks;
     }
 
     @NotNull

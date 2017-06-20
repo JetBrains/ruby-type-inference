@@ -5,23 +5,28 @@ import com.google.gson.JsonParseException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ruby.codeInsight.types.signature.*;
+import org.jetbrains.ruby.codeInsight.types.storage.server.RSignatureStorage;
+import org.jetbrains.ruby.codeInsight.types.storage.server.StorageException;
+import org.jetbrains.ruby.codeInsight.types.storage.server.impl.MethodInfoSerializationKt;
+import org.jetbrains.ruby.codeInsight.types.storage.server.impl.SignatureContractSerializationKt;
 import org.jetbrains.ruby.runtime.signature.RawSignature;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.logging.Logger;
 
 
-public class SignatureServer {
+public class SignatureServer implements RSignatureStorage {
     private static final Logger LOGGER = Logger.getLogger("SignatureServer");
 
     RSignatureContractContainer mainContainer = new RSignatureContractContainer();
+    RSignatureContractContainer newSignaturesContainer = new RSignatureContractContainer();
 
     @Nullable
     private static SignatureServer ourInstance;
@@ -47,8 +52,6 @@ public class SignatureServer {
             if (info.getName().equals(methodName)) {
                 return mainContainer.getSignature(info);
             }
-
-
         }
         return null;
     }
@@ -77,12 +80,54 @@ public class SignatureServer {
         return mainContainer.getSignature(info);
     }
 
+    @Override
+    public void addSignature(@NotNull RSignature signature) throws StorageException {
+
+    }
+
+    @Override
+    public void readPacket(@NotNull Packet packet) throws StorageException {
+        if (packet instanceof TestPacketImpl) {
+            ByteArrayInputStream inputStream = new ByteArrayInputStream(((TestPacketImpl) packet).getData());
+            DataInput in = new DataInputStream(inputStream);
+
+            MethodInfo info = MethodInfoSerializationKt.MethodInfo(in);
+            SignatureContract contract = SignatureContractSerializationKt.SignatureContract(in);
+
+            if (contract instanceof RSignatureContract)
+                SignatureServer.getInstance().mainContainer.addContract(info, (RSignatureContract) contract);
+        }
+    }
+
+    @Override
+    public @NotNull Collection<Packet> formPackets() throws StorageException {
+
+        List<Packet> packets = new ArrayList<>();
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        DataOutput out = new DataOutputStream(outputStream);
+
+        int size = 0;
+
+        for (MethodInfo info : SignatureServer.getInstance().newSignaturesContainer.getKeySet()) {
+            RSignatureContract contract = SignatureServer.getInstance().newSignaturesContainer.getSignature(info);
+
+
+            MethodInfoSerializationKt.serialize(info, out);
+            SignatureContractSerializationKt.serialize(contract, out);
+            size++;
+        }
+        packets.add(new TestPacketImpl(outputStream.toByteArray(), size));
+
+        return packets;
+    }
+
 
     private static class SignatureHandler extends Thread {
         private Socket socket;
         private int handlerNumber;
 
-        public SignatureHandler(Socket socket, int handlerNumber) {
+        SignatureHandler(Socket socket, int handlerNumber) {
             this.socket = socket;
             this.handlerNumber = handlerNumber;
             LOGGER.info("New connection with client# " + handlerNumber + " at " + socket);
@@ -114,7 +159,10 @@ public class SignatureServer {
                             }
                             RSignature currRSignature = currRawSignature.getRSignature();
 
-                            SignatureServer.getInstance().mainContainer.addSignature(currRSignature);
+                            if (!SignatureServer.getInstance().mainContainer.acceptSignature(currRSignature)) {
+                                SignatureServer.getInstance().newSignaturesContainer.addSignature(currRSignature);
+                            }
+
                         }
 
                     } catch (JsonParseException e) {
@@ -132,12 +180,18 @@ public class SignatureServer {
                 }
                 LOGGER.info("Connection with client# " + handlerNumber + " closed");
                 SignatureServer.getInstance().mainContainer.reduction();
-                SignatureServer.getInstance().mainContainer.printInfo();
+                try {
+                    Collection<Packet> packets = SignatureServer.getInstance().formPackets();
+                    for (Packet packet : packets) {
+                        LocalBucket.getInstance().readPacket(packet);
+                    }
+                } catch (Exception ex) {
+                    LOGGER.severe(ex.getMessage());
+                }
             }
         }
 
     }
-
 
     public void runServer() throws IOException {
         LOGGER.info("Starting server");
@@ -145,6 +199,29 @@ public class SignatureServer {
         Path file = Paths.get("callStatLog.txt");
 
         int handlersCounter = 0;
+
+        try {
+            Collection<Packet> packets = LocalBucket.getInstance().formPackets();
+
+            for (Packet packet : packets) {
+                if (packet instanceof TestPacketImpl) {
+                    byte[] packetData = ((TestPacketImpl) packet).getData();
+
+                    if (((TestPacketImpl) packet).size > 0) {
+                        ByteArrayInputStream inputStream = new ByteArrayInputStream(packetData);
+                        DataInput in = new DataInputStream(inputStream);
+
+                        MethodInfo methodInfo = MethodInfoSerializationKt.MethodInfo(in);
+                        SignatureContract contract = SignatureContractSerializationKt.SignatureContract(in);
+                        if (contract instanceof RSignatureContract)
+                            SignatureServer.getInstance().mainContainer.addContract(methodInfo, (RSignatureContract) contract);
+                    }
+                }
+            }
+        } catch (StorageException ex) {
+
+        }
+
 
         ServerSocket listener = new ServerSocket(7777);
 

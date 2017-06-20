@@ -5,9 +5,7 @@ import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.Contrac
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ReferenceContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.TypedContractTransition;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class RSignatureContract implements SignatureContract {
 
@@ -42,11 +40,43 @@ public class RSignatureContract implements SignatureContract {
         return termNode;
     }
 
-    public RSignatureContract(RSignature signature) {
+    public RSignatureContract(SignatureContract contract) {
         levels = new ArrayList<>();
-        termNode = new RSignatureContractNode();
+        myArgsInfo = contract.getArgsInfo();
+        startContractNode = new RSignatureContractNode(contract.getStartNode());
+
+        Set<RSignatureContractNode> used = new HashSet<>();
+
+        for (int i = 0; i < myArgsInfo.size() + 2; i++)
+            levels.add(new ArrayList<>());
+
+        levels.get(0).add(startContractNode);
+        int level = 0;
+
+        for (int i = 0; i <= myArgsInfo.size(); i++, level++) {
+            for (RSignatureContractNode contractNode : levels.get(level)) {
+                for (ContractTransition transition : contractNode.getTransitionKeys()) {
+                    RSignatureContractNode node = contractNode.goByTransition(transition);
+
+                    if (used.add(node)) {
+                        levels.get(level + 1).add(node);
+                    }
+                }
+            }
+        }
+        termNode = levels.get(levels.size() - 1).get(0);
+    }
+
+    RSignatureContract(RSignature signature) {
         myArgsInfo = signature.getArgsInfo();
-        startContractNode = this.createNodeAndAddToLevels(0);
+        levels = new ArrayList<>();
+        for (int i = 0; i < getArgsInfo().size() + 2; i++) {
+            levels.add(new ArrayList<>());
+        }
+
+        termNode = this.createNodeAndAddToLevels(0);
+
+        startContractNode = this.createNodeAndAddToLevels(levels.size() - 1);
 
         addRSignature(signature);
     }
@@ -84,7 +114,7 @@ public class RSignatureContract implements SignatureContract {
     }
 
     @NotNull
-    ContractTransition calculateTransition(@NotNull List<String> argTypes, int argIndex, String type) {
+    private ContractTransition calculateTransition(@NotNull List<String> argTypes, int argIndex, String type) {
         final int mask = getNewMask(argTypes, argIndex, type);
 
         if (mask > 0)
@@ -93,7 +123,7 @@ public class RSignatureContract implements SignatureContract {
             return new TypedContractTransition(type);
     }
 
-    public void addRSignature(RSignature signature) {
+    void addRSignature(RSignature signature) {
         myNumberOfCalls++;
         RSignatureContractNode currNode = startContractNode;
 
@@ -137,7 +167,7 @@ public class RSignatureContract implements SignatureContract {
         return tempMask;
     }
 
-    public void minimization() {
+    void minimization() {
         int numberOfLevels = levels.size();
 
         for (int i = numberOfLevels - 1; i > 0; i--) {
@@ -197,18 +227,42 @@ public class RSignatureContract implements SignatureContract {
         return myNumberOfCalls;
     }
 
-    void mergeDFS(RSignatureContractNode node1, RSignatureContractNode node2) {
-        for (ContractTransition transition : node2.getTransitionKeys()) {
-            if (node1.getTransitionKeys().contains(transition)) {
-                mergeDFS(node1.goByTransition(transition), node2.goByTransition(transition));
-            } else {
-                node1.addLink(transition, node2.goByTransition(transition));
-            }
-        }
+    private void mergeDFS(RSignatureContractNode node1, SignatureNode node2) {
+        //TODO
+        //        for (ContractTransition transition : node2.getTransitionKeys()) {
+//            if (node1.getTransitionKeys().contains(transition)) {
+//                mergeDFS(node1.goByTransition(transition), node2.goByTransition(transition));
+//            } else {
+//                node1.addLink(transition, node2.goByTransition(transition));
+//            }
+//        }
     }
 
-    public void merge(RSignatureContract additive) {
+    public void merge(SignatureContract additive) {
         mergeDFS(startContractNode, additive.getStartNode());
         minimization();
+    }
+
+    boolean accept(@NotNull RSignature signature) {
+        RSignatureContractNode currNode = startContractNode;
+
+        String returnType = signature.getReturnTypeName();
+
+        final List<String> argsTypes = signature.getArgsTypes();
+        for (int argIndex = 0; argIndex < argsTypes.size(); argIndex++) {
+            final String type = argsTypes.get(argIndex);
+
+            final ContractTransition transition = calculateTransition(signature.getArgsTypes(), argIndex, type);
+
+            if (!currNode.containsKey(transition)) {
+                return false;
+            } else {
+                currNode = currNode.goByTransition(transition);
+            }
+        }
+
+        final ContractTransition transition = calculateTransition(signature.getArgsTypes(), signature.getArgsTypes().size(), returnType);
+
+        return currNode.containsKey(transition);
     }
 }
