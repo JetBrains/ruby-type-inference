@@ -49,18 +49,6 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
         Assert.assertEquals(contract.getLevels().get(3).size(), 2);
     }
 
-    public void testMerge() {
-        RSignatureContract contract1 = doTestContract("merge_test1", "doo1");
-        RSignatureContract contract2 = doTestContract("merge_test2", "doo2");
-
-        contract1.merge(contract2);
-
-        Assert.assertEquals(contract1.getLevels().size(), 3);
-        Assert.assertEquals(contract1.getLevels().get(1).size(), 1);
-        Assert.assertEquals(contract1.getLevels().get(2).size(), 1);
-        Assert.assertEquals(contract1.getLevels().get(2).get(0).getTransitionKeys().size(), 2);
-    }
-
     private void executeScript(@NotNull String runnableScriptName) {
         final String scriptPath = PathManager.getAbsolutePath(getTestDataPath() + "/" + runnableScriptName);
 

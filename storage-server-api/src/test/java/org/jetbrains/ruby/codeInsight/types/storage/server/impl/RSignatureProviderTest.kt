@@ -38,11 +38,6 @@ class RSignatureProviderTest : TestCase() {
         assertEquals("rails", insertedGem.name)
         assertEquals("5.0.0.beta1", insertedGem.version)
 
-        val gemInfoData = GemInfoData.new {
-            name = "asds"
-            version = "asdas"
-        }
-
         ClassInfoTable.insert { it[gemInfo] = insertedGem.id; it[fqn] = "ActiveRecord::Base" }
         val insertedClass = ClassInfoData.all().first()
         assertEquals("ActiveRecord::Base", insertedClass.classFQN)

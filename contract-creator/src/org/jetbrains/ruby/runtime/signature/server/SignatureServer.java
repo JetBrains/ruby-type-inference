@@ -183,7 +183,7 @@ public class SignatureServer implements RSignatureStorage {
                 try {
                     Collection<Packet> packets = SignatureServer.getInstance().formPackets();
                     for (Packet packet : packets) {
-                        LocalBucket.getInstance().readPacket(packet);
+                        LocalBucket.INSTANCE.readPacket(packet);
                     }
                 } catch (Exception ex) {
                     LOGGER.severe(ex.getMessage());
@@ -200,26 +200,23 @@ public class SignatureServer implements RSignatureStorage {
 
         int handlersCounter = 0;
 
-        try {
-            Collection<Packet> packets = LocalBucket.getInstance().formPackets();
 
-            for (Packet packet : packets) {
-                if (packet instanceof TestPacketImpl) {
-                    byte[] packetData = ((TestPacketImpl) packet).getData();
+        Collection<Packet> packets = LocalBucket.INSTANCE.formPackets();
 
-                    if (((TestPacketImpl) packet).size > 0) {
-                        ByteArrayInputStream inputStream = new ByteArrayInputStream(packetData);
-                        DataInput in = new DataInputStream(inputStream);
+        for (Packet packet : packets) {
+            if (packet instanceof TestPacketImpl) {
+                byte[] packetData = ((TestPacketImpl) packet).getData();
 
-                        MethodInfo methodInfo = MethodInfoSerializationKt.MethodInfo(in);
-                        SignatureContract contract = SignatureContractSerializationKt.SignatureContract(in);
-                        if (contract instanceof RSignatureContract)
-                            SignatureServer.getInstance().mainContainer.addContract(methodInfo, (RSignatureContract) contract);
-                    }
+                if (((TestPacketImpl) packet).size > 0) {
+                    ByteArrayInputStream inputStream = new ByteArrayInputStream(packetData);
+                    DataInput in = new DataInputStream(inputStream);
+
+                    MethodInfo methodInfo = MethodInfoSerializationKt.MethodInfo(in);
+                    SignatureContract contract = SignatureContractSerializationKt.SignatureContract(in);
+                    if (contract instanceof RSignatureContract)
+                        SignatureServer.getInstance().mainContainer.addContract(methodInfo, (RSignatureContract) contract);
                 }
             }
-        } catch (StorageException ex) {
-
         }
 
 

@@ -10,13 +10,15 @@ import org.jetbrains.ruby.codeInsight.types.storage.server.impl.*
 
 class SignatureDBProvider {
 
-    var transaction: Transaction? = null
+    init {
+        connectToDB()
+    }
 
     fun connectToDB() {
+
         Database.connect("jdbc:mysql://localhost:3306/rsignatures", driver = "com.mysql.jdbc.Driver", user = "root", password = "12345")
 
-        transaction = TransactionManager.manager.newTransaction()
-        SchemaUtils.create(GemInfoTable, ClassInfoTable, MethodInfoTable, SignatureTable)
+        transaction { SchemaUtils.create(GemInfoTable, ClassInfoTable, MethodInfoTable, SignatureTable) }
     }
 
     fun getSignatureContract(methodInfo: MethodInfo): SignatureContract? {
@@ -39,8 +41,7 @@ class SignatureDBProvider {
                         MethodInfoTable.visibility.eq(methodInfo.visibility) and MethodInfoTable.locationFile.eq(methodInfo.location?.path) and MethodInfoTable.locationLineno.eq(methodInfo.location?.lineno ?: 0)
             }.firstOrNull()?.get(MethodInfoTable.id) ?: return@transaction null
 
-            val signatureContractId = SignatureTable.select { SignatureTable.methodInfo.eq(insertedMethodInfo) }.firstOrNull()?.get(SignatureTable.id) ?: return@transaction null
-            return@transaction SignatureContractData(signatureContractId).contract
+            return@transaction SignatureContractData.find { SignatureTable.methodInfo.eq(insertedMethodInfo) }.firstOrNull()?.contract
         }
     }
 
@@ -73,18 +74,20 @@ class SignatureDBProvider {
 
             val insertedSignature = SignatureTable.select { SignatureTable.methodInfo.eq(insertedMethodInfo) }.firstOrNull()?.get(SignatureTable.id)
 
+            val blob = TransactionManager.current().connection.createBlob()
             if (insertedSignature == null) {
-                val blob = TransactionManager.current().connection.createBlob()
                 SignatureTable.insertIgnore { it[SignatureTable.contract] = BlobSerializer.writeToBlob(contract, blob); it[SignatureTable.methodInfo] = insertedMethodInfo }
             } else {
-                //TODO[update]
+                SignatureTable.update({ SignatureTable.id.eq(insertedSignature) }) {
+                    it[SignatureTable.contract] = BlobSerializer.writeToBlob(contract, blob)
+                }
             }
         }
     }
 
     fun getRegisteredContractsWithInfos(): Collection<SignatureContractData> {
         return transaction {
-            SignatureContractData.all().toList()
+            return@transaction SignatureContractData.all().toList()
         }
     }
 }

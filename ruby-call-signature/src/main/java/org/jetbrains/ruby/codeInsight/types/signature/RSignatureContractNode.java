@@ -17,14 +17,6 @@ public class RSignatureContractNode implements SignatureNode {
         transitions = new HashMap<>();
     }
 
-    public RSignatureContractNode(SignatureNode node) {
-
-        transitions = new HashMap<>();
-        for (ContractTransition transition : node.getTransitions().keySet()) {
-            transitions.put(transition, node.getTransitions().get(transition));
-        }
-    }
-
     @NotNull
     public RSignatureContractNode goByTransition(ContractTransition transition) {
 
@@ -49,11 +41,5 @@ public class RSignatureContractNode implements SignatureNode {
     @Override
     public Map<ContractTransition, SignatureNode> getTransitions() {
         return transitions;
-    }
-
-    public enum ContractNodeType {
-        argNode,
-        returnNode,
-        returnTypeNode
     }
 }

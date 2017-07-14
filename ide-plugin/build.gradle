@@ -5,7 +5,7 @@ buildscript {
 }
 
 plugins {
-    id "org.jetbrains.intellij" version "0.2.13"
+    id "org.jetbrains.intellij" version "0.2.15"
 }
 
 dependencies {
@@ -21,7 +21,7 @@ sourceSets {
 intellij {
     version 'IU-172-SNAPSHOT'
     pluginName 'ruby-runtime-stats'
-    plugins = ['org.jetbrains.plugins.ruby:2017.2.20170530']
+    plugins = ['org.jetbrains.plugins.ruby:2017.2.20170717']
 }
 
 prepareSandbox.doLast {
