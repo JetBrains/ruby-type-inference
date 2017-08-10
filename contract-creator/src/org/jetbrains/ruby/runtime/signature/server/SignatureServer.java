@@ -1,6 +1,5 @@
 package org.jetbrains.ruby.runtime.signature.server;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -9,7 +8,7 @@ import org.jetbrains.ruby.codeInsight.types.storage.server.RSignatureStorage;
 import org.jetbrains.ruby.codeInsight.types.storage.server.StorageException;
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.MethodInfoSerializationKt;
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.SignatureContractSerializationKt;
-import org.jetbrains.ruby.runtime.signature.RawSignature;
+import org.jetbrains.ruby.runtime.signature.server.serialisation.RSignatureBuilder;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -135,27 +134,11 @@ public class SignatureServer implements RSignatureStorage {
 
                 while ((currString = br.readLine()) != null) {
                     try {
-                        ServerResponseBean result = new Gson().fromJson(currString, ServerResponseBean.class);
+                        RSignature currRSignature = RSignatureBuilder.fromJson(currString);
 
-                        if (result != null) {
-                            RawSignature currRawSignature = new RawSignature(result);
-
-                            if (currRawSignature.argc != -1) {
-                                RSignatureFetcher fetcher = new RSignatureFetcher(currRawSignature.argc, currRawSignature.kwArgs);
-                                List<Boolean> flags = fetcher.fetch(currRawSignature.getArgsInfo());
-
-                                for (int i = 0; i < flags.size(); i++) {
-                                    Boolean flag = flags.get(i);
-                                    if (!flag)
-                                        currRawSignature.changeArgumentType(i, "-");
-                                }
-                            }
-                            RSignature currRSignature = currRawSignature.getRSignature();
-
-                            if (!SignatureServer.getInstance().mainContainer.acceptSignature(currRSignature)) {
-                                SignatureServer.getInstance().newSignaturesContainer.addSignature(currRSignature);
-                            }
-
+                        if (currRSignature != null
+                                && !SignatureServer.getInstance().mainContainer.acceptSignature(currRSignature)) {
+                            SignatureServer.getInstance().newSignaturesContainer.addSignature(currRSignature);
                         }
 
                     } catch (JsonParseException e) {

@@ -24,11 +24,15 @@ import org.jetbrains.plugins.ruby.ruby.lang.psi.expressions.RExpression;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.methodCall.RArgumentToBlock;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.methodCall.RCall;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.references.RReference;
-import org.jetbrains.ruby.codeInsight.types.signature.*;
+import org.jetbrains.ruby.codeInsight.types.signature.MethodInfo;
+import org.jetbrains.ruby.codeInsight.types.signature.ParameterInfo;
+import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContract;
+import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContractNode;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ReferenceContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.TypedContractTransition;
 import org.jetbrains.ruby.runtime.signature.server.SignatureServer;
+import org.jetbrains.ruby.runtime.signature.server.serialisation.RSignatureBuilder;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -138,8 +142,6 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
                 simpleArgs.add(arg);
         }
 
-        RSignatureFetcher fetcher = new RSignatureFetcher(callArgs.size(), kwArgs.keySet());
-
         if (methodName != null) {
 
             final Module module = ModuleUtilCore.findModuleForPsiElement(call);
@@ -155,10 +157,10 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
 
             if (contract != null && contract.locked == false) {
                 List<ParameterInfo> paramInfos = contract.getParamInfoList();
-                List<Boolean> flags = fetcher.fetch(paramInfos);
+                boolean[] isArgumentPresent = RSignatureBuilder.calcPresentArguments(paramInfos, callArgs.size(), kwArgs.keySet());
 
-                for (int i = 0; i < flags.size(); i++) {
-                    if (flags.get(i)) {
+                for (int i = 0; i < isArgumentPresent.length; i++) {
+                    if (isArgumentPresent[i]) {
                         if (paramInfos.get(i).getModifier() == ParameterInfo.Type.KEY ||
                                 paramInfos.get(i).getModifier() == ParameterInfo.Type.KEYREQ) {
                             RPsiElement currElement = kwArgs.get(paramInfos.get(i).getName());
