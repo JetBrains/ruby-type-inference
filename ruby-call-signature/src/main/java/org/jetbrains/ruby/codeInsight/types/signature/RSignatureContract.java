@@ -9,8 +9,6 @@ import java.util.*;
 
 public class RSignatureContract implements SignatureContract {
 
-    public boolean locked = false;
-
     @NotNull
     private final RSignatureContractNode myStartContractNode;
     @NotNull

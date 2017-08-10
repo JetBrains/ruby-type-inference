@@ -89,8 +89,11 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
             }
             RSignatureContract currContract = callStatServer.getContractByMethodName(method_name);
 
-            if (currContract != null && !currContract.locked)
-                contract = currContract;
+            if (currContract != null) {
+                synchronized (currContract) {
+                    contract = currContract;
+                }
+            }
 
             cnt++;
         }

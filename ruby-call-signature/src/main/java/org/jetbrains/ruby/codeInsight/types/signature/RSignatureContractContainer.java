@@ -21,9 +21,10 @@ public class RSignatureContractContainer {
                 .sorted(Collections.reverseOrder(Comparator.comparingInt(entry -> myNumberOfCalls.get(entry.getKey()))))
                 .forEachOrdered(entry -> {
                     final MethodInfo key = entry.getKey();
-                    contracts.get(key).locked = true;
-                    contracts.get(key).minimize();
-                    contracts.get(key).locked = false;
+                    final RSignatureContract contract = contracts.get(key);
+                    synchronized (contract) {
+                        contract.minimize();
+                    }
                 });
         System.out.println("Finished");
     }
@@ -50,18 +51,16 @@ public class RSignatureContractContainer {
         if (contracts.containsKey(currInfo)) {
             RSignatureContract contract = contracts.get(currInfo);
 
-            contract.locked = true;
-            if (signature.getArgsInfo().size() == contract.getArgsInfo().size()) {
-                contracts.get(currInfo).addRSignature(signature);
-                myNumberOfCalls.compute(currInfo, (method, oldNumber) -> oldNumber != null ? oldNumber + 1 : 1);
+            synchronized (contract) {
+                if (signature.getArgsInfo().size() == contract.getArgsInfo().size()) {
+                    contract.addRSignature(signature);
+                    myNumberOfCalls.compute(currInfo, (method, oldNumber) -> oldNumber != null ? oldNumber + 1 : 1);
+                }
             }
-            contract.locked = false;
 
         } else {
             RSignatureContract contract = new RSignatureContract(signature);
-            contract.locked = true;
             contracts.put(currInfo, contract);
-            contract.locked = false;
         }
     }
 

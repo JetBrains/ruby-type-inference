@@ -122,6 +122,7 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
         );
     }
 
+    @NotNull
     public RType createTypeByCallAndArgs(@NotNull final RExpression call, @NotNull final List<RPsiElement> callArgs) {
 
         final PsiElement callElement = call instanceof RCall ? ((RCall) call).getPsiCommand() : call;
@@ -153,26 +154,26 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
                 return REmptyType.INSTANCE;
 
             Map<RSignatureContractNode, List<Set<String>>> currNodesAndReadTypes = new HashMap<>();
-            currNodesAndReadTypes.put(contract.getStartNode(), new ArrayList<>());
+            synchronized (contract) {
+                currNodesAndReadTypes.put(contract.getStartNode(), new ArrayList<>());
+            }
 
-            if (contract != null && contract.locked == false) {
-                List<ParameterInfo> paramInfos = contract.getParamInfoList();
-                boolean[] isArgumentPresent = RSignatureBuilder.calcPresentArguments(paramInfos, callArgs.size(), kwArgs.keySet());
+            List<ParameterInfo> paramInfos = contract.getParamInfoList();
+            boolean[] isArgumentPresent = RSignatureBuilder.calcPresentArguments(paramInfos, callArgs.size(), kwArgs.keySet());
 
-                for (int i = 0; i < isArgumentPresent.length; i++) {
-                    if (isArgumentPresent[i]) {
-                        if (paramInfos.get(i).getModifier() == ParameterInfo.Type.KEY ||
-                                paramInfos.get(i).getModifier() == ParameterInfo.Type.KEYREQ) {
-                            RPsiElement currElement = kwArgs.get(paramInfos.get(i).getName());
+            for (int i = 0; i < isArgumentPresent.length; i++) {
+                if (isArgumentPresent[i]) {
+                    if (paramInfos.get(i).getModifier() == ParameterInfo.Type.KEY ||
+                            paramInfos.get(i).getModifier() == ParameterInfo.Type.KEYREQ) {
+                        RPsiElement currElement = kwArgs.get(paramInfos.get(i).getName());
 
-                            currNodesAndReadTypes = getNextLevel(currNodesAndReadTypes, getArgTypeNames(currElement), i);
-                        } else {
-                            RPsiElement currElement = simpleArgs.poll();
-                            currNodesAndReadTypes = getNextLevel(currNodesAndReadTypes, getArgTypeNames(currElement), i);
-                        }
+                        currNodesAndReadTypes = getNextLevel(currNodesAndReadTypes, getArgTypeNames(currElement), i);
                     } else {
-                        currNodesAndReadTypes = getNextLevelByString(currNodesAndReadTypes, "-", i);
+                        RPsiElement currElement = simpleArgs.poll();
+                        currNodesAndReadTypes = getNextLevel(currNodesAndReadTypes, getArgTypeNames(currElement), i);
                     }
+                } else {
+                    currNodesAndReadTypes = getNextLevelByString(currNodesAndReadTypes, "-", i);
                 }
             }
 
