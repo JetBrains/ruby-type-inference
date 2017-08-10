@@ -13,21 +13,21 @@ public class RSignatureContract implements SignatureContract {
     public boolean locked = false;
 
     @NotNull
-    private final RSignatureContractNode startContractNode;
+    private final RSignatureContractNode myStartContractNode;
     @NotNull
     private final List<ParameterInfo> myArgsInfo;
 
-    private final List<List<RSignatureContractNode>> levels;
-    private final RSignatureContractNode termNode;
+    private final List<List<RSignatureContractNode>> myLevels;
+    private final RSignatureContractNode myTermNode;
 
     private RSignatureContractNode createNodeAndAddToLevels(Integer index) {
         RSignatureContractNode newNode;
 
         newNode = new RSignatureContractNode();
 
-        while (levels.size() <= index)
-            levels.add(new ArrayList<>());
-        levels.get(index).add(newNode);
+        while (myLevels.size() <= index)
+            myLevels.add(new ArrayList<>());
+        myLevels.get(index).add(newNode);
         return newNode;
     }
 
@@ -36,19 +36,19 @@ public class RSignatureContract implements SignatureContract {
     }
 
     private RSignatureContractNode getTermNode() {
-        return termNode;
+        return myTermNode;
     }
 
     public RSignatureContract(RSignature signature) {
         myArgsInfo = signature.getArgsInfo();
-        levels = new ArrayList<>();
+        myLevels = new ArrayList<>();
         for (int i = 0; i < getArgsInfo().size() + 2; i++) {
-            levels.add(new ArrayList<>());
+            myLevels.add(new ArrayList<>());
         }
 
-        startContractNode = this.createNodeAndAddToLevels(0);
+        myStartContractNode = createNodeAndAddToLevels(0);
 
-        termNode = this.createNodeAndAddToLevels(levels.size() - 1);
+        myTermNode = createNodeAndAddToLevels(myLevels.size() - 1);
 
         addRSignature(signature);
     }
@@ -57,10 +57,10 @@ public class RSignatureContract implements SignatureContract {
                               @NotNull RSignatureContractNode startContractNode,
                               @NotNull RSignatureContractNode termNode,
                               @NotNull List<List<RSignatureContractNode>> levels) {
-        this.startContractNode = startContractNode;
+        myStartContractNode = startContractNode;
         myArgsInfo = argsInfo;
-        this.levels = levels;
-        this.termNode = termNode;
+        myLevels = levels;
+        myTermNode = termNode;
 
         // TODO recalculate mask
     }
@@ -68,7 +68,7 @@ public class RSignatureContract implements SignatureContract {
     @NotNull
     @Override
     public RSignatureContractNode getStartNode() {
-        return startContractNode;
+        return myStartContractNode;
     }
 
     @NotNull
@@ -78,7 +78,7 @@ public class RSignatureContract implements SignatureContract {
     }
 
     public int getNodeCount() {
-        return levels.stream().map(List::size).reduce(0, (a, b) -> a + b);
+        return myLevels.stream().map(List::size).reduce(0, (a, b) -> a + b);
     }
 
     @NotNull
@@ -92,7 +92,7 @@ public class RSignatureContract implements SignatureContract {
     }
 
     public void addRSignature(RSignature signature) {
-        RSignatureContractNode currNode = startContractNode;
+        RSignatureContractNode currNode = myStartContractNode;
 
         String returnType = signature.getReturnTypeName();
 
@@ -136,10 +136,10 @@ public class RSignatureContract implements SignatureContract {
     }
 
     void minimize() {
-        int numberOfLevels = levels.size();
+        int numberOfLevels = myLevels.size();
 
         for (int i = numberOfLevels - 1; i > 0; i--) {
-            List<RSignatureContractNode> level = levels.get(i);
+            List<RSignatureContractNode> level = myLevels.get(i);
 
             HashMap<RSignatureContractNode, RSignatureContractNode> representatives = new HashMap<>();
             Set<RSignatureContractNode> uselessVertices = new HashSet<>();
@@ -170,7 +170,7 @@ public class RSignatureContract implements SignatureContract {
                 }
             }
 
-            List<RSignatureContractNode> prevLevel = levels.get(i - 1);
+            List<RSignatureContractNode> prevLevel = myLevels.get(i - 1);
 
 
             if (uselessVertices.size() > 0) {
@@ -188,7 +188,7 @@ public class RSignatureContract implements SignatureContract {
 
 
     public List<List<RSignatureContractNode>> getLevels() {
-        return levels;
+        return myLevels;
     }
 
     private Set<NodeWithTransition> getMarkedTransitionsBFS(RSignatureContractNode oldNode, RSignatureContractNode newNode) {
@@ -199,8 +199,8 @@ public class RSignatureContract implements SignatureContract {
 
         while (!bfsQueue.isEmpty()) {
             PairOfNodes currPair = bfsQueue.poll();
-            oldNode = currPair.oldNode;
-            newNode = currPair.newNode;
+            oldNode = currPair.myOldNode;
+            newNode = currPair.myNewNode;
 
             for (ContractTransition transition : newNode.getTransitions().keySet()) {
                 if (oldNode.containsKey(transition)) {
@@ -227,7 +227,7 @@ public class RSignatureContract implements SignatureContract {
                 RSignatureContractNode node;
 
                 if (newNode.goByTransition(transition) == newTermNode)
-                    node = termNode;
+                    node = myTermNode;
                 else
                     node = createNodeAndAddToLevels(level);
 
@@ -238,12 +238,12 @@ public class RSignatureContract implements SignatureContract {
     }
 
     public void mergeWith(RSignatureContract additive) {
-        Set<NodeWithTransition> markedTransitions = getMarkedTransitionsBFS(startContractNode, additive.getStartNode());
+        Set<NodeWithTransition> markedTransitions = getMarkedTransitionsBFS(myStartContractNode, additive.getStartNode());
 
         int levelID = 0;
         Map<RSignatureContractNode, RSignatureContractNode> linkToParentNode = new HashMap<>();
 
-        for (List<RSignatureContractNode> level : levels) {
+        for (List<RSignatureContractNode> level : myLevels) {
 
             for (RSignatureContractNode node : level) {
                 Set<ContractTransition> transitions = node.getTransitionKeys();
@@ -267,11 +267,9 @@ public class RSignatureContract implements SignatureContract {
                         continue;
                     }
 
-                    NodeWithTransition nodeWithTransition = new NodeWithTransition(node, transition);
-
-                    if (linkToParentNode.keySet().contains(node)) {
-                        nodeWithTransition.node = linkToParentNode.get(node);
-                    }
+                    final NodeWithTransition nodeWithTransition = new NodeWithTransition(
+                            linkToParentNode.keySet().contains(node) ? linkToParentNode.get(node) : node,
+                            transition);
 
                     if (markedTransitions.contains(nodeWithTransition)) {
 
@@ -297,7 +295,7 @@ public class RSignatureContract implements SignatureContract {
     }
 
     boolean accept(@NotNull RSignature signature) {
-        RSignatureContractNode currNode = startContractNode;
+        RSignatureContractNode currNode = myStartContractNode;
 
         String returnType = signature.getReturnTypeName();
 
@@ -320,12 +318,12 @@ public class RSignatureContract implements SignatureContract {
     }
 
     class NodeWithTransition {
-        RSignatureContractNode node;
-        ContractTransition transition;
+        final RSignatureContractNode myNode;
+        final ContractTransition myTransition;
 
         NodeWithTransition(RSignatureContractNode node, ContractTransition transition) {
-            this.node = node;
-            this.transition = transition;
+            myNode = node;
+            myTransition = transition;
         }
 
         @Override
@@ -336,29 +334,31 @@ public class RSignatureContract implements SignatureContract {
             final NodeWithTransition that = (NodeWithTransition) o;
 
             //noinspection SimplifiableIfStatement
-            if (node != null ? !node.equals(that.node) : that.node != null) return false;
-            return transition != null ? transition.equals(that.transition) : that.transition == null;
+            if (myNode != null ? !myNode.equals(that.myNode) : that.myNode != null) return false;
+            return myTransition != null ? myTransition.equals(that.myTransition) : that.myTransition == null;
         }
 
         @Override
         public int hashCode() {
-            int result = node != null ? node.hashCode() : 0;
-            result = 31 * result + (transition != null ? transition.hashCode() : 0);
+            int result = myNode != null ? myNode.hashCode() : 0;
+            result = 31 * result + (myTransition != null ? myTransition.hashCode() : 0);
             return result;
         }
     }
 
     class PairOfNodes {
-        RSignatureContractNode oldNode;
-        RSignatureContractNode newNode;
+        @NotNull
+        final RSignatureContractNode myOldNode;
+        @Nullable
+        final RSignatureContractNode myNewNode;
 
         PairOfNodes pairGoByTransition(ContractTransition transition) {
-            return new PairOfNodes(oldNode.goByTransition(transition), newNode.goByTransition(transition));
+            return new PairOfNodes(myOldNode.goByTransition(transition), myNewNode.goByTransition(transition));
         }
 
         PairOfNodes(@NotNull RSignatureContractNode node1, @Nullable RSignatureContractNode node2) {
-            oldNode = node1;
-            newNode = node2;
+            myOldNode = node1;
+            myNewNode = node2;
         }
     }
 }
