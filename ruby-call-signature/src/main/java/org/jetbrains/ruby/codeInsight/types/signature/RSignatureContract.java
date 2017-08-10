@@ -10,8 +10,6 @@ import java.util.*;
 
 public class RSignatureContract implements SignatureContract {
 
-    private int myNumberOfCalls = 0;
-
     public boolean locked = false;
 
     @NotNull
@@ -94,7 +92,6 @@ public class RSignatureContract implements SignatureContract {
     }
 
     public void addRSignature(RSignature signature) {
-        myNumberOfCalls++;
         RSignatureContractNode currNode = startContractNode;
 
         String returnType = signature.getReturnTypeName();
@@ -192,10 +189,6 @@ public class RSignatureContract implements SignatureContract {
 
     public List<List<RSignatureContractNode>> getLevels() {
         return levels;
-    }
-
-    int getNumberOfCalls() {
-        return myNumberOfCalls;
     }
 
     private Set<NodeWithTransition> getMarkedTransitionsBFS(RSignatureContractNode oldNode, RSignatureContractNode newNode) {

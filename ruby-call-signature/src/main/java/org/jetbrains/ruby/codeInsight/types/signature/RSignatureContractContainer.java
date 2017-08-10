@@ -6,16 +6,19 @@ import java.util.*;
 
 public class RSignatureContractContainer {
 
-    private Map<MethodInfo, RSignatureContract> contracts;
+    private final Map<MethodInfo, RSignatureContract> contracts;
+
+    private final Map<MethodInfo, Integer> myNumberOfCalls;
 
     public RSignatureContractContainer() {
         contracts = new HashMap<>();
+        myNumberOfCalls = new HashMap<>();
     }
 
     public void reduce()
     {
         contracts.entrySet().stream()
-                .sorted(Collections.reverseOrder(Comparator.comparingInt(entry -> entry.getValue().getNumberOfCalls())))
+                .sorted(Collections.reverseOrder(Comparator.comparingInt(entry -> myNumberOfCalls.get(entry.getKey()))))
                 .forEachOrdered(entry -> {
                     final MethodInfo key = entry.getKey();
                     contracts.get(key).locked = true;
@@ -50,6 +53,7 @@ public class RSignatureContractContainer {
             contract.locked = true;
             if (signature.getArgsInfo().size() == contract.getArgsInfo().size()) {
                 contracts.get(currInfo).addRSignature(signature);
+                myNumberOfCalls.compute(currInfo, (method, oldNumber) -> oldNumber != null ? oldNumber + 1 : 1);
             }
             contract.locked = false;
 
