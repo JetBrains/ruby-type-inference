@@ -113,9 +113,12 @@ class BlobDeserializer {
 
     operator fun setValue(signatureContractData: SignatureContractData, property: KProperty<*>, signatureContract: SignatureContract) {
         val blob = TransactionManager.current().connection.createBlob()
-        BlobSerializer.writeToBlob(signatureContract, blob)
-        signatureContractData.contractRaw = blob
-        blob.free()
+        try {
+            BlobSerializer.writeToBlob(signatureContract, blob)
+            signatureContractData.contractRaw = blob
+        } finally {
+            blob.free()
+        }
     }
 }
 
