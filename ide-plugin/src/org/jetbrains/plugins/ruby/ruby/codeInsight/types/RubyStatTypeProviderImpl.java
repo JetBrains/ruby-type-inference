@@ -27,7 +27,7 @@ import org.jetbrains.plugins.ruby.ruby.lang.psi.references.RReference;
 import org.jetbrains.ruby.codeInsight.types.signature.MethodInfo;
 import org.jetbrains.ruby.codeInsight.types.signature.ParameterInfo;
 import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContract;
-import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContractNode;
+import org.jetbrains.ruby.codeInsight.types.signature.SignatureNode;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ReferenceContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.TypedContractTransition;
@@ -55,29 +55,29 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
         return ans;
     }
 
-    private Map<RSignatureContractNode, List<Set<String>>> getNextLevel(Map<RSignatureContractNode, List<Set<String>>> currNodesAndReadTypes, Set<String> argTypeNames, int pos) {
+    private Map<SignatureNode, List<Set<String>>> getNextLevel(Map<SignatureNode, List<Set<String>>> currNodesAndReadTypes, Set<String> argTypeNames, int pos) {
 
-        Map<RSignatureContractNode, List<Set<String>>> nextLayer = new HashMap<>();
+        Map<SignatureNode, List<Set<String>>> nextLayer = new HashMap<>();
         currNodesAndReadTypes.forEach((node, readTypeSets) -> {
 
             for (final String typeName : argTypeNames) {
                 TypedContractTransition typedTransition = new TypedContractTransition(typeName);
 
-                if (node.containsKey(typedTransition)) {
+                if (node.getTransitions().containsKey(typedTransition)) {
                     final List<Set<String>> newList = new ArrayList<>(readTypeSets);
                     newList.add(ContainerUtil.newHashSet(typeName));
 
-                    addReadTypesList(nextLayer, newList, node.goByTransition(typedTransition));
+                    addReadTypesList(nextLayer, newList, node.getTransitions().get(typedTransition));
                 } else {
                     int mask = countMask(readTypeSets, typeName, pos);
 
                     ReferenceContractTransition refTransition = new ReferenceContractTransition(mask);
 
-                    if (node.containsKey(refTransition)) {
+                    if (node.getTransitions().containsKey(refTransition)) {
                         final List<Set<String>> newList = new ArrayList<>(readTypeSets);
                         newList.add(ContainerUtil.newHashSet(typeName));
 
-                        addReadTypesList(nextLayer, newList, node.goByTransition(refTransition));
+                        addReadTypesList(nextLayer, newList, node.getTransitions().get(refTransition));
                     }
                 }
             }
@@ -87,7 +87,7 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
         return nextLayer;
     }
 
-    private Map<RSignatureContractNode, List<Set<String>>> getNextLevelByString(Map<RSignatureContractNode, List<Set<String>>> currNodesAndReadTypes, String argName, int pos) {
+    private Map<SignatureNode, List<Set<String>>> getNextLevelByString(Map<SignatureNode, List<Set<String>>> currNodesAndReadTypes, String argName, int pos) {
 
         Set<String> tmpSet = new HashSet<>();
         tmpSet.add(argName);
@@ -153,7 +153,7 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
             if (contract == null)
                 return REmptyType.INSTANCE;
 
-            Map<RSignatureContractNode, List<Set<String>>> currNodesAndReadTypes = new HashMap<>();
+            Map<SignatureNode, List<Set<String>>> currNodesAndReadTypes = new HashMap<>();
             synchronized (contract) {
                 currNodesAndReadTypes.put(contract.getStartNode(), new ArrayList<>());
             }
@@ -179,7 +179,7 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
 
             final Set<String> returnTypes = new HashSet<>();
             currNodesAndReadTypes.forEach((node, readTypeSets) -> {
-                for (final ContractTransition transition : node.getTransitionKeys()) {
+                for (final ContractTransition transition : node.getTransitions().keySet()) {
                     returnTypes.addAll(transition.getValue(readTypeSets));
                 }
             });
@@ -193,7 +193,7 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
         return REmptyType.INSTANCE;
     }
 
-    private void addReadTypesList(Map<RSignatureContractNode, List<Set<String>>> nextLayer, List<Set<String>> readTypeSets, RSignatureContractNode to) {
+    private void addReadTypesList(Map<SignatureNode, List<Set<String>>> nextLayer, List<Set<String>> readTypeSets, SignatureNode to) {
         nextLayer.computeIfPresent(to, (rSignatureContractNode, sets) -> {
             for (int i = 0; i < sets.size(); i++) {
                 sets.get(i).addAll(readTypeSets.get(i));

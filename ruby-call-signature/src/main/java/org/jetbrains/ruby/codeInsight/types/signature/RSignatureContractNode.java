@@ -5,7 +5,6 @@ import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.Contrac
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 public class RSignatureContractNode implements SignatureNode {
 
@@ -16,24 +15,9 @@ public class RSignatureContractNode implements SignatureNode {
         myTransitions = new HashMap<>();
     }
 
-    @NotNull
-    public RSignatureContractNode goByTransition(ContractTransition transition) {
-        return ((RSignatureContractNode) myTransitions.get(transition));
-    }
-
-    @NotNull
-    public Set<ContractTransition> getTransitionKeys() {
-        return myTransitions.keySet();
-    }
-
-    public void addLink(final @NotNull ContractTransition transition, @NotNull RSignatureContractNode arrivalNode) {
+    public void addLink(final @NotNull ContractTransition transition, @NotNull SignatureNode arrivalNode) {
         myTransitions.put(transition, arrivalNode);
     }
-
-    public boolean containsKey(final @NotNull ContractTransition transition) {
-        return myTransitions.keySet().contains(transition);
-    }
-
 
     @NotNull
     @Override

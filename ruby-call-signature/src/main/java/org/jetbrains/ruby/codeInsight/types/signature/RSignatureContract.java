@@ -1,6 +1,7 @@
 package org.jetbrains.ruby.codeInsight.types.signature;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ReferenceContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.TypedContractTransition;
@@ -16,7 +17,7 @@ public class RSignatureContract implements SignatureContract {
     @NotNull
     private final List<List<RSignatureContractNode>> myLevels;
     @NotNull
-    private final RSignatureContractNode myTermNode;
+    private final SignatureNode myTermNode;
 
     @NotNull
     public List<ParameterInfo> getParamInfoList() {
@@ -24,7 +25,7 @@ public class RSignatureContract implements SignatureContract {
     }
 
     @NotNull
-    private RSignatureContractNode getTermNode() {
+    private SignatureNode getTermNode() {
         return myTermNode;
     }
 
@@ -44,7 +45,7 @@ public class RSignatureContract implements SignatureContract {
 
     public RSignatureContract(@NotNull List<ParameterInfo> argsInfo,
                               @NotNull RSignatureContractNode startContractNode,
-                              @NotNull RSignatureContractNode termNode,
+                              @NotNull SignatureNode termNode,
                               @NotNull List<List<RSignatureContractNode>> levels) {
         myStartContractNode = startContractNode;
         myArgsInfo = argsInfo;
@@ -56,7 +57,7 @@ public class RSignatureContract implements SignatureContract {
 
     @NotNull
     @Override
-    public RSignatureContractNode getStartNode() {
+    public SignatureNode getStartNode() {
         return myStartContractNode;
     }
 
@@ -75,7 +76,7 @@ public class RSignatureContract implements SignatureContract {
 
         String returnType = tuple.getReturnTypeName();
 
-        RSignatureContractNode termNode = getTermNode();
+        SignatureNode termNode = getTermNode();
 
         final List<String> argsTypes = tuple.getArgsTypes();
         for (int argIndex = 0; argIndex < argsTypes.size(); argIndex++) {
@@ -83,7 +84,7 @@ public class RSignatureContract implements SignatureContract {
 
             final ContractTransition transition = calculateTransition(tuple.getArgsTypes(), argIndex, type);
 
-            if (!currNode.containsKey(transition)) {
+            if (!currNode.getTransitions().containsKey(transition)) {
                 final RSignatureContractNode newNode = createNodeAndAddToLevels(argIndex + 1);
 
                 currNode.addLink(transition, newNode);
@@ -91,7 +92,7 @@ public class RSignatureContract implements SignatureContract {
                 currNode = newNode;
             } else {
 
-                currNode = currNode.goByTransition(transition);
+                currNode = ((RSignatureContractNode) currNode.getTransitions().get(transition));
             }
         }
 
@@ -106,29 +107,29 @@ public class RSignatureContract implements SignatureContract {
         for (int i = numberOfLevels - 1; i > 0; i--) {
             List<RSignatureContractNode> level = myLevels.get(i);
 
-            HashMap<RSignatureContractNode, RSignatureContractNode> representatives = new HashMap<>();
-            Set<RSignatureContractNode> uselessVertices = new HashSet<>();
+            HashMap<SignatureNode, SignatureNode> representatives = new HashMap<>();
+            Set<SignatureNode> uselessVertices = new HashSet<>();
 
-            for (RSignatureContractNode node : level) {
+            for (SignatureNode node : level) {
                 representatives.put(node, node);
             }
 
             for (int v1 = 0; v1 < level.size(); v1++) {
                 for (int v2 = v1 + 1; v2 < level.size(); v2++) {
-                    RSignatureContractNode vertex1 = level.get(v1);
-                    RSignatureContractNode vertex2 = level.get(v2);
+                    SignatureNode vertex1 = level.get(v1);
+                    SignatureNode vertex2 = level.get(v2);
 
                     boolean isSame = vertex1.getTransitions().size() == vertex2.getTransitions().size();
 
-                    for (ContractTransition transition : vertex1.getTransitionKeys()) {
+                    for (ContractTransition transition : vertex1.getTransitions().keySet()) {
 
-                        if (!vertex2.containsKey(transition) || vertex1.goByTransition(transition) != vertex2.goByTransition(transition)) {
+                        if (!vertex2.getTransitions().containsKey(transition) || vertex1.getTransitions().get(transition) != vertex2.getTransitions().get(transition)) {
                             isSame = false;
                         }
                     }
 
                     if (isSame) {
-                        RSignatureContractNode vertex1presenter = representatives.get(vertex1);
+                        SignatureNode vertex1presenter = representatives.get(vertex1);
                         representatives.put(vertex2, vertex1presenter);
                         uselessVertices.add(vertex2);
                     }
@@ -140,17 +141,19 @@ public class RSignatureContract implements SignatureContract {
 
             if (!uselessVertices.isEmpty()) {
                 for (RSignatureContractNode node : prevLevel) {
-                    for (ContractTransition transition : node.getTransitionKeys()) {
-                        RSignatureContractNode child = node.goByTransition(transition);
+                    for (ContractTransition transition : node.getTransitions().keySet()) {
+                        RSignatureContractNode child = ((RSignatureContractNode) node.getTransitions().get(transition));
                         node.addLink(transition, representatives.get(child));
                     }
                 }
             }
 
+            //noinspection SuspiciousMethodCalls
             level.removeAll(uselessVertices);
         }
     }
 
+    @TestOnly
     @NotNull
     public List<List<RSignatureContractNode>> getLevels() {
         return myLevels;
@@ -160,17 +163,17 @@ public class RSignatureContract implements SignatureContract {
         Set<NodeWithTransition> markedTransitions = getMarkedTransitionsBFS(myStartContractNode, additive.getStartNode());
 
         int levelID = 0;
-        Map<RSignatureContractNode, RSignatureContractNode> linkToParentNode = new HashMap<>();
+        Map<SignatureNode, SignatureNode> linkToParentNode = new HashMap<>();
 
         for (List<RSignatureContractNode> level : myLevels) {
 
             for (RSignatureContractNode node : level) {
-                Set<ContractTransition> transitions = node.getTransitionKeys();
-                Set<RSignatureContractNode> children = new HashSet<>();
-                Set<RSignatureContractNode> multipleEdgeChildren = new HashSet<>();
+                Set<ContractTransition> transitions = node.getTransitions().keySet();
+                Set<SignatureNode> children = new HashSet<>();
+                Set<SignatureNode> multipleEdgeChildren = new HashSet<>();
 
                 for (ContractTransition transition : transitions) {
-                    RSignatureContractNode childNode = node.goByTransition(transition);
+                    SignatureNode childNode = node.getTransitions().get(transition);
                     if (children.contains(childNode)) {
                         multipleEdgeChildren.add(childNode);
                     } else {
@@ -179,25 +182,24 @@ public class RSignatureContract implements SignatureContract {
                 }
 
                 for (ContractTransition transition : transitions) {
-
-                    RSignatureContractNode childNode = node.goByTransition(transition);
+                    SignatureNode childNode = node.getTransitions().get(transition);
 
                     if (!multipleEdgeChildren.contains(childNode)) {
                         continue;
                     }
 
                     final NodeWithTransition nodeWithTransition = new NodeWithTransition(
-                            linkToParentNode.keySet().contains(node) ? linkToParentNode.get(node) : node,
+                            linkToParentNode.containsKey(node) ? linkToParentNode.get(node) : node,
                             transition);
 
                     if (markedTransitions.contains(nodeWithTransition)) {
 
-                        RSignatureContractNode nodeToClone = node.goByTransition(transition);
+                        SignatureNode nodeToClone = node.getTransitions().get(transition);
                         RSignatureContractNode clonedNode;
 
                         clonedNode = createNodeAndAddToLevels(levelID + 1);
-                        for (ContractTransition tmpTransition : nodeToClone.getTransitionKeys()) {
-                            clonedNode.addLink(tmpTransition, nodeToClone.goByTransition(tmpTransition));
+                        for (ContractTransition tmpTransition : nodeToClone.getTransitions().keySet()) {
+                            clonedNode.addLink(tmpTransition, nodeToClone.getTransitions().get(tmpTransition));
                         }
 
                         linkToParentNode.put(clonedNode, nodeToClone);
@@ -209,12 +211,12 @@ public class RSignatureContract implements SignatureContract {
             levelID++;
         }
 
-        mergeDfs(getStartNode(), additive.getStartNode(), 0, additive.getTermNode());
+        mergeDfs(myStartContractNode, additive.getStartNode(), 0, additive.getTermNode());
         minimize();
     }
 
     boolean accept(@NotNull RTuple signature) {
-        RSignatureContractNode currNode = myStartContractNode;
+        SignatureNode currNode = myStartContractNode;
 
         String returnType = signature.getReturnTypeName();
 
@@ -224,16 +226,16 @@ public class RSignatureContract implements SignatureContract {
 
             final ContractTransition transition = calculateTransition(signature.getArgsTypes(), argIndex, type);
 
-            if (!currNode.containsKey(transition)) {
+            if (!currNode.getTransitions().containsKey(transition)) {
                 return false;
             } else {
-                currNode = currNode.goByTransition(transition);
+                currNode = currNode.getTransitions().get(transition);
             }
         }
 
         final ContractTransition transition = calculateTransition(signature.getArgsTypes(), signature.getArgsTypes().size(), returnType);
 
-        return currNode.containsKey(transition);
+        return currNode.getTransitions().containsKey(transition);
     }
 
     @NotNull
@@ -261,8 +263,8 @@ public class RSignatureContract implements SignatureContract {
     }
 
     @NotNull
-    private Set<NodeWithTransition> getMarkedTransitionsBFS(@NotNull RSignatureContractNode oldNode,
-                                                            @NotNull RSignatureContractNode newNode) {
+    private Set<NodeWithTransition> getMarkedTransitionsBFS(@NotNull SignatureNode oldNode,
+                                                            @NotNull SignatureNode newNode) {
         Set<NodeWithTransition> result = new HashSet<>();
 
         Queue<PairOfNodes> bfsQueue = new LinkedList<>();
@@ -274,7 +276,7 @@ public class RSignatureContract implements SignatureContract {
             newNode = currPair.myNewNode;
 
             for (ContractTransition transition : newNode.getTransitions().keySet()) {
-                if (oldNode.containsKey(transition)) {
+                if (oldNode.getTransitions().containsKey(transition)) {
                     result.add(new NodeWithTransition(oldNode, transition));
                     bfsQueue.add(currPair.pairGoByTransition(transition));
                 }
@@ -285,25 +287,26 @@ public class RSignatureContract implements SignatureContract {
     }
 
     private void mergeDfs(@NotNull RSignatureContractNode oldNode,
-                          @NotNull RSignatureContractNode newNode,
+                          @NotNull SignatureNode newNode,
                           int level,
-                          @NotNull RSignatureContractNode newTermNode) {
+                          @NotNull SignatureNode newTermNode) {
 
         level++;
 
-        for (ContractTransition transition : newNode.getTransitionKeys()) {
-            if (oldNode.getTransitionKeys().contains(transition)) {
-                mergeDfs(oldNode.goByTransition(transition), newNode.goByTransition(transition), level, newTermNode);
+        for (ContractTransition transition : newNode.getTransitions().keySet()) {
+            final SignatureNode nextNewNode = newNode.getTransitions().get(transition);
+
+            if (oldNode.getTransitions().containsKey(transition)) {
+                mergeDfs(((RSignatureContractNode) oldNode.getTransitions().get(transition)), nextNewNode, level, newTermNode);
             } else {
-                RSignatureContractNode node;
+                if (nextNewNode == newTermNode) {
+                    oldNode.addLink(transition, myTermNode);
+                    return;
+                }
 
-                if (newNode.goByTransition(transition) == newTermNode)
-                    node = myTermNode;
-                else
-                    node = createNodeAndAddToLevels(level);
-
+                final RSignatureContractNode node = createNodeAndAddToLevels(level);
                 oldNode.addLink(transition, node);
-                mergeDfs(node, newNode.goByTransition(transition), level, newTermNode);
+                mergeDfs(node, nextNewNode, level, newTermNode);
             }
         }
     }
@@ -320,11 +323,11 @@ public class RSignatureContract implements SignatureContract {
 
     private static class NodeWithTransition {
         @NotNull
-        private final RSignatureContractNode myNode;
+        private final SignatureNode myNode;
         @NotNull
         private final ContractTransition myTransition;
 
-        NodeWithTransition(@NotNull RSignatureContractNode node, @NotNull ContractTransition transition) {
+        NodeWithTransition(@NotNull SignatureNode node, @NotNull ContractTransition transition) {
             myNode = node;
             myTransition = transition;
         }
@@ -351,16 +354,16 @@ public class RSignatureContract implements SignatureContract {
 
     private static class PairOfNodes {
         @NotNull
-        private final RSignatureContractNode myOldNode;
+        private final SignatureNode myOldNode;
         @NotNull
-        private final RSignatureContractNode myNewNode;
+        private final SignatureNode myNewNode;
 
         @NotNull
         PairOfNodes pairGoByTransition(@NotNull ContractTransition transition) {
-            return new PairOfNodes(myOldNode.goByTransition(transition), myNewNode.goByTransition(transition));
+            return new PairOfNodes(myOldNode.getTransitions().get(transition), myNewNode.getTransitions().get(transition));
         }
 
-        PairOfNodes(@NotNull RSignatureContractNode node1, @NotNull RSignatureContractNode node2) {
+        PairOfNodes(@NotNull SignatureNode node1, @NotNull SignatureNode node2) {
             myOldNode = node1;
             myNewNode = node2;
         }

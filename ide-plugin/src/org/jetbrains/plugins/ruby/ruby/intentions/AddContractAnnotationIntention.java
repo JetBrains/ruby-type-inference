@@ -16,7 +16,6 @@ import org.jetbrains.plugins.ruby.ruby.lang.psi.RFile;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RubyElementFactory;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.RMethod;
 import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContract;
-import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContractNode;
 import org.jetbrains.ruby.codeInsight.types.signature.SignatureNode;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ReferenceContractTransition;
@@ -71,7 +70,7 @@ public class AddContractAnnotationIntention extends BaseIntentionAction {
     @Nullable
     private List<String> getContractAsStringList(RSignatureContract contract) {
         final List<String> contracts = new ArrayList<>();
-        final RSignatureContractNode startNode = contract.getStartNode();
+        final SignatureNode startNode = contract.getStartNode();
         dfs(startNode, new StringBuilder(), contracts);
         if (contracts.size() > 3) {
             return null;
