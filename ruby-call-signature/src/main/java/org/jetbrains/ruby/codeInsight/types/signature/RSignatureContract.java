@@ -1,7 +1,6 @@
 package org.jetbrains.ruby.codeInsight.types.signature;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ReferenceContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.TypedContractTransition;
@@ -16,30 +15,22 @@ public class RSignatureContract implements SignatureContract {
     private final RSignatureContractNode myStartContractNode;
     @NotNull
     private final List<ParameterInfo> myArgsInfo;
-
+    @NotNull
     private final List<List<RSignatureContractNode>> myLevels;
+    @NotNull
     private final RSignatureContractNode myTermNode;
 
-    private RSignatureContractNode createNodeAndAddToLevels(Integer index) {
-        RSignatureContractNode newNode;
-
-        newNode = new RSignatureContractNode();
-
-        while (myLevels.size() <= index)
-            myLevels.add(new ArrayList<>());
-        myLevels.get(index).add(newNode);
-        return newNode;
-    }
-
+    @NotNull
     public List<ParameterInfo> getParamInfoList() {
         return myArgsInfo;
     }
 
+    @NotNull
     private RSignatureContractNode getTermNode() {
         return myTermNode;
     }
 
-    public RSignatureContract(RSignature signature) {
+    public RSignatureContract(@NotNull RSignature signature) {
         myArgsInfo = signature.getArgsInfo();
         myLevels = new ArrayList<>();
         for (int i = 0; i < getArgsInfo().size() + 2; i++) {
@@ -81,17 +72,7 @@ public class RSignatureContract implements SignatureContract {
         return myLevels.stream().map(List::size).reduce(0, (a, b) -> a + b);
     }
 
-    @NotNull
-    private ContractTransition calculateTransition(@NotNull List<String> argTypes, int argIndex, String type) {
-        final int mask = getNewMask(argTypes, argIndex, type);
-
-        if (mask > 0)
-            return new ReferenceContractTransition(mask);
-        else
-            return new TypedContractTransition(type);
-    }
-
-    public void addRSignature(RSignature signature) {
+    public void addRSignature(@NotNull RSignature signature) {
         RSignatureContractNode currNode = myStartContractNode;
 
         String returnType = signature.getReturnTypeName();
@@ -119,20 +100,6 @@ public class RSignatureContract implements SignatureContract {
         final ContractTransition transition = calculateTransition(signature.getArgsTypes(), signature.getArgsTypes().size(), returnType);
 
         currNode.addLink(transition, termNode);
-    }
-
-    private int getNewMask(@NotNull List<String> argsTypes, int argIndex, @NotNull String type) {
-        int tempMask = 0;
-
-        for (int i = argIndex - 1; i >= 0; i--) {
-            tempMask <<= 1;
-
-            if (argsTypes.get(i).equals(type)) {
-                tempMask |= 1;
-            }
-        }
-
-        return tempMask;
     }
 
     void minimize() {
@@ -186,58 +153,12 @@ public class RSignatureContract implements SignatureContract {
         }
     }
 
-
+    @NotNull
     public List<List<RSignatureContractNode>> getLevels() {
         return myLevels;
     }
 
-    private Set<NodeWithTransition> getMarkedTransitionsBFS(RSignatureContractNode oldNode, RSignatureContractNode newNode) {
-        Set<NodeWithTransition> result = new HashSet<>();
-
-        Queue<PairOfNodes> bfsQueue = new LinkedList<>();
-        bfsQueue.add(new PairOfNodes(oldNode, newNode));
-
-        while (!bfsQueue.isEmpty()) {
-            PairOfNodes currPair = bfsQueue.poll();
-            oldNode = currPair.myOldNode;
-            newNode = currPair.myNewNode;
-
-            for (ContractTransition transition : newNode.getTransitions().keySet()) {
-                if (oldNode.containsKey(transition)) {
-                    result.add(new NodeWithTransition(oldNode, transition));
-                    bfsQueue.add(currPair.pairGoByTransition(transition));
-                }
-            }
-        }
-
-        return result;
-    }
-
-    private void mergeDfs(@NotNull RSignatureContractNode oldNode,
-                          @NotNull RSignatureContractNode newNode,
-                          int level,
-                          @NotNull RSignatureContractNode newTermNode) {
-
-        level++;
-
-        for (ContractTransition transition : newNode.getTransitionKeys()) {
-            if (oldNode.getTransitionKeys().contains(transition)) {
-                mergeDfs(oldNode.goByTransition(transition), newNode.goByTransition(transition), level, newTermNode);
-            } else {
-                RSignatureContractNode node;
-
-                if (newNode.goByTransition(transition) == newTermNode)
-                    node = myTermNode;
-                else
-                    node = createNodeAndAddToLevels(level);
-
-                oldNode.addLink(transition, node);
-                mergeDfs(node, newNode.goByTransition(transition), level, newTermNode);
-            }
-        }
-    }
-
-    public void mergeWith(RSignatureContract additive) {
+    public void mergeWith(@NotNull RSignatureContract additive) {
         Set<NodeWithTransition> markedTransitions = getMarkedTransitionsBFS(myStartContractNode, additive.getStartNode());
 
         int levelID = 0;
@@ -317,6 +238,88 @@ public class RSignatureContract implements SignatureContract {
         return currNode.containsKey(transition);
     }
 
+    @NotNull
+    private ContractTransition calculateTransition(@NotNull List<String> argTypes, int argIndex, @NotNull String type) {
+        final int mask = getNewMask(argTypes, argIndex, type);
+
+        if (mask > 0)
+            return new ReferenceContractTransition(mask);
+        else
+            return new TypedContractTransition(type);
+    }
+
+    private int getNewMask(@NotNull List<String> argsTypes, int argIndex, @NotNull String type) {
+        int tempMask = 0;
+
+        for (int i = argIndex - 1; i >= 0; i--) {
+            tempMask <<= 1;
+
+            if (argsTypes.get(i).equals(type)) {
+                tempMask |= 1;
+            }
+        }
+
+        return tempMask;
+    }
+
+    @NotNull
+    private Set<NodeWithTransition> getMarkedTransitionsBFS(@NotNull RSignatureContractNode oldNode,
+                                                            @NotNull RSignatureContractNode newNode) {
+        Set<NodeWithTransition> result = new HashSet<>();
+
+        Queue<PairOfNodes> bfsQueue = new LinkedList<>();
+        bfsQueue.add(new PairOfNodes(oldNode, newNode));
+
+        while (!bfsQueue.isEmpty()) {
+            PairOfNodes currPair = bfsQueue.poll();
+            oldNode = currPair.myOldNode;
+            newNode = currPair.myNewNode;
+
+            for (ContractTransition transition : newNode.getTransitions().keySet()) {
+                if (oldNode.containsKey(transition)) {
+                    result.add(new NodeWithTransition(oldNode, transition));
+                    bfsQueue.add(currPair.pairGoByTransition(transition));
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private void mergeDfs(@NotNull RSignatureContractNode oldNode,
+                          @NotNull RSignatureContractNode newNode,
+                          int level,
+                          @NotNull RSignatureContractNode newTermNode) {
+
+        level++;
+
+        for (ContractTransition transition : newNode.getTransitionKeys()) {
+            if (oldNode.getTransitionKeys().contains(transition)) {
+                mergeDfs(oldNode.goByTransition(transition), newNode.goByTransition(transition), level, newTermNode);
+            } else {
+                RSignatureContractNode node;
+
+                if (newNode.goByTransition(transition) == newTermNode)
+                    node = myTermNode;
+                else
+                    node = createNodeAndAddToLevels(level);
+
+                oldNode.addLink(transition, node);
+                mergeDfs(node, newNode.goByTransition(transition), level, newTermNode);
+            }
+        }
+    }
+
+    @NotNull
+    private RSignatureContractNode createNodeAndAddToLevels(int index) {
+        RSignatureContractNode newNode = new RSignatureContractNode();
+
+        while (myLevels.size() <= index)
+            myLevels.add(new ArrayList<>());
+        myLevels.get(index).add(newNode);
+        return newNode;
+    }
+
     class NodeWithTransition {
         final RSignatureContractNode myNode;
         final ContractTransition myTransition;
@@ -349,14 +352,15 @@ public class RSignatureContract implements SignatureContract {
     class PairOfNodes {
         @NotNull
         final RSignatureContractNode myOldNode;
-        @Nullable
+        @NotNull
         final RSignatureContractNode myNewNode;
 
-        PairOfNodes pairGoByTransition(ContractTransition transition) {
+        @NotNull
+        PairOfNodes pairGoByTransition(@NotNull ContractTransition transition) {
             return new PairOfNodes(myOldNode.goByTransition(transition), myNewNode.goByTransition(transition));
         }
 
-        PairOfNodes(@NotNull RSignatureContractNode node1, @Nullable RSignatureContractNode node2) {
+        PairOfNodes(@NotNull RSignatureContractNode node1, @NotNull RSignatureContractNode node2) {
             myOldNode = node1;
             myNewNode = node2;
         }
