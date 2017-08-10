@@ -140,7 +140,7 @@ public class RSignatureContract implements SignatureContract {
             List<RSignatureContractNode> prevLevel = myLevels.get(i - 1);
 
 
-            if (uselessVertices.size() > 0) {
+            if (!uselessVertices.isEmpty()) {
                 for (RSignatureContractNode node : prevLevel) {
                     for (ContractTransition transition : node.getTransitionKeys()) {
                         RSignatureContractNode child = node.goByTransition(transition);
@@ -320,11 +320,13 @@ public class RSignatureContract implements SignatureContract {
         return newNode;
     }
 
-    class NodeWithTransition {
-        final RSignatureContractNode myNode;
-        final ContractTransition myTransition;
+    private static class NodeWithTransition {
+        @NotNull
+        private final RSignatureContractNode myNode;
+        @NotNull
+        private final ContractTransition myTransition;
 
-        NodeWithTransition(RSignatureContractNode node, ContractTransition transition) {
+        NodeWithTransition(@NotNull RSignatureContractNode node, @NotNull ContractTransition transition) {
             myNode = node;
             myTransition = transition;
         }
@@ -337,23 +339,23 @@ public class RSignatureContract implements SignatureContract {
             final NodeWithTransition that = (NodeWithTransition) o;
 
             //noinspection SimplifiableIfStatement
-            if (myNode != null ? !myNode.equals(that.myNode) : that.myNode != null) return false;
-            return myTransition != null ? myTransition.equals(that.myTransition) : that.myTransition == null;
+            if (!myNode.equals(that.myNode)) return false;
+            return myTransition.equals(that.myTransition);
         }
 
         @Override
         public int hashCode() {
-            int result = myNode != null ? myNode.hashCode() : 0;
-            result = 31 * result + (myTransition != null ? myTransition.hashCode() : 0);
+            int result = myNode.hashCode();
+            result = 31 * result + myTransition.hashCode();
             return result;
         }
     }
 
-    class PairOfNodes {
+    private static class PairOfNodes {
         @NotNull
-        final RSignatureContractNode myOldNode;
+        private final RSignatureContractNode myOldNode;
         @NotNull
-        final RSignatureContractNode myNewNode;
+        private final RSignatureContractNode myNewNode;
 
         @NotNull
         PairOfNodes pairGoByTransition(@NotNull ContractTransition transition) {
