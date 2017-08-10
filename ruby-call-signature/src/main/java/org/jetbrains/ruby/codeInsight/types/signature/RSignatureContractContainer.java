@@ -3,43 +3,46 @@ package org.jetbrains.ruby.codeInsight.types.signature;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.logging.Logger;
 
 public class RSignatureContractContainer {
+    private static final Logger LOGGER = Logger.getLogger(RSignatureContractContainer.class.getName());
 
-    private final Map<MethodInfo, RSignatureContract> contracts;
-
+    @NotNull
+    private final Map<MethodInfo, RSignatureContract> myContracts;
+    @NotNull
     private final Map<MethodInfo, Integer> myNumberOfCalls;
 
     public RSignatureContractContainer() {
-        contracts = new HashMap<>();
+        myContracts = new HashMap<>();
         myNumberOfCalls = new HashMap<>();
     }
 
     public void reduce()
     {
-        contracts.entrySet().stream()
+        myContracts.entrySet().stream()
                 .sorted(Collections.reverseOrder(Comparator.comparingInt(entry -> myNumberOfCalls.get(entry.getKey()))))
                 .forEachOrdered(entry -> {
                     final MethodInfo key = entry.getKey();
-                    final RSignatureContract contract = contracts.get(key);
+                    final RSignatureContract contract = myContracts.get(key);
                     synchronized (contract) {
                         contract.minimize();
                     }
                 });
-        System.out.println("Finished");
+        LOGGER.fine("Finished");
     }
 
     public void addContract(@NotNull MethodInfo info, @NotNull RSignatureContract contract) {
-        contracts.put(info, contract);
+        myContracts.put(info, contract);
     }
 
     public boolean acceptSignature(@NotNull RSignature signature) {
         MethodInfo currInfo = signature.getMethodInfo();
 
-        if (contracts.containsKey(currInfo)) {
-            RSignatureContract contract = contracts.get(currInfo);
+        if (myContracts.containsKey(currInfo)) {
+            RSignatureContract contract = myContracts.get(currInfo);
 
-            return signature.getArgsInfo().equals(contract.getArgsInfo()) && contracts.get(currInfo).accept(signature);
+            return signature.getArgsInfo().equals(contract.getArgsInfo()) && myContracts.get(currInfo).accept(signature);
         } else {
             return false;
         }
@@ -48,8 +51,8 @@ public class RSignatureContractContainer {
     public void addSignature(@NotNull RSignature signature) {
         MethodInfo currInfo = signature.getMethodInfo();
 
-        if (contracts.containsKey(currInfo)) {
-            RSignatureContract contract = contracts.get(currInfo);
+        if (myContracts.containsKey(currInfo)) {
+            RSignatureContract contract = myContracts.get(currInfo);
 
             synchronized (contract) {
                 if (signature.getArgsInfo().size() == contract.getArgsInfo().size()) {
@@ -60,15 +63,15 @@ public class RSignatureContractContainer {
 
         } else {
             RSignatureContract contract = new RSignatureContract(signature);
-            contracts.put(currInfo, contract);
+            myContracts.put(currInfo, contract);
         }
     }
 
     public Set<MethodInfo> getKeySet() {
-        return contracts.keySet();
+        return myContracts.keySet();
     }
 
     public RSignatureContract getSignature(MethodInfo info) {
-        return contracts.get(info);
+        return myContracts.get(info);
     }
 }

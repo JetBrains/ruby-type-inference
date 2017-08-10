@@ -10,36 +10,34 @@ import java.util.Set;
 public class RSignatureContractNode implements SignatureNode {
 
     @NotNull
-    private final Map<ContractTransition, SignatureNode> transitions;
+    private final Map<ContractTransition, SignatureNode> myTransitions;
 
     public RSignatureContractNode() {
-
-        transitions = new HashMap<>();
+        myTransitions = new HashMap<>();
     }
 
     @NotNull
     public RSignatureContractNode goByTransition(ContractTransition transition) {
-
-        return ((RSignatureContractNode) transitions.get(transition));
+        return ((RSignatureContractNode) myTransitions.get(transition));
     }
 
     @NotNull
     public Set<ContractTransition> getTransitionKeys() {
-        return this.transitions.keySet();
+        return myTransitions.keySet();
     }
 
     public void addLink(final @NotNull ContractTransition transition, @NotNull RSignatureContractNode arrivalNode) {
-        this.transitions.put(transition, arrivalNode);
+        myTransitions.put(transition, arrivalNode);
     }
 
     public boolean containsKey(final @NotNull ContractTransition transition) {
-        return this.transitions.keySet().contains(transition);
+        return myTransitions.keySet().contains(transition);
     }
 
 
     @NotNull
     @Override
     public Map<ContractTransition, SignatureNode> getTransitions() {
-        return transitions;
+        return myTransitions;
     }
 }
