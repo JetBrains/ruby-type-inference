@@ -15,13 +15,13 @@ public class RTupleBuilder {
     @NotNull
     private final List<ParameterInfo> myArgsInfo;
     @NotNull
-    private List<String> myArgsTypes;
+    private final List<String> myArgsTypes;
 
-    private String myReturnTypeName;
+    private final String myReturnTypeName;
 
     private RTupleBuilder(ServerResponseBean bean) {
 
-        this.myMethodInfo = MethodInfoKt.MethodInfo(
+        myMethodInfo = MethodInfoKt.MethodInfo(
                 ClassInfoKt.ClassInfo(GemInfoKt.GemInfo(bean.gem_name, bean.gem_version), bean.receiver_name),
                 bean.method_name,
                 RVisibility.valueOf(bean.visibility),
@@ -34,14 +34,14 @@ public class RTupleBuilder {
         else
             argc = 0;
 
-        this.myReturnTypeName = bean.return_type_name;
+        myReturnTypeName = bean.return_type_name;
 
-        this.myArgsTypes = new ArrayList<>();
+        myArgsTypes = new ArrayList<>();
         //this.myArgsTypes.addAll(Arrays.asList(argsTypeName.split("\\s*;\\s*")));
 
 
         String argsInfo = bean.args_info;
-        this.myArgsInfo = new ArrayList<>();
+        myArgsInfo = new ArrayList<>();
         if (!argsInfo.equals("")) {
             for (String argument : Arrays.asList(argsInfo.split("\\s*;\\s*"))) {
                 List<String> parts = Arrays.asList(argument.split("\\s*,\\s*"));
@@ -51,8 +51,8 @@ public class RTupleBuilder {
                 if (parts.size() > 2 && !parts.get(2).equals("nil"))
                     name = parts.get(2);
 
-                this.myArgsInfo.add(new ParameterInfo(name, ParameterInfo.Type.valueOf(parts.get(0))));
-                this.myArgsTypes.add(parts.get(1));
+                myArgsInfo.add(new ParameterInfo(name, ParameterInfo.Type.valueOf(parts.get(0))));
+                myArgsTypes.add(parts.get(1));
             }
         }
 
@@ -82,7 +82,7 @@ public class RTupleBuilder {
             kwArgs.clear();
         }
 
-        if (kwArgs.size() == 0 || !isKeyArgsPresent(info)) {
+        if (kwArgs.isEmpty() || !isKeyArgsPresent(info)) {
             argc = updateFlags(info, ParameterInfo.Type.OPT, isPresent, argc, kwArgs);
             if (argc <= 0) {
                 kwArgs.clear();
