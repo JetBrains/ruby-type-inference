@@ -5,10 +5,10 @@ import java.io.DataInput
 import java.io.DataOutput
 
 fun MethodInfo.serialize(stream: DataOutput) {
-    this.classInfo.serialize(stream)
-    stream.writeUTF(this.name)
-    stream.writeByte(this.visibility.ordinal)
-    this.location?.serialize(stream)
+    classInfo.serialize(stream)
+    stream.writeUTF(name)
+    stream.writeByte(visibility.ordinal)
+    location?.serialize(stream)
 }
 
 fun MethodInfo(stream: DataInput): MethodInfo {
@@ -22,8 +22,8 @@ fun MethodInfo(stream: DataInput): MethodInfo {
 }
 
 fun ClassInfo.serialize(stream: DataOutput) {
-    stream.writeUTF(this.classFQN)
-    this.gemInfo?.serialize(stream)
+    stream.writeUTF(classFQN)
+    gemInfo?.serialize(stream)
 }
 
 fun ClassInfo(stream: DataInput): ClassInfo {
@@ -34,8 +34,8 @@ fun ClassInfo(stream: DataInput): ClassInfo {
 }
 
 fun GemInfo.serialize(stream: DataOutput) {
-    stream.writeUTF(this.name)
-    stream.writeUTF(this.version)
+    stream.writeUTF(name)
+    stream.writeUTF(version)
 }
 
 fun GemInfo(stream: DataInput): GemInfo {
@@ -45,8 +45,8 @@ fun GemInfo(stream: DataInput): GemInfo {
 }
 
 fun Location.serialize(stream: DataOutput) {
-    stream.writeUTF(this.path)
-    stream.writeInt(this.lineno)
+    stream.writeUTF(path)
+    stream.writeInt(lineno)
 }
 
 fun Location(stream: DataInput): Location {
