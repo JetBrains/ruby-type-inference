@@ -36,33 +36,33 @@ public class RSignatureContractContainer {
         myContracts.put(info, contract);
     }
 
-    public boolean acceptSignature(@NotNull RSignature signature) {
-        MethodInfo currInfo = signature.getMethodInfo();
+    public boolean acceptTuple(@NotNull RTuple tuple) {
+        MethodInfo currInfo = tuple.getMethodInfo();
 
         if (myContracts.containsKey(currInfo)) {
             RSignatureContract contract = myContracts.get(currInfo);
 
-            return signature.getArgsInfo().equals(contract.getArgsInfo()) && myContracts.get(currInfo).accept(signature);
+            return tuple.getArgsInfo().equals(contract.getArgsInfo()) && myContracts.get(currInfo).accept(tuple);
         } else {
             return false;
         }
     }
 
-    public void addSignature(@NotNull RSignature signature) {
-        MethodInfo currInfo = signature.getMethodInfo();
+    public void addTuple(@NotNull RTuple tuple) {
+        MethodInfo currInfo = tuple.getMethodInfo();
 
         if (myContracts.containsKey(currInfo)) {
             RSignatureContract contract = myContracts.get(currInfo);
 
             synchronized (contract) {
-                if (signature.getArgsInfo().size() == contract.getArgsInfo().size()) {
-                    contract.addRSignature(signature);
+                if (tuple.getArgsInfo().size() == contract.getArgsInfo().size()) {
+                    contract.addRTuple(tuple);
                     myNumberOfCalls.compute(currInfo, (method, oldNumber) -> oldNumber != null ? oldNumber + 1 : 1);
                 }
             }
 
         } else {
-            RSignatureContract contract = new RSignatureContract(signature);
+            RSignatureContract contract = new RSignatureContract(tuple);
             myContracts.put(currInfo, contract);
         }
     }

@@ -5,7 +5,7 @@ import org.junit.Test
 
 class MergeTest : TestCase() {
 
-    private fun generateRSignature(args: List<String>, returnType: String): RSignature {
+    private fun generateRTuple(args: List<String>, returnType: String): RTuple {
         val gemInfo = GemInfo.Impl("test_gem", "1.2.3")
         val classInfo = ClassInfo.Impl(gemInfo, "TEST1::Fqn")
         val location = Location("test1test1", 11)
@@ -13,7 +13,7 @@ class MergeTest : TestCase() {
 
         val params = args.indices.map { ParameterInfo("a" + it, ParameterInfo.Type.REQ) }
 
-        return RSignature(methodInfo, params, args, returnType)
+        return RTuple(methodInfo, params, args, returnType)
     }
 
     @Test
@@ -28,27 +28,27 @@ class MergeTest : TestCase() {
         val testArgs1 = listOf("Int1", "Int2", "Int3")
         val testArgs2 = listOf("String1", "Int2", "Int3")
 
-        val signature1 = generateRSignature(args1, "String4")
-        val signature2 = generateRSignature(args2, "String4")
-        val signature3 = generateRSignature(args3, "String4")
-        val signature4 = generateRSignature(args4, "String4")
+        val tuple1 = generateRTuple(args1, "String4")
+        val tuple2 = generateRTuple(args2, "String4")
+        val tuple3 = generateRTuple(args3, "String4")
+        val tuple4 = generateRTuple(args4, "String4")
 
-        val testSignature1 = generateRSignature(testArgs1, "String4")
-        val testSignature2 = generateRSignature(testArgs2, "String4")
+        val testTuple1 = generateRTuple(testArgs1, "String4")
+        val testTuple2 = generateRTuple(testArgs2, "String4")
 
-        val signature5 = generateRSignature(args5, "String4")
+        val tuple5 = generateRTuple(args5, "String4")
 
-        val contract1 = RSignatureContract(signature1)
-        contract1.addRSignature(signature2)
-        contract1.addRSignature(signature3)
-        contract1.addRSignature(signature4)
+        val contract1 = RSignatureContract(tuple1)
+        contract1.addRTuple(tuple2)
+        contract1.addRTuple(tuple3)
+        contract1.addRTuple(tuple4)
 
         contract1.minimize()
 
-        val contract2 = RSignatureContract(signature5)
+        val contract2 = RSignatureContract(tuple5)
 
         contract1.mergeWith(contract2)
-        assertTrue(contract1.accept(testSignature1))
-        assertFalse(contract1.accept(testSignature2))
+        assertTrue(contract1.accept(testTuple1))
+        assertFalse(contract1.accept(testTuple2))
     }
 }

@@ -4,7 +4,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class RSignature {
+public class RTuple {
 
     @NotNull
     private final MethodInfo myMethodInfo;
@@ -16,10 +16,10 @@ public class RSignature {
     @NotNull
     private final String myReturnTypeName;
 
-    public RSignature(@NotNull final MethodInfo methodInfo,
-                      @NotNull final List<ParameterInfo> argsInfo,
-                      @NotNull final List<String> argsTypeName,
-                      @NotNull final String returnTypeName) {
+    public RTuple(@NotNull final MethodInfo methodInfo,
+                  @NotNull final List<ParameterInfo> argsInfo,
+                  @NotNull final List<String> argsTypeName,
+                  @NotNull final String returnTypeName) {
         myMethodInfo = methodInfo;
         myArgsInfo = argsInfo;
         myArgsTypes = argsTypeName;
@@ -32,17 +32,17 @@ public class RSignature {
     }
 
     @NotNull
-    public List<ParameterInfo> getArgsInfo() {
+    List<ParameterInfo> getArgsInfo() {
         return myArgsInfo;
     }
 
     @NotNull
-    public List<String> getArgsTypes() {
+    List<String> getArgsTypes() {
         return myArgsTypes;
     }
 
     @NotNull
-    public String getReturnTypeName() {
+    String getReturnTypeName() {
         return myReturnTypeName;
     }
 
@@ -51,7 +51,7 @@ public class RSignature {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        RSignature that = (RSignature) o;
+        RTuple that = (RTuple) o;
 
         return myMethodInfo.equals(that.myMethodInfo) &&
                 myArgsInfo.equals(that.myArgsInfo) &&

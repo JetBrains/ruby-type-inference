@@ -1,17 +1,17 @@
 package org.jetbrains.ruby.codeInsight.types.storage.server;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.ruby.codeInsight.types.signature.RSignature;
+import org.jetbrains.ruby.codeInsight.types.signature.RTuple;
 
 import java.util.Collection;
 
 /**
  * The data obtained when running ruby scripts may be registered to be used for code insight
- * via {@link #addSignature(RSignature)}.
+ * via {@link #addTuple(RTuple)}.
  */
 public interface RSignatureStorage {
 
-    void addSignature(@NotNull RSignature signature) throws StorageException;
+    void addTuple(@NotNull RTuple signature) throws StorageException;
 
     void readPacket(@NotNull Packet packet) throws StorageException;
 

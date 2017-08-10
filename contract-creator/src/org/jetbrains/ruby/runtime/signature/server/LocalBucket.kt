@@ -5,8 +5,8 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.ruby.codeInsight.types.signature.MethodInfo
-import org.jetbrains.ruby.codeInsight.types.signature.RSignature
 import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContract
+import org.jetbrains.ruby.codeInsight.types.signature.RTuple
 import org.jetbrains.ruby.codeInsight.types.signature.SignatureContract
 import org.jetbrains.ruby.codeInsight.types.storage.server.RSignatureStorage
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.*
@@ -58,7 +58,7 @@ object LocalBucket : RSignatureStorage {
         }
     }
 
-    override fun addSignature(signature: RSignature) {
+    override fun addTuple(signature: RTuple) {
 
     }
 

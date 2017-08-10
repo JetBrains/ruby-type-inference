@@ -32,7 +32,7 @@ import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.Contrac
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ReferenceContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.TypedContractTransition;
 import org.jetbrains.ruby.runtime.signature.server.SignatureServer;
-import org.jetbrains.ruby.runtime.signature.server.serialisation.RSignatureBuilder;
+import org.jetbrains.ruby.runtime.signature.server.serialisation.RTupleBuilder;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -159,7 +159,7 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
             }
 
             List<ParameterInfo> paramInfos = contract.getParamInfoList();
-            boolean[] isArgumentPresent = RSignatureBuilder.calcPresentArguments(paramInfos, callArgs.size(), kwArgs.keySet());
+            boolean[] isArgumentPresent = RTupleBuilder.calcPresentArguments(paramInfos, callArgs.size(), kwArgs.keySet());
 
             for (int i = 0; i < isArgumentPresent.length; i++) {
                 if (isArgumentPresent[i]) {

@@ -28,8 +28,8 @@ public class RSignatureContract implements SignatureContract {
         return myTermNode;
     }
 
-    public RSignatureContract(@NotNull RSignature signature) {
-        myArgsInfo = signature.getArgsInfo();
+    public RSignatureContract(@NotNull RTuple tuple) {
+        myArgsInfo = tuple.getArgsInfo();
         myLevels = new ArrayList<>();
         for (int i = 0; i < getArgsInfo().size() + 2; i++) {
             myLevels.add(new ArrayList<>());
@@ -39,7 +39,7 @@ public class RSignatureContract implements SignatureContract {
 
         myTermNode = createNodeAndAddToLevels(myLevels.size() - 1);
 
-        addRSignature(signature);
+        addRTuple(tuple);
     }
 
     public RSignatureContract(@NotNull List<ParameterInfo> argsInfo,
@@ -70,18 +70,18 @@ public class RSignatureContract implements SignatureContract {
         return myLevels.stream().map(List::size).reduce(0, (a, b) -> a + b);
     }
 
-    public void addRSignature(@NotNull RSignature signature) {
+    public void addRTuple(@NotNull RTuple tuple) {
         RSignatureContractNode currNode = myStartContractNode;
 
-        String returnType = signature.getReturnTypeName();
+        String returnType = tuple.getReturnTypeName();
 
         RSignatureContractNode termNode = getTermNode();
 
-        final List<String> argsTypes = signature.getArgsTypes();
+        final List<String> argsTypes = tuple.getArgsTypes();
         for (int argIndex = 0; argIndex < argsTypes.size(); argIndex++) {
             final String type = argsTypes.get(argIndex);
 
-            final ContractTransition transition = calculateTransition(signature.getArgsTypes(), argIndex, type);
+            final ContractTransition transition = calculateTransition(tuple.getArgsTypes(), argIndex, type);
 
             if (!currNode.containsKey(transition)) {
                 final RSignatureContractNode newNode = createNodeAndAddToLevels(argIndex + 1);
@@ -95,7 +95,7 @@ public class RSignatureContract implements SignatureContract {
             }
         }
 
-        final ContractTransition transition = calculateTransition(signature.getArgsTypes(), signature.getArgsTypes().size(), returnType);
+        final ContractTransition transition = calculateTransition(tuple.getArgsTypes(), tuple.getArgsTypes().size(), returnType);
 
         currNode.addLink(transition, termNode);
     }
@@ -213,7 +213,7 @@ public class RSignatureContract implements SignatureContract {
         minimize();
     }
 
-    boolean accept(@NotNull RSignature signature) {
+    boolean accept(@NotNull RTuple signature) {
         RSignatureContractNode currNode = myStartContractNode;
 
         String returnType = signature.getReturnTypeName();

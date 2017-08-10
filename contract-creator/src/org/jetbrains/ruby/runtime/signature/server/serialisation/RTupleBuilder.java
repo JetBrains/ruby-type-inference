@@ -7,7 +7,7 @@ import org.jetbrains.ruby.codeInsight.types.signature.*;
 
 import java.util.*;
 
-public class RSignatureBuilder {
+public class RTupleBuilder {
     private static final Gson GSON = new Gson();
 
     @NotNull
@@ -19,7 +19,7 @@ public class RSignatureBuilder {
 
     private String myReturnTypeName;
 
-    private RSignatureBuilder(ServerResponseBean bean) {
+    private RTupleBuilder(ServerResponseBean bean) {
 
         this.myMethodInfo = MethodInfoKt.MethodInfo(
                 ClassInfoKt.ClassInfo(GemInfoKt.GemInfo(bean.gem_name, bean.gem_version), bean.receiver_name),
@@ -69,9 +69,9 @@ public class RSignatureBuilder {
     }
 
     @Nullable
-    public static RSignature fromJson(@NotNull String json) {
+    public static RTuple fromJson(@NotNull String json) {
         final ServerResponseBean result = GSON.fromJson(json, ServerResponseBean.class);
-        return result != null ? new RSignatureBuilder(result).build() : null;
+        return result != null ? new RTupleBuilder(result).build() : null;
     }
 
     public static boolean[] calcPresentArguments(List<ParameterInfo> info, int argc, Set<String> kwArgs) {
@@ -132,8 +132,8 @@ public class RSignatureBuilder {
     }
 
     @NotNull
-    private RSignature build() {
-        return new RSignature(myMethodInfo, myArgsInfo, myArgsTypes, myReturnTypeName);
+    private RTuple build() {
+        return new RTuple(myMethodInfo, myArgsInfo, myArgsTypes, myReturnTypeName);
     }
 
     //     parameter information

@@ -8,7 +8,7 @@ import org.jetbrains.ruby.codeInsight.types.storage.server.RSignatureStorage;
 import org.jetbrains.ruby.codeInsight.types.storage.server.StorageException;
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.MethodInfoSerializationKt;
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.SignatureContractSerializationKt;
-import org.jetbrains.ruby.runtime.signature.server.serialisation.RSignatureBuilder;
+import org.jetbrains.ruby.runtime.signature.server.serialisation.RTupleBuilder;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -73,7 +73,7 @@ public class SignatureServer implements RSignatureStorage {
     }
 
     @Override
-    public void addSignature(@NotNull RSignature signature) throws StorageException {
+    public void addTuple(@NotNull RTuple signature) throws StorageException {
 
     }
 
@@ -134,11 +134,11 @@ public class SignatureServer implements RSignatureStorage {
 
                 while ((currString = br.readLine()) != null) {
                     try {
-                        RSignature currRSignature = RSignatureBuilder.fromJson(currString);
+                        RTuple currRTuple = RTupleBuilder.fromJson(currString);
 
-                        if (currRSignature != null
-                                && !SignatureServer.getInstance().mainContainer.acceptSignature(currRSignature)) {
-                            SignatureServer.getInstance().newSignaturesContainer.addSignature(currRSignature);
+                        if (currRTuple != null
+                                && !SignatureServer.getInstance().mainContainer.acceptTuple(currRTuple)) {
+                            SignatureServer.getInstance().newSignaturesContainer.addTuple(currRTuple);
                         }
 
                     } catch (JsonParseException e) {
