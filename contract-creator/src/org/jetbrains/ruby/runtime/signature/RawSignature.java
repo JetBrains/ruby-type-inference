@@ -13,11 +13,8 @@ public class RawSignature {
     @NotNull
     private final List<ParameterInfo> myArgsInfo;
     @NotNull
-    private final List<Boolean> isGiven;
-    @NotNull
     private List<String> myArgsTypes;
 
-    private final String myCallMid;
     public int argc;
     @NotNull
     public final Set<String> kwArgs;
@@ -31,8 +28,6 @@ public class RawSignature {
                 RVisibility.valueOf(bean.visibility),
                 new Location(bean.path, bean.lineno));
 
-        this.myCallMid = bean.call_info_mid;
-
 
         if (!bean.call_info_argc.equals(""))
             this.argc = Integer.parseInt(bean.call_info_argc);
@@ -45,7 +40,6 @@ public class RawSignature {
 
         this.myReturnTypeName = bean.return_type_name;
 
-        String argsTypeName = bean.args_type_name;
         this.myArgsTypes = new ArrayList<>();
         //this.myArgsTypes.addAll(Arrays.asList(argsTypeName.split("\\s*;\\s*")));
 
@@ -66,8 +60,6 @@ public class RawSignature {
             }
         }
 
-        isGiven = new ArrayList<>(Arrays.asList(new Boolean[myArgsTypes.size()]));
-        Collections.fill(isGiven, Boolean.FALSE);
     }
 
     public RSignature getRSignature() {

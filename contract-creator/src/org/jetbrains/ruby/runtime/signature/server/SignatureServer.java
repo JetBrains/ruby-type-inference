@@ -14,8 +14,6 @@ import org.jetbrains.ruby.runtime.signature.RawSignature;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -73,11 +71,6 @@ public class SignatureServer implements RSignatureStorage {
                 return info;
         }
         return null;
-    }
-
-    @Nullable
-    public RSignatureContract getContractByMethodInfo(@NotNull MethodInfo info) {
-        return mainContainer.getSignature(info);
     }
 
     @Override
@@ -179,7 +172,7 @@ public class SignatureServer implements RSignatureStorage {
                     LOGGER.severe("Can't close a socket");
                 }
                 LOGGER.info("Connection with client# " + handlerNumber + " closed");
-                SignatureServer.getInstance().mainContainer.reduction();
+                SignatureServer.getInstance().mainContainer.reduce();
                 try {
                     Collection<Packet> packets = SignatureServer.getInstance().formPackets();
                     for (Packet packet : packets) {
@@ -196,10 +189,7 @@ public class SignatureServer implements RSignatureStorage {
     public void runServer() throws IOException {
         LOGGER.info("Starting server");
 
-        Path file = Paths.get("callStatLog.txt");
-
         int handlersCounter = 0;
-
 
         Collection<Packet> packets = LocalBucket.INSTANCE.formPackets();
 
@@ -220,15 +210,13 @@ public class SignatureServer implements RSignatureStorage {
         }
 
 
-        ServerSocket listener = new ServerSocket(7777);
-
-        try {
+        try (ServerSocket listener = new ServerSocket(7777)) {
+            //noinspection InfiniteLoopStatement
             while (true) {
                 new SignatureHandler(listener.accept(), handlersCounter++).start();
             }
         } finally {
-            listener.close();
-            SignatureServer.getInstance().mainContainer.reduction();
+            SignatureServer.getInstance().mainContainer.reduce();
         }
     }
 

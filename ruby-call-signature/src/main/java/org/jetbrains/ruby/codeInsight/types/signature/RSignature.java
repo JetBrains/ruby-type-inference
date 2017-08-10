@@ -14,7 +14,7 @@ public class RSignature {
     @NotNull
     private final List<String> myArgsTypes;
     @NotNull
-    private String myReturnTypeName;
+    private final String myReturnTypeName;
 
     public RSignature(@NotNull final MethodInfo methodInfo,
                       @NotNull final List<ParameterInfo> argsInfo,
@@ -44,10 +44,6 @@ public class RSignature {
     @NotNull
     public String getReturnTypeName() {
         return myReturnTypeName;
-    }
-
-    public void setReturnTypeName(@NotNull final String returnTypeName) {
-        this.myReturnTypeName = returnTypeName;
     }
 
     @Override

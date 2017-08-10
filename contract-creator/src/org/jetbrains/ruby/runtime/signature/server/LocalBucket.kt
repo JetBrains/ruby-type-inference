@@ -13,7 +13,7 @@ import java.io.DataInputStream
 import java.io.DataOutputStream
 
 object LocalBucket : RSignatureStorage {
-    val provider: SignatureDBProvider = SignatureDBProvider()
+    private val provider: SignatureDBProvider = SignatureDBProvider()
 
     override fun formPackets(): Collection<RSignatureStorage.Packet> {
 

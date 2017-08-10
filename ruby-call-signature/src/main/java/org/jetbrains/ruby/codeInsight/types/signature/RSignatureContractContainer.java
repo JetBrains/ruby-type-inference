@@ -12,14 +12,14 @@ public class RSignatureContractContainer {
         contracts = new HashMap<>();
     }
 
-    public void reduction()
+    public void reduce()
     {
         contracts.entrySet().stream()
                 .sorted(Collections.reverseOrder(Comparator.comparingInt(entry -> entry.getValue().getNumberOfCalls())))
                 .forEachOrdered(entry -> {
                     final MethodInfo key = entry.getKey();
                     contracts.get(key).locked = true;
-                    contracts.get(key).minimization();
+                    contracts.get(key).minimize();
                     contracts.get(key).locked = false;
                 });
         System.out.println("Finished");
@@ -48,10 +48,8 @@ public class RSignatureContractContainer {
             RSignatureContract contract = contracts.get(currInfo);
 
             contract.locked = true;
-            if (signature.getArgsInfo().size() == contract.getArgsInfo().size())
+            if (signature.getArgsInfo().size() == contract.getArgsInfo().size()) {
                 contracts.get(currInfo).addRSignature(signature);
-            else {
-                //System.out.println("Collision");
             }
             contract.locked = false;
 

@@ -79,10 +79,6 @@ public class RSignatureContract implements SignatureContract {
         return myArgsInfo;
     }
 
-    private int getSize() {
-        return myArgsInfo.size();
-    }
-
     public int getNodeCount() {
         return levels.stream().map(List::size).reduce(0, (a, b) -> a + b);
     }
@@ -142,7 +138,7 @@ public class RSignatureContract implements SignatureContract {
         return tempMask;
     }
 
-    void minimization() {
+    void minimize() {
         int numberOfLevels = levels.size();
 
         for (int i = numberOfLevels - 1; i > 0; i--) {
@@ -304,7 +300,7 @@ public class RSignatureContract implements SignatureContract {
         }
 
         mergeDfs(getStartNode(), additive.getStartNode(), 0, additive.getTermNode());
-        minimization();
+        minimize();
     }
 
     boolean accept(@NotNull RSignature signature) {
@@ -344,8 +340,9 @@ public class RSignatureContract implements SignatureContract {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 
-            NodeWithTransition that = (NodeWithTransition) o;
+            final NodeWithTransition that = (NodeWithTransition) o;
 
+            //noinspection SimplifiableIfStatement
             if (node != null ? !node.equals(that.node) : that.node != null) return false;
             return transition != null ? transition.equals(that.transition) : that.transition == null;
         }

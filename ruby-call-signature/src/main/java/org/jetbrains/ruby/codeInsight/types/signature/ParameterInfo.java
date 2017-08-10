@@ -4,11 +4,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ParameterInfo {
+    // TODO investigate nullability
     @Nullable
     private final String myName;
     @NotNull
     private final ParameterInfo.Type myModifier;
-
 
     public ParameterInfo(@Nullable final String name, @NotNull final Type modifier) {
         this.myName = name;
@@ -20,6 +20,7 @@ public class ParameterInfo {
         return this.myName;
     }
 
+    @NotNull
     public ParameterInfo.Type getModifier() {
         return this.myModifier;
     }
@@ -29,17 +30,17 @@ public class ParameterInfo {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        ParameterInfo that = (ParameterInfo) o;
+        final ParameterInfo that = (ParameterInfo) o;
 
-        return myName.equals(that.myName) &&
-                myModifier.equals(that.myModifier);
+        //noinspection SimplifiableIfStatement
+        if (myName != null ? !myName.equals(that.myName) : that.myName != null) return false;
+        return myModifier == that.myModifier;
     }
 
     @Override
     public int hashCode() {
-        int result = myName.hashCode();
+        int result = myName != null ? myName.hashCode() : 0;
         result = 31 * result + myModifier.hashCode();
-
         return result;
     }
 

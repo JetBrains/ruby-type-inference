@@ -2,7 +2,6 @@ package org.jetbrains.ruby.codeInsight.types.signature
 
 import junit.framework.TestCase
 import org.junit.Test
-import java.util.*
 
 class MergeTest : TestCase() {
 
@@ -12,11 +11,7 @@ class MergeTest : TestCase() {
         val location = Location("test1test1", 11)
         val methodInfo = MethodInfo.Impl(classInfo, "met1", RVisibility.PUBLIC, location)
 
-        val params = ArrayList<ParameterInfo>()
-
-        for (i in args.indices) {
-            params.add(ParameterInfo("a" + i, ParameterInfo.Type.REQ))
-        }
+        val params = args.indices.map { ParameterInfo("a" + it, ParameterInfo.Type.REQ) }
 
         return RSignature(methodInfo, params, args, returnType)
     }
@@ -48,7 +43,7 @@ class MergeTest : TestCase() {
         contract1.addRSignature(signature3)
         contract1.addRSignature(signature4)
 
-        contract1.minimization()
+        contract1.minimize()
 
         val contract2 = RSignatureContract(signature5)
 

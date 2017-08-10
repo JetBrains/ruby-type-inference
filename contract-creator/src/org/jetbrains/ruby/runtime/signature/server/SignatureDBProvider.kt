@@ -26,12 +26,10 @@ class SignatureDBProvider {
         return transaction {
             val gemInfo = methodInfo.classInfo.gemInfo
             val classInfo = methodInfo.classInfo
-            val gemInfoId: EntityID<Int>?
-
-            if (gemInfo != null) {
-                gemInfoId = GemInfoTable.select { GemInfoTable.name.eq(gemInfo.name) and GemInfoTable.version.eq(gemInfo.version) }.firstOrNull()?.get(GemInfoTable.id)
+            val gemInfoId: EntityID<Int>? = if (gemInfo != null) {
+                GemInfoTable.select { GemInfoTable.name.eq(gemInfo.name) and GemInfoTable.version.eq(gemInfo.version) }.firstOrNull()?.get(GemInfoTable.id)
             } else {
-                gemInfoId = null
+                null
             }
 
             val insertedClassInfo = ClassInfoTable.select { ClassInfoTable.gemInfo.eq(gemInfoId) and ClassInfoTable.fqn.eq(classInfo.classFQN) }.firstOrNull()?.get(ClassInfoTable.id) ?: return@transaction null
