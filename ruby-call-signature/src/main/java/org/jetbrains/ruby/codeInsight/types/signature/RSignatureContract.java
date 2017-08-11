@@ -315,8 +315,10 @@ public class RSignatureContract implements SignatureContract {
     private RSignatureContractNode createNodeAndAddToLevels(int index) {
         RSignatureContractNode newNode = new RSignatureContractNode();
 
-        while (myLevels.size() <= index)
-            myLevels.add(new ArrayList<>());
+        if (myLevels.size() <= index) {
+            throw new IndexOutOfBoundsException("Trying to add to the level " + index
+                    + " when the number of levels is " + myLevels.size());
+        }
         myLevels.get(index).add(newNode);
         return newNode;
     }
