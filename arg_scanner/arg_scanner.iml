@@ -5,9 +5,5 @@
     <content url="file://$MODULE_DIR$" />
     <orderEntry type="jdk" jdkName="RVM: ruby-2.4.0-preview1 [arg_scanner]" jdkType="RUBY_SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" scope="PROVIDED" name="bundler (v1.14.6, RVM: ruby-2.4.0-preview1 [arg_scanner]) [gem]" level="application" />
-    <orderEntry type="library" scope="PROVIDED" name="debase-ruby_core_source (v0.9.6, RVM: ruby-2.4.0-preview1 [arg_scanner]) [gem]" level="application" />
-    <orderEntry type="library" scope="PROVIDED" name="rake (v10.5.0, RVM: ruby-2.4.0-preview1 [arg_scanner]) [gem]" level="application" />
-    <orderEntry type="library" scope="PROVIDED" name="rake-compiler (v1.0.3, RVM: ruby-2.4.0-preview1 [arg_scanner]) [gem]" level="application" />
   </component>
 </module>

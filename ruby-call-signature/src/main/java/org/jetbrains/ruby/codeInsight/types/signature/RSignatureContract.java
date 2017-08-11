@@ -19,16 +19,6 @@ public class RSignatureContract implements SignatureContract {
     @NotNull
     private final SignatureNode myTermNode;
 
-    @NotNull
-    public List<ParameterInfo> getParamInfoList() {
-        return myArgsInfo;
-    }
-
-    @NotNull
-    private SignatureNode getTermNode() {
-        return myTermNode;
-    }
-
     public RSignatureContract(@NotNull RTuple tuple) {
         myArgsInfo = tuple.getArgsInfo();
         myLevels = new ArrayList<>();
@@ -76,8 +66,6 @@ public class RSignatureContract implements SignatureContract {
 
         String returnType = tuple.getReturnTypeName();
 
-        SignatureNode termNode = getTermNode();
-
         final List<String> argsTypes = tuple.getArgsTypes();
         for (int argIndex = 0; argIndex < argsTypes.size(); argIndex++) {
             final String type = argsTypes.get(argIndex);
@@ -98,7 +86,7 @@ public class RSignatureContract implements SignatureContract {
 
         final ContractTransition transition = calculateTransition(tuple.getArgsTypes(), tuple.getArgsTypes().size(), returnType);
 
-        currNode.addLink(transition, termNode);
+        currNode.addLink(transition, myTermNode);
     }
 
     void minimize() {
@@ -211,7 +199,7 @@ public class RSignatureContract implements SignatureContract {
             levelID++;
         }
 
-        mergeDfs(myStartContractNode, additive.getStartNode(), 0, additive.getTermNode());
+        mergeDfs(myStartContractNode, additive.getStartNode(), 0, additive.myTermNode);
         minimize();
     }
 

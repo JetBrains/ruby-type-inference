@@ -158,7 +158,7 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
                 currNodesAndReadTypes.put(contract.getStartNode(), new ArrayList<>());
             }
 
-            List<ParameterInfo> paramInfos = contract.getParamInfoList();
+            List<ParameterInfo> paramInfos = contract.getArgsInfo();
             boolean[] isArgumentPresent = RTupleBuilder.calcPresentArguments(paramInfos, callArgs.size(), kwArgs.keySet());
 
             for (int i = 0; i < isArgumentPresent.length; i++) {
