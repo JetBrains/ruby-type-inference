@@ -51,6 +51,11 @@ public class RTupleBuilder {
                 if (parts.size() > 2 && !parts.get(2).equals("nil"))
                     name = parts.get(2);
 
+                if (name == null) {
+                    // TODO[viuginick] investigate nullability
+                    throw new RuntimeException("parse fail");
+                }
+
                 myArgsInfo.add(new ParameterInfo(name, ParameterInfo.Type.valueOf(parts.get(0))));
                 myArgsTypes.add(parts.get(1));
             }

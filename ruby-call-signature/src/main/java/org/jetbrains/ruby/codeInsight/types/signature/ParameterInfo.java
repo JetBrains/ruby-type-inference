@@ -1,28 +1,26 @@
 package org.jetbrains.ruby.codeInsight.types.signature;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class ParameterInfo {
-    // TODO investigate nullability
-    @Nullable
+    @NotNull
     private final String myName;
     @NotNull
     private final ParameterInfo.Type myModifier;
 
-    public ParameterInfo(@Nullable final String name, @NotNull final Type modifier) {
-        this.myName = name;
-        this.myModifier = modifier;
+    public ParameterInfo(@NotNull final String name, @NotNull final Type modifier) {
+        myName = name;
+        myModifier = modifier;
     }
 
-    @Nullable
+    @NotNull
     public String getName() {
-        return this.myName;
+        return myName;
     }
 
     @NotNull
     public ParameterInfo.Type getModifier() {
-        return this.myModifier;
+        return myModifier;
     }
 
     @Override
@@ -33,13 +31,13 @@ public class ParameterInfo {
         final ParameterInfo that = (ParameterInfo) o;
 
         //noinspection SimplifiableIfStatement
-        if (myName != null ? !myName.equals(that.myName) : that.myName != null) return false;
+        if (!myName.equals(that.myName)) return false;
         return myModifier == that.myModifier;
     }
 
     @Override
     public int hashCode() {
-        int result = myName != null ? myName.hashCode() : 0;
+        int result = myName.hashCode();
         result = 31 * result + myModifier.hashCode();
         return result;
     }
