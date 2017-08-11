@@ -42,7 +42,7 @@ public class RSignatureContractContainer {
         if (myContracts.containsKey(currInfo)) {
             RSignatureContract contract = myContracts.get(currInfo);
 
-            return tuple.getArgsInfo().equals(contract.getArgsInfo()) && myContracts.get(currInfo).accept(tuple);
+            return tuple.getArgsInfo().equals(contract.getArgsInfo()) && SignatureContract.Companion.accept(myContracts.get(currInfo), tuple);
         } else {
             return false;
         }

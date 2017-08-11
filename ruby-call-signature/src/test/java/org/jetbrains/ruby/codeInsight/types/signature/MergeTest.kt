@@ -48,7 +48,7 @@ class MergeTest : TestCase() {
         val contract2 = RSignatureContract(tuple5)
 
         contract1.mergeWith(contract2)
-        assertTrue(contract1.accept(testTuple1))
-        assertFalse(contract1.accept(testTuple2))
+        assertTrue(SignatureContract.Companion.accept(contract1, testTuple1))
+        assertFalse(SignatureContract.Companion.accept(contract1, testTuple2))
     }
 }

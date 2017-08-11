@@ -1,6 +1,7 @@
 package org.jetbrains.ruby.codeInsight.types.signature
 
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition
+import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.TransitionHelper
 
 /**
  * The `SignatureContract` interface allows for checking input type sequence validity
@@ -27,6 +28,28 @@ interface SignatureContract {
     val nodeCount: Int
     val startNode: SignatureNode
     val argsInfo: List<ParameterInfo>
+
+    companion object {
+        fun accept(rSignatureContract: SignatureContract, signature: RTuple): Boolean {
+            var currNode = rSignatureContract.startNode
+
+            val returnType = signature.returnTypeName
+
+            val argsTypes = signature.argsTypes
+            for (argIndex in argsTypes.indices) {
+                val type = argsTypes[argIndex]
+
+                val transition = TransitionHelper.calculateTransition(signature.argsTypes, argIndex, type)
+
+                currNode = currNode.transitions[transition]
+                        ?: return false
+            }
+
+            val transition = TransitionHelper.calculateTransition(signature.argsTypes, signature.argsTypes.size, returnType)
+
+            return currNode.transitions.containsKey(transition)
+        }
+    }
 }
 
 interface SignatureNode {

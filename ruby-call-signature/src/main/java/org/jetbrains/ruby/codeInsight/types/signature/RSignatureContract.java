@@ -3,10 +3,10 @@ package org.jetbrains.ruby.codeInsight.types.signature;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition;
-import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ReferenceContractTransition;
-import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.TypedContractTransition;
 
 import java.util.*;
+
+import static org.jetbrains.ruby.codeInsight.types.signature.contractTransition.TransitionHelper.calculateTransition;
 
 public class RSignatureContract implements SignatureContract {
 
@@ -201,53 +201,6 @@ public class RSignatureContract implements SignatureContract {
 
         mergeDfs(myStartContractNode, additive.getStartNode(), 0, additive.myTermNode);
         minimize();
-    }
-
-    boolean accept(@NotNull RTuple signature) {
-        SignatureNode currNode = myStartContractNode;
-
-        String returnType = signature.getReturnTypeName();
-
-        final List<String> argsTypes = signature.getArgsTypes();
-        for (int argIndex = 0; argIndex < argsTypes.size(); argIndex++) {
-            final String type = argsTypes.get(argIndex);
-
-            final ContractTransition transition = calculateTransition(signature.getArgsTypes(), argIndex, type);
-
-            if (!currNode.getTransitions().containsKey(transition)) {
-                return false;
-            } else {
-                currNode = currNode.getTransitions().get(transition);
-            }
-        }
-
-        final ContractTransition transition = calculateTransition(signature.getArgsTypes(), signature.getArgsTypes().size(), returnType);
-
-        return currNode.getTransitions().containsKey(transition);
-    }
-
-    @NotNull
-    private ContractTransition calculateTransition(@NotNull List<String> argTypes, int argIndex, @NotNull String type) {
-        final int mask = getNewMask(argTypes, argIndex, type);
-
-        if (mask > 0)
-            return new ReferenceContractTransition(mask);
-        else
-            return new TypedContractTransition(type);
-    }
-
-    private int getNewMask(@NotNull List<String> argsTypes, int argIndex, @NotNull String type) {
-        int tempMask = 0;
-
-        for (int i = argIndex - 1; i >= 0; i--) {
-            tempMask <<= 1;
-
-            if (argsTypes.get(i).equals(type)) {
-                tempMask |= 1;
-            }
-        }
-
-        return tempMask;
     }
 
     @NotNull
