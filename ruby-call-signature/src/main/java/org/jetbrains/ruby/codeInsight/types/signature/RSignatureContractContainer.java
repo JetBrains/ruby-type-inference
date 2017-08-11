@@ -24,10 +24,7 @@ public class RSignatureContractContainer {
                 .sorted(Collections.reverseOrder(Comparator.comparingInt(entry -> myNumberOfCalls.get(entry.getKey()))))
                 .forEachOrdered(entry -> {
                     final MethodInfo key = entry.getKey();
-                    final RSignatureContract contract = myContracts.get(key);
-                    synchronized (contract) {
-                        contract.minimize();
-                    }
+                    myContracts.get(key).minimize();
                 });
         LOGGER.fine("Finished");
     }
@@ -54,13 +51,10 @@ public class RSignatureContractContainer {
         if (myContracts.containsKey(currInfo)) {
             RSignatureContract contract = myContracts.get(currInfo);
 
-            synchronized (contract) {
-                if (tuple.getArgsInfo().size() == contract.getArgsInfo().size()) {
-                    contract.addRTuple(tuple);
-                    myNumberOfCalls.compute(currInfo, (method, oldNumber) -> oldNumber != null ? oldNumber + 1 : 1);
-                }
+            if (tuple.getArgsInfo().size() == contract.getArgsInfo().size()) {
+                contract.addRTuple(tuple);
+                myNumberOfCalls.compute(currInfo, (method, oldNumber) -> oldNumber != null ? oldNumber + 1 : 1);
             }
-
         } else {
             RSignatureContract contract = new RSignatureContract(tuple);
             myContracts.put(currInfo, contract);

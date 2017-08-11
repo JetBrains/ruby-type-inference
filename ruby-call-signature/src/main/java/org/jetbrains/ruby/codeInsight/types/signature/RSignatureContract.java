@@ -61,7 +61,29 @@ public class RSignatureContract implements SignatureContract {
         return myLevels.stream().map(List::size).reduce(0, (a, b) -> a + b);
     }
 
-    public void addRTuple(@NotNull RTuple tuple) {
+    @NotNull
+    public synchronized SignatureContract copy() {
+        final Map<SignatureNode, RSignatureContractNode> oldToNew = new HashMap<>();
+
+        RSignatureContractNode newStartNode = new RSignatureContractNode();
+        oldToNew.put(myStartContractNode, newStartNode);
+
+        for (int i = 0; i < myLevels.size() - 1; ++i) {
+            for (final RSignatureContractNode oldSourceNode : myLevels.get(i)) {
+
+                final RSignatureContractNode newSourceNode = oldToNew.get(oldSourceNode);
+                oldSourceNode.getTransitions().forEach((transition, oldTargetNode) -> {
+                    final RSignatureContractNode newTargetNode = oldToNew.computeIfAbsent(oldTargetNode,
+                            (x) -> new RSignatureContractNode());
+                    newSourceNode.addLink(transition, newTargetNode);
+                });
+            }
+        }
+
+        return new Immutable(newStartNode, oldToNew.size(), myArgsInfo);
+    }
+
+    public synchronized void addRTuple(@NotNull RTuple tuple) {
         RSignatureContractNode currNode = myStartContractNode;
 
         String returnType = tuple.getReturnTypeName();
@@ -89,7 +111,7 @@ public class RSignatureContract implements SignatureContract {
         currNode.addLink(transition, myTermNode);
     }
 
-    void minimize() {
+    synchronized void minimize() {
         int numberOfLevels = myLevels.size();
 
         for (int i = numberOfLevels - 1; i > 0; i--) {
@@ -147,7 +169,8 @@ public class RSignatureContract implements SignatureContract {
         return myLevels;
     }
 
-    public void mergeWith(@NotNull RSignatureContract additive) {
+    public synchronized void mergeWith(@NotNull RSignatureContract additive) {
+        // TODO synchronize on additive (can't do this plainly due to the possible deadlock)
         Set<NodeWithTransition> markedTransitions = getMarkedTransitionsBFS(myStartContractNode, additive.getStartNode());
 
         int levelID = 0;
@@ -262,6 +285,39 @@ public class RSignatureContract implements SignatureContract {
         }
         myLevels.get(index).add(newNode);
         return newNode;
+    }
+
+    private static class Immutable implements SignatureContract {
+        @NotNull
+        private final SignatureNode myStartNode;
+
+        private final int myNodeCount;
+        @NotNull
+        private final List<ParameterInfo> myArgsInfo;
+
+
+        private Immutable(@NotNull SignatureNode startNode, int nodeCount, @NotNull List<ParameterInfo> argsInfo) {
+            myStartNode = startNode;
+            myNodeCount = nodeCount;
+            myArgsInfo = argsInfo;
+        }
+
+        @Override
+        public int getNodeCount() {
+            return myNodeCount;
+        }
+
+        @NotNull
+        @Override
+        public SignatureNode getStartNode() {
+            return myStartNode;
+        }
+
+        @NotNull
+        @Override
+        public List<ParameterInfo> getArgsInfo() {
+            return myArgsInfo;
+        }
     }
 
     private static class NodeWithTransition {

@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RFile;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RubyElementFactory;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.RMethod;
-import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContract;
+import org.jetbrains.ruby.codeInsight.types.signature.SignatureContract;
 import org.jetbrains.ruby.codeInsight.types.signature.SignatureNode;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ReferenceContractTransition;
@@ -53,7 +53,7 @@ public class AddContractAnnotationIntention extends BaseIntentionAction {
         if (method == null) {
             return false;
         }
-        final RSignatureContract contract = SignatureServer.getInstance().getContractByMethodName(method.getFQN().getShortName());
+        final SignatureContract contract = SignatureServer.getInstance().getContractByMethodName(method.getFQN().getShortName());
         return contract != null && getContractAsStringList(contract) != null;
     }
 
@@ -62,13 +62,13 @@ public class AddContractAnnotationIntention extends BaseIntentionAction {
         final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
         final RMethod method = PsiTreeUtil.getParentOfType(element, RMethod.class);
         assert method != null : "Method cannot be null here";
-        final RSignatureContract contract = SignatureServer.getInstance().getContractByMethodName(method.getFQN().getShortName());
+        final SignatureContract contract = SignatureServer.getInstance().getContractByMethodName(method.getFQN().getShortName());
         final RFile fileWithComments = RubyElementFactory.createRubyFile(project, getContractAsStringList(contract).stream().reduce("# @contract", (s, s2) -> s + "\n# " + s2));
         method.getParent().addRangeBefore(fileWithComments.getFirstChild(), fileWithComments.getLastChild(), method);
     }
 
     @Nullable
-    private List<String> getContractAsStringList(RSignatureContract contract) {
+    private List<String> getContractAsStringList(SignatureContract contract) {
         final List<String> contracts = new ArrayList<>();
         final SignatureNode startNode = contract.getStartNode();
         dfs(startNode, new StringBuilder(), contracts);

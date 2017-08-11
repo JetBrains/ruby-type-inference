@@ -26,7 +26,7 @@ import org.jetbrains.plugins.ruby.ruby.lang.psi.methodCall.RCall;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.references.RReference;
 import org.jetbrains.ruby.codeInsight.types.signature.MethodInfo;
 import org.jetbrains.ruby.codeInsight.types.signature.ParameterInfo;
-import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContract;
+import org.jetbrains.ruby.codeInsight.types.signature.SignatureContract;
 import org.jetbrains.ruby.codeInsight.types.signature.SignatureNode;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ReferenceContractTransition;
@@ -110,7 +110,7 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
         if (methodInfo == null) {
             return null;
         }
-        final RSignatureContract contract = callStatServer.getContract(methodInfo);
+        final SignatureContract contract = callStatServer.getContract(methodInfo);
         if (contract == null) {
             return null;
         }
@@ -148,15 +148,13 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
             final Module module = ModuleUtilCore.findModuleForPsiElement(call);
             final String receiverName = StringUtil.notNullize(names.getSecond(), CoreTypes.Object);
 
-            RSignatureContract contract = callStatServer.getContractByMethodAndReceiverName(methodName, receiverName);
+            SignatureContract contract = callStatServer.getContractByMethodAndReceiverName(methodName, receiverName);
 
             if (contract == null)
                 return REmptyType.INSTANCE;
 
             Map<SignatureNode, List<Set<String>>> currNodesAndReadTypes = new HashMap<>();
-            synchronized (contract) {
-                currNodesAndReadTypes.put(contract.getStartNode(), new ArrayList<>());
-            }
+            currNodesAndReadTypes.put(contract.getStartNode(), new ArrayList<>());
 
             List<ParameterInfo> paramInfos = contract.getArgsInfo();
             boolean[] isArgumentPresent = RTupleBuilder.calcPresentArguments(paramInfos, callArgs.size(), kwArgs.keySet());

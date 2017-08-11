@@ -38,27 +38,27 @@ public class SignatureServer implements RSignatureStorage {
     }
 
     @Nullable
-    public RSignatureContract getContract(@NotNull MethodInfo info) {
-        return mainContainer.getSignature(info);
+    public SignatureContract getContract(@NotNull MethodInfo info) {
+        return mainContainer.getSignature(info).copy();
     }
 
     @Nullable
-    public RSignatureContract getContractByMethodName(@NotNull String methodName) {
+    public SignatureContract getContractByMethodName(@NotNull String methodName) {
 
         for (MethodInfo info : mainContainer.getKeySet()) {
             if (info.getName().equals(methodName)) {
-                return mainContainer.getSignature(info);
+                return mainContainer.getSignature(info).copy();
             }
         }
         return null;
     }
 
     @Nullable
-    public RSignatureContract getContractByMethodAndReceiverName(@NotNull String methodName, @NotNull String receiverName) {
+    public SignatureContract getContractByMethodAndReceiverName(@NotNull String methodName, @NotNull String receiverName) {
 
         for (MethodInfo info : mainContainer.getKeySet()) {
             if (info.getName().equals(methodName) && info.getClassInfo().getClassFQN().equals(receiverName))
-                return mainContainer.getSignature(info);
+                return mainContainer.getSignature(info).copy();
         }
         return null;
     }

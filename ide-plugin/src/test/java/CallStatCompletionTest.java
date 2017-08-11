@@ -9,6 +9,7 @@ import org.jetbrains.plugins.ruby.ruby.run.RubyScriptRunner;
 import org.jetbrains.plugins.ruby.ruby.sdk.RubySdkType;
 import org.jetbrains.plugins.ruby.ruby.sdk.RubySdkUtil;
 import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContract;
+import org.jetbrains.ruby.codeInsight.types.signature.SignatureContract;
 import org.jetbrains.ruby.runtime.signature.server.SignatureServer;
 import org.junit.Assert;
 
@@ -34,14 +35,14 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
 
     public void testMultipleExecution() {
         executeScript("multiple_execution_test1.rb");
-        RSignatureContract contract = doTestContract("multiple_execution_test2", "foo2");
+        RSignatureContract contract = ((RSignatureContract) doTestContract("multiple_execution_test2", "foo2"));
 
         Assert.assertEquals(contract.getLevels().size(), 2);
         Assert.assertEquals(contract.getLevels().get(1).size(), 1);
     }
 
     public void testRefLinks() {
-        RSignatureContract contract = doTestContract("ref_links_test", "doo");
+        RSignatureContract contract = ((RSignatureContract) doTestContract("ref_links_test", "doo"));
 
         Assert.assertEquals(contract.getLevels().size(), 4);
         Assert.assertEquals(contract.getLevels().get(1).size(), 3);
@@ -67,7 +68,7 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
         }
     }
 
-    private RSignatureContract run(@NotNull String name, @NotNull String method_name) {
+    private SignatureContract run(@NotNull String name, @NotNull String method_name) {
         final String scriptName = name + ".rb";
         final String runnableScriptName = name + "_to_run.rb";
 
@@ -76,7 +77,7 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
         executeScript(runnableScriptName);
 
         SignatureServer callStatServer = SignatureServer.getInstance();
-        RSignatureContract contract = null;
+        SignatureContract contract = null;
 
         int cnt = 0;
 
@@ -87,12 +88,10 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
                 LOGGER.severe(e.getMessage());
                 e.printStackTrace();
             }
-            RSignatureContract currContract = callStatServer.getContractByMethodName(method_name);
+            SignatureContract currContract = callStatServer.getContractByMethodName(method_name);
 
             if (currContract != null) {
-                synchronized (currContract) {
-                    contract = currContract;
-                }
+                contract = currContract;
             }
 
             cnt++;
@@ -109,7 +108,7 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
         myFixture.testCompletionVariants(scriptName, items);
     }
 
-    private RSignatureContract doTestContract(@NotNull String name, @NotNull String method_name) {
+    private SignatureContract doTestContract(@NotNull String name, @NotNull String method_name) {
         return run(name, method_name);
     }
 
