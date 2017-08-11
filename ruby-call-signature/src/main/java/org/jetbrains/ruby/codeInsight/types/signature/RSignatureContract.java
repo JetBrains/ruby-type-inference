@@ -189,7 +189,7 @@ public class RSignatureContract implements SignatureContract {
                     }
 
                     final NodeWithTransition nodeWithTransition = new NodeWithTransition(
-                            linkToParentNode.containsKey(node) ? linkToParentNode.get(node) : node,
+                            linkToParentNode.getOrDefault(node, node),
                             transition);
 
                     if (markedTransitions.contains(nodeWithTransition)) {
