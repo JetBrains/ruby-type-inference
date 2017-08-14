@@ -1,9 +1,23 @@
 package org.jetbrains.ruby.codeInsight.types.signature
 
 import junit.framework.TestCase
+import org.jetbrains.ruby.codeInsight.types.storage.server.StringDataOutput
+import org.jetbrains.ruby.codeInsight.types.storage.server.impl.serialize
 import org.junit.Test
 
 class MergeTest : TestCase() {
+
+    private fun checkSerialization(rContract: RSignatureContract, testData: String) {
+        val serialized = StringDataOutput().let {
+            val contract = rContract as SignatureContract
+            contract.serialize(it)
+            it.result.toString()
+        }
+
+        val testDataClean = testData.trim().replace('\n', ' ')
+
+        assertEquals(serialized, testDataClean)
+    }
 
     private fun generateRTuple(args: List<String>, returnType: String): RTuple {
         val gemInfo = GemInfo.Impl("test_gem", "1.2.3")
@@ -17,7 +31,7 @@ class MergeTest : TestCase() {
     }
 
     @Test
-    fun testMerge() {
+    fun testSimpleMerge() {
         val args1 = listOf("String1", "String2", "String3")
         val args2 = listOf("Int1", "String2", "String3")
         val args3 = listOf("String1", "Int2", "String3")
@@ -50,5 +64,78 @@ class MergeTest : TestCase() {
         contract1.mergeWith(contract2)
         assertTrue(SignatureContract.Companion.accept(contract1, testTuple1))
         assertFalse(SignatureContract.Companion.accept(contract1, testTuple2))
+
+        checkSerialization(contract1, MergeTestData.testSimpleMerge)
     }
+
+    @Test
+    fun testAdd() {
+        val args1 = listOf("String1", "String2", "String3")
+        val args2 = listOf("String1", "Int2", "String3")
+
+        val testArgs1 = listOf("String1", "Date2", "String3")
+
+        val tuple1 = generateRTuple(args1, "String4")
+        val tuple2 = generateRTuple(args2, "String4")
+
+        val testTuple1 = generateRTuple(testArgs1, "String4")
+
+        val contract1 = RSignatureContract(tuple1)
+        contract1.addRTuple(tuple2)
+
+        contract1.minimize()
+
+        val contract2 = RSignatureContract(testTuple1)
+
+        contract1.mergeWith(contract2)
+        assertTrue(SignatureContract.Companion.accept(contract1, testTuple1))
+
+        checkSerialization(contract1, MergeTestData.testAddResult)
+    }
+
+    object MergeTestData {
+        val testAddResult = """
+3
+a0 0
+a1 0
+a2 0
+5
+1
+1 0 String1
+3
+2 0 Int2
+2 0 Date2
+2 0 String2
+1
+3 0 String3
+1
+4 0 String4
+0
+            """
+        val testSimpleMerge = """
+3
+a0 0
+a1 0
+a2 0
+7
+2
+1 0 Int1
+2 0 String1
+2
+3 0 Int2
+4 0 String2
+2
+4 0 Int2
+4 0 String2
+2
+5 0 Int3
+5 0 String3
+1
+5 0 String3
+1
+6 0 String4
+0
+            """
+    }
+
 }
