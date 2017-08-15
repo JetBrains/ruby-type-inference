@@ -1,6 +1,4 @@
 buildscript {
-    ext.kotlin_version = '1.1.0'
-
     repositories {
         jcenter()
         mavenCentral()
@@ -28,9 +26,18 @@ allprojects {
         compile 'org.jetbrains:annotations:15.0'
         compile 'mysql:mysql-connector-java:5.1.37'
         compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+        compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
 
         testCompile 'junit:junit:4.12'
         testCompile 'com.h2database:h2:1.4.193'
+    }
+
+    compileKotlin {
+        kotlinOptions {
+            apiVersion = '1.1'
+            languageVersion = '1.1'
+            jvmTarget = '1.8'
+        }
     }
 }
 
