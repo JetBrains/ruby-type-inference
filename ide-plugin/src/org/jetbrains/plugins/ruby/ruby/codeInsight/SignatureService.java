@@ -11,7 +11,7 @@ public class SignatureService {
         new Thread() {
             @Override
             public void run() {
-                SignatureServer server = SignatureServer.getInstance();
+                SignatureServer server = SignatureServer.INSTANCE;
                 while (true) {
                     try {
                         server.runServer();

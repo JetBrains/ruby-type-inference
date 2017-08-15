@@ -105,7 +105,7 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
         if (typeName == null) {
             return null;
         }
-        SignatureServer callStatServer = SignatureServer.getInstance();
+        SignatureServer callStatServer = SignatureServer.INSTANCE;
         final MethodInfo methodInfo = callStatServer.getMethodByClass(typeName, name);
         if (methodInfo == null) {
             return null;
@@ -127,7 +127,7 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
 
         final PsiElement callElement = call instanceof RCall ? ((RCall) call).getPsiCommand() : call;
 
-        SignatureServer callStatServer = SignatureServer.getInstance();
+        SignatureServer callStatServer = SignatureServer.INSTANCE;
 
         final Couple<String> names = getMethodAndReceiverNames(callElement);
 

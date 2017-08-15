@@ -76,7 +76,7 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
 
         executeScript(runnableScriptName);
 
-        SignatureServer callStatServer = SignatureServer.getInstance();
+        SignatureServer callStatServer = SignatureServer.INSTANCE;
         SignatureContract contract = null;
 
         int cnt = 0;
