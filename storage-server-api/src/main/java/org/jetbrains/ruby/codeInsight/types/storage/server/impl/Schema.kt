@@ -5,6 +5,7 @@ import org.jetbrains.exposed.dao.IntEntity
 import org.jetbrains.exposed.dao.IntEntityClass
 import org.jetbrains.exposed.dao.IntIdTable
 import org.jetbrains.ruby.codeInsight.types.signature.*
+import org.jetbrains.ruby.codeInsight.types.signature.serialization.BlobDeserializer
 import java.sql.Blob
 import kotlin.reflect.KProperty
 
@@ -68,7 +69,7 @@ class SignatureContractData(id: EntityID<Int>) : IntEntity(id), SignatureInfo {
     companion object : IntEntityClass<SignatureContractData>(SignatureTable)
 
     override var methodInfo: MethodInfoData by MethodInfoData referencedOn SignatureTable.methodInfo
-    override var contract: SignatureContract by BlobDeserializer()
+    override var contract: SignatureContract by BlobDeserializer
 
     var contractRaw: Blob by SignatureTable.contract
 }

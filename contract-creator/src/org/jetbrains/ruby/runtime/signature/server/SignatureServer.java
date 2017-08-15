@@ -4,10 +4,10 @@ import com.google.gson.JsonParseException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ruby.codeInsight.types.signature.*;
+import org.jetbrains.ruby.codeInsight.types.signature.serialization.MethodInfoSerializationKt;
+import org.jetbrains.ruby.codeInsight.types.signature.serialization.SignatureContractSerializationKt;
 import org.jetbrains.ruby.codeInsight.types.storage.server.RSignatureStorage;
 import org.jetbrains.ruby.codeInsight.types.storage.server.StorageException;
-import org.jetbrains.ruby.codeInsight.types.storage.server.impl.MethodInfoSerializationKt;
-import org.jetbrains.ruby.codeInsight.types.storage.server.impl.SignatureContractSerializationKt;
 import org.jetbrains.ruby.runtime.signature.server.serialisation.RTupleBuilder;
 
 import java.io.*;

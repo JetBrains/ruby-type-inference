@@ -1,8 +1,8 @@
 package org.jetbrains.ruby.codeInsight.types.signature
 
 import junit.framework.TestCase
-import org.jetbrains.ruby.codeInsight.types.storage.server.StringDataOutput
-import org.jetbrains.ruby.codeInsight.types.storage.server.impl.serialize
+import org.jetbrains.ruby.codeInsight.types.signature.serialization.StringDataOutput
+import org.jetbrains.ruby.codeInsight.types.signature.serialization.serialize
 import org.junit.Test
 
 class MergeTest : TestCase() {

@@ -1,4 +1,4 @@
-package org.jetbrains.ruby.codeInsight.types.storage.server
+package org.jetbrains.ruby.codeInsight.types.signature.serialization
 
 import java.io.DataInput
 import java.io.DataOutput

@@ -1,8 +1,10 @@
 package org.jetbrains.ruby.codeInsight.types.storage.server.impl
 
 import junit.framework.TestCase
-import org.jetbrains.ruby.codeInsight.types.storage.server.StringDataInput
-import org.jetbrains.ruby.codeInsight.types.storage.server.StringDataOutput
+import org.jetbrains.ruby.codeInsight.types.signature.serialization.SignatureContract
+import org.jetbrains.ruby.codeInsight.types.signature.serialization.StringDataInput
+import org.jetbrains.ruby.codeInsight.types.signature.serialization.StringDataOutput
+import org.jetbrains.ruby.codeInsight.types.signature.serialization.serialize
 
 class SignatureContractSerializationTest : TestCase() {
 

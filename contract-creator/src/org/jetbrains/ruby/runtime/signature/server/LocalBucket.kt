@@ -8,6 +8,9 @@ import org.jetbrains.ruby.codeInsight.types.signature.MethodInfo
 import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContract
 import org.jetbrains.ruby.codeInsight.types.signature.RTuple
 import org.jetbrains.ruby.codeInsight.types.signature.SignatureContract
+import org.jetbrains.ruby.codeInsight.types.signature.serialization.BlobSerializer
+import org.jetbrains.ruby.codeInsight.types.signature.serialization.SignatureContract
+import org.jetbrains.ruby.codeInsight.types.signature.serialization.serialize
 import org.jetbrains.ruby.codeInsight.types.storage.server.RSignatureStorage
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.*
 import java.io.ByteArrayInputStream
@@ -41,7 +44,7 @@ object LocalBucket : RSignatureStorage {
             val inputStream = ByteArrayInputStream(packet.data)
             val dataInput = DataInputStream(inputStream)
             repeat(packet.size) { _ ->
-                val info = MethodInfo(dataInput)
+                val info = org.jetbrains.ruby.codeInsight.types.signature.serialization.MethodInfo(dataInput)
                 val contract = SignatureContract(dataInput)
                 val oldContract = getSignatureContract(info)
 

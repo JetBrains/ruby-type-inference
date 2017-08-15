@@ -7,7 +7,9 @@ import org.jetbrains.ruby.codeInsight.types.signature.ClassInfo
 import org.jetbrains.ruby.codeInsight.types.signature.GemInfo
 import org.jetbrains.ruby.codeInsight.types.signature.MethodInfo
 import org.jetbrains.ruby.codeInsight.types.signature.RVisibility
-import org.jetbrains.ruby.codeInsight.types.storage.server.StringDataInput
+import org.jetbrains.ruby.codeInsight.types.signature.serialization.BlobSerializer
+import org.jetbrains.ruby.codeInsight.types.signature.serialization.SignatureContract
+import org.jetbrains.ruby.codeInsight.types.signature.serialization.StringDataInput
 import org.junit.Test
 
 class RSignatureProviderTest : TestCase() {
