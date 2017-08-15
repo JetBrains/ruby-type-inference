@@ -69,6 +69,48 @@ class MergeTest : TestCase() {
     }
 
     @Test
+    fun testComplicatedMerge() {
+        val args1 = listOf("a1", "c2", "a3", "a4")
+        val args2 = listOf("a1", "b2", "a3", "a4")
+        val args3 = listOf("a1", "c2", "b3", "a4")
+        val args4 = listOf("a1", "b2", "b3", "a4")
+
+        val args5 = listOf("a1", "c2", "b3", "d4")
+        val args6 = listOf("a1", "b2", "b3", "d4")
+
+        val testArgs1 = listOf("a1", "b2", "a3", "d4")
+        val testArgs2 = listOf("a1", "c2", "b3", "d4")
+
+        val tuple1 = generateRTuple(args1, "e5")
+        val tuple2 = generateRTuple(args2, "e5")
+        val tuple3 = generateRTuple(args3, "e5")
+        val tuple4 = generateRTuple(args4, "e5")
+
+        val testTuple1 = generateRTuple(testArgs1, "a5")
+        val testTuple2 = generateRTuple(testArgs2, "a5")
+
+        val tuple5 = generateRTuple(args5, "a5")
+        val tuple6 = generateRTuple(args6, "a5")
+
+        val contract1 = RSignatureContract(tuple1)
+        contract1.addRTuple(tuple2)
+        contract1.addRTuple(tuple3)
+        contract1.addRTuple(tuple4)
+
+        contract1.minimize()
+
+        val contract2 = RSignatureContract(tuple5)
+        contract2.addRTuple(tuple6)
+        contract2.minimize()
+
+        contract1.mergeWith(contract2)
+        assertFalse(SignatureContract.Companion.accept(contract1, testTuple1))
+        assertTrue(SignatureContract.Companion.accept(contract1, testTuple2))
+
+        checkSerialization(contract1, MergeTestData.testComplicatedMerge)
+    }
+
+    @Test
     fun testAdd() {
         val args1 = listOf("String1", "String2", "String3")
         val args2 = listOf("String1", "Int2", "String3")
@@ -136,6 +178,59 @@ a2 0
 6 0 String4
 0
             """
+
+        val testComplicatedMerge = """
+4
+a0 0
+a1 0
+a2 0
+a3 0
+8
+1
+1 0 a1
+2
+2 0 b2
+2 0 c2
+2
+3 0 b3
+4 0 a3
+2
+5 0 d4
+6 0 a4
+1
+6 0 a4
+1
+7 0 a5
+1
+7 0 e5
+0
+            """
     }
 
 }
+
+//4
+//a0 0
+//a1 0
+//a2 0
+//a3 0
+//9
+//
+//1
+//1 0 a1
+//2
+//2 0 b2
+//2 0 c2
+//2
+//3 0 b3
+//4 0 a3
+//2
+//5 0 d4
+//6 0 a4
+//1
+//6 0 a4
+//1
+//7 0 a4
+//1
+//7 0 e5
+//0

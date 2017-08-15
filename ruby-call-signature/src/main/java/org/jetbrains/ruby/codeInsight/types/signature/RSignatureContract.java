@@ -1,5 +1,6 @@
 package org.jetbrains.ruby.codeInsight.types.signature;
 
+import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition;
@@ -47,7 +48,7 @@ public class RSignatureContract implements SignatureContract {
 
     @NotNull
     @Override
-    public SignatureNode getStartNode() {
+    public RSignatureContractNode getStartNode() {
         return myStartContractNode;
     }
 
@@ -169,115 +170,80 @@ public class RSignatureContract implements SignatureContract {
         return myLevels;
     }
 
+    private void AddToBfsQueueAndUse(@NotNull SignatureNode oldNode, @NotNull SignatureNode newNode, @NotNull Queue<Pair<PairOfNodes, Integer>> bfsQueue, @NotNull Set<PairOfNodes> used, Integer level) {
+        PairOfNodes newPairOfNodes = new PairOfNodes(oldNode, newNode);
+
+        if (!used.contains(newPairOfNodes)) {
+            used.add(newPairOfNodes);
+            bfsQueue.add(new Pair<>(newPairOfNodes, level));
+        }
+    }
+
     public synchronized void mergeWith(@NotNull RSignatureContract additive) {
-        // TODO synchronize on additive (can't do this plainly due to the possible deadlock)
-        Set<NodeWithTransition> markedTransitions = getMarkedTransitionsBFS(myStartContractNode, additive.getStartNode());
+        // TODO synchronize on additive (can't do this plainly due to the possible deadlock)???
+        Set<PairOfNodes> used = new HashSet<>();
+        Queue<Pair<PairOfNodes, Integer>> bfsQueue = new LinkedList<>();
+        PairOfNodes startPairOfNodes = new PairOfNodes(getStartNode(), additive.getStartNode());
+        bfsQueue.add(new Pair<>(startPairOfNodes, 0));
 
-        int levelID = 0;
-        Map<SignatureNode, SignatureNode> linkToParentNode = new HashMap<>();
+        while (!bfsQueue.isEmpty()) {
+            Pair<PairOfNodes, Integer> currItem = bfsQueue.poll();
+            SignatureNode oldNode = currItem.getKey().myOldNode;
+            SignatureNode newNode = currItem.getKey().myNewNode;
+            Integer level = currItem.getValue();
 
-        for (List<RSignatureContractNode> level : myLevels) {
+            Map<SignatureNode, Integer> childNodesWithPows = new HashMap<>();
 
-            for (RSignatureContractNode node : level) {
-                Set<ContractTransition> transitions = node.getTransitions().keySet();
-                Set<SignatureNode> children = new HashSet<>();
-                Set<SignatureNode> multipleEdgeChildren = new HashSet<>();
+            for (ContractTransition transition : oldNode.getTransitions().keySet()) {
+                SignatureNode node = oldNode.getTransitions().get(transition);
 
-                for (ContractTransition transition : transitions) {
-                    SignatureNode childNode = node.getTransitions().get(transition);
-                    if (children.contains(childNode)) {
-                        multipleEdgeChildren.add(childNode);
-                    } else {
-                        children.add(childNode);
-                    }
+                if (childNodesWithPows.containsKey(node)) {
+                    Integer oldPow = childNodesWithPows.get(node);
+                    childNodesWithPows.put(node, oldPow + 1);
+                } else {
+                    childNodesWithPows.put(node, 1);
                 }
+            }
 
-                for (ContractTransition transition : transitions) {
-                    SignatureNode childNode = node.getTransitions().get(transition);
+            for (ContractTransition transition : newNode.getTransitions().keySet()) {
 
-                    if (!multipleEdgeChildren.contains(childNode)) {
+                if (oldNode.getTransitions().containsKey(transition)) {
+                    SignatureNode node = oldNode.getTransitions().get(transition);
+                    if (childNodesWithPows.get(node) == 1) {
+                        AddToBfsQueueAndUse(node, newNode.getTransitions().get(transition), bfsQueue, used, level + 1);
                         continue;
                     }
 
-                    final NodeWithTransition nodeWithTransition = new NodeWithTransition(
-                            linkToParentNode.getOrDefault(node, node),
-                            transition);
+                    Integer oldPow = childNodesWithPows.get(node);
+                    childNodesWithPows.put(node, oldPow - 1);
+                }
 
-                    if (markedTransitions.contains(nodeWithTransition)) {
 
-                        SignatureNode nodeToClone = node.getTransitions().get(transition);
-                        RSignatureContractNode clonedNode;
+                RSignatureContractNode node = createNodeAndAddToLevels(level + 1);
 
-                        clonedNode = createNodeAndAddToLevels(levelID + 1);
-                        for (ContractTransition tmpTransition : nodeToClone.getTransitions().keySet()) {
-                            clonedNode.addLink(tmpTransition, nodeToClone.getTransitions().get(tmpTransition));
-                        }
+                if (oldNode.getTransitions().keySet().contains(transition)) {
+                    SignatureNode nodeToClone = oldNode.getTransitions().get(transition);
 
-                        linkToParentNode.put(clonedNode, nodeToClone);
-
-                        node.addLink(transition, clonedNode);
+                    for (ContractTransition contractTransition : nodeToClone.getTransitions().keySet()) {
+                        node.getTransitions().put(contractTransition, nodeToClone.getTransitions().get(contractTransition));
                     }
                 }
+                oldNode.getTransitions().put(transition, node);
+
+                AddToBfsQueueAndUse(node, newNode.getTransitions().get(transition), bfsQueue, used, level + 1);
             }
-            levelID++;
         }
 
-        mergeDfs(myStartContractNode, additive.getStartNode(), 0, additive.myTermNode);
         minimize();
-    }
-
-    @NotNull
-    private Set<NodeWithTransition> getMarkedTransitionsBFS(@NotNull SignatureNode oldNode,
-                                                            @NotNull SignatureNode newNode) {
-        Set<NodeWithTransition> result = new HashSet<>();
-
-        Queue<PairOfNodes> bfsQueue = new LinkedList<>();
-        bfsQueue.add(new PairOfNodes(oldNode, newNode));
-
-        while (!bfsQueue.isEmpty()) {
-            PairOfNodes currPair = bfsQueue.poll();
-            oldNode = currPair.myOldNode;
-            newNode = currPair.myNewNode;
-
-            for (ContractTransition transition : newNode.getTransitions().keySet()) {
-                if (oldNode.getTransitions().containsKey(transition)) {
-                    result.add(new NodeWithTransition(oldNode, transition));
-                    bfsQueue.add(currPair.pairGoByTransition(transition));
-                }
-            }
-        }
-
-        return result;
-    }
-
-    private void mergeDfs(@NotNull RSignatureContractNode oldNode,
-                          @NotNull SignatureNode newNode,
-                          int level,
-                          @NotNull SignatureNode newTermNode) {
-
-        level++;
-
-        for (ContractTransition transition : newNode.getTransitions().keySet()) {
-            final SignatureNode nextNewNode = newNode.getTransitions().get(transition);
-
-            if (oldNode.getTransitions().containsKey(transition)) {
-                mergeDfs(((RSignatureContractNode) oldNode.getTransitions().get(transition)), nextNewNode, level, newTermNode);
-            } else {
-                if (nextNewNode == newTermNode) {
-                    oldNode.addLink(transition, myTermNode);
-                    return;
-                }
-
-                final RSignatureContractNode node = createNodeAndAddToLevels(level);
-                oldNode.addLink(transition, node);
-                mergeDfs(node, nextNewNode, level, newTermNode);
-            }
-        }
     }
 
     @NotNull
     private RSignatureContractNode createNodeAndAddToLevels(int index) {
         RSignatureContractNode newNode = new RSignatureContractNode();
+
+        if (index == myLevels.size() - 1 && !myLevels.get(index).isEmpty()) {
+            return myLevels.get(index).get(0);
+        }
 
         if (myLevels.size() <= index) {
             throw new IndexOutOfBoundsException("Trying to add to the level " + index
@@ -317,37 +283,6 @@ public class RSignatureContract implements SignatureContract {
         @Override
         public List<ParameterInfo> getArgsInfo() {
             return myArgsInfo;
-        }
-    }
-
-    private static class NodeWithTransition {
-        @NotNull
-        private final SignatureNode myNode;
-        @NotNull
-        private final ContractTransition myTransition;
-
-        NodeWithTransition(@NotNull SignatureNode node, @NotNull ContractTransition transition) {
-            myNode = node;
-            myTransition = transition;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            final NodeWithTransition that = (NodeWithTransition) o;
-
-            //noinspection SimplifiableIfStatement
-            if (!myNode.equals(that.myNode)) return false;
-            return myTransition.equals(that.myTransition);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = myNode.hashCode();
-            result = 31 * result + myTransition.hashCode();
-            return result;
         }
     }
 
