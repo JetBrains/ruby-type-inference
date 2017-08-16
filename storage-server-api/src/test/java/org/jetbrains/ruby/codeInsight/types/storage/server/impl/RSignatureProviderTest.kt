@@ -3,10 +3,7 @@ package org.jetbrains.ruby.codeInsight.types.storage.server.impl
 import junit.framework.TestCase
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.TransactionManager
-import org.jetbrains.ruby.codeInsight.types.signature.ClassInfo
-import org.jetbrains.ruby.codeInsight.types.signature.GemInfo
-import org.jetbrains.ruby.codeInsight.types.signature.MethodInfo
-import org.jetbrains.ruby.codeInsight.types.signature.RVisibility
+import org.jetbrains.ruby.codeInsight.types.signature.*
 import org.jetbrains.ruby.codeInsight.types.signature.serialization.BlobSerializer
 import org.jetbrains.ruby.codeInsight.types.signature.serialization.SignatureContract
 import org.jetbrains.ruby.codeInsight.types.signature.serialization.StringDataInput
@@ -148,4 +145,59 @@ class RSignatureProviderTest : TestCase() {
         assertNotNull(signatureInfo2)
         assertEquals(2, signatureInfo2!!.contract.nodeCount)
     }
+
+    @Test
+    fun testSignaturesWithAPIPut() {
+        val gem = GemInfo("test_gem", "1.2.3")
+        val clazz = ClassInfo(gem, "Test::Fqn")
+        val method1 = MethodInfo(clazz,
+                "met1",
+                RVisibility.PUBLIC)
+
+        val method2 = MethodInfo(clazz,
+                "met2",
+                RVisibility.PUBLIC)
+
+        val contract1 = SignatureContract(StringDataInput(SignatureTestData.simpleContract))
+        val contract2 = SignatureContract(StringDataInput(SignatureTestData.trivialContract))
+
+        val provider = RSignatureProviderImpl()
+
+        provider.putSignature(SignatureInfo(method1, contract1))
+        provider.putSignature(SignatureInfo(method2, contract2))
+
+        val signatureInfo1 = provider.getSignature(MethodInfo(ClassInfo(GemInfo("test_gem", "1.2.3"), "Test::Fqn"), "met1", RVisibility.PUBLIC))
+        val signatureInfo2 = provider.getSignature(MethodInfo(ClassInfo(GemInfo("test_gem", "1.2.3"), "Test::Fqn"), "met2", RVisibility.PUBLIC))
+
+        assertNotNull(signatureInfo1)
+        assertEquals(4, signatureInfo1!!.contract.nodeCount)
+
+        assertNotNull(signatureInfo2)
+        assertEquals(2, signatureInfo2!!.contract.nodeCount)
+    }
+
+    @Test
+    fun testSignaturesWithSignatureReplace() {
+        val gem = GemInfo("test_gem", "1.2.3")
+        val clazz = ClassInfo(gem, "Test::Fqn")
+        val method = MethodInfo(clazz,
+                "met1",
+                RVisibility.PUBLIC)
+
+        val contract1 = SignatureContract(StringDataInput(SignatureTestData.simpleContract))
+        val contract2 = SignatureContract(StringDataInput(SignatureTestData.trivialContract))
+
+        val provider = RSignatureProviderImpl()
+
+        provider.putSignature(SignatureInfo(method, contract1))
+        val signatureInfo1 = provider.getSignature(MethodInfo(ClassInfo(GemInfo("test_gem", "1.2.3"), "Test::Fqn"), "met1", RVisibility.PUBLIC))
+        assertNotNull(signatureInfo1)
+        assertEquals(4, signatureInfo1!!.contract.nodeCount)
+
+        provider.putSignature(SignatureInfo(method, contract2))
+        val signatureInfo2 = provider.getSignature(MethodInfo(ClassInfo(GemInfo("test_gem", "1.2.3"), "Test::Fqn"), "met1", RVisibility.PUBLIC))
+        assertNotNull(signatureInfo2)
+        assertEquals(2, signatureInfo2!!.contract.nodeCount)
+    }
+
 }

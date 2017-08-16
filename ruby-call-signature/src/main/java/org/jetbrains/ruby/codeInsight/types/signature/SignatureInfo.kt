@@ -6,3 +6,5 @@ interface SignatureInfo {
 
     data class Impl(override val methodInfo: MethodInfo, override val contract: SignatureContract) : SignatureInfo
 }
+
+fun SignatureInfo(methodInfo: MethodInfo, contract: SignatureContract) = SignatureInfo.Impl(methodInfo, contract)

@@ -1,10 +1,7 @@
 package org.jetbrains.ruby.codeInsight.types.storage.server.impl
 
 import org.jetbrains.exposed.dao.EntityID
-import org.jetbrains.exposed.sql.Op
-import org.jetbrains.exposed.sql.SqlExpressionBuilder
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.ruby.codeInsight.types.signature.ClassInfo
@@ -12,6 +9,7 @@ import org.jetbrains.ruby.codeInsight.types.signature.GemInfo
 import org.jetbrains.ruby.codeInsight.types.signature.MethodInfo
 import org.jetbrains.ruby.codeInsight.types.signature.SignatureInfo
 import org.jetbrains.ruby.codeInsight.types.storage.server.RSignatureProvider
+import org.jetbrains.ruby.codeInsight.types.storage.server.StorageException
 
 class RSignatureProviderImpl : RSignatureProvider {
     override fun getClosestRegisteredGem(usedGem: GemInfo): GemInfo? {
@@ -103,6 +101,75 @@ class RSignatureProviderImpl : RSignatureProvider {
         }
     }
 
+    override fun putSignature(signatureInfo: SignatureInfo) {
+        return transaction {
+            val lazyGemInfoId = lazy {
+                signatureInfo.methodInfo.classInfo.gemInfo?.let { givenGemInfo ->
+                    (givenGemInfo as? GemInfoData)?.id
+                            ?: with(GemInfoTable) {
+                        select {
+                            (name eq givenGemInfo.name) and (version eq givenGemInfo.version)
+                        }.firstOrNull()?.get(id)
+                    }
+                            ?: GemInfoTable.insertAndGetId {
+                        it[name] = givenGemInfo.name
+                        it[version] = givenGemInfo.version
+                    }
+                            ?: throw StorageException("Could not retrieve nor insert gem info: $givenGemInfo")
+                }
+            }
+
+            val lazyClassInfoId = lazy {
+                signatureInfo.methodInfo.classInfo.let { givenClassInfo ->
+                    (givenClassInfo as? ClassInfoData)?.id
+                            ?: with(ClassInfoTable) {
+                        select {
+                            (fqn eq givenClassInfo.classFQN) and (gemInfo eq lazyGemInfoId.value)
+                        }
+                                .firstOrNull()?.get(id)
+                    }
+                            ?: ClassInfoTable.insertAndGetId {
+                        it[fqn] = givenClassInfo.classFQN
+                        it[gemInfo] = lazyGemInfoId.value
+                    }
+                            ?: throw StorageException("Could not retrieve nor insert class info: $givenClassInfo")
+                }
+            }
+
+            val methodInfoData = signatureInfo.methodInfo.let { givenMethodInfo ->
+                givenMethodInfo as? MethodInfoData
+                        ?: with(MethodInfoTable) {
+                    MethodInfoData.find {
+                        (name eq givenMethodInfo.name) and
+                                (visibility eq givenMethodInfo.visibility) and
+                                (locationFile eq givenMethodInfo.location?.path) and
+                                (locationLineno eq (givenMethodInfo.location?.lineno ?: 0)) and
+                                (classInfo eq lazyClassInfoId.value)
+                    }.firstOrNull()
+                }
+                        ?: MethodInfoTable.insertAndGetId {
+                    it[name] = givenMethodInfo.name
+                    it[visibility] = givenMethodInfo.visibility
+                    it[locationFile] = givenMethodInfo.location?.path
+                    it[locationLineno] = givenMethodInfo.location?.lineno ?: 0
+                    it[classInfo] = lazyClassInfoId.value
+                }?.let {
+                    MethodInfoData[it]
+                }
+                        ?: throw StorageException("Could not retrieve not insert method info: $givenMethodInfo")
+            }
+
+            val existingContractData = SignatureContractData.find { SignatureTable.methodInfo eq methodInfoData.id }
+                    .firstOrNull()
+
+            if (existingContractData != null) {
+                existingContractData.contract = signatureInfo.contract
+            } else {
+                SignatureContractData.new { this.methodInfo = methodInfoData; contract = signatureInfo.contract }
+            }
+        }
+    }
+
     private fun getGemWhereClause(containerClass: ClassInfo): SqlExpressionBuilder.() -> Op<Boolean> {
         val gemInfo = containerClass.gemInfo
         if (gemInfo == null) {
@@ -117,8 +184,8 @@ class RSignatureProviderImpl : RSignatureProvider {
 
 }
 
-fun firstStringCloser(gemVersion: String,
-                      firstVersion: String, secondVersion: String): Boolean {
+private fun firstStringCloser(gemVersion: String,
+                              firstVersion: String, secondVersion: String): Boolean {
     val lcpLengthFirst = longestCommonPrefixLength(gemVersion, firstVersion)
     val lcpLengthSecond = longestCommonPrefixLength(gemVersion, secondVersion)
     return lcpLengthFirst > lcpLengthSecond || lcpLengthFirst > 0 && lcpLengthFirst == lcpLengthSecond &&

@@ -69,7 +69,7 @@ class SignatureContractData(id: EntityID<Int>) : IntEntity(id), SignatureInfo {
     companion object : IntEntityClass<SignatureContractData>(SignatureTable)
 
     override var methodInfo: MethodInfoData by MethodInfoData referencedOn SignatureTable.methodInfo
-    override var contract: SignatureContract by BlobDeserializer
+    override var contract: SignatureContract by BlobDeserializer()
 
     var contractRaw: Blob by SignatureTable.contract
 }
