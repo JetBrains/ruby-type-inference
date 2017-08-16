@@ -111,6 +111,30 @@ class MergeTest : TestCase() {
     }
 
     @Test
+    fun testMultipleReturnTypeMerge() {
+        val args1 = listOf("a1")
+        val args2 = listOf("a1")
+
+        val args3 = listOf("a1")
+
+        val tuple1 = generateRTuple(args1, "b2")
+        val tuple2 = generateRTuple(args2, "c2")
+
+        val tuple3 = generateRTuple(args3, "d2")
+
+        val contract1 = RSignatureContract(tuple1)
+        contract1.addRTuple(tuple2)
+
+        contract1.minimize()
+
+        val contract2 = RSignatureContract(tuple3)
+
+        contract1.mergeWith(contract2)
+
+        checkSerialization(contract1, MergeTestData.testMultipleReturnTypeMerge)
+    }
+
+    @Test
     fun testAdd() {
         val args1 = listOf("String1", "String2", "String3")
         val args2 = listOf("String1", "Int2", "String3")
@@ -205,32 +229,16 @@ a3 0
 7 0 e5
 0
             """
+        val testMultipleReturnTypeMerge = """
+1
+a0 0
+3
+1
+1 0 a1
+3
+2 0 b2
+2 0 d2
+2 0 c2
+0            """
     }
-
 }
-
-//4
-//a0 0
-//a1 0
-//a2 0
-//a3 0
-//9
-//
-//1
-//1 0 a1
-//2
-//2 0 b2
-//2 0 c2
-//2
-//3 0 b3
-//4 0 a3
-//2
-//5 0 d4
-//6 0 a4
-//1
-//6 0 a4
-//1
-//7 0 a4
-//1
-//7 0 e5
-//0
