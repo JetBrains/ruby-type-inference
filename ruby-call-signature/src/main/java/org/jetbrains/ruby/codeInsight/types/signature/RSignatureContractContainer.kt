@@ -1,7 +1,6 @@
 package org.jetbrains.ruby.codeInsight.types.signature
 
 import java.util.*
-import java.util.logging.Logger
 
 class RSignatureContractContainer {
 
@@ -11,17 +10,6 @@ class RSignatureContractContainer {
     init {
         myContracts = HashMap()
         myNumberOfCalls = HashMap()
-    }
-
-    fun reduce() {
-        myContracts.entries
-                .sortedWith(Collections.reverseOrder(Comparator.comparingInt { entry -> myNumberOfCalls[entry.key]!! }))
-                .forEach { entry -> entry.value.minimize() }
-        LOGGER.fine("Finished")
-    }
-
-    fun addContract(info: MethodInfo, contract: RSignatureContract) {
-        myContracts.put(info, contract)
     }
 
     fun acceptTuple(tuple: RTuple): Boolean {
@@ -54,7 +42,7 @@ class RSignatureContractContainer {
         return myContracts[info]
     }
 
-    companion object {
-        private val LOGGER = Logger.getLogger(RSignatureContractContainer::class.java.name)
+    fun deleteSignature(info: MethodInfo) {
+        myContracts.remove(info)
     }
 }

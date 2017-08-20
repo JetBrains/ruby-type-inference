@@ -80,24 +80,19 @@ class RSignatureProviderImpl : RSignatureProvider {
 
     override fun getSignature(method: MethodInfo): SignatureInfo? {
         return transaction {
-            val methodId: EntityID<Int>
-            if (method is MethodInfoData) {
-                methodId = method.id
-            } else {
-                val selectGemClause = getGemWhereClause(method.classInfo)
-                methodId = (MethodInfoTable innerJoin ClassInfoTable leftJoin GemInfoTable).slice(MethodInfoTable.id)
-                        .select {
-                            MethodInfoTable.name.eq(method.name) and
-                                    ClassInfoTable.fqn.eq(method.classInfo.classFQN) and
-                                    selectGemClause()
-                        }.firstOrNull()
-                        ?.let {
-                            it[MethodInfoTable.id]
-                        }
-                        ?: return@transaction null
-            }
+            val methodId = findMethodId(method)
+                    ?: return@transaction null
 
             SignatureContractData.find { SignatureTable.methodInfo.eq(methodId) }.firstOrNull()
+        }
+    }
+
+    override fun deleteSignature(method: MethodInfo) {
+        return transaction {
+            val methodId = findMethodId(method)
+                    ?: return@transaction
+
+            SignatureTable.deleteWhere { SignatureTable.methodInfo eq methodId }
         }
     }
 
@@ -170,6 +165,23 @@ class RSignatureProviderImpl : RSignatureProvider {
         }
     }
 
+    private fun findMethodId(method: MethodInfo): EntityID<Int>? {
+        if (method is MethodInfoData) {
+            return method.id
+        }
+
+        val selectGemClause = getGemWhereClause(method.classInfo)
+        return (MethodInfoTable innerJoin ClassInfoTable leftJoin GemInfoTable).slice(MethodInfoTable.id)
+                .select {
+                    MethodInfoTable.name.eq(method.name) and
+                            ClassInfoTable.fqn.eq(method.classInfo.classFQN) and
+                            selectGemClause()
+                }.firstOrNull()
+                ?.let {
+                    it[MethodInfoTable.id]
+                }
+    }
+
     private fun getGemWhereClause(containerClass: ClassInfo): SqlExpressionBuilder.() -> Op<Boolean> {
         val gemInfo = containerClass.gemInfo
         if (gemInfo == null) {
@@ -184,8 +196,8 @@ class RSignatureProviderImpl : RSignatureProvider {
 
 }
 
-private fun firstStringCloser(gemVersion: String,
-                              firstVersion: String, secondVersion: String): Boolean {
+fun firstStringCloser(gemVersion: String,
+                      firstVersion: String, secondVersion: String): Boolean {
     val lcpLengthFirst = longestCommonPrefixLength(gemVersion, firstVersion)
     val lcpLengthSecond = longestCommonPrefixLength(gemVersion, secondVersion)
     return lcpLengthFirst > lcpLengthSecond || lcpLengthFirst > 0 && lcpLengthFirst == lcpLengthSecond &&

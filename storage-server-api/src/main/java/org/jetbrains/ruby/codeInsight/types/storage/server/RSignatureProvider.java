@@ -41,6 +41,8 @@ public interface RSignatureProvider {
     @Nullable
     SignatureInfo getSignature(@NotNull MethodInfo method) throws StorageException;
 
+    void deleteSignature(@NotNull MethodInfo method) throws StorageException;
+
     void putSignature(@NotNull SignatureInfo signatureInfo) throws StorageException;
 
 }

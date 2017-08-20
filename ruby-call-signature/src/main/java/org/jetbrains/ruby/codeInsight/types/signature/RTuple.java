@@ -32,7 +32,7 @@ public class RTuple {
     }
 
     @NotNull
-    List<ParameterInfo> getArgsInfo() {
+    public List<ParameterInfo> getArgsInfo() {
         return myArgsInfo;
     }
 

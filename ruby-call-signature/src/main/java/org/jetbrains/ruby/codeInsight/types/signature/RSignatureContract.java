@@ -22,7 +22,7 @@ public class RSignatureContract implements SignatureContract {
 
     public RSignatureContract(@NotNull RTuple tuple) {
         myArgsInfo = tuple.getArgsInfo();
-        myLevels = new ArrayList<>();
+        myLevels = new ArrayList<>(getArgsInfo().size() + 2);
         for (int i = 0; i < getArgsInfo().size() + 2; i++) {
             myLevels.add(new ArrayList<>());
         }
@@ -44,6 +44,49 @@ public class RSignatureContract implements SignatureContract {
         myTermNode = termNode;
 
         // TODO recalculate mask
+    }
+
+    private RSignatureContract(@NotNull SignatureContract source) {
+        myArgsInfo = source.getArgsInfo();
+        myLevels = new ArrayList<>(getArgsInfo().size() + 2);
+        for (int i = 0; i < getArgsInfo().size() + 2; i++) {
+            myLevels.add(new ArrayList<>());
+        }
+
+        final Map<SignatureNode, kotlin.Pair<RSignatureContractNode, Integer>> oldNodesToNewWithLayerNumber = new HashMap<>();
+        final Queue<SignatureNode> q = new ArrayDeque<>();
+
+        final RSignatureContractNode newStartNode = createNodeAndAddToLevels(0);
+        myLevels.get(0).add(newStartNode);
+        oldNodesToNewWithLayerNumber.put(newStartNode, new kotlin.Pair<>(newStartNode, 0));
+        q.add(source.getStartNode());
+
+        while (!q.isEmpty()) {
+            final SignatureNode oldSourceNode = q.poll();
+            final kotlin.Pair<RSignatureContractNode, Integer> newSourceNodeAndLevel = oldNodesToNewWithLayerNumber.get(oldSourceNode);
+
+            oldSourceNode.getTransitions().forEach((contractTransition, oldTargetNode) -> {
+                final kotlin.Pair<RSignatureContractNode, Integer> newTargetNodeWithLayer =
+                        oldNodesToNewWithLayerNumber.computeIfAbsent(oldTargetNode, old -> {
+                            final RSignatureContractNode newNode = createNodeAndAddToLevels(newSourceNodeAndLevel.getSecond() + 1);
+                            q.add(newNode);
+                            return new kotlin.Pair<>(
+                                    newNode,
+                                    newSourceNodeAndLevel.getSecond() + 1
+                            );
+                        });
+
+                newSourceNodeAndLevel.getFirst().addLink(contractTransition, newTargetNodeWithLayer.getFirst());
+            });
+        }
+
+        myStartContractNode = newStartNode;
+
+        if (myLevels.get(myLevels.size() - 1).size() != 1) {
+            throw new AssertionError("Incorrect # of nodes on the last level: "
+                    + myLevels.get(myLevels.size() - 1));
+        }
+        myTermNode = myLevels.get(myLevels.size() - 1).iterator().next();
     }
 
     @NotNull
@@ -179,7 +222,7 @@ public class RSignatureContract implements SignatureContract {
         }
     }
 
-    public synchronized void mergeWith(@NotNull RSignatureContract additive) {
+    public synchronized void mergeWith(@NotNull SignatureContract additive) {
         // TODO synchronize on additive (can't do this plainly due to the possible deadlock)???
         Set<PairOfNodes> used = new HashSet<>();
         Queue<Pair<PairOfNodes, Integer>> bfsQueue = new LinkedList<>();
@@ -247,6 +290,15 @@ public class RSignatureContract implements SignatureContract {
         }
         myLevels.get(index).add(newNode);
         return newNode;
+    }
+
+    public static RSignatureContract mergeMutably(@NotNull SignatureContract first, @NotNull SignatureContract second) {
+        if (first instanceof RSignatureContract) {
+            ((RSignatureContract) first).mergeWith(second);
+            return ((RSignatureContract) first);
+        } else {
+            return mergeMutably(new RSignatureContract(first), second);
+        }
     }
 
     private static class Immutable implements SignatureContract {

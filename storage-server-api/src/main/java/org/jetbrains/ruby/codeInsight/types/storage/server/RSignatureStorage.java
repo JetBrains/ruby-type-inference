@@ -1,23 +1,31 @@
 package org.jetbrains.ruby.codeInsight.types.storage.server;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.ruby.codeInsight.types.signature.RTuple;
+import org.jetbrains.ruby.codeInsight.types.signature.MethodInfo;
+import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContract;
+import org.jetbrains.ruby.codeInsight.types.signature.SignatureInfo;
+import org.jetbrains.ruby.codeInsight.types.signature.SignatureInfoKt;
 
 import java.util.Collection;
 
-/**
- * The data obtained when running ruby scripts may be registered to be used for code insight
- * via {@link #addTuple(RTuple)}.
- */
-public interface RSignatureStorage {
+public interface RSignatureStorage<T extends RSignatureStorage.Packet> extends RSignatureProvider {
 
-    void addTuple(@NotNull RTuple signature) throws StorageException;
+    default void readPacket(@NotNull T packet) throws StorageException {
+        for (final SignatureInfo signatureInfo : packet.getSignatures()) {
+            final MethodInfo methodInfo = signatureInfo.getMethodInfo();
+            final SignatureInfo oldSignature = getSignature(methodInfo);
 
-    void readPacket(@NotNull Packet packet) throws StorageException;
+            putSignature(oldSignature == null ? signatureInfo : SignatureInfoKt.SignatureInfo(
+                    methodInfo,
+                    RSignatureContract.mergeMutably(oldSignature.getContract(), signatureInfo.getContract())
+            ));
+        }
+    }
 
     @NotNull
-    Collection<Packet> formPackets() throws StorageException;
+    Collection<T> formPackets() throws StorageException;
 
     interface Packet {
+        Collection<SignatureInfo> getSignatures();
     }
 }
