@@ -1,5 +1,4 @@
 require 'date'
-require '../../../resources/type_tracker.rb'
 
 class A
 

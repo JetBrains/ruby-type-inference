@@ -6,11 +6,11 @@ require 'arg_scanner/version'
 Gem::Specification.new do |spec|
   spec.name = "arg_scanner"
   spec.version = ArgScanner::VERSION
-  spec.authors = ["Nickolay Viuginov"]
-  spec.email = ["aa@aa.bb"]
+  spec.authors = ["Nickolay Viuginov", "Valentin Fondaratov"]
+  spec.email = ["viuginov.nickolay@gmail.com", "fondarat@gmail.com"]
 
-  spec.summary = %q{Arg scanner.}
-  spec.homepage = "https://www.jetbrains.com"
+  spec.summary = %q{Program execution tracker to retrieve data types information}
+  spec.homepage = "https://github.com/jetbrains/ruby-type-inference"
   spec.license = "MIT"
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'
@@ -25,13 +25,13 @@ Gem::Specification.new do |spec|
   spec.files = `git ls-files -z`.split("\x0").reject do |f|
     f.match(%r{^(test|spec|features)/})
   end
-  spec.bindir = "exe"
-  spec.executables = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
+  spec.bindir = "bin"
+  spec.executables = spec.files.grep(%r{^bin/}) {|f| File.basename(f)}
   spec.require_paths = ["lib"]
   spec.extensions = ["ext/arg_scanner/extconf.rb"]
 
   spec.add_development_dependency "bundler", "~> 1.13"
-  spec.add_development_dependency "rake", "~> 10.0"
+  spec.add_development_dependency "rake", "~> 12.0"
   spec.add_development_dependency "rake-compiler"
   spec.add_development_dependency "debase-ruby_core_source", "~> 0.9.6"
 end
