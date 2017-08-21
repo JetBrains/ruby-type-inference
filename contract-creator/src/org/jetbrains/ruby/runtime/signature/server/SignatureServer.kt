@@ -31,10 +31,6 @@ object SignatureServer {
         return mainContainer.getSignature(info)?.contract?.let { (it as? RSignatureContract)?.copy() ?: it }
     }
 
-    fun getContractByMethodName(methodName: String): SignatureContract? {
-        TODO("Not implemented and should not be :)")
-    }
-
     fun getContractByMethodAndReceiverName(methodName: String, receiverName: String): SignatureContract? {
         TODO("Not implemented (and should be with gem data given)")
     }

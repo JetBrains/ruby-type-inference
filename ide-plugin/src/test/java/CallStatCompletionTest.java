@@ -5,17 +5,28 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.yourkit.util.FileUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.exposed.sql.Database;
+import org.jetbrains.exposed.sql.SchemaUtils;
+import org.jetbrains.exposed.sql.Transaction;
+import org.jetbrains.exposed.sql.transactions.ThreadLocalTransactionManager;
+import org.jetbrains.exposed.sql.transactions.TransactionManager;
 import org.jetbrains.plugins.ruby.ruby.run.LocalRunner;
 import org.jetbrains.plugins.ruby.ruby.run.RubyCommandLine;
-import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContract;
-import org.jetbrains.ruby.codeInsight.types.signature.SignatureContract;
+import org.jetbrains.ruby.codeInsight.types.signature.*;
+import org.jetbrains.ruby.codeInsight.types.storage.server.impl.ClassInfoTable;
+import org.jetbrains.ruby.codeInsight.types.storage.server.impl.GemInfoTable;
+import org.jetbrains.ruby.codeInsight.types.storage.server.impl.MethodInfoTable;
+import org.jetbrains.ruby.codeInsight.types.storage.server.impl.SignatureTable;
 import org.jetbrains.ruby.runtime.signature.server.SignatureServer;
 import org.junit.Assert;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
+
+import static org.jetbrains.exposed.sql.transactions.TransactionApiKt.DEFAULT_ISOLATION_LEVEL;
 
 public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestCase {
 
@@ -27,23 +38,25 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
     }
 
     public void testSimple() {
-        doTest("sample_test", "foo", "test1", "test2");
+        doTest("sample_test", createMethodInfo("A", "foo"), "test1", "test2");
     }
 
     public void testKW() {
-        doTest("sample_kw_test", "foo1", "test1", "test2");
+        doTest("sample_kw_test", createMethodInfo("A", "foo1"), "test1", "test2");
     }
 
     public void testMultipleExecution() {
         executeScript("multiple_execution_test1.rb");
-        RSignatureContract contract = ((RSignatureContract) doTestContract("multiple_execution_test2", "foo2"));
+        RSignatureContract contract = ((RSignatureContract) doTestContract("multiple_execution_test2",
+                createMethodInfo("A", "foo2")));
 
         Assert.assertEquals(contract.getLevels().size(), 2);
         Assert.assertEquals(contract.getLevels().get(1).size(), 1);
     }
 
     public void testRefLinks() {
-        RSignatureContract contract = ((RSignatureContract) doTestContract("ref_links_test", "doo"));
+        RSignatureContract contract = ((RSignatureContract) doTestContract("ref_links_test",
+                createMethodInfo("A", "doo")));
 
         Assert.assertEquals(contract.getLevels().size(), 4);
         Assert.assertEquals(contract.getLevels().get(1).size(), 3);
@@ -85,12 +98,17 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
         }
     }
 
-    private SignatureContract run(@NotNull String name, @NotNull String method_name) {
+    private SignatureContract run(@NotNull String name, @NotNull MethodInfo methodInfo) {
         final String scriptName = name + ".rb";
         final String runnableScriptName = name + "_to_run.rb";
 
         myFixture.configureByFiles(scriptName, runnableScriptName);
 
+        Database.Companion.connect("jdbc:h2:mem:test", "org.h2.Driver", "", "", connection -> Unit.INSTANCE,
+                database -> new ThreadLocalTransactionManager(database, DEFAULT_ISOLATION_LEVEL));
+        final Transaction transaction = TransactionManager.Companion.getManager().newTransaction(4);
+        SchemaUtils.INSTANCE.create(GemInfoTable.INSTANCE, ClassInfoTable.INSTANCE, MethodInfoTable.INSTANCE, SignatureTable.INSTANCE);
+        transaction.commit();
         SignatureServer callStatServer = SignatureServer.INSTANCE;
         executeScript(runnableScriptName);
 
@@ -104,7 +122,7 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
             } catch (InterruptedException e) {
                 LOGGER.error(e.getMessage());
             }
-            SignatureContract currContract = callStatServer.getContractByMethodName(method_name);
+            SignatureContract currContract = callStatServer.getContract(methodInfo);
 
             if (currContract != null) {
                 contract = currContract;
@@ -116,16 +134,20 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
         return contract;
     }
 
-    private void doTest(@NotNull String name, @NotNull String method_name, String... items) {
+    private void doTest(@NotNull String name, @NotNull MethodInfo methodInfo, String... items) {
 
         final String scriptName = name + ".rb";
-        Assert.assertNotNull(run(name, method_name));
+        Assert.assertNotNull(run(name, methodInfo));
 
         myFixture.testCompletionVariants(scriptName, items);
     }
 
-    private SignatureContract doTestContract(@NotNull String name, @NotNull String method_name) {
-        return run(name, method_name);
+    private SignatureContract doTestContract(@NotNull String name, @NotNull MethodInfo methodInfo) {
+        return run(name, methodInfo);
+    }
+
+    private static MethodInfo createMethodInfo(@NotNull String className, @NotNull String methodName) {
+        return MethodInfoKt.MethodInfo(ClassInfoKt.ClassInfo(className), methodName, RVisibility.PUBLIC);
     }
 
 }
