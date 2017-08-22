@@ -34,7 +34,7 @@ object SignatureServer {
     private val mainContainer = DiffPreservingStorage(SignatureStorageImpl(), SignatureStorageImpl())
     private val newSignaturesContainer = RSignatureContractContainer()
 
-    private val queue = ArrayBlockingQueue<String>(1024)
+    private val queue = ArrayBlockingQueue<String>(10024)
     private val isReady = AtomicBoolean(true)
     val readTime = AtomicLong(0)
     val jsonTome = AtomicLong(0)
@@ -80,6 +80,10 @@ object SignatureServer {
             try {
                 val currRTuple = ben(jsonTome) { RTupleBuilder.fromJson(jsonString) }
 
+                if (currRTuple?.methodInfo?.classInfo?.classFQN?.startsWith("#<") == true) {
+                    continue
+                }
+
                 ben(addTime) {
                     if (currRTuple != null
                             && !SignatureServer.newSignaturesContainer.acceptTuple(currRTuple) // optimization
@@ -123,6 +127,9 @@ object SignatureServer {
                 while (true) {
                     val currString = ben(readTime) { br.readLine() }
                             ?: break
+                    if (queue.size > queue.remainingCapacity()) {
+                        LOGGER.info("Queue capacity is low")
+                    }
                     queue.put(currString)
                     isReady.set(false)
                 }

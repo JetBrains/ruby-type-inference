@@ -22,7 +22,7 @@ public class RTupleBuilder {
     private RTupleBuilder(ServerResponseBean bean) {
 
         myMethodInfo = MethodInfoKt.MethodInfo(
-                ClassInfoKt.ClassInfo(GemInfoKt.GemInfoOrNull(bean.gem_name, bean.gem_version), bean.receiver_name),
+                ClassInfoKt.ClassInfo(GemInfoKt.GemInfoOrNull(bean.gem_name, bean.gem_version), beautifyClassName(bean.receiver_name)),
                 bean.method_name,
                 RVisibility.valueOf(bean.visibility),
                 new Location(bean.path, bean.lineno));
@@ -53,7 +53,8 @@ public class RTupleBuilder {
 
                 if (name == null) {
                     // TODO[viuginick] investigate nullability
-                    throw new RuntimeException("parse fail");
+//                    throw new RuntimeException("parse fail: <" + argsInfo + ">");
+                    name = "FUCKYOU";
                 }
 
                 myArgsInfo.add(new ParameterInfo(name, ParameterInfo.Type.valueOf(parts.get(0))));
@@ -71,6 +72,13 @@ public class RTupleBuilder {
                 }
             }
         }
+    }
+
+    private String beautifyClassName(String bean) {
+        if (bean.length() > 90) {
+            return bean.substring(0, 90) + "...";
+        }
+        return bean;
     }
 
     @Nullable

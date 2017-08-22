@@ -6,7 +6,6 @@ class TypeTracker
   include Singleton
 
   def initialize
-    @signatures = Array.new
     @cache = Set.new
     @socket = TCPSocket.new('127.0.0.1', 7777)
 
@@ -22,7 +21,11 @@ class TypeTracker
 
   attr_accessor :cache
   attr_accessor :socket
-  attr_accessor :signatures
+
+
+  def signatures
+    Thread.current[:signatures] ||= Array.new
+  end
 
   def at_exit
     socket.close
@@ -40,13 +43,20 @@ class TypeTracker
   end
 
   def handle_return(tp)
-    unless signatures.empty?
-      signature = signatures.pop
+    sigi = signatures
+    unless sigi.empty?
+      signature = sigi.pop
 
-      receiver_name = tp.defined_class.to_s
-      return_type_name = tp.return_value.class.to_s
+      defined_class = tp.defined_class
+      return if !defined_class || defined_class.singleton_class?
 
-      json = ArgScanner.handle_return(signature, receiver_name, return_type_name)
+      receiver_name = defined_class.name ? defined_class : defined_class.ancestors.first
+      return_type_name = tp.return_value.class
+
+      return if !receiver_name || !receiver_name.to_s || receiver_name.to_s.length > 200
+
+      json = ArgScanner.handle_return(signature, return_type_name) +
+         "\"receiver_name\":\"#{receiver_name}\",\"return_type_name\":\"#{return_type_name}\","
 
       if cache.add?(json)
         matches = tp.path.scan(/\w+-\d+(?:\.\d+)+/)

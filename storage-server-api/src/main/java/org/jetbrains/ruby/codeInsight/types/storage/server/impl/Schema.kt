@@ -37,7 +37,7 @@ object MethodInfoTable : IntIdTable() {
     val classInfo = reference("class_info", ClassInfoTable)
     val name = varchar("name", 50)
     val visibility = enumeration("visibility", RVisibility::class.java)
-    val locationFile = varchar("location_file", 100).nullable()
+    val locationFile = varchar("location_file", 1000).nullable()
     val locationLineno = integer("location_lineno").default(0)
 }
 

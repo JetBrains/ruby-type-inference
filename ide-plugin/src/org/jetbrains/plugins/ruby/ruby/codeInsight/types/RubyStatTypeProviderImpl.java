@@ -268,10 +268,13 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
         switch (info.getModifier()) {
 
             case REQ:
-                type = ArgumentInfo.Type.NAMED;
+                type = ArgumentInfo.Type.SIMPLE;
                 break;
             case OPT:
                 type = ArgumentInfo.Type.PREDEFINED;
+                break;
+            case POST:
+                type = ArgumentInfo.Type.SIMPLE;
                 break;
             case REST:
                 type = ArgumentInfo.Type.ARRAY;

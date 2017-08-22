@@ -45,6 +45,7 @@ public class ParameterInfo {
     public enum Type {
         REQ,
         OPT,
+        POST,
         REST,
         KEYREQ,
         KEY,
