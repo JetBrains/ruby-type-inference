@@ -11,4 +11,4 @@ interface GemInfo {
     data class Impl(override val name: String, override val version: String) : GemInfo
 }
 
-fun GemInfo(name: String, version: String) = GemInfo.Impl(name, version)
+fun GemInfo(name: String, version: String) = GemInfo.Impl(name, version).let { if (it == GemInfo.NONE) null else it }

@@ -83,7 +83,10 @@ class RSignatureProviderImpl : RSignatureProvider {
             val methodId = findMethodId(method)
                     ?: return@transaction null
 
-            SignatureContractData.find { SignatureTable.methodInfo.eq(methodId) }.firstOrNull()
+            val result = SignatureContractData.find { SignatureTable.methodInfo.eq(methodId) }.firstOrNull()
+            // cache contract
+            result?.contract
+            result
         }
     }
 

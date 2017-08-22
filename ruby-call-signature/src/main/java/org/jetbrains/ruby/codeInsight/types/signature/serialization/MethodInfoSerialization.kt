@@ -23,7 +23,7 @@ fun MethodInfo(stream: DataInput): MethodInfo {
 
 fun ClassInfo.serialize(stream: DataOutput) {
     stream.writeUTF(classFQN)
-    gemInfo?.serialize(stream)
+    gemInfo.serialize(stream)
 }
 
 fun ClassInfo(stream: DataInput): ClassInfo {
@@ -33,12 +33,14 @@ fun ClassInfo(stream: DataInput): ClassInfo {
     return ClassInfo(gemInfo, classFQN)
 }
 
-fun GemInfo.serialize(stream: DataOutput) {
-    stream.writeUTF(name)
-    stream.writeUTF(version)
+fun GemInfo?.serialize(stream: DataOutput) {
+    (this ?: GemInfo.NONE).let {
+        stream.writeUTF(it.name)
+        stream.writeUTF(it.version)
+    }
 }
 
-fun GemInfo(stream: DataInput): GemInfo {
+fun GemInfo(stream: DataInput): GemInfo? {
     val name = stream.readUTF()
     val version = stream.readUTF()
     return GemInfo(name, version)

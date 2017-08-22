@@ -8,7 +8,7 @@ interface ClassInfo {
 }
 
 
-fun ClassInfo(gemInfo: GemInfo, classFQN: String) = ClassInfo.Impl(gemInfo, classFQN)
+fun ClassInfo(gemInfo: GemInfo?, classFQN: String) = ClassInfo.Impl(gemInfo, classFQN)
 
 fun ClassInfo(classFQN: String) = ClassInfo.Impl(null, classFQN)
 

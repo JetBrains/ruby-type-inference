@@ -37,6 +37,19 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
         return "src/test/testData";
     }
 
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        Database.Companion.connect("jdbc:h2:mem:test", "org.h2.Driver", "", "", connection -> Unit.INSTANCE,
+                database -> {
+                    ThreadLocalTransactionManager manager = new ThreadLocalTransactionManager(database, DEFAULT_ISOLATION_LEVEL);
+                    TransactionManager.Companion.setManager(manager);
+                    return manager;
+                });final Transaction transaction = TransactionManager.Companion.getManager().newTransaction(4);
+        SchemaUtils.INSTANCE.create(GemInfoTable.INSTANCE, ClassInfoTable.INSTANCE, MethodInfoTable.INSTANCE, SignatureTable.INSTANCE);
+        transaction.commit();
+    }
+
     public void testSimple() {
         doTest("sample_test", createMethodInfo("A", "foo"), "test1", "test2");
     }
@@ -104,34 +117,20 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
 
         myFixture.configureByFiles(scriptName, runnableScriptName);
 
-        Database.Companion.connect("jdbc:h2:mem:test", "org.h2.Driver", "", "", connection -> Unit.INSTANCE,
-                database -> new ThreadLocalTransactionManager(database, DEFAULT_ISOLATION_LEVEL));
-        final Transaction transaction = TransactionManager.Companion.getManager().newTransaction(4);
-        SchemaUtils.INSTANCE.create(GemInfoTable.INSTANCE, ClassInfoTable.INSTANCE, MethodInfoTable.INSTANCE, SignatureTable.INSTANCE);
-        transaction.commit();
         SignatureServer callStatServer = SignatureServer.INSTANCE;
         executeScript(runnableScriptName);
 
-        SignatureContract contract = null;
-
         int cnt = 0;
-
-        while (contract == null && cnt < 10) {
+        while (callStatServer.isProcessingRequests() && cnt < 100) {
             try {
-                Thread.sleep(100);
+                Thread.sleep(1000);
+                cnt++;
             } catch (InterruptedException e) {
-                LOGGER.error(e.getMessage());
+                throw new RuntimeException(e);
             }
-            SignatureContract currContract = callStatServer.getContract(methodInfo);
-
-            if (currContract != null) {
-                contract = currContract;
-            }
-
-            cnt++;
         }
 
-        return contract;
+        return callStatServer.getContract(methodInfo);
     }
 
     private void doTest(@NotNull String name, @NotNull MethodInfo methodInfo, String... items) {

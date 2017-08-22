@@ -42,7 +42,7 @@ class RSignatureContractContainer {
         return myContracts[info]
     }
 
-    fun deleteSignature(info: MethodInfo) {
-        myContracts.remove(info)
+    fun clear() {
+        myContracts.clear()
     }
 }
