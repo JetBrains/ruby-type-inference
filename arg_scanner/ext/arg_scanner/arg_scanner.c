@@ -94,12 +94,12 @@ void Init_arg_scanner();
 static call_info_t* get_call_info();
 static char* get_args_info();
 static bool is_call_info_needed();
-static VALUE handle_call(VALUE self);
+static VALUE handle_call(VALUE self, VALUE trace_point);
 static VALUE handle_return(VALUE self, VALUE signature, VALUE receiver_name, VALUE return_type_name);
 
 void Init_arg_scanner() {
     mArgScanner = rb_define_module("ArgScanner");
-    rb_define_module_function(mArgScanner, "handle_call", handle_call, 0);
+    rb_define_module_function(mArgScanner, "handle_call", handle_call, 1);
     rb_define_module_function(mArgScanner, "handle_return", handle_return, 3);
 }
 
@@ -116,11 +116,11 @@ my_rb_vm_get_binding_creatable_next_cfp(const rb_thread_t *th, const rb_control_
 }
 
 static VALUE
-handle_call(VALUE self)
+handle_call(VALUE self, VALUE trace_point)
 {
-    rb_trace_arg_t* tp = get_trace_arg();
+    rb_trace_arg_t *trace_arg = rb_tracearg_from_tracepoint(trace_point);
 
-    VALUE method_sym = rb_tracearg_method_id(tp);
+    VALUE method_sym = rb_tracearg_method_id(trace_arg);
     ID method_id = SYM2ID(method_sym);
     VALUE path = rb_tracearg_path(tp);
     char* c_method_name = rb_id2name(method_id);

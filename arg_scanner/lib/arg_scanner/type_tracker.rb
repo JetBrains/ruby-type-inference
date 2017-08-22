@@ -13,7 +13,7 @@ class TypeTracker
     TracePoint.trace(:call, :return) do |tp|
       case tp.event
         when :call
-          handle_call
+          handle_call(tp)
         when :return
           handle_return(tp)
       end
@@ -33,8 +33,8 @@ class TypeTracker
   end
 
   private
-  def handle_call
-    signature = ArgScanner.handle_call
+  def handle_call(tp)
+    signature = ArgScanner.handle_call(tp)
     signatures.push(signature)
   end
 
