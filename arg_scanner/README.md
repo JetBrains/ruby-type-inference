@@ -1,39 +1,47 @@
 # ArgScanner
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/arg_scanner`. To experiment with that code, run `bin/console` for an interactive prompt.
+`arg_scanner` is a gem with the purpose to track all method calls and
+deliver the following information:
 
-TODO: Delete this and the text above, and describe your gem
+* Method signature (arguments, their names and kinds) and declaration place
+* The types of argument variables given to each method call done
+
+This information can be used then to calculate and use type contracts
+for the analysed methods.
 
 ## Installation
 
-Add this line to your application's Gemfile:
 
-```ruby
-gem 'arg_scanner'
-```
+`arg_scanner` is meant to be used as a binary to run any other ruby executable
+manually so including it in the `Gemfile` is not necessary.
 
-And then execute:
-
-    $ bundle
-
-Or install it yourself as:
+The recommended way to install it is to install manually:
 
     $ gem install arg_scanner
+    
+If you want to compile the gem from sources, just run
+    
+    $ bundle install
+    $ bundle exec rake install
+    
+If you have problems with native extension compilation, make sure you have
+actual version of [ruby-core-source gem](https://github.com/os97673/debase-ruby_core_source). 
 
 ## Usage
 
-TODO: Write usage instructions here
+`arg_scanner` provides binary `arg-scanner` which receives any number of
+arguments and executes the given command in type tracking mode,
+for example:
 
-## Development
-
-After checking out the repo, run `bin/setup` to install dependencies. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
-
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+    $ arg-scanner bundle exec rake spec
+    
+The gem will need to send the obtained data though TCP socket on **port 7777**.
+See [global readme](../README.md) for instructions on how to run server
+to receive and process that data.
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/arg_scanner.
-
+Bug reports and pull requests are welcome on GitHub at https://github.com/JetBrains/ruby-type-inference
 
 ## License
 

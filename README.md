@@ -7,34 +7,30 @@ symbol resolution and type inference.
 
 ## Architecture
  
-The planned structure consists of the following parts:
-* **Ruby Type Tracker** which collects the raw type data for all ruby calls in runtime.
-  Currently consists of [type tracker script](ide-plugin/resources/type_tracker.rb) and
-  [arg scanner gem] to intercept ruby calls and obtain lowlevel data from VM,
-  respectively;
+* **Ruby Type Tracker** is a gem with a native extension to attach to 
+  ruby processes and trace and intercept all method calls to log 
+  type-wise data flow in runtime.
+  
+  See [`arg_scanner`] documentation for details on usage.
 
-* [**Type contract producer**](contract-creator) server which listens for incoming raw data and transforms it
-  to a compact format;
+* [**Type contract processor**](contract-creator) server listens for
+  incoming type data (from `arg_scanner`) and processes it to a compact format.
+  
+  The data stored may be used later for better code analysis and shared
+  with other users.
 
-* Code analysis clients (a RubyMine/IJ+Ruby plugin [example](ide-plugin)) which use the contract data
-  to provide features for the users such as code completion, better resolving, etc.
+* Code analysis clients (a RubyMine/IJ+Ruby plugin [example](ide-plugin)) use the contract data
+  to provide features for the users such as code completion, better resolution, etc.
 
-* (_todo_) Signature server which receives contracts anonymously from the users and provides
+* (_todo_) Signature server receives contracts anonymously from the users and provides
   a compiled contract collections for popular gems.
 
 ## Usage
 
 #### Prerequisites
 
-The [arg scanner gem] is required for collecting type information. It should be installed to the
+The [`arg_scanner`] gem is used for collecting type information. It can be installed to the
 target SDK manually and requires MRI Ruby at least 2.3.
-
-
-In order to build plugin:
-* Select the appropriate ruby SDK if rvm is used
-* `cd arg_scanner`
-* `bundle install`
-* `bundle exec rake install`
 
 #### Running type tracker
 
@@ -53,8 +49,8 @@ _(i)_ requiring it from Ruby code and _(ii)_ using IJ/RubyMine plugin.
    If you're using RubyMine plugin, there is no need to run server manually since it will
    be run as a plugin service.
 
-1. Require [type tracker](ide-plugin/resources/type_tracker.rb) script when running your ruby process and it will
-   start collecting information during that run.
+1. Run the ruby script to be processed via [`arg-scanner`](arg_scanner/bin/arg-scanner)
+   binary.
 
 1. Use the data collected by the contract server.
 
@@ -87,4 +83,4 @@ Any kind of ideas, use cases, contributions and questions are very welcome
 as the project is just incubating.
 Please feel free to create issues for any sensible request.
 
-[arg scanner gem]: arg_scanner
+[`arg_scanner`]: arg_scanner/README.md
