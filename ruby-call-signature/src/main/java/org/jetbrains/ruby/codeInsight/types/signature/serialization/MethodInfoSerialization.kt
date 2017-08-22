@@ -43,7 +43,7 @@ fun GemInfo?.serialize(stream: DataOutput) {
 fun GemInfo(stream: DataInput): GemInfo? {
     val name = stream.readUTF()
     val version = stream.readUTF()
-    return GemInfo(name, version)
+    return GemInfoOrNull(name, version)
 }
 
 fun Location.serialize(stream: DataOutput) {

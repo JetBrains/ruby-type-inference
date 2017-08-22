@@ -22,7 +22,7 @@ public class RTupleBuilder {
     private RTupleBuilder(ServerResponseBean bean) {
 
         myMethodInfo = MethodInfoKt.MethodInfo(
-                ClassInfoKt.ClassInfo(GemInfoKt.GemInfo(bean.gem_name, bean.gem_version), bean.receiver_name),
+                ClassInfoKt.ClassInfo(GemInfoKt.GemInfoOrNull(bean.gem_name, bean.gem_version), bean.receiver_name),
                 bean.method_name,
                 RVisibility.valueOf(bean.visibility),
                 new Location(bean.path, bean.lineno));
