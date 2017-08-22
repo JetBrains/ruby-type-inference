@@ -3,7 +3,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
+#define DEBUG_ARG_SCANNER 1
+
+#ifdef DEBUG_ARG_SCANNER
+    #define LOG(f, args...) { fprintf(stderr, "DEBUG: '%s'=", #args); fprintf(stderr, f, ##args); fflush(stderr); }
+#else
+    #define LOG(...) {}
+#endif
 
 #define ruby_current_thread ((rb_thread_t *)RTYPEDDATA_DATA(rb_thread_current()))
 typedef struct rb_trace_arg_struct rb_trace_arg_t;
@@ -36,6 +44,7 @@ typedef struct
 
 static void signature_t_free(void *s)
 {
+    LOG("free5\n");
     free(s);
 }
 
@@ -257,6 +266,7 @@ get_call_info()
                         if(j + 1 < kwArgSize)
                             strcat(info->call_info_kw_args, ",");
                     }
+                    LOG("free1\n");
                     free(c_kw_ary);
                 }
                 return info;
@@ -314,26 +324,28 @@ get_args_info()
 
         types[types_iterator] = klass_name;
     }
+    types_iterator--;
 
     if(has_kw)
         param_size--;
 
     char **ans = (char** )malloc(param_size * sizeof(char*));
 
-    types_iterator--;
 
     for(i = 0; i < lead_num; i++, ans_iterator++)
     {
         char* name = rb_id2name(cfp->iseq->body->local_table[ans_iterator]);
         if(name)
         {
-            ans[ans_iterator] = (char*)malloc(sizeof(char) * (6 + strlen(types[types_iterator])) + strlen(name));
+            ans[ans_iterator] = (char*)malloc(sizeof(char) * (6 + strlen(types[types_iterator]) + strlen(name)));
 
             strcpy(ans[ans_iterator], "REQ,");
             strcat(ans[ans_iterator], types[types_iterator]);
 
             strcat(ans[ans_iterator], ",");
             strcat(ans[ans_iterator], name);
+
+            assert(6 + strlen(types[types_iterator]) + strlen(name) == strlen(ans[ans_iterator]) + 1);
         }
         else
         {
@@ -341,6 +353,8 @@ get_args_info()
 
             strcpy(ans[ans_iterator], "REQ,");
             strcat(ans[ans_iterator], types[types_iterator]);
+
+            assert(5 + strlen(types[types_iterator]) == strlen(ans[ans_iterator]) + 1);
         }
 
         types_iterator--;
@@ -351,13 +365,15 @@ get_args_info()
         char* name = rb_id2name(cfp->iseq->body->local_table[ans_iterator]);
         if(name)
         {
-            ans[ans_iterator] = (char*)malloc(sizeof(char) * (6 + strlen(types[types_iterator])) + strlen(name));
+            ans[ans_iterator] = (char*)malloc(sizeof(char) * (6 + strlen(types[types_iterator]) + strlen(name)));
 
             strcpy(ans[ans_iterator], "OPT,");
             strcat(ans[ans_iterator], types[types_iterator]);
 
             strcat(ans[ans_iterator], ",");
             strcat(ans[ans_iterator], name);
+
+            assert(6 + strlen(types[types_iterator]) + strlen(name) == strlen(ans[ans_iterator]) + 1);
         }
         else
         {
@@ -365,6 +381,8 @@ get_args_info()
 
             strcpy(ans[ans_iterator], "OPT,");
             strcat(ans[ans_iterator], types[types_iterator]);
+
+            assert(5 + strlen(types[types_iterator]) == strlen(ans[ans_iterator]) + 1);
         }
 
         types_iterator--;
@@ -381,13 +399,17 @@ get_args_info()
             strcat(ans[ans_iterator], types[types_iterator]);
             strcat(ans[ans_iterator], ",");
             strcat(ans[ans_iterator], name);
-        }
+
+             assert(7 + strlen(types[types_iterator]) + strlen(name) == strlen(ans[ans_iterator]) + 1);
+       }
         else
         {
             ans[ans_iterator] = (char*)malloc(sizeof(char) * (6 + strlen(types[types_iterator])));
 
             strcpy(ans[ans_iterator], "REST,");
             strcat(ans[ans_iterator], types[types_iterator]);
+
+            assert(6 + strlen(types[types_iterator]) == strlen(ans[ans_iterator]) + 1);
         }
 
         types_iterator--;
@@ -404,6 +426,8 @@ get_args_info()
             strcat(ans[ans_iterator], types[types_iterator]);
             strcat(ans[ans_iterator], ",");
             strcat(ans[ans_iterator], name);
+
+            assert(7 + strlen(types[types_iterator]) + strlen(name) == strlen(ans[ans_iterator]) + 1);
         }
         else
         {
@@ -411,6 +435,8 @@ get_args_info()
 
             strcpy(ans[ans_iterator], "POST,");
             strcat(ans[ans_iterator], types[types_iterator]);
+
+            assert(6 + strlen(types[types_iterator]) == strlen(ans[ans_iterator]) + 1);
         }
 
         types_iterator--;
@@ -423,29 +449,39 @@ get_args_info()
         int kw_num = cfp->iseq->body->param.keyword->num;
         int required_num = cfp->iseq->body->param.keyword->required_num;
 
+        LOG("%d %d\n", kw_num, required_num)
+
         const VALUE * const default_values = cfp->iseq->body->param.keyword->default_values;
 
         for(i = 0; i < required_num; i++, ans_iterator++)
         {
             ID key = keywords[i];
 
-            ans[ans_iterator] = (char*)malloc(sizeof(char) * (9 + strlen(types[types_iterator] + strlen(rb_id2name(key)))));
+            ans[ans_iterator] = (char*)malloc(sizeof(char) * (9 + strlen(types[types_iterator]) + strlen(rb_id2name(key))));
 
             strcpy(ans[ans_iterator], "KEYREQ,");
-            strcat(ans[ans_iterator], types[types_iterator--]);
+            strcat(ans[ans_iterator], types[types_iterator]);
             strcat(ans[ans_iterator], ",");
             strcat(ans[ans_iterator], rb_id2name(key));
+
+            assert(9 + strlen(types[types_iterator]) + strlen(rb_id2name(key)) == strlen(ans[ans_iterator]) + 1);
+
+            types_iterator--;
         }
         for(i = required_num; i < kw_num; i++, ans_iterator++)
         {
             ID key = keywords[i];
 
-            ans[ans_iterator] = (char*)malloc(sizeof(char) * (6 + strlen(types[types_iterator] + strlen(rb_id2name(key)))));
+            ans[ans_iterator] = (char*)malloc(sizeof(char) * (6 + strlen(types[types_iterator]) + strlen(rb_id2name(key))));
 
             strcpy(ans[ans_iterator], "KEY,");
-            strcat(ans[ans_iterator], types[types_iterator--]);
+            strcat(ans[ans_iterator], types[types_iterator]);
             strcat(ans[ans_iterator], ",");
             strcat(ans[ans_iterator], rb_id2name(key));
+
+            assert(6 + strlen(types[types_iterator]) + strlen(rb_id2name(key)) == strlen(ans[ans_iterator]) + 1);
+
+            types_iterator--;
         }
     }
 
@@ -460,6 +496,8 @@ get_args_info()
             strcat(ans[ans_iterator], types[types_iterator]);
             strcat(ans[ans_iterator], ",");
             strcat(ans[ans_iterator], name);
+
+            assert(10 + strlen(types[types_iterator]) + strlen(name) == strlen(ans[ans_iterator]) + 1);
         }
         else
         {
@@ -467,6 +505,8 @@ get_args_info()
 
             strcpy(ans[ans_iterator], "KEYREST,");
             strcat(ans[ans_iterator], types[types_iterator]);
+
+            assert(9 + strlen(types[types_iterator]) == strlen(ans[ans_iterator]) + 1);
         }
 
         types_iterator--;
@@ -483,6 +523,8 @@ get_args_info()
             strcat(ans[ans_iterator], types[types_iterator]);
             strcat(ans[ans_iterator], ",");
             strcat(ans[ans_iterator], name);
+
+            assert(8 + strlen(types[types_iterator]) + strlen(name) == strlen(ans[ans_iterator]) + 1);
         }
         else
         {
@@ -490,6 +532,8 @@ get_args_info()
 
             strcpy(ans[ans_iterator], "BLOCK,");
             strcat(ans[ans_iterator], types[types_iterator]);
+
+            assert(7 + strlen(types[types_iterator]) == strlen(ans[ans_iterator]) + 1);
         }
 
         types_iterator--;
@@ -515,10 +559,38 @@ get_args_info()
         strcat(answer, ans[i]);
     }
 
-    for(i = 0; i < ans_iterator; i++)
+    for(i = 0; i < ans_iterator; i++) {
+        LOG("free2 %d %d =%s= \n", ans[i], strlen(ans[i]), ans[i]);
         free(ans[i]);
+    }
 
+    assert(ans_iterator == param_size);
+    LOG("%d\n", has_kw)
+    if (types_iterator >= 0)
+    {
+        LOG("%d =%s=\n", types_iterator, types[types_iterator]);
+        LOG("%d: %d %d %d %d %d %d %d\n", param_size
+                 ,has_lead
+                 ,has_opt
+                 ,has_rest
+                 ,has_post
+                 ,has_kw
+                 ,has_kwrest
+                 ,has_block);
+        LOG("%d %d %d %d %d %d %d\n",
+            param_size,
+            lead_num,
+            opt_num,
+            rest_start,
+            post_start,
+            post_num,
+            block_start)
+    }
+    assert(types_iterator - has_kw == -1);
+
+    LOG("free3\n");
     free(types);
+    LOG("free4\n");
     free(ans);
 
     return answer;
