@@ -15,6 +15,9 @@ import org.jetbrains.exposed.sql.transactions.TransactionManager;
 import org.jetbrains.plugins.ruby.ruby.run.LocalRunner;
 import org.jetbrains.plugins.ruby.ruby.run.RubyCommandLine;
 import org.jetbrains.ruby.codeInsight.types.signature.*;
+import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition;
+import org.jetbrains.ruby.codeInsight.types.signature.serialization.SignatureContractSerializationKt;
+import org.jetbrains.ruby.codeInsight.types.signature.serialization.StringDataOutput;
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.ClassInfoTable;
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.GemInfoTable;
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.MethodInfoTable;
@@ -24,6 +27,8 @@ import org.junit.Assert;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.jetbrains.exposed.sql.transactions.TransactionApiKt.DEFAULT_ISOLATION_LEVEL;
@@ -60,21 +65,30 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
 
     public void testMultipleExecution() {
         executeScript("multiple_execution_test1.rb");
-        RSignatureContract contract = ((RSignatureContract) doTestContract("multiple_execution_test2",
-                createMethodInfo("A", "foo2")));
+        SignatureContract contract = doTestContract("multiple_execution_test2",
+                createMethodInfo("A", "foo2"));
 
-        Assert.assertEquals(contract.getLevels().size(), 2);
-        Assert.assertEquals(contract.getLevels().get(1).size(), 1);
+
+        assertEquals(3, contract.getNodeCount());
+        Map<ContractTransition, SignatureNode> edges = contract.getStartNode().getTransitions();
+        assertEquals(4, edges.size());
+
+        assertEquals(1, edges.values().stream().distinct().count());
+        Map<ContractTransition, SignatureNode> nextEdges = edges.values().iterator().next().getTransitions();
+
+        assertEquals(Collections.singleton("Abacaba"), nextEdges.keySet().iterator().next().getValue(Collections.singletonList(Collections.singleton("Abacaba"))));
     }
 
     public void testRefLinks() {
-        RSignatureContract contract = ((RSignatureContract) doTestContract("ref_links_test",
-                createMethodInfo("A", "doo")));
+        SignatureContract contract = doTestContract("ref_links_test",
+                createMethodInfo("A", "doo"));
 
-        Assert.assertEquals(contract.getLevels().size(), 4);
-        Assert.assertEquals(contract.getLevels().get(1).size(), 3);
-        Assert.assertEquals(contract.getLevels().get(2).size(), 2);
-        Assert.assertEquals(contract.getLevels().get(3).size(), 2);
+        final StringDataOutput stream = new StringDataOutput();
+        SignatureContractSerializationKt.serialize(contract, stream);
+        assertEquals(
+                "3 a 0 b 0 c 0 9 3 1 0 Fixnum 2 0 B 3 0 String 1 4 0 String 1 4 0 A 1 5 1 1 1 6 1 1 1 7 1 3 1 8 1 5 1 8 1 7 0",
+                stream.getResult().toString()
+        );
     }
 
     private void executeScript(@NotNull String runnableScriptName) {
@@ -119,6 +133,11 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
 
         SignatureServer callStatServer = SignatureServer.INSTANCE;
         executeScript(runnableScriptName);
+
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException ignored) {
+        }
 
         int cnt = 0;
         while (callStatServer.isProcessingRequests() && cnt < 100) {
