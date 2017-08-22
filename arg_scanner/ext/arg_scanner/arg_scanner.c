@@ -48,37 +48,6 @@ static void signature_t_free(void *s)
     free(s);
 }
 
-static void
-fill_path_and_lineno(rb_trace_arg_t *trace_arg)
-{
-    if (trace_arg->path == Qundef) {
-        rb_control_frame_t *cfp = rb_vm_get_ruby_level_next_cfp(trace_arg->th, trace_arg->cfp);
-
-        if (cfp) {
-            trace_arg->path = cfp->iseq->body->location.path;
-            trace_arg->lineno = rb_vm_get_sourceline(cfp);
-        }
-        else {
-            trace_arg->path = Qnil;
-            trace_arg->lineno = 0;
-        }
-    }
-}
-
-int
-my_rb_tracearg_lineno(rb_trace_arg_t *trace_arg)
-{
-    fill_path_and_lineno(trace_arg);
-    return trace_arg->lineno;
-}
-
-VALUE
-rb_tracearg_path(rb_trace_arg_t *trace_arg)
-{
-    fill_path_and_lineno(trace_arg);
-    return trace_arg->path;
-}
-
 static rb_trace_arg_t *
 get_trace_arg(void)
 {
@@ -90,16 +59,33 @@ get_trace_arg(void)
     return trace_arg;
 }
 
+static void
+fill_path_and_lineno(rb_trace_arg_t *trace_arg)
+{
+    if (trace_arg->path == Qundef) {
+	rb_control_frame_t *cfp = rb_vm_get_ruby_level_next_cfp(trace_arg->th, trace_arg->cfp);
+
+	if (cfp) {
+	    trace_arg->path = rb_iseq_path(cfp->iseq);
+	    trace_arg->lineno = rb_vm_get_sourceline(cfp);
+	}
+	else {
+	    trace_arg->path = Qnil;
+	    trace_arg->lineno = 0;
+	}
+    }
+}
+
 void Init_arg_scanner();
 static call_info_t* get_call_info();
 static char* get_args_info();
 static bool is_call_info_needed();
-static VALUE handle_call(VALUE self, VALUE trace_point);
+static VALUE handle_call(VALUE self, VALUE lineno, VALUE method_name, VALUE path);
 static VALUE handle_return(VALUE self, VALUE signature, VALUE receiver_name, VALUE return_type_name);
 
 void Init_arg_scanner() {
     mArgScanner = rb_define_module("ArgScanner");
-    rb_define_module_function(mArgScanner, "handle_call", handle_call, 1);
+    rb_define_module_function(mArgScanner, "handle_call", handle_call, 3);
     rb_define_module_function(mArgScanner, "handle_return", handle_return, 3);
 }
 
@@ -116,16 +102,17 @@ my_rb_vm_get_binding_creatable_next_cfp(const rb_thread_t *th, const rb_control_
 }
 
 static VALUE
-handle_call(VALUE self, VALUE trace_point)
+handle_call(VALUE self, VALUE lineno, VALUE method_name, VALUE path)
 {
-    rb_trace_arg_t *trace_arg = rb_tracearg_from_tracepoint(trace_point);
+    rb_trace_arg_t *trace_arg = get_trace_arg();
 
-    VALUE method_sym = rb_tracearg_method_id(trace_arg);
-    ID method_id = SYM2ID(method_sym);
-    VALUE path = rb_tracearg_path(tp);
+    //VALUE method_sym = rb_tracearg_method_id(trace_arg);
+    ID method_id = SYM2ID(method_name);
+    //fill_path_and_lineno(trace_arg);
+    //VALUE path = trace_arg->path;
     char* c_method_name = rb_id2name(method_id);
     char* c_path = StringValuePtr(path);
-    int c_lineno = my_rb_tracearg_lineno(tp);
+    int c_lineno = FIX2INT(lineno);//trace_arg->lineno;
 
     signature_t *sign;
     sign = ALLOC(signature_t);
@@ -163,6 +150,17 @@ handle_return(VALUE self, VALUE signature, VALUE receiver_name, VALUE return_typ
     sign->visibility = "PUBLIC";
 
     char* json_mes[100];
+
+    LOG("%d \n", sign->method_name);
+    LOG("%d \n", sign->call_info_argc);
+    LOG("%d \n", sign->call_info_kw_args);
+    LOG("%d \n", sign->receiver_name);
+    LOG("%d \n", sign->args_info);
+    LOG("%d \n", sign->return_type_name);
+    LOG("%d \n", sign->visibility);
+    LOG("%d \n", sign->path);
+    LOG("%d \n", sign->lineno);
+
 
     sprintf(json_mes,
     "{\"method_name\":\"%s\",\"call_info_argc\":\"%d\",\"call_info_kw_args\":\"%s\",\"receiver_name\":\"%s\",\"args_info\":\"%s\",\"return_type_name\":\"%s\",\"visibility\":\"%s\",\"path\":\"%s\",\"lineno\":\"%d\",",

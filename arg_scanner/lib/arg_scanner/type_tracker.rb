@@ -34,7 +34,8 @@ class TypeTracker
 
   private
   def handle_call(tp)
-    signature = ArgScanner.handle_call(tp)
+    #handle_call(VALUE self, VALUE lineno, VALUE method_name, VALUE path)
+    signature = ArgScanner.handle_call(tp.lineno, tp.method_id, tp.path)
     signatures.push(signature)
   end
 
