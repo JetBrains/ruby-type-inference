@@ -62,7 +62,7 @@ public class RTupleBuilder {
         }
 
         if (argc != -1) {
-            final Set<String> kwArgs = new HashSet<>(Arrays.asList(bean.call_info_kw_args.split("\\s*,\\s*")));
+            Collection<String> kwArgs = Arrays.asList(bean.call_info_kw_args.split("\\s*,\\s*"));
             boolean[] flags = calcPresentArguments(myArgsInfo, argc, kwArgs);
 
             for (int i = 0; i < flags.length; i++) {
@@ -79,8 +79,9 @@ public class RTupleBuilder {
         return result != null ? new RTupleBuilder(result).build() : null;
     }
 
-    public static boolean[] calcPresentArguments(List<ParameterInfo> info, int argc, Set<String> kwArgs) {
+    public static boolean[] calcPresentArguments(List<ParameterInfo> info, int argc, Collection<String> kwArgsImmutable) {
         final boolean[] isPresent = new boolean[info.size()];
+        final Set<String> kwArgs = new HashSet<>(kwArgsImmutable);
 
         argc = updateFlags(info, ParameterInfo.Type.REQ, isPresent, argc, kwArgs);
         if (argc <= 0) {
