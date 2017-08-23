@@ -4,10 +4,7 @@ import org.jetbrains.exposed.dao.EntityID
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.ruby.codeInsight.types.signature.ClassInfo
-import org.jetbrains.ruby.codeInsight.types.signature.GemInfo
-import org.jetbrains.ruby.codeInsight.types.signature.MethodInfo
-import org.jetbrains.ruby.codeInsight.types.signature.SignatureInfo
+import org.jetbrains.ruby.codeInsight.types.signature.*
 import org.jetbrains.ruby.codeInsight.types.storage.server.RSignatureProvider
 import org.jetbrains.ruby.codeInsight.types.storage.server.StorageException
 
@@ -29,7 +26,7 @@ class RSignatureProviderImpl : RSignatureProvider {
                     .limit(1)
                     .firstOrNull()
                     ?.let { GemInfoData.wrapRow(it, TransactionManager.current()) }
-            Pair(upperBound, lowerBound)
+            Pair(upperBound?.copy(), lowerBound?.copy())
         }
 
         if (lowerBound == null || upperBound == null) {
@@ -54,7 +51,7 @@ class RSignatureProviderImpl : RSignatureProvider {
                         ?: return@transaction emptyList()
             }
 
-            ClassInfoData.find { ClassInfoTable.gemInfo.eq(gemId) }.toList()
+            ClassInfoData.find { ClassInfoTable.gemInfo.eq(gemId) }.toList().map { it.copy() }
         }
     }
 
@@ -74,7 +71,7 @@ class RSignatureProviderImpl : RSignatureProvider {
                         ?: return@transaction emptyList()
             }
 
-            MethodInfoData.find { MethodInfoTable.classInfo.eq(classId) }.toList()
+            MethodInfoData.find { MethodInfoTable.classInfo.eq(classId) }.toList().map { it.copy() }
         }
     }
 
@@ -83,10 +80,7 @@ class RSignatureProviderImpl : RSignatureProvider {
             val methodId = findMethodId(method)
                     ?: return@transaction null
 
-            val result = SignatureContractData.find { SignatureTable.methodInfo.eq(methodId) }.firstOrNull()
-            // cache contract
-            result?.contract
-            result
+            SignatureContractData.find { SignatureTable.methodInfo.eq(methodId) }.firstOrNull()?.copy()
         }
     }
 

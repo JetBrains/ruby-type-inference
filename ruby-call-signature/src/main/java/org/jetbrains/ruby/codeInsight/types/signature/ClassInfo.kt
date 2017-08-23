@@ -12,3 +12,5 @@ fun ClassInfo(gemInfo: GemInfo?, classFQN: String) = ClassInfo.Impl(gemInfo, cla
 
 fun ClassInfo(classFQN: String) = ClassInfo.Impl(null, classFQN)
 
+fun ClassInfo(copy: ClassInfo) = with(copy) { ClassInfo.Impl(gemInfo?.let { GemInfo(it) }, classFQN) }
+

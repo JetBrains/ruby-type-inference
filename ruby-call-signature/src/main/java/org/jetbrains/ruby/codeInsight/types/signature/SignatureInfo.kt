@@ -8,3 +8,5 @@ interface SignatureInfo {
 }
 
 fun SignatureInfo(methodInfo: MethodInfo, contract: SignatureContract) = SignatureInfo.Impl(methodInfo, contract)
+
+fun SignatureInfo(copy: SignatureInfo) = with(copy) { SignatureInfo.Impl(MethodInfo(methodInfo), contract) }

@@ -19,6 +19,8 @@ class GemInfoData(id: EntityID<Int>) : IntEntity(id), GemInfo {
 
     override var name: String by GemInfoTable.name
     override var version: String by GemInfoTable.version
+
+    fun copy() = GemInfo(this)
 }
 
 object ClassInfoTable : IntIdTable() {
@@ -31,6 +33,8 @@ class ClassInfoData(id: EntityID<Int>) : IntEntity(id), ClassInfo {
 
     override var gemInfo: GemInfoData? by GemInfoData optionalReferencedOn ClassInfoTable.gemInfo
     override var classFQN: String by ClassInfoTable.fqn
+
+    fun copy() = ClassInfo(this)
 }
 
 object MethodInfoTable : IntIdTable() {
@@ -58,6 +62,8 @@ class MethodInfoData(id: EntityID<Int>) : IntEntity(id), MethodInfo {
             MethodInfoTable.locationLineno.setValue(methodInfoData, property, location?.lineno ?: 0)
         }
     }
+
+    fun copy() = MethodInfo(this)
 }
 
 object SignatureTable : IntIdTable() {
@@ -72,4 +78,6 @@ class SignatureContractData(id: EntityID<Int>) : IntEntity(id), SignatureInfo {
     override var contract: SignatureContract by BlobDeserializer()
 
     var contractRaw: Blob by SignatureTable.contract
+
+    fun copy() = SignatureInfo(this)
 }

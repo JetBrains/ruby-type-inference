@@ -16,6 +16,8 @@ fun MethodInfo(classInfo: ClassInfo, name: String, visibility: RVisibility) = Me
 
 fun MethodInfo(classInfo: ClassInfo, name: String, visibility: RVisibility, location: Location) = MethodInfo.Impl(classInfo, name, visibility, location)
 
+fun MethodInfo(copy: MethodInfo) = with(copy) { MethodInfo.Impl(ClassInfo(classInfo), name, visibility, location) }
+
 data class Location(val path: String, val lineno: Int)
 
 enum class RVisibility constructor(val value: Byte, val presentableName: String) {
