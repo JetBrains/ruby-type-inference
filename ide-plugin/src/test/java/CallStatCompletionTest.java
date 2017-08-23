@@ -50,7 +50,8 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
                     ThreadLocalTransactionManager manager = new ThreadLocalTransactionManager(database, DEFAULT_ISOLATION_LEVEL);
                     TransactionManager.Companion.setManager(manager);
                     return manager;
-                });final Transaction transaction = TransactionManager.Companion.getManager().newTransaction(4);
+                });
+        final Transaction transaction = TransactionManager.Companion.getManager().newTransaction(4);
         SchemaUtils.INSTANCE.create(GemInfoTable.INSTANCE, ClassInfoTable.INSTANCE, MethodInfoTable.INSTANCE, SignatureTable.INSTANCE);
         transaction.commit();
     }
