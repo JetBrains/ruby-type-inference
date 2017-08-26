@@ -9,7 +9,17 @@ plugins {
 }
 
 dependencies {
-    compile project(':ruby-call-signature'), project(':storage-server-api'), project(':contract-creator')
+    def withoutSlf = {
+        exclude group: 'org.slf4j'//, module: 'slf4j-api'
+    }
+
+    compile project(':ruby-call-signature')
+    compile project(':storage-server-api'), withoutSlf
+    compile project(':contract-creator'), withoutSlf
+
+    // https://mvnrepository.com/artifact/mysql/mysql-connector-java
+    compile group: 'mysql', name: 'mysql-connector-java', version: '6.0.6'
+
 }
 
 sourceSets {
@@ -19,9 +29,9 @@ sourceSets {
 }
 
 intellij {
-    version 'IU-172-SNAPSHOT'
+    version ideaVersion
     pluginName 'ruby-runtime-stats'
-    plugins = ['org.jetbrains.plugins.ruby:2017.2.20170717']
+    plugins = ["org.jetbrains.plugins.ruby:$rubyPluginVersion"]
 }
 
 prepareSandbox.doLast {

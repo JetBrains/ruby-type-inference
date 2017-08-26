@@ -12,16 +12,17 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.ruby.PluginResourceUtil;
 import org.jetbrains.plugins.ruby.gem.GemInfo;
 import org.jetbrains.plugins.ruby.gem.util.GemSearchUtil;
 import org.jetbrains.plugins.ruby.ruby.RubyUtil;
 
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Stream;
 
 public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationExtension {
+    private static final String ARG_SCANNER_GEM_NAME = "arg_scanner";
+
+    private static final String ARG_SCANNER_REQUIRE_SCRIPT = "arg_scanner/starter";
+
     @NonNls
     @NotNull
     private static final String ID = "CollectTypeRunConfigurationExtension";
@@ -55,24 +56,36 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
                                     @Nullable final RunnerSettings runnerSettings,
                                     @NotNull final GeneralCommandLine cmdLine,
                                     @NotNull final String runnerId) throws ExecutionException {
-        final String typeTrackerPath = PluginResourceUtil.getPluginResourcesPath() + "type_tracker.rb";
         final Module module = configuration.getModule();
         if (module == null) {
             return;
         }
 
-        final String includeOptions = Stream.of("sqlite3", "arg_scanner")
-                .map(gem -> getRequireKeyForGem(module, gem))
-                .filter(Objects::nonNull)
-                .reduce(String::concat)
-                .orElseGet(String::new);
+        String includeKey = getRequireKeyForGem(module, ARG_SCANNER_GEM_NAME);
+        if (includeKey == null) {
+            return;
+        }
 
         final Map<String, String> env = cmdLine.getEnvironment();
         final String rubyOpt = StringUtil.notNullize(env.get(RubyUtil.RUBYOPT));
-        final String newRubyOpt = rubyOpt + includeOptions + " -r" + typeTrackerPath;
-        //final String newRubyOpt = rubyOpt + " -r" + typeTrackerScriptURL.getPath();
+        final String newRubyOpt = rubyOpt + includeKey + " -r" + ARG_SCANNER_REQUIRE_SCRIPT;
 
         cmdLine.withEnvironment(RubyUtil.RUBYOPT, newRubyOpt);
+    }
+
+    @Override
+    protected void validateConfiguration(@NotNull AbstractRubyRunConfiguration configuration, boolean isExecution) throws Exception {
+        RunConfigurationUtil.inspectSDK(configuration, isExecution);
+        Module module = configuration.getModule();
+        if (module == null) {
+            RunConfigurationUtil.throwExecutionOrRuntimeException("Cannot execute outside of module context", isExecution);
+        }
+
+        GemInfo argScannerGem = GemSearchUtil.findGem(module, ARG_SCANNER_GEM_NAME);
+        if (argScannerGem == null) {
+            RunConfigurationUtil.throwExecutionOrRuntimeException("Cannot find required " + ARG_SCANNER_GEM_NAME +
+                    " gem in the current SDK", false);
+        }
     }
 
     @Nullable

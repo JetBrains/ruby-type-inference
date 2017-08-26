@@ -3,12 +3,9 @@ sourceSets {
 }
 
 dependencies {
-    compile 'com.google.code.gson:gson:2.8.0'
-    compile project(':ruby-call-signature')
-    compile project(':storage-server-api')
+    compile project(':ruby-call-signature'), project(':storage-server-api')
 
     compile 'com.h2database:h2:1.4.193'
-
 }
 
 task runServer(type: JavaExec) {

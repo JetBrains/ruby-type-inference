@@ -24,7 +24,6 @@ allprojects {
 
     dependencies {
         compile 'org.jetbrains:annotations:15.0'
-        compile 'mysql:mysql-connector-java:5.1.37'
         compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
         compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
 
@@ -42,7 +41,7 @@ allprojects {
 }
 
 subprojects {
-    if (it.name in ['storage-server-api', 'lambda-update-handler', 'lambda-put-handler']) {
+    if (it.name in ['storage-server-api', 'lambda-update-handler', 'lambda-put-handler', 'contract-creator']) {
         dependencies {
             compile 'com.google.code.gson:gson:2.8.0'
         }

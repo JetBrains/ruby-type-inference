@@ -11,7 +11,9 @@ buildscript {
 dependencies {
     compile project(':ruby-call-signature')
 
-    compile ('org.jetbrains.exposed:exposed:0.7.6')
+    compile "org.jetbrains.exposed:exposed:$exposedVersion"/*, {
+        exclude group: 'org.slf4j'
+    }*/
 }
 
 sourceSets {
