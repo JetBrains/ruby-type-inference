@@ -25,7 +25,7 @@ class GemInfoData(id: EntityID<Int>) : IntEntity(id), GemInfo {
 
 object ClassInfoTable : IntIdTable() {
     val gemInfo = reference("gem_info", GemInfoTable).nullable()
-    val fqn = varchar("fqn", 100)
+    val fqn = varchar("fqn", 200)
 }
 
 class ClassInfoData(id: EntityID<Int>) : IntEntity(id), ClassInfo {
@@ -39,7 +39,7 @@ class ClassInfoData(id: EntityID<Int>) : IntEntity(id), ClassInfo {
 
 object MethodInfoTable : IntIdTable() {
     val classInfo = reference("class_info", ClassInfoTable)
-    val name = varchar("name", 50)
+    val name = varchar("name", 100)
     val visibility = enumeration("visibility", RVisibility::class.java)
     val locationFile = varchar("location_file", 1000).nullable()
     val locationLineno = integer("location_lineno").default(0)
