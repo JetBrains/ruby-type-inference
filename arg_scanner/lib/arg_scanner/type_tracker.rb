@@ -5,6 +5,8 @@ require 'singleton'
 class TypeTracker
   include Singleton
 
+  GEM_PATH_REVERSED_REGEX = /((?:[0-9A-Za-z]+\.)+\d+)-([A-Za-z0-9_-]+)/
+
   def initialize
     @cache = Set.new
     @socket = TCPSocket.new('127.0.0.1', 7777)
@@ -22,6 +24,15 @@ class TypeTracker
   attr_accessor :cache
   attr_accessor :socket
 
+
+  # @param [String] path
+  def self.extract_gem_name_and_version(path)
+    reversed = path.reverse
+    return ['', ''] unless GEM_PATH_REVERSED_REGEX =~ reversed
+
+    name_and_version = Regexp.last_match
+    return name_and_version[2].reverse, name_and_version[1].reverse
+  end
 
   def signatures
     Thread.current[:signatures] ||= Array.new
@@ -59,8 +70,7 @@ class TypeTracker
          "\"receiver_name\":\"#{receiver_name}\",\"return_type_name\":\"#{return_type_name}\","
 
       if cache.add?(json)
-        matches = tp.path.scan(/\w+-\d+(?:\.\d+)+/)
-        gem_name, gem_version = matches[0] ? matches[0].split('-') : ['', '']
+        gem_name, gem_version = TypeTracker.extract_gem_name_and_version(tp.path)
         json += '"gem_name":"' + gem_name.to_s + '","gem_version":"' + gem_version.to_s + '"}'
         put_to_socket(json)
       end

@@ -21,7 +21,7 @@ class TestTypeTracker
   end
 
   def enable(*args, &b)
-    @tp.enable *args, &b
+    @tp.enable(*args, &b)
   end
 
   def signatures
