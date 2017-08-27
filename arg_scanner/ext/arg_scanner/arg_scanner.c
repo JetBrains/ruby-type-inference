@@ -37,10 +37,23 @@ typedef struct
     int lineno;
 } signature_t;
 
+void Init_arg_scanner();
+
+static char* get_args_info();
+static VALUE handle_call(VALUE self, VALUE lineno, VALUE method_name, VALUE path);
+static VALUE handle_return(VALUE self, VALUE signature, VALUE return_type_name);
+
+// For testing
+static VALUE get_args_info_rb();
+static VALUE get_call_info_rb();
+
+static call_info_t* get_call_info();
+static bool is_call_info_needed();
+
 static void call_info_t_free(void *s)
 {
-    //if (((call_info_t *)s)->call_info_kw_args != "")
-    //    free(((call_info_t *)s)->call_info_kw_args);
+    if (((call_info_t *)s)->call_info_kw_args != 0)
+        free(((call_info_t *)s)->call_info_kw_args);
     free(s);
 }
 
@@ -60,17 +73,12 @@ signature_t_mark(signature_t *sig)
     rb_gc_mark(sig->path);
 }
 
-void Init_arg_scanner();
-static call_info_t* get_call_info();
-static char* get_args_info();
-static bool is_call_info_needed();
-static VALUE handle_call(VALUE self, VALUE lineno, VALUE method_name, VALUE path);
-static VALUE handle_return(VALUE self, VALUE signature, VALUE return_type_name);
-
 void Init_arg_scanner() {
     mArgScanner = rb_define_module("ArgScanner");
     rb_define_module_function(mArgScanner, "handle_call", handle_call, 3);
     rb_define_module_function(mArgScanner, "handle_return", handle_return, 2);
+    rb_define_module_function(mArgScanner, "get_args_info", get_args_info_rb, 0);
+//    rb_define_module_function(mArgScanner, "get_call_info", get_call_info_rb, 0);
 }
 
 rb_control_frame_t *
@@ -113,7 +121,7 @@ handle_call(VALUE self, VALUE lineno, VALUE method_name, VALUE path)
         sign->call_info_argc = info->call_info_argc;
         sign->call_info_kw_args = info->call_info_kw_args;
 
-        call_info_t_free(info);
+        free(info);
     } else {
         sign->call_info_argc = -1;
         sign->call_info_kw_args = 0;
@@ -388,7 +396,10 @@ get_args_info()
     ans_iterator = 0;
 
     for(i = param_size - 1, types_iterator = 0; (size_t)types_iterator < param_size; i--, types_iterator++)
+    {
         types[types_iterator] = calc_sane_class_name(*(ep + i - 1));
+        LOG("Type #%d=%s\n", types_iterator, types[types_iterator])
+    }
 
     types_iterator--;
 
@@ -438,7 +449,7 @@ get_args_info()
         for(i = required_num; i < kw_num; i++, ans_iterator++, types_iterator--)
         {
             ID key = keywords[i];
-            ans[ans_iterator] = fast_join(',', 3, "KEY,", types[types_iterator], rb_id2name(key));
+            ans[ans_iterator] = fast_join(',', 3, "KEY", types[types_iterator], rb_id2name(key));
         }
     }
 
@@ -479,6 +490,27 @@ get_args_info()
 
     return answer;
 }
+
+static VALUE
+get_args_info_rb()
+{
+    char *args_info = get_args_info();
+    return args_info ? rb_str_new_cstr(args_info) : Qnil;
+}
+
+//static VALUE
+//get_call_info_rb()
+//{
+//    if (is_call_info_needed())
+//    {
+//        call_info_t *info = get_call_info();
+//        return Data_Wrap_Struct(c_signature, NULL, call_info_t_free, info);
+//    }
+//    else
+//    {
+//        return Qnil;
+//    }
+//}
 
 static bool
 is_call_info_needed()

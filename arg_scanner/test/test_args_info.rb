@@ -2,8 +2,6 @@
 require File.expand_path("helper", File.dirname(__FILE__))
 require 'date'
 
-include ArgScanner
-
 class TestArgsInfoWrapper
 
   def foo(a)
@@ -30,29 +28,30 @@ class TestArgsInfoWrapper
 
   end
 
-  attr_accessor :args_info
-  attr_accessor :trace
-
-  def handle_call(tp)
-
-    ArgScanner.get_args_info
-  end
-
   def initialize
 
-    @trace = TracePoint.trace(:call) do |tp|
-      case tp.event
-        when :call
-          @args_info = handle_call(tp)
-      end
-    end
+    # @trace = TracePoint.new(:call) do |tp|
+    #   case tp.event
+    #     when :call
+    #       tp.binding.local_variables.each { |v| p tp.binding.eval v.to_s }
+    #       ArgScanner.handle_call(tp.lineno, tp.method_id, tp.path)
+    #       @args_info = ArgScanner.get_args_info
+    #       p @args_info
+    #   end
+    # end
   end
-
 end
 
 class TestArgsInfo < Test::Unit::TestCase
+
+  # @!attribute [r] type_tracker
+  #   @return [TestTypeTracker]
+  attr_reader :type_tracker
+
+
   def setup
     @args_info_wrapper = TestArgsInfoWrapper.new
+    @type_tracker = TestTypeTracker.instance
   end
 
   def teardown
@@ -60,92 +59,66 @@ class TestArgsInfo < Test::Unit::TestCase
   end
 
   def test_simple_kwrest
-    @args_info_wrapper.foo3(a: Date.new, kkw: 'hi')
-    @args_info_wrapper.trace.disable
+    type_tracker.enable do
+      @args_info_wrapper.foo3(a: Date.new, kkw: 'hi')
+    end
 
-    assert_not_nil @args_info_wrapper.args_info
-    assert @args_info_wrapper.args_info.size == 1
-    assert @args_info_wrapper.args_info[0] == "KEYREST,Hash"
-
+    assert_equal ["KEYREST,Hash,rest"], type_tracker.last_args_info
   end
 
   def test_req_and_opt_arg
-    @args_info_wrapper.foo2(Date.new)
-    @args_info_wrapper.trace.disable
+    type_tracker.enable do
+      @args_info_wrapper.foo2(Date.new)
+    end
 
-    assert_not_nil @args_info_wrapper.args_info
-    assert @args_info_wrapper.args_info.size == 2
-    assert @args_info_wrapper.args_info[0] == "REQ,Date"
-    assert @args_info_wrapper.args_info[1] = "OPT,Fixnum"
-
+    assert_equal ["REQ,Date,a", "OPT,Fixnum,b"], type_tracker.last_args_info
   end
 
   def test_optkw_and_empty_kwrest
-    @args_info_wrapper.foo4(kw: Date.new)
-    @args_info_wrapper.trace.disable
+    type_tracker.enable do
+      @args_info_wrapper.foo4(kw: Date.new)
+    end
 
-    assert_not_nil @args_info_wrapper.args_info
-    assert @args_info_wrapper.args_info.size == 2
-    assert @args_info_wrapper.args_info[0] == "KEY,Date,kw"
-    assert @args_info_wrapper.args_info[1] = "KEYREST,Nil"
-
+    assert_equal ["KEY,Date,kw", "KEYREST,Nil"], type_tracker.last_args_info
   end
 
   def test_reqkw_and_empty_kwrest
-    @args_info_wrapper.foo5(kw: Date.new)
-    @args_info_wrapper.trace.disable
+    type_tracker.enable do
+      @args_info_wrapper.foo5(kw: Date.new)
+    end
 
-    assert_not_nil @args_info_wrapper.args_info
-    assert @args_info_wrapper.args_info.size == 2
-    assert @args_info_wrapper.args_info[0] == "KEYREQ,Date,kw"
-    assert @args_info_wrapper.args_info[1] = "KEYREST,Nil"
-
+    assert_equal ["KEYREQ,Date,kw", "KEYREST,Nil"], type_tracker.last_args_info
   end
 
   def test_reqkw_and_kwrest
-    @args_info_wrapper.foo5(kw: Date.new, aa: 1, bb: '1')
-    @args_info_wrapper.trace.disable
+    type_tracker.enable do
+      @args_info_wrapper.foo5(kw: Date.new, aa: 1, bb: '1')
+    end
 
-    assert_not_nil @args_info_wrapper.args_info
-    p @args_info_wrapper.args_info
-    assert @args_info_wrapper.args_info.size == 2
-    assert @args_info_wrapper.args_info[0] == "KEYREQ,Date,kw"
-    assert @args_info_wrapper.args_info[1] = "KEYREST,Hash"
-
+    assert_equal ["KEYREQ,Date,kw", "KEYREST,Hash"], type_tracker.last_args_info
   end
 
   def test_optkw_and_kwrest
-    @args_info_wrapper.foo4(aa: 1, bb: '1')
-    @args_info_wrapper.trace.disable
+    type_tracker.enable do
+      @args_info_wrapper.foo4(aa: 1, bb: '1')
+    end
 
-    assert_not_nil @args_info_wrapper.args_info
-    assert @args_info_wrapper.args_info.size == 2
-    assert @args_info_wrapper.args_info[0] == "KEY,Fixnum,kw"
-    assert @args_info_wrapper.args_info[1] = "KEYREST,Hash"
-
+    assert_equal ["KEY,Fixnum,kw", "KEYREST,Hash"], type_tracker.last_args_info
   end
 
   def test_rest
-    @args_info_wrapper.foo6(1, 'hi', Date.new, '1')
-    @args_info_wrapper.trace.disable
+    type_tracker.enable do
+      @args_info_wrapper.foo6(1, 'hi', Date.new, '1')
+    end
 
-    assert_not_nil @args_info_wrapper.args_info
-    assert @args_info_wrapper.args_info.size == 3
-    assert @args_info_wrapper.args_info[0] == "REQ,Fixnum"
-    assert @args_info_wrapper.args_info[1] = "REST,Array"
-    assert @args_info_wrapper.args_info[1] = "POST,String"
-
+    assert_equal ["REQ,Fixnum,a", "REST,Array,rest", "POST,String,b"], type_tracker.last_args_info
   end
 
   def test_empty_rest
-    @args_info_wrapper.foo6(1, '1')
-    @args_info_wrapper.trace.disable
+    type_tracker.enable do
+      @args_info_wrapper.foo6(1, '1')
+    end
 
-    assert_not_nil @args_info_wrapper.args_info
-    assert @args_info_wrapper.args_info.size == 3
-    assert @args_info_wrapper.args_info[0] == "REQ,Fixnum"
-    assert @args_info_wrapper.args_info[1] = "REST,Nil"
-    assert @args_info_wrapper.args_info[1] = "POST,String"
-
+    assert_equal ["REQ,Fixnum,a", "REST,Nil,rest", "POST,String,b"], type_tracker.last_args_info
   end
 end

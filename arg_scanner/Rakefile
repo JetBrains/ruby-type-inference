@@ -11,12 +11,12 @@ Rake::ExtensionTask.new("arg_scanner") do |ext|
 end
 
 desc "Test arg_scanner."
-Rake::TestTask.new(:test) do |t|
-  t.libs += ['./ext', './lib']
+Rake::TestTask.new(:test => [:clean, :compile]) do |t|
+  t.libs += %w(./ext ./lib)
   t.test_files = FileList[BASE_TEST_FILE_LIST]
   t.verbose = true
 end
 
 task :test => :lib
 
-task :default => [:clobber, :compile, :spec]
+task :default => [:clobber, :compile, :test]
