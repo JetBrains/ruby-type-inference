@@ -453,7 +453,7 @@ get_args_info()
         }
     }
 
-    if(param_size - has_block > 1)
+    if(param_size - has_block > 1 && has_kwrest)
         types_iterator--;
 
     for(i = 0; i < has_kwrest; i++, ans_iterator++, types_iterator--)
