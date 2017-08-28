@@ -21,7 +21,7 @@ class TestTypeTracker
   end
 
   def enable(*args, &b)
-    @tp.enable(*args, &b)
+    @tp.enable *args, &b
   end
 
   def signatures
@@ -35,7 +35,7 @@ class TestTypeTracker
     signatures.push(signature)
 
     @last_args_info = ArgScanner.get_args_info.split ';'
-      # @last_call_info = ArgScanner.get_call_info.split ';'
+    @last_call_info = ArgScanner.get_call_info
   end
 
   def handle_return(tp)

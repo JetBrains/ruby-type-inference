@@ -44,8 +44,8 @@ static VALUE handle_call(VALUE self, VALUE lineno, VALUE method_name, VALUE path
 static VALUE handle_return(VALUE self, VALUE signature, VALUE return_type_name);
 
 // For testing
-static VALUE get_args_info_rb();
-static VALUE get_call_info_rb();
+static VALUE get_args_info_rb(VALUE self);
+static VALUE get_call_info_rb(VALUE self);
 
 static call_info_t* get_call_info();
 static bool is_call_info_needed();
@@ -78,7 +78,7 @@ void Init_arg_scanner() {
     rb_define_module_function(mArgScanner, "handle_call", handle_call, 3);
     rb_define_module_function(mArgScanner, "handle_return", handle_return, 2);
     rb_define_module_function(mArgScanner, "get_args_info", get_args_info_rb, 0);
-//    rb_define_module_function(mArgScanner, "get_call_info", get_call_info_rb, 0);
+    rb_define_module_function(mArgScanner, "get_call_info", get_call_info_rb, 0);
 }
 
 rb_control_frame_t *
@@ -453,6 +453,9 @@ get_args_info()
         }
     }
 
+    if(param_size - has_block > 1)
+        types_iterator--;
+
     for(i = 0; i < has_kwrest; i++, ans_iterator++, types_iterator--)
     {
         const char* name = rb_id2name(cfp->iseq->body->local_table[ans_iterator]);
@@ -483,7 +486,7 @@ get_args_info()
     }
 
     assert(ans_iterator == param_size);
-    assert(types_iterator - (int)has_kw == -1);
+    //assert(types_iterator - (int)has_kw == -1);
 
     free(types);
     free(ans);
@@ -492,25 +495,32 @@ get_args_info()
 }
 
 static VALUE
-get_args_info_rb()
+get_args_info_rb(VALUE self)
 {
     char *args_info = get_args_info();
     return args_info ? rb_str_new_cstr(args_info) : Qnil;
 }
 
-//static VALUE
-//get_call_info_rb()
-//{
-//    if (is_call_info_needed())
-//    {
-//        call_info_t *info = get_call_info();
-//        return Data_Wrap_Struct(c_signature, NULL, call_info_t_free, info);
-//    }
-//    else
-//    {
-//        return Qnil;
-//    }
-//}
+static VALUE
+get_call_info_rb(VALUE self)
+{
+    if(is_call_info_needed())
+    {
+        call_info_t *info = get_call_info();
+
+        VALUE ans;
+        ans = rb_ary_new();
+        rb_ary_push(ans, LONG2FIX(info->call_info_argc));
+        if(info->call_info_kw_args != 0)
+            rb_ary_push(ans, rb_str_new_cstr(info->call_info_kw_args));
+
+        return ans;
+    }
+    else
+    {
+        return Qnil;
+    }
+}
 
 static bool
 is_call_info_needed()

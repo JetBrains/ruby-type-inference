@@ -79,7 +79,7 @@ class TestArgsInfo < Test::Unit::TestCase
       @args_info_wrapper.foo4(kw: Date.new)
     end
 
-    assert_equal ["KEY,Date,kw", "KEYREST,Nil"], type_tracker.last_args_info
+    assert_equal ["KEY,Date,kw", "KEYREST,Hash"], type_tracker.last_args_info
   end
 
   def test_reqkw_and_empty_kwrest
@@ -87,7 +87,7 @@ class TestArgsInfo < Test::Unit::TestCase
       @args_info_wrapper.foo5(kw: Date.new)
     end
 
-    assert_equal ["KEYREQ,Date,kw", "KEYREST,Nil"], type_tracker.last_args_info
+    assert_equal ["KEYREQ,Date,kw", "KEYREST,Hash"], type_tracker.last_args_info
   end
 
   def test_reqkw_and_kwrest
@@ -119,6 +119,6 @@ class TestArgsInfo < Test::Unit::TestCase
       @args_info_wrapper.foo6(1, '1')
     end
 
-    assert_equal ["REQ,Fixnum,a", "REST,Nil,rest", "POST,String,b"], type_tracker.last_args_info
+    assert_equal ["REQ,Fixnum,a", "REST,Array,rest", "POST,String,b"], type_tracker.last_args_info
   end
 end

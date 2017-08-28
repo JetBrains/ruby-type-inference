@@ -58,9 +58,9 @@ class TestCallInfo < Test::Unit::TestCase
     end
 
     assert_not_nil type_tracker.last_call_info
-    assert type_tracker.last_call_info.size == 2
-    assert type_tracker.last_call_info[0] == "sqr2"
-    assert type_tracker.last_call_info[1] == 2
+    #assert type_tracker.last_call_info.size == 2
+    #assert type_tracker.last_call_info[0] == "sqr2"
+    assert type_tracker.last_call_info[0] == 2
   end
 
   def test_simple_req_arg
@@ -68,7 +68,7 @@ class TestCallInfo < Test::Unit::TestCase
       @call_info_wrapper.foo5(10)
     end
 
-    assert type_tracker.last_call_info == nil
+    assert_nil type_tracker.last_call_info
   end
 
   def test_simple_kw
@@ -77,10 +77,10 @@ class TestCallInfo < Test::Unit::TestCase
     end
 
     assert_not_nil type_tracker.last_call_info
-    assert type_tracker.last_call_info.size == 3
-    assert type_tracker.last_call_info[0] == "sqr2"
-    assert type_tracker.last_call_info[1] == 4
-    assert type_tracker.last_call_info[2].join(',') == "x,y"
+    #assert type_tracker.last_call_info.size == 3
+    #assert type_tracker.last_call_info[0] == "sqr2"
+    assert type_tracker.last_call_info[0] == 4
+    assert type_tracker.last_call_info[1] == "x,y"
   end
 
   def test_rest
@@ -89,9 +89,9 @@ class TestCallInfo < Test::Unit::TestCase
     end
 
     assert_not_nil type_tracker.last_call_info
-    assert type_tracker.last_call_info.size == 2
-    assert type_tracker.last_call_info[0] == "foo2"
-    assert type_tracker.last_call_info[1] == 8
+    #assert type_tracker.last_call_info.size == 2
+    #assert type_tracker.last_call_info[0] == "foo2"
+    assert type_tracker.last_call_info[0] == 8
   end
 
   def test_post_and_rest
@@ -99,10 +99,11 @@ class TestCallInfo < Test::Unit::TestCase
       @call_info_wrapper.foo(1, 2, 3, 4, 5, 6, 7, 8)
     end
 
+    #coz it is obvious that all the arguments were passed (they are all required)
     assert_not_nil type_tracker.last_call_info
-    assert type_tracker.last_call_info.size == 2
-    assert type_tracker.last_call_info[0] == "foo"
-    assert type_tracker.last_call_info[1] == 8
+    #assert type_tracker.last_call_info.size == 2
+    #assert type_tracker.last_call_info[0] == "foo"
+    #assert type_tracker.last_call_info[0] == 8
   end
 
   def test_kwrest
@@ -111,10 +112,10 @@ class TestCallInfo < Test::Unit::TestCase
     end
 
     assert_not_nil type_tracker.last_call_info
-    assert type_tracker.last_call_info.size == 3
-    assert type_tracker.last_call_info[0] == "foo3"
-    assert type_tracker.last_call_info[1] == 4
-    assert type_tracker.last_call_info[2].join(',') == "a,b,c,d"
+    #assert type_tracker.last_call_info.size == 3
+    #assert type_tracker.last_call_info[0] == "foo3"
+    assert type_tracker.last_call_info[0] == 4
+    assert type_tracker.last_call_info[1] == "a,b,c,d"
   end
 
   def test_rest_and_reqkw_args
@@ -123,10 +124,10 @@ class TestCallInfo < Test::Unit::TestCase
     end
 
     assert_not_nil type_tracker.last_call_info
-    assert type_tracker.last_call_info.size == 3
-    assert type_tracker.last_call_info[0] == "foo4"
-    assert type_tracker.last_call_info[1] == 4
-    assert type_tracker.last_call_info[2].join(',') == "b,c,e,f"
+    #assert type_tracker.last_call_info.size == 3
+    #assert type_tracker.last_call_info[0] == "foo4"
+    assert type_tracker.last_call_info[0] == 4
+    assert type_tracker.last_call_info[1] == "b,c,e,f"
 
   end
 end
