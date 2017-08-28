@@ -19,11 +19,7 @@ class TestCallInfoWrapper
 
   end
 
-  def foo3(b: 2, c: 3, **args)
-
-  end
-
-  def foo3(b: 2, c:, **args)
+  def foo3(b: 2, c: '3', **args)
 
   end
 
