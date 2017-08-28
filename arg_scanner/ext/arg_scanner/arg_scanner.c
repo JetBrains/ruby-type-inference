@@ -6,7 +6,7 @@
 #include <assert.h>
 #include <stdarg.h>
 
-//#define DEBUG_ARG_SCANNER 1
+#define DEBUG_ARG_SCANNER 1
 
 #ifdef DEBUG_ARG_SCANNER
     #define LOG(f, args...) { fprintf(stderr, "DEBUG: '%s'=", #args); fprintf(stderr, f, ##args); fflush(stderr); }
@@ -386,6 +386,16 @@ get_args_info()
     unsigned int has_kwrest = cfp->iseq->body->param.flags.has_kwrest;
     unsigned int has_block = cfp->iseq->body->param.flags.has_block;
 
+    LOG("%d\n", param_size);
+    LOG("%d\n", lead_num);
+    LOG("%d\n", opt_num);
+    LOG("%d\n", post_num);
+
+    LOG("%d\n", has_rest);
+    LOG("%d\n", has_kw);
+    LOG("%d\n", has_kwrest);
+    LOG("%d\n", has_block);
+
     if(param_size == 0)
         return 0;
 
@@ -485,8 +495,9 @@ get_args_info()
         free(ans[i]);
     }
 
+    LOG("%d %d %d", ans_iterator, param_size, types_iterator);
     assert(ans_iterator == param_size);
-    //assert(types_iterator - (int)has_kw == -1);
+    assert(types_iterator <= 0);
 
     free(types);
     free(ans);

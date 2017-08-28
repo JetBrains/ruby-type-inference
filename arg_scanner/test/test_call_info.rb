@@ -7,7 +7,7 @@ class TestCallInfoWrapper
 
   end
 
-  def sqr2(z0, z1 = 2, z2 = 10, z3 = 2, z4 = 0, y: 1, x: 30, z: 40)
+  def sqr2(z0, z1 = 2, z2 = 10, z3 = 2, z4 = 0, y: 1, x: 30, z: '40')
 
   end
 
