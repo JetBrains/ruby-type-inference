@@ -71,7 +71,8 @@ class TestArgsInfo < Test::Unit::TestCase
       @args_info_wrapper.foo2(Date.new)
     end
 
-    assert_equal ["REQ,Date,a", "OPT,Fixnum,b"], type_tracker.last_args_info
+    assert type_tracker.last_args_info[0] == "REQ,Date,a"
+    assert type_tracker.last_args_info[1] == "OPT,Fixnum,b" || type_tracker.last_args_info[1] == "OPT,Integer,b"
   end
 
   def test_optkw_and_empty_kwrest
@@ -103,7 +104,8 @@ class TestArgsInfo < Test::Unit::TestCase
       @args_info_wrapper.foo4(aa: 1, bb: '1')
     end
 
-    assert_equal ["KEY,Fixnum,kw", "KEYREST,Hash"], type_tracker.last_args_info
+    assert type_tracker.last_args_info[0] == "KEY,Fixnum,kw" || type_tracker.last_args_info[0] == "KEY,Integer,kw"
+    assert type_tracker.last_args_info[1] == "KEYREST,Hash"
   end
 
   def test_rest
@@ -111,7 +113,9 @@ class TestArgsInfo < Test::Unit::TestCase
       @args_info_wrapper.foo6(1, 'hi', Date.new, '1')
     end
 
-    assert_equal ["REQ,Fixnum,a", "REST,Array,rest", "POST,String,b"], type_tracker.last_args_info
+    assert type_tracker.last_args_info[0] == "REQ,Fixnum,a" || type_tracker.last_args_info[0] == "REQ,Integer,a"
+    assert type_tracker.last_args_info[1] == "REST,Array,rest"
+    assert type_tracker.last_args_info[2] == "POST,String,b"
   end
 
   def test_empty_rest
@@ -119,6 +123,8 @@ class TestArgsInfo < Test::Unit::TestCase
       @args_info_wrapper.foo6(1, '1')
     end
 
-    assert_equal ["REQ,Fixnum,a", "REST,Array,rest", "POST,String,b"], type_tracker.last_args_info
+    assert type_tracker.last_args_info[0] == "REQ,Fixnum,a" || type_tracker.last_args_info[0] == "REQ,Integer,a"
+    assert type_tracker.last_args_info[1] == "REST,Array,rest"
+    assert type_tracker.last_args_info[2] == "POST,String,b"
   end
 end
