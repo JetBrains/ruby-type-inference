@@ -6,7 +6,7 @@
 #include <assert.h>
 #include <stdarg.h>
 
-#define DEBUG_ARG_SCANNER 1
+//#define DEBUG_ARG_SCANNER 1
 
 #ifdef DEBUG_ARG_SCANNER
     #define LOG(f, args...) { fprintf(stderr, "DEBUG: '%s'=", #args); fprintf(stderr, f, ##args); fflush(stderr); }
@@ -18,6 +18,7 @@
 typedef struct rb_trace_arg_struct rb_trace_arg_t;
 
 VALUE mArgScanner = Qnil;
+int types_ids[20];
 
 static VALUE c_signature;
 
@@ -408,6 +409,7 @@ get_args_info()
     for(i = param_size - 1, types_iterator = 0; (size_t)types_iterator < param_size; i--, types_iterator++)
     {
         types[types_iterator] = calc_sane_class_name(*(ep + i - 1));
+        types_ids[types_iterator] = i - 1;
         LOG("Type #%d=%s\n", types_iterator, types[types_iterator])
     }
 
@@ -433,7 +435,14 @@ get_args_info()
     for(i = 0; i < has_rest; i++, ans_iterator++, types_iterator--)
     {
         const char* name = rb_id2name(cfp->iseq->body->local_table[ans_iterator]);
-        ans[ans_iterator] = fast_join(',', 3, "REST", types[types_iterator], name);
+
+        char* type;
+        if(RARRAY_LEN(*(ep + types_ids[types_iterator])) == 0)
+            type = "Array/empty";
+        else
+            type = types[types_iterator];
+
+        ans[ans_iterator] = fast_join(',', 3, "REST", type, name);
     }
 
     for(i = 0; i < post_num; i++, ans_iterator++, types_iterator--)
@@ -469,7 +478,16 @@ get_args_info()
     for(i = 0; i < has_kwrest; i++, ans_iterator++, types_iterator--)
     {
         const char* name = rb_id2name(cfp->iseq->body->local_table[ans_iterator]);
-        ans[ans_iterator] = fast_join(',', 3, "KEYREST", types[types_iterator], name);
+        LOG("%s\n", calc_sane_class_name(*(ep + types_ids[types_iterator])));
+        LOG("%d\n", rb_hash_size(*(ep + types_ids[types_iterator])));
+        char* type;
+
+        if(rb_hash_size(*(ep + types_ids[types_iterator])) == 1)
+            type = "Hash/empty";
+        else
+            type = types[types_iterator];
+
+        ans[ans_iterator] = fast_join(',', 3, "KEYREST", type, name);
     }
 
     for(i = 0; i < has_block; i++, ans_iterator++, types_iterator--)
