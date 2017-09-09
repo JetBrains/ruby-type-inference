@@ -1,3 +1,5 @@
+*.iml
+
 .bundle/
 .yardoc
 Gemfile.lock
