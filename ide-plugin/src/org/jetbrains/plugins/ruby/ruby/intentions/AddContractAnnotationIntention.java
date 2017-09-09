@@ -2,6 +2,8 @@ package org.jetbrains.plugins.ruby.ruby.intentions;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -12,10 +14,15 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.fqn.FQN;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.types.CoreTypes;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyStatTypeProviderImpl;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RFile;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RubyElementFactory;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.RMethod;
-import org.jetbrains.ruby.codeInsight.types.signature.*;
+import org.jetbrains.ruby.codeInsight.types.signature.MethodInfo;
+import org.jetbrains.ruby.codeInsight.types.signature.SignatureContract;
+import org.jetbrains.ruby.codeInsight.types.signature.SignatureNode;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ReferenceContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.TypedContractTransition;
@@ -53,7 +60,11 @@ public class AddContractAnnotationIntention extends BaseIntentionAction {
             return false;
         }
 
-        final SignatureContract contract = SignatureServer.INSTANCE.getContract(createMethodInfo(method.getFQN().getCallerFQN().getFullPath(), method.getFQN().getShortName()));
+        final MethodInfo methodInfo = createMethodInfo(method);
+        if (methodInfo == null) {
+            return false;
+        }
+        final SignatureContract contract = SignatureServer.INSTANCE.getContract(methodInfo);
         return contract != null && getContractAsStringList(contract) != null;
     }
 
@@ -62,13 +73,26 @@ public class AddContractAnnotationIntention extends BaseIntentionAction {
         final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
         final RMethod method = PsiTreeUtil.getParentOfType(element, RMethod.class);
         assert method != null : "Method cannot be null here";
-        final SignatureContract contract = SignatureServer.INSTANCE.getContract(createMethodInfo(method.getFQN().getCallerFQN().getFullPath(), method.getFQN().getShortName()));
+        final MethodInfo methodInfo = createMethodInfo(method);
+        assert methodInfo != null : "MethodInfo mustn't be null: it was checked in isAvailable";
+        final SignatureContract contract = SignatureServer.INSTANCE.getContract(methodInfo);
         final RFile fileWithComments = RubyElementFactory.createRubyFile(project, getContractAsStringList(contract).stream().reduce("# @contract", (s, s2) -> s + "\n# " + s2));
         method.getParent().addRangeBefore(fileWithComments.getFirstChild(), fileWithComments.getLastChild(), method);
     }
 
-    private static MethodInfo createMethodInfo(@NotNull String className, @NotNull String methodName) {
-        return MethodInfoKt.MethodInfo(ClassInfoKt.ClassInfo(className), methodName, RVisibility.PUBLIC);
+    @Nullable
+    private static MethodInfo createMethodInfo(@NotNull RMethod method) {
+        final FQN fqnWithNesting = method.getFQNWithNesting();
+        final String methodName = fqnWithNesting.getShortName();
+        final String receiverName = fqnWithNesting.getCallerFQN().getFullPath();
+        final Module module = ModuleUtilCore.findModuleForPsiElement(method);
+        if (module == null) {
+            return null;
+        }
+        return RubyStatTypeProviderImpl.findMethodInfo(methodName,
+                receiverName.isEmpty() ? CoreTypes.Object : receiverName,
+                module,
+                SignatureServer.INSTANCE.getStorage());
     }
 
     @Nullable
@@ -82,7 +106,7 @@ public class AddContractAnnotationIntention extends BaseIntentionAction {
 
         return contracts.stream().map(s -> {
             final int i = s.lastIndexOf(",");
-            if (i == 0) {
+            if (i <= 0) {
                 return "-> " + s;
             } else {
                 return "(" + s.substring(0, i) + ") -> " + s.substring(i + 2);

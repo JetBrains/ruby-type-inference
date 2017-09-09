@@ -4,7 +4,6 @@ import com.google.gson.JsonParseException
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.TransactionManager
-import org.jetbrains.exposed.sql.transactions.inTopLevelTransaction
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.ruby.codeInsight.types.signature.*
 import org.jetbrains.ruby.codeInsight.types.storage.server.DiffPreservingStorage
@@ -57,6 +56,8 @@ object SignatureServer {
     fun getContractByMethodAndReceiverName(methodName: String, receiverName: String): SignatureContract? {
         return getMethodByClass(receiverName, methodName)?.let { mainContainer.getSignature(it)?.contract }
     }
+
+    fun getStorage() = mainContainer
 
     fun getMethodByClass(className: String, methodName: String): MethodInfo? {
         return mainContainer.getRegisteredMethods(ClassInfo(className)).find { it.name == methodName }

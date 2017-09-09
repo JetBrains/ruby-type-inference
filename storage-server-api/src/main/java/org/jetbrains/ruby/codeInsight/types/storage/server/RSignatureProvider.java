@@ -35,6 +35,9 @@ public interface RSignatureProvider {
     Collection<ClassInfo> getRegisteredClasses(@NotNull GemInfo gem) throws StorageException;
 
     @NotNull
+    Collection<ClassInfo> getAllClassesWithFQN(@NotNull String fqn) throws StorageException;
+
+    @NotNull
     Collection<MethodInfo> getRegisteredMethods(@NotNull ClassInfo containerClass)
             throws StorageException;
 

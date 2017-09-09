@@ -45,6 +45,14 @@ class DiffPreservingStorage<T : RSignatureStorage.Packet>(
         }
     }
 
+    override fun getAllClassesWithFQN(fqn: String): MutableCollection<ClassInfo> {
+        return HashSet<ClassInfo>().let {
+            it.addAll(receivedDataStorage.getAllClassesWithFQN(fqn))
+            it.addAll(localDataStorage.getAllClassesWithFQN(fqn))
+            it
+        }
+    }
+
     override fun getRegisteredMethods(containerClass: ClassInfo): MutableCollection<MethodInfo> {
         return HashSet<MethodInfo>().let {
             it.addAll(receivedDataStorage.getRegisteredMethods(containerClass))

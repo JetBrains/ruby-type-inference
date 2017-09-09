@@ -4,7 +4,10 @@ import org.jetbrains.exposed.dao.EntityID
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.ruby.codeInsight.types.signature.*
+import org.jetbrains.ruby.codeInsight.types.signature.ClassInfo
+import org.jetbrains.ruby.codeInsight.types.signature.GemInfo
+import org.jetbrains.ruby.codeInsight.types.signature.MethodInfo
+import org.jetbrains.ruby.codeInsight.types.signature.SignatureInfo
 import org.jetbrains.ruby.codeInsight.types.storage.server.RSignatureProvider
 import org.jetbrains.ruby.codeInsight.types.storage.server.StorageException
 
@@ -52,6 +55,12 @@ class RSignatureProviderImpl : RSignatureProvider {
             }
 
             ClassInfoData.find { ClassInfoTable.gemInfo.eq(gemId) }.toList().map { it.copy() }
+        }
+    }
+
+    override fun getAllClassesWithFQN(fqn: String): Collection<ClassInfo> {
+        return transaction {
+            ClassInfoData.find { ClassInfoTable.fqn eq fqn }.toList().map { it.copy() }
         }
     }
 
