@@ -2,9 +2,27 @@ Automated Type Contracts Generation
 ===================================
 
 `ruby-type-inference` project is a completely new approach to
-tackle the problems Ruby dynamic nature by providing more reliable
-symbol resolution and type inference.
+tackle the problems Ruby dynamic nature and provide more reliable
+symbol resolution and type inference. It collects some run time data
+to build type contracts for the methods.
 
+Every time a method is being called, some arguments of
+particular types are being passed to it. Type Tracker collects
+all such argument combinations and then builds a special contract
+which satisfies all encountered argument type tuples. 
+
+The approach has its own pros and cons:
+* The obtained contracts utilize real-world usages of code of
+  any complexity so it provides true results even if a method
+  utilizes dynamic Ruby features heavily.
+* The completeness of the contracts obtained for a method highly
+  depends on the coverage of that method, including its callees.
+  That implies the need to merge the data obtained from the
+  different sources (e.g. different projects using the same gem).
+  
+This implementation addresses the stated coverage problem by providing
+the possibility to merge any type contracts at any time.
+     
 ## Architecture
  
 * **Ruby Type Tracker** is a gem with a native extension to attach to 
@@ -16,8 +34,8 @@ symbol resolution and type inference.
 * [**Type contract processor**](contract-creator) server listens for
   incoming type data (from `arg_scanner`) and processes it to a compact format.
   
-  The data stored may be used later for better code analysis and shared
-  with other users.
+  The data stored may be used later for better code analysis and also
+  can be shared with other users.
 
 * Code analysis clients (a RubyMine/IJ+Ruby plugin [example](ide-plugin)) use the contract data
   to provide features for the users such as code completion, better resolution, etc.
