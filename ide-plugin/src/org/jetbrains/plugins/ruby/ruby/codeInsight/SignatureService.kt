@@ -14,7 +14,9 @@ import org.jetbrains.ruby.runtime.signature.server.SignatureServer
 class SignatureService {
     init {
         Database.connect("jdbc:mysql://localhost:3306/" + "ruby_type_contracts" + "?serverTimezone=UTC&nullNamePatternMatchesAll=true&useSSL=false",
-                driver = "com.mysql.cj.jdbc.Driver", user = "rubymine", password = "rubymine")
+                driver = "com.mysql.cj.jdbc.Driver",
+                user = System.getProperty("mysql.user.name", "rubymine"),
+                password = System.getProperty("mysql.user.password", "rubymine"))
         transaction {
             SchemaUtils.create(GemInfoTable, ClassInfoTable, MethodInfoTable, SignatureTable)
         }

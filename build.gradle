@@ -10,7 +10,6 @@ buildscript {
     }
 }
 
-
 allprojects {
     repositories {
         mavenCentral()
@@ -36,6 +35,13 @@ allprojects {
             apiVersion = '1.1'
             languageVersion = '1.1'
             jvmTarget = '1.8'
+        }
+    }
+
+    test {
+        systemProperties System.properties
+        testLogging {
+            exceptionFormat = 'full'
         }
     }
 }
