@@ -1,4 +1,4 @@
-Automated Type Contracts Generation 
+Automated Type Contracts Generation [![JetBrains incubator project](http://jb.gg/badges/incubator-flat-square.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 ===================================
 
 `ruby-type-inference` project is a completely new approach to
