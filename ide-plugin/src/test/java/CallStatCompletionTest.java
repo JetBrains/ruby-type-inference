@@ -93,7 +93,7 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
     }
 
     private void executeScript(@NotNull String runnableScriptName) {
-        final String scriptPath = PathManager.getAbsolutePath(getTestDataPath() + "/" + runnableScriptName);
+        final String scriptPath = PathManager.getAbsolutePath("ide-plugin/" + getTestDataPath() + "/" + runnableScriptName);
 
         final Module module = myFixture.getModule();
 
@@ -119,8 +119,7 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
         final InputStream errorStream = process.getErrorStream();
         process.waitFor(30, TimeUnit.SECONDS);
         try {
-            return /*StringUtil.join(FileUtil.readStreamAsLines(inputStream), "\n") + ";" +*/
-                    StringUtil.join(FileUtil.readStreamAsLines(errorStream), "\n");
+            return StringUtil.join(FileUtil.readStreamAsLines(errorStream), "\n");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -162,7 +161,10 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
     }
 
     private SignatureContract doTestContract(@NotNull String name, @NotNull MethodInfo methodInfo) {
-        return run(name, methodInfo);
+        SignatureContract contract = run(name, methodInfo);
+        Assert.assertNotNull(contract);
+
+        return contract;
     }
 
     private static MethodInfo createMethodInfo(@NotNull String className, @NotNull String methodName) {
