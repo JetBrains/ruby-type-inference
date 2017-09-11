@@ -3,6 +3,7 @@
 
 #include "ruby.h"
 #include "vm_core.h"
+#include "version.h"
 #include "iseq.h"
 #include "vm_insnhelper.h"
 #include "method.h"

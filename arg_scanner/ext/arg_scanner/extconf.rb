@@ -7,6 +7,7 @@ require "debase/ruby_core_source"
 hdrs = proc {
   have_header("vm_core.h") and
   have_header("iseq.h") and
+  have_header("version.h") and
       have_header("vm_core.h") and
       have_header("vm_insnhelper.h") and
       have_header("vm_core.h") and
