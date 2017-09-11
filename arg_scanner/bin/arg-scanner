@@ -1,9 +1,46 @@
 #!/usr/bin/env ruby
 
-if ARGV.size < 1
-  puts "Usage: arg-scanner <ruby cmdline>\n"
+require 'optparse'
+require 'arg_scanner/options'
+
+options = ArgScanner::OPTIONS
+option_parser = OptionParser.new do |opts|
+  opts.banner = <<~EOB
+    Usage: arg-scanner [OPTIONS] <ruby cmdline> 
+    arg-scanner is a ruby script mediator supposed to be run from the command line or IDE.
+        The data will be sent to a signature server so it must be running during arg-scanner execution.
+  EOB
+
+  opts.separator "Options:"
+  opts.on("-r", "--root=[ROOT]", String, "local project root(s) to distinguish from library sources (path1[:pathn]*)") do |paths|
+    options.project_roots = paths.split ':' if paths
+  end
+  opts.on("--local=[VERSION]", Integer,
+          "local source treatment: mark as fake gem with given VERSION, default: 0") do |local|
+    options.local_version = local.to_s
+  end
+  opts.on("--no-local", "local source treatment: ignore, do not send data from local sources") do
+    options.no_local = true
+  end
+end
+
+begin
+  option_parser.parse! ARGV
+rescue StandardError => e
+  puts option_parser
+  puts
+  puts e.message
   exit 1
 end
+
+if ARGV.size < 1
+  puts option_parser
+  puts
+  puts "Ruby program to trace must be specified."
+  exit 1
+end
+
+options.set_env
 
 old_opts = ENV['RUBYOPT'] || ''
 starter = "-r#{File.expand_path(File.dirname(__FILE__))}/../lib/arg_scanner/starter"
