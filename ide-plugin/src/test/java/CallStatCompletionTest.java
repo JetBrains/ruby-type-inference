@@ -86,9 +86,9 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
 
         final StringDataOutput stream = new StringDataOutput();
         SignatureContractSerializationKt.serialize(contract, stream);
-        assertEquals(
-                "3 a 0 b 0 c 0 9 3 1 0 Fixnum 2 0 B 3 0 String 1 4 0 String 1 4 0 A 1 5 1 1 1 6 1 1 1 7 1 3 1 8 1 5 1 8 1 7 0",
-                stream.getResult().toString()
+        assertTrue(
+                stream.getResult().toString().equals("3 a 0 b 0 c 0 9 3 1 0 Fixnum 2 0 B 3 0 String 1 4 0 String 1 4 0 A 1 5 1 1 1 6 1 1 1 7 1 3 1 8 1 5 1 8 1 7 0")
+                || stream.getResult().toString().equals("3 a 0 b 0 c 0 9 3 1 0 Integer 2 0 B 3 0 String 1 4 0 String 1 4 0 A 1 5 1 1 1 6 1 1 1 7 1 3 1 8 1 5 1 8 1 7 0")
         );
     }
 
