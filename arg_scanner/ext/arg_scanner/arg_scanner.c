@@ -406,7 +406,7 @@ get_args_info()
 
     ans_iterator = 0;
 
-    for(i = param_size - 1 - (RUBY_VERSION >= "2.4.1"), types_iterator = 0; (size_t)types_iterator < param_size; i--, types_iterator++)
+    for(i = param_size - 1 - (RUBY_VERSION >= "2.4.0"), types_iterator = 0; (size_t)types_iterator < param_size; i--, types_iterator++)
     {
         types[types_iterator] = calc_sane_class_name(*(ep + i - 1));
         types_ids[types_iterator] = i - 1;
