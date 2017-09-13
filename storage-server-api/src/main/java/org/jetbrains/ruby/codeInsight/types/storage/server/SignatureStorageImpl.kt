@@ -15,18 +15,20 @@ import java.io.DataOutputStream
 class SignatureStorageImpl : RSignatureStorage<PacketImpl>, RSignatureProvider by RSignatureProviderImpl() {
     override fun formPackets(): MutableCollection<PacketImpl> {
         val contractData = transaction {
-            SignatureContractData.all().toList()
+            SignatureContractData.all().toList().map { it.copy() }
         }
 
         return PacketImpl.createPacketsBySignatureContracts(contractData)
     }
 }
 
-class PacketImpl(private val data: ByteArray, private val contractsCount: Int) : RSignatureStorage.Packet {
+class PacketImpl(val data: ByteArray) : RSignatureStorage.Packet {
 
     override fun getSignatures(): MutableCollection<SignatureInfo> {
         val inputStream = ByteArrayInputStream(data)
         val dataInput = DataInputStream(inputStream)
+
+        val contractsCount = dataInput.readInt()
 
         return Array(contractsCount, {
             val info = MethodInfo(dataInput)
@@ -40,15 +42,15 @@ class PacketImpl(private val data: ByteArray, private val contractsCount: Int) :
             val outputStream = ByteArrayOutputStream()
             val dataOut = DataOutputStream(outputStream)
 
+            dataOut.writeInt(contractData.size)
+
             for (data in contractData) {
-                transaction {
-                    val info = data.methodInfo
-                    val contract = data.contract
-                    info.serialize(dataOut)
-                    contract.serialize(dataOut)
-                }
+                val info = data.methodInfo
+                val contract = data.contract
+                info.serialize(dataOut)
+                contract.serialize(dataOut)
             }
-            return ArrayList(listOf(PacketImpl(outputStream.toByteArray(), contractData.size)))
+            return ArrayList(listOf(PacketImpl(outputStream.toByteArray())))
         }
 
     }

@@ -47,7 +47,17 @@
     </extensions>
 
     <actions>
-        <!-- Add your actions here -->
+        <group id="ruby.contracts.group"
+               text="Type Contracts"
+               popup="true">
+            <add-to-group group-id="RUBY_TOOLS" anchor="before" relative-to-action="BUNDLER_ACTIONS"/>
+            <action class="org.jetbrains.plugins.ruby.ruby.actions.ExportContractsAction"
+                    id="ruby.contracts.export"
+                    text="Export..."/>
+            <action class="org.jetbrains.plugins.ruby.ruby.actions.ImportContractsAction"
+                    id="ruby.contracts.import"
+                    text="Import..."/>
+        </group>
     </actions>
 
 </idea-plugin>
