@@ -31,6 +31,14 @@ class DiffPreservingStorage<T : RSignatureStorage.Packet>(
         return localDataStorage.formPackets()
     }
 
+    override fun getRegisteredGems(): Collection<GemInfo> {
+        return HashSet<GemInfo>().let {
+            it.addAll(receivedDataStorage.registeredGems)
+            it.addAll(localDataStorage.registeredGems)
+            it
+        }
+    }
+
     override fun getClosestRegisteredGem(usedGem: GemInfo): GemInfo? {
         TODO("not implemented: unclear what to do when local gem version differs" +
                 "MAYBE this method should be eliminated and replaced by internal 'closest gem' auto-cache")

@@ -26,9 +26,15 @@
         <programRunner implementation="org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyCollectTypeRunner"/>
 
         <applicationService serviceImplementation="org.jetbrains.plugins.ruby.ruby.codeInsight.SignatureService"/>
+        <applicationService serviceImplementation="org.jetbrains.plugins.ruby.settings.RubyTypeContractsSettings"/>
         <intentionAction>
             <className>org.jetbrains.plugins.ruby.ruby.intentions.AddContractAnnotationIntention</className>
         </intentionAction>
+
+        <applicationConfigurable groupId="language"
+                                 groupWeight="130"
+                                 instance="org.jetbrains.plugins.ruby.settings.RubyTypeContractsConfigurable"/>
+
     </extensions>
 
     <extensions defaultExtensionNs="org.jetbrains.plugins.ruby">

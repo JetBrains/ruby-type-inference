@@ -12,6 +12,12 @@ import org.jetbrains.ruby.codeInsight.types.storage.server.RSignatureProvider
 import org.jetbrains.ruby.codeInsight.types.storage.server.StorageException
 
 class RSignatureProviderImpl : RSignatureProvider {
+    override fun getRegisteredGems(): Collection<GemInfo> {
+        return transaction {
+            GemInfoData.all().toList().map { it.copy() }
+        }
+    }
+
     override fun getClosestRegisteredGem(usedGem: GemInfo): GemInfo? {
         val (upperBound, lowerBound) = transaction {
             val upperBound = GemInfoTable.select {

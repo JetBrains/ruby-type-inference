@@ -28,6 +28,9 @@ import java.util.Collection;
  * </ul>
  */
 public interface RSignatureProvider {
+    @NotNull
+    Collection<GemInfo> getRegisteredGems() throws StorageException;
+
     @Nullable
     GemInfo getClosestRegisteredGem(@NotNull GemInfo usedGem) throws StorageException;
 

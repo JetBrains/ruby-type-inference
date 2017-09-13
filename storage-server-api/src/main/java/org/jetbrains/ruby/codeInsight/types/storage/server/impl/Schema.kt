@@ -4,6 +4,7 @@ import org.jetbrains.exposed.dao.EntityID
 import org.jetbrains.exposed.dao.IntEntity
 import org.jetbrains.exposed.dao.IntEntityClass
 import org.jetbrains.exposed.dao.IntIdTable
+import org.jetbrains.exposed.sql.ReferenceOption
 import org.jetbrains.ruby.codeInsight.types.signature.*
 import org.jetbrains.ruby.codeInsight.types.signature.serialization.BlobDeserializer
 import java.sql.Blob
@@ -24,7 +25,7 @@ class GemInfoData(id: EntityID<Int>) : IntEntity(id), GemInfo {
 }
 
 object ClassInfoTable : IntIdTable() {
-    val gemInfo = reference("gem_info", GemInfoTable).nullable()
+    val gemInfo = reference("gem_info", GemInfoTable, ReferenceOption.CASCADE).nullable()
     val fqn = varchar("fqn", 200)
 }
 
@@ -38,7 +39,7 @@ class ClassInfoData(id: EntityID<Int>) : IntEntity(id), ClassInfo {
 }
 
 object MethodInfoTable : IntIdTable() {
-    val classInfo = reference("class_info", ClassInfoTable)
+    val classInfo = reference("class_info", ClassInfoTable, ReferenceOption.CASCADE)
     val name = varchar("name", 100)
     val visibility = enumeration("visibility", RVisibility::class.java)
     val locationFile = varchar("location_file", 1000).nullable()
@@ -67,7 +68,7 @@ class MethodInfoData(id: EntityID<Int>) : IntEntity(id), MethodInfo {
 }
 
 object SignatureTable : IntIdTable() {
-    val methodInfo = reference("method_info", MethodInfoTable)
+    val methodInfo = reference("method_info", MethodInfoTable, ReferenceOption.CASCADE)
     val contract = blob("contract")
 }
 
