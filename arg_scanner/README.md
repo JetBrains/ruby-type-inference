@@ -1,4 +1,4 @@
-# ArgScanner
+# ArgScanner [![Gem Version](https://badge.fury.io/rb/arg_scanner.svg)](https://badge.fury.io/rb/arg_scanner)
 
 `arg_scanner` is a gem with the purpose to track all method calls and
 deliver the following information:
