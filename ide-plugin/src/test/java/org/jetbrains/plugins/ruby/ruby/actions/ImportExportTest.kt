@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.ruby.ruby.actions
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
@@ -69,6 +70,8 @@ class ImportExportTest : LightPlatformCodeInsightFixtureTestCase() {
 
         ImportContractsAction.importContractsFromFile(virtualFile!!)
 
+        ApplicationManager.getApplication().runWriteAction { virtualFile.delete(this) }
+
         TestCase.assertEquals(3, storage.registeredGems.size)
 
         TestCase.assertEquals(SignatureTestData.simpleContract,
@@ -100,6 +103,8 @@ class ImportExportTest : LightPlatformCodeInsightFixtureTestCase() {
 
         ImportContractsAction.importContractsFromFile(virtualFile!!)
 
+        ApplicationManager.getApplication().runWriteAction { virtualFile.delete(this) }
+
         TestCase.assertEquals(2, storage.registeredGems.size)
 
         TestCase.assertEquals(SignatureTestData.simpleContract,
@@ -109,7 +114,6 @@ class ImportExportTest : LightPlatformCodeInsightFixtureTestCase() {
         TestCase.assertEquals(SignatureTestData.simpleContract,
                 storage.getSignature(MethodInfo(ClassInfo(GemInfo("test_gem2", "1.2"), "Test::Fqn"), "met3", RVisibility.PUBLIC))
                         ?.contract?.let { contract -> StringDataOutput().let { contract.serialize(it); it.result.toString() } })
-
     }
 
     companion object {
