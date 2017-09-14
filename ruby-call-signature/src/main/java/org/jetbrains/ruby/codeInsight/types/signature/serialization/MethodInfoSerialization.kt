@@ -8,17 +8,18 @@ fun MethodInfo.serialize(stream: DataOutput) {
     classInfo.serialize(stream)
     stream.writeUTF(name)
     stream.writeByte(visibility.ordinal)
+    stream.writeBoolean(location != null)
     location?.serialize(stream)
 }
 
 fun MethodInfo(stream: DataInput): MethodInfo {
     val classInfo = ClassInfo(stream)
     val name = stream.readUTF()
-    val tmp = stream.readByte()
-    val visibility = RVisibility.values()[tmp.toInt()]
-    val location = Location(stream)
+    val visibility = RVisibility.values()[stream.readByte().toInt()]
+    val isLocationPresent = stream.readBoolean()
+    val location = if (isLocationPresent) Location(stream) else null
 
-    return MethodInfo(classInfo, name, visibility, location)
+    return MethodInfo.Impl(classInfo, name, visibility, location)
 }
 
 fun ClassInfo.serialize(stream: DataOutput) {

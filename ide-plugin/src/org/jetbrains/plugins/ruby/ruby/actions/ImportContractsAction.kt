@@ -6,6 +6,7 @@ import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.ruby.codeInsight.types.storage.server.PacketImpl
 import org.jetbrains.ruby.runtime.signature.server.SignatureServer
 
@@ -20,10 +21,14 @@ class ImportContractsAction : DumbAwareAction() {
             return
 
         ProgressManager.getInstance().runProcessWithProgressSynchronously({ ->
-            files.forEach {
-                val contents = VfsUtilCore.loadBytes(it)
-                SignatureServer.getStorage().readPacket(PacketImpl(contents))
-            }
+            files.forEach { importContractsFromFile(it) }
         }, "Importing Contracts", false, e.project)
+    }
+
+    companion object {
+        fun importContractsFromFile(file: VirtualFile) {
+            val contents = VfsUtilCore.loadBytes(file)
+            SignatureServer.getStorage().readPacket(PacketImpl(contents))
+        }
     }
 }

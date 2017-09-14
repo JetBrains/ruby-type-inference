@@ -1,10 +1,8 @@
 package org.jetbrains.ruby.codeInsight.types.storage.server;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.ruby.codeInsight.types.signature.MethodInfo;
-import org.jetbrains.ruby.codeInsight.types.signature.RSignatureContract;
-import org.jetbrains.ruby.codeInsight.types.signature.SignatureInfo;
-import org.jetbrains.ruby.codeInsight.types.signature.SignatureInfoKt;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ruby.codeInsight.types.signature.*;
 
 import java.util.Collection;
 
@@ -23,7 +21,28 @@ public interface RSignatureStorage<T extends RSignatureStorage.Packet> extends R
     }
 
     @NotNull
-    Collection<T> formPackets() throws StorageException;
+    Collection<T> formPackets(@Nullable ExportDescriptor descriptor) throws StorageException;
+
+    class ExportDescriptor {
+        private final boolean myInclude;
+
+        @NotNull
+        private final Collection<GemInfo> myGemsToIncludeOrExclude;
+
+        public ExportDescriptor(boolean include, @NotNull Collection<GemInfo> gemsToIncludeOrExclude) {
+            myInclude = include;
+            myGemsToIncludeOrExclude = gemsToIncludeOrExclude;
+        }
+
+        public boolean isInclude() {
+            return myInclude;
+        }
+
+        @NotNull
+        public Collection<GemInfo> getGemsToIncludeOrExclude() {
+            return myGemsToIncludeOrExclude;
+        }
+    }
 
     interface Packet {
         Collection<SignatureInfo> getSignatures();

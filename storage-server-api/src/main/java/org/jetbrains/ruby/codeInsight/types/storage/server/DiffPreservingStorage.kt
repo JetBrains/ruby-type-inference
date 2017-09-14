@@ -27,8 +27,8 @@ class DiffPreservingStorage<T : RSignatureStorage.Packet>(
         }
     }
 
-    override fun formPackets(): MutableCollection<T> {
-        return localDataStorage.formPackets()
+    override fun formPackets(descriptor: RSignatureStorage.ExportDescriptor?): MutableCollection<T> {
+        return localDataStorage.formPackets(descriptor)
     }
 
     override fun getRegisteredGems(): Collection<GemInfo> {
