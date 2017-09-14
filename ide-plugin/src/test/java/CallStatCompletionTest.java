@@ -56,6 +56,15 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
         transaction.commit();
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        try {
+            SchemaUtils.INSTANCE.drop(GemInfoTable.INSTANCE, ClassInfoTable.INSTANCE, MethodInfoTable.INSTANCE, SignatureTable.INSTANCE);
+        } finally {
+            super.tearDown();
+        }
+    }
+
     public void testSimple() {
         doTest("sample_test", createMethodInfo("A", "foo"), "test1", "test2");
     }

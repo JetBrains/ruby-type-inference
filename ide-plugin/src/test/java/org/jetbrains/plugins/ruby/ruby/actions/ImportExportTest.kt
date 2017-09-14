@@ -39,6 +39,8 @@ class ImportExportTest : LightPlatformCodeInsightFixtureTestCase() {
 
         listOf(gem1, gem2, gem3).forEach { insertSomething(it) }
 
+        TestCase.assertEquals(3, SignatureServer.getStorage().registeredGems.size)
+
         tempFile = FileUtil.createTempFile("temp_contract", ".bin")
     }
 
