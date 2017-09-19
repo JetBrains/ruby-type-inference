@@ -28,10 +28,7 @@ import org.jetbrains.plugins.ruby.ruby.lang.psi.holders.RContainer;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.methodCall.RArgumentToBlock;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.methodCall.RCall;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.references.RReference;
-import org.jetbrains.ruby.codeInsight.types.signature.MethodInfo;
-import org.jetbrains.ruby.codeInsight.types.signature.ParameterInfo;
-import org.jetbrains.ruby.codeInsight.types.signature.SignatureContract;
-import org.jetbrains.ruby.codeInsight.types.signature.SignatureNode;
+import org.jetbrains.ruby.codeInsight.types.signature.*;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ReferenceContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.TypedContractTransition;
@@ -142,10 +139,11 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
         try {
             return signatureProvider.getAllClassesWithFQN(typeName).stream()
                     .filter(classInfo -> {
-                        if (classInfo.getGemInfo() == null) {
+                        final GemInfo gemInfo = classInfo.getGemInfo();
+                        if (gemInfo == null || "LOCAL".equals(gemInfo.getName())) {
                             return true;
                         }
-                        final String parentGem = classInfo.getGemInfo().getName();
+                        final String parentGem = gemInfo.getName();
                         return GemSearchUtil.findGem(module, parentGem) != null;
                     })
                     .map(classInfo -> {
