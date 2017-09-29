@@ -406,7 +406,8 @@ get_args_info()
 
     ans_iterator = 0;
 
-    int new_version_flag = strcmp(RUBY_VERSION, "2.4.0") >= 0 ? 1 : 0;
+    int new_version_flag = strcmp(RUBY_VERSION, "2.4.0") > 0 ? 1 : 0;
+    LOG("%d\n", new_version_flag);
 
     for(i = param_size - 1 - new_version_flag, types_iterator = 0; (size_t)types_iterator < param_size; i--, types_iterator++)
     {
@@ -474,7 +475,7 @@ get_args_info()
         }
     }
 
-    if(param_size - has_block > 1 && has_kwrest)
+    if(param_size - has_block > 1 && has_kwrest && TYPE(*(ep + types_ids[types_iterator])) == T_FIXNUM)
         types_iterator--;
 
     for(i = 0; i < has_kwrest; i++, ans_iterator++, types_iterator--)
