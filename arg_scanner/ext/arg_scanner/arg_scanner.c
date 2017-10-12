@@ -440,10 +440,7 @@ get_args_info()
         const char* name = rb_id2name(cfp->iseq->body->local_table[ans_iterator]);
 
         char* type;
-        if(RARRAY_LEN(*(ep + types_ids[types_iterator])) == 0)
-            type = "Array/empty";
-        else
-            type = types[types_iterator];
+        type = types[types_iterator];
 
         ans[ans_iterator] = fast_join(',', 3, "REST", type, name);
     }
@@ -485,10 +482,7 @@ get_args_info()
         LOG("%d\n", rb_hash_size(*(ep + types_ids[types_iterator])));
         char* type;
 
-        if(rb_hash_size(*(ep + types_ids[types_iterator])) == 1)
-            type = "Hash/empty";
-        else
-            type = types[types_iterator];
+        type = types[types_iterator];
 
         ans[ans_iterator] = fast_join(',', 3, "KEYREST", type, name);
     }
