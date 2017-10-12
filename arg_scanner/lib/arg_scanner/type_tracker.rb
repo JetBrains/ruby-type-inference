@@ -1,6 +1,7 @@
 require 'set'
 require 'socket'
 require 'singleton'
+require 'thread'
 
 require_relative 'options'
 
@@ -13,7 +14,7 @@ module ArgScanner
     def initialize
       @cache = Set.new
       @socket = TCPSocket.new('127.0.0.1', 7777)
-
+      @mutex = Mutex.new
       TracePoint.trace(:call, :return) do |tp|
         case tp.event
           when :call
@@ -26,6 +27,7 @@ module ArgScanner
 
     attr_accessor :cache
     attr_accessor :socket
+    attr_accessor :mutex
 
 
     # @param [String] path
@@ -50,7 +52,9 @@ module ArgScanner
     end
 
     def put_to_socket(message)
-      socket.puts(message)
+      mutex.synchronize {
+        socket.puts(message)
+      }
     end
 
     private
