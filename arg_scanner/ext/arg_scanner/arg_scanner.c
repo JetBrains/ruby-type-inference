@@ -297,11 +297,6 @@ calc_sane_class_name(VALUE ptr)
         klass_name = "<err>";
     }
 
-    if (strlen(klass_name) >= 200)
-    {
-        fprintf(stderr, "ERROR: too long class name: '%s'\n", klass_name);
-        assert(false);
-    }
     return klass_name;
 }
 
