@@ -1,0 +1,27 @@
+version 'unspecified'
+
+apply plugin: 'java'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+
+dependencies {
+    compile project(':ruby-call-signature')
+    compile project(':storage-server-api')
+
+//    compile 'com.h2database:h2:1.4.193'
+    compile group: 'mysql', name: 'mysql-connector-java', version: '6.0.6'
+}
+
+task runViewer(type: JavaExec) {
+    classpath sourceSets.main.runtimeClasspath
+    main = 'org.jetbrains.ruby.runtime.signature.SignatureViewer'
+}
+
+sourceSets {
+    main.java.srcDirs = ['src']
+}
