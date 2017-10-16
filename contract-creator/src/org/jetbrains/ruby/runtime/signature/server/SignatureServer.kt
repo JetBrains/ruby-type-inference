@@ -42,11 +42,25 @@ object SignatureServer {
     @JvmStatic
     fun main(args: Array<String>) {
 
-        Database.connect("jdbc:h2:mem:test", driver = "org.h2.Driver")
-        val transaction = TransactionManager.manager.newTransaction()
-        SchemaUtils.create(GemInfoTable, ClassInfoTable, MethodInfoTable, SignatureTable)
-        transaction.commit()
-        runServer()
+        Database.connect("jdbc:mysql://localhost:3306/" + "ruby_type_contracts" + "?serverTimezone=UTC&nullNamePatternMatchesAll=true&useSSL=false",
+                driver = "com.mysql.cj.jdbc.Driver",
+                user = System.getProperty("mysql.user.name", "rubymine"),
+                password = System.getProperty("mysql.user.password", "rubymine"))
+
+        transaction { SchemaUtils.create(GemInfoTable, ClassInfoTable, MethodInfoTable, SignatureTable) }
+
+        Thread {
+            val server = SignatureServer
+            while (true) {
+                try {
+                    server.runServer()
+                } catch (e: Exception) {
+                    System.err.println(e)
+                }
+
+            }
+
+        }.start()
     }
 
     fun getContract(info: MethodInfo): SignatureContract? {
@@ -70,36 +84,44 @@ object SignatureServer {
 
         SocketDispatcher().start()
 
-        while (true) {
-            val jsonString = queue.poll(5, TimeUnit.SECONDS)
-            if (jsonString == null) {
-                flushNewTuplesToMainStorage()
-                if (queue.isEmpty()) isReady.set(true)
-                continue
-            }
-
-            try {
-                val currRTuple = ben(jsonTome) { RTupleBuilder.fromJson(jsonString) }
-
-                if (currRTuple?.methodInfo?.classInfo?.classFQN?.startsWith("#<") == true) {
+        try {
+            while (true) {
+                val jsonString = queue.poll(5, TimeUnit.SECONDS)
+                if (jsonString == null) {
+                    flushNewTuplesToMainStorage()
+                    if (queue.isEmpty()) isReady.set(true)
                     continue
                 }
 
-                ben(addTime) {
-                    if (currRTuple != null
-                            && !SignatureServer.newSignaturesContainer.acceptTuple(currRTuple) // optimization
-                            && !SignatureServer.mainContainer.acceptTuple(currRTuple)) {
-                        SignatureServer.newSignaturesContainer.addTuple(currRTuple)
+                try {
+                    val currRTuple = ben(jsonTome) { RTupleBuilder.fromJson(jsonString) }
+
+                    if (currRTuple?.methodInfo?.classInfo?.classFQN?.startsWith("#<") == true) {
+                        continue
                     }
+
+                    ben(addTime) {
+                        if (currRTuple != null
+                                && !SignatureServer.newSignaturesContainer.acceptTuple(currRTuple) // optimization
+                                && !SignatureServer.mainContainer.acceptTuple(currRTuple)) {
+                            SignatureServer.newSignaturesContainer.addTuple(currRTuple)
+                        }
+                    }
+                } catch (e: JsonParseException) {
+                    LOGGER.severe("!$jsonString!\n$e")
                 }
-            } catch (e: JsonParseException) {
-                LOGGER.severe("!$jsonString!\n$e")
             }
+        } finally {
+            LOGGER.warning("Exiting...");
         }
     }
 
     private fun flushNewTuplesToMainStorage() {
         for (methodInfo in newSignaturesContainer.registeredMethods) {
+            if (!methodInfo.validate()) {
+                LOGGER.warning("validation failed, cannot store " + methodInfo.toString())
+                continue;
+            }
             newSignaturesContainer.getSignature(methodInfo)?.let { newSignature ->
                 transaction {
                     val storedSignature = mainContainer.getSignature(methodInfo)
@@ -125,11 +147,22 @@ object SignatureServer {
             try {
                 val br = BufferedReader(InputStreamReader(socket.getInputStream()))
 
+                var iter = 0L
+                var millis = System.currentTimeMillis()
                 while (true) {
+                    ++iter
                     val currString = ben(readTime) { br.readLine() }
                             ?: break
-                    if (queue.size > queue.remainingCapacity()) {
-                        LOGGER.info("Queue capacity is low")
+                    val remainingCapacity = queue.remainingCapacity()
+                    val mask = (1L shl 12) - 1L
+                    if (iter and mask == 0L) {
+                        val timeInterval = System.currentTimeMillis() - millis
+                        millis = System.currentTimeMillis()
+                        LOGGER.info( "[" + iter.toString() + "]" +"per second: " +
+                                ((mask +1) * 1000 / timeInterval).toString());
+                        if (queue.size > remainingCapacity) {
+                            LOGGER.info("Queue capacity is low: " + remainingCapacity)
+                        }
                     }
                     queue.put(currString)
                     isReady.set(false)
