@@ -1,6 +1,6 @@
 package org.jetbrains.ruby.codeInsight.types.signature;
 
-import javafx.util.Pair;
+import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition;
@@ -231,9 +231,9 @@ public class RSignatureContract implements SignatureContract {
 
         while (!bfsQueue.isEmpty()) {
             Pair<PairOfNodes, Integer> currItem = bfsQueue.poll();
-            SignatureNode oldNode = currItem.getKey().myOldNode;
-            SignatureNode newNode = currItem.getKey().myNewNode;
-            Integer level = currItem.getValue();
+            SignatureNode oldNode = currItem.getFirst().myOldNode;
+            SignatureNode newNode = currItem.getFirst().myNewNode;
+            Integer level = currItem.getSecond();
 
             Map<SignatureNode, Integer> childNodesWithPows = new HashMap<>();
 
