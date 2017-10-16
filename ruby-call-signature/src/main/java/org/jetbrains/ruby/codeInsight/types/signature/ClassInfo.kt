@@ -1,10 +1,23 @@
 package org.jetbrains.ruby.codeInsight.types.signature
 
+object ClassInfoConstraint {
+    val LENGTH_OF_FQN = 200
+}
+
 interface ClassInfo {
     val gemInfo: GemInfo?
     val classFQN: String
+    
 
     data class Impl(override val gemInfo: GemInfo?, override val classFQN: String) : ClassInfo
+
+    fun validate(): Boolean {
+        if (classFQN.length > ClassInfoConstraint.LENGTH_OF_FQN) {
+            return false;
+        }
+        val gemInfoVal = gemInfo
+        return gemInfoVal == null || gemInfoVal.validate()
+    }
 }
 
 
