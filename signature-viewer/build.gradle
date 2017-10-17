@@ -19,8 +19,19 @@ dependencies {
 
 task runViewer(type: JavaExec) {
     classpath sourceSets.main.runtimeClasspath
-    main = 'org.jetbrains.ruby.runtime.signature.SignatureViewer'
+    main = 'org.jetbrains.ruby.runtime.signature.SignatureViewerKt'
 }
+
+task runExport(type: JavaExec) {
+    if (project.hasProperty("outputDir")) {
+        args = ["$outputDir"]
+    } else {
+        args = ["rmcOutput"]
+    }
+    classpath sourceSets.main.runtimeClasspath
+    main = 'org.jetbrains.ruby.runtime.signature.SignatureExportKt'
+}
+
 
 sourceSets {
     main.java.srcDirs = ['src']
