@@ -14,6 +14,7 @@ import org.jetbrains.ruby.codeInsight.types.signature.GemInfo
 import org.jetbrains.ruby.codeInsight.types.signature.MethodInfo
 import org.jetbrains.ruby.codeInsight.types.signature.RVisibility
 import org.jetbrains.ruby.codeInsight.types.signature.serialization.*
+import org.jetbrains.ruby.codeInsight.types.storage.server.DatabaseProvider
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.ClassInfoTable
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.GemInfoTable
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.MethodInfoTable
@@ -29,7 +30,7 @@ class ImportExportTest : LightPlatformCodeInsightFixtureTestCase() {
     override fun setUp() {
         super.setUp()
 
-        Database.connect("jdbc:h2:mem:test", driver = "org.h2.Driver")
+        DatabaseProvider.connect(true)
         transaction = TransactionManager.manager.newTransaction()
         SchemaUtils.create(GemInfoTable, ClassInfoTable, MethodInfoTable, SignatureTable)
 

@@ -1,21 +1,24 @@
 package org.jetbrains.ruby.codeInsight.types.storage.server.impl
 
 import junit.framework.TestCase
-import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SchemaUtils
+import org.jetbrains.exposed.sql.Transaction
+import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.ruby.codeInsight.types.signature.*
 import org.jetbrains.ruby.codeInsight.types.signature.serialization.BlobSerializer
 import org.jetbrains.ruby.codeInsight.types.signature.serialization.SignatureContract
 import org.jetbrains.ruby.codeInsight.types.signature.serialization.StringDataInput
+import org.jetbrains.ruby.codeInsight.types.storage.server.DatabaseProvider
 import org.junit.Test
 
 class RSignatureProviderTest : TestCase() {
     var transaction: Transaction? = null
 
     override fun setUp() {
+        DatabaseProvider.connect(true)
         super.setUp()
-
-        Database.connect("jdbc:h2:mem:test", driver = "org.h2.Driver")
         transaction = TransactionManager.manager.newTransaction()
         SchemaUtils.create(GemInfoTable, ClassInfoTable, MethodInfoTable, SignatureTable)
     }

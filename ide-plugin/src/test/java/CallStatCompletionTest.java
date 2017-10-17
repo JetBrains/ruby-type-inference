@@ -7,7 +7,6 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCa
 import com.yourkit.util.FileUtil;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.exposed.sql.Database;
 import org.jetbrains.exposed.sql.SchemaUtils;
 import org.jetbrains.exposed.sql.Transaction;
 import org.jetbrains.exposed.sql.transactions.ThreadLocalTransactionManager;
@@ -18,6 +17,7 @@ import org.jetbrains.ruby.codeInsight.types.signature.*;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.serialization.SignatureContractSerializationKt;
 import org.jetbrains.ruby.codeInsight.types.signature.serialization.StringDataOutput;
+import org.jetbrains.ruby.codeInsight.types.storage.server.DatabaseProvider;
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.ClassInfoTable;
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.GemInfoTable;
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.MethodInfoTable;
@@ -45,7 +45,7 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        Database.Companion.connect("jdbc:h2:mem:test", "org.h2.Driver", "", "", connection -> Unit.INSTANCE,
+        DatabaseProvider.INSTANCE.connect(true, connection -> Unit.INSTANCE,
                 database -> {
                     ThreadLocalTransactionManager manager = new ThreadLocalTransactionManager(database, DEFAULT_ISOLATION_LEVEL);
                     TransactionManager.Companion.setManager(manager);
