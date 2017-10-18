@@ -32,6 +32,16 @@ task runExport(type: JavaExec) {
     main = 'org.jetbrains.ruby.runtime.signature.SignatureExportKt'
 }
 
+task runImport(type: JavaExec) {
+    if (project.hasProperty("inputDir")) {
+        args = ["$inputDir"]
+    } else {
+        args = ["rmcInput"]
+    }
+    classpath sourceSets.main.runtimeClasspath
+    main = 'org.jetbrains.ruby.runtime.signature.SignatureImportKt'
+}
+
 
 sourceSets {
     main.java.srcDirs = ['src']
