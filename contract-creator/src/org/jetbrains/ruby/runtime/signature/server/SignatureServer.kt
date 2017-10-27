@@ -13,6 +13,7 @@ import org.jetbrains.ruby.codeInsight.types.storage.server.impl.GemInfoTable
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.MethodInfoTable
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.SignatureTable
 import org.jetbrains.ruby.runtime.signature.server.serialisation.RTupleBuilder
+import org.jetbrains.ruby.runtime.signature.server.serialisation.MethodCachedNameBuilder
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
@@ -34,6 +35,8 @@ object SignatureServer {
 
     private val queue = ArrayBlockingQueue<String>(10024)
     private val isReady = AtomicBoolean(true)
+    private val cachedMethodNames = mutableMapOf<Int, String>()
+
     val readTime = AtomicLong(0)
     val jsonTome = AtomicLong(0)
     val addTime = AtomicLong(0)
@@ -97,25 +100,36 @@ object SignatureServer {
             return
         }
 
-        try {
-            parseJson(jsonString)
-        } catch (e: JsonParseException) {
-            LOGGER.severe("!$jsonString!\n$e")
+            try {
+                if (jsonString.startsWith("{\"id\"")) {
+                    parseMethodJson(jsonString)
+                }
+                else {
+                    parseRTupleJson(jsonString)
+                }
+            } catch (e: JsonParseException) {
+                LOGGER.severe("!$jsonString!\n$e")
+            }
         }
     }
 
-    private fun parseJson(jsonString: String) {
-        val currRTuple = ben(jsonTome) { RTupleBuilder.fromJson(jsonString) }
+    private fun parseMethodJson(jsonString: String) {
+        val result = ben(SignatureServer.jsonTome) { MethodCachedNameBuilder.fromJson(jsonString) }
+        SignatureServer.cachedMethodNames.put(result.id, result.method_name)
+    }
+
+    private fun parseRTupleJson(jsonString: String) {
+        val currRTuple = ben(SignatureServer.jsonTome) { RTupleBuilder.fromJson(jsonString) }
 
         if (currRTuple?.methodInfo?.classInfo?.classFQN?.startsWith("#<") == true) {
             return
         }
 
-        ben(addTime) {
+        ben(SignatureServer.addTime) {
             if (currRTuple != null
-                    && !newSignaturesContainer.acceptTuple(currRTuple) // optimization
-                    && !mainContainer.acceptTuple(currRTuple)) {
-                newSignaturesContainer.addTuple(currRTuple)
+                    && !SignatureServer.newSignaturesContainer.acceptTuple(currRTuple) // optimization
+                    && !SignatureServer.mainContainer.acceptTuple(currRTuple)) {
+                SignatureServer.newSignaturesContainer.addTuple(currRTuple)
             }
         }
     }

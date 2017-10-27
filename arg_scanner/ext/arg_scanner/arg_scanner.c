@@ -36,7 +36,7 @@ typedef struct
 
 typedef struct
 {
-    VALUE method_name;
+    long method_name_id;
     char* args_info;
     VALUE path;
     char* call_info_kw_args;
@@ -47,8 +47,9 @@ typedef struct
 void Init_arg_scanner();
 
 static char* get_args_info();
-static VALUE handle_call(VALUE self, VALUE lineno, VALUE method_name, VALUE path);
+static VALUE handle_call(VALUE self, VALUE lineno, VALUE rb_method_name_id, VALUE path);
 static VALUE handle_return(VALUE self, VALUE signature, VALUE return_type_name);
+static VALUE get_param_info_rb(VALUE self);
 
 // For testing
 static VALUE get_args_info_rb(VALUE self);
@@ -76,7 +77,6 @@ static void signature_t_free(void *s)
 static void
 signature_t_mark(signature_t *sig)
 {
-    rb_gc_mark(sig->method_name);
     rb_gc_mark(sig->path);
 }
 
@@ -85,6 +85,7 @@ void Init_arg_scanner() {
     rb_define_module_function(mArgScanner, "handle_call", handle_call, 3);
     rb_define_module_function(mArgScanner, "handle_return", handle_return, 2);
     rb_define_module_function(mArgScanner, "get_args_info", get_args_info_rb, 0);
+    rb_define_module_function(mArgScanner, "get_param_info", get_param_info_rb, 0);
     rb_define_module_function(mArgScanner, "get_call_info", get_call_info_rb, 0);
 }
 
@@ -101,11 +102,11 @@ my_rb_vm_get_binding_creatable_next_cfp(const rb_thread_t *th, const rb_control_
 }
 
 static VALUE
-handle_call(VALUE self, VALUE lineno, VALUE method_name, VALUE path)
+handle_call(VALUE self, VALUE lineno, VALUE rb_method_name_id, VALUE path)
 {
     //VALUE method_sym = rb_tracearg_method_id(trace_arg);
     //VALUE path = trace_arg->path;
-    VALUE c_method_name = method_name;
+    long method_name_id = FIX2LONG(rb_method_name_id);
     VALUE c_path = path;
     int c_lineno = FIX2INT(lineno);//trace_arg->lineno;
 
@@ -113,11 +114,11 @@ handle_call(VALUE self, VALUE lineno, VALUE method_name, VALUE path)
     sign = ALLOC(signature_t);
 
     sign->lineno = c_lineno;
-    sign->method_name = c_method_name;
+    sign->method_name_id = method_name_id;
     sign->path = c_path;
 
 #ifdef DEBUG_ARG_SCANNER
-    LOG("Getting args info for %s %s %d \n", rb_id2name(SYM2ID(sign->method_name)), StringValuePtr(sign->path), sign->lineno);
+    LOG("Getting args info for %d %s %d \n", sign->method_name_id, StringValuePtr(sign->path), sign->lineno);
 #endif
     sign->args_info = get_args_info();
 
@@ -157,7 +158,7 @@ handle_return(VALUE self, VALUE signature, VALUE return_type_name)
 
 
 #ifdef DEBUG_ARG_SCANNER
-    LOG("%s \n", rb_id2name(SYM2ID(sign->method_name)));
+    LOG("%d \n", sign->method_name_id);
     LOG("%d \n", sign->call_info_argc);
     LOG("%s \n", call_info_kw_args);
     LOG("%s \n", args_info);
@@ -168,13 +169,11 @@ handle_return(VALUE self, VALUE signature, VALUE return_type_name)
     assert(strlen(args_info) < 1000);
 
     snprintf(json_mes, 2000,
-        "{\"method_name\":\"%s\",\"call_info_argc\":\"%d\",\"call_info_kw_args\":\"%s\",\"args_info\":\"%s\",\"visibility\":\"%s\",\"path\":\"%s\",\"lineno\":\"%d\",",
-        rb_id2name(SYM2ID(sign->method_name)),
+        "{\"method_name\":\"%d\",\"call_info_argc\":\"%d\",\"call_info_kw_args\":\"%s\",\"args_info\":\"%s\",\"visibility\":\"%s\",\"path\":\"%s\",\"lineno\":\"%d\",",
+        sign->method_name_id,
         sign->call_info_argc,
         call_info_kw_args,
-        //StringValuePtr(receiver_name),
         args_info,
-        //StringValuePtr(return_type_name),
         "PUBLIC",
         StringValuePtr(sign->path),
         sign->lineno);
@@ -364,6 +363,109 @@ fast_join(char sep, size_t count, ...)
     return fast_join_array(sep, count, strings);
 }
 
+static VALUE
+get_param_info_rb(VALUE self)
+{
+    rb_thread_t *thread;
+    rb_control_frame_t *cfp;
+
+    thread = ruby_current_thread;
+    cfp = thread->cfp;
+
+    cfp += 3;
+
+    size_t param_size = cfp->iseq->body->param.size;
+    size_t lead_num = cfp->iseq->body->param.lead_num;
+    size_t opt_num = cfp->iseq->body->param.opt_num;
+    size_t post_num = cfp->iseq->body->param.post_num;
+
+    unsigned int has_rest = cfp->iseq->body->param.flags.has_rest;
+    unsigned int has_kw = cfp->iseq->body->param.flags.has_kw;
+    unsigned int has_kwrest = cfp->iseq->body->param.flags.has_kwrest;
+    unsigned int has_block = cfp->iseq->body->param.flags.has_block;
+
+    const char **ans = (const char **)malloc(param_size * sizeof(const char*));
+
+    if(param_size == 0)
+        return 0;
+
+    size_t i, ans_iterator;
+
+    ans_iterator = 0;
+
+    if(has_kw)
+        param_size--;
+
+    for(i = 0; i < lead_num; i++, ans_iterator++)
+    {
+        const char* name = rb_id2name(cfp->iseq->body->local_table[ans_iterator]);
+        ans[ans_iterator] = fast_join(',', 2, "REQ", name);
+    }
+
+    for(i = 0; i < opt_num; i++, ans_iterator++)
+    {
+        const char* name = rb_id2name(cfp->iseq->body->local_table[ans_iterator]);
+        ans[ans_iterator] = fast_join(',', 2, "OPT", name);
+    }
+
+    for(i = 0; i < has_rest; i++, ans_iterator++)
+    {
+        const char* name = rb_id2name(cfp->iseq->body->local_table[ans_iterator]);
+        ans[ans_iterator] = fast_join(',', 2, "REST", name);
+    }
+
+    for(i = 0; i < post_num; i++, ans_iterator++)
+    {
+        const char* name = rb_id2name(cfp->iseq->body->local_table[ans_iterator]);
+        ans[ans_iterator] = fast_join(',', 2, "POST", name);
+    }
+
+
+    if(cfp->iseq->body->param.keyword != NULL)
+    {
+        const ID *keywords = cfp->iseq->body->param.keyword->table;
+        size_t kw_num = cfp->iseq->body->param.keyword->num;
+        size_t required_num = cfp->iseq->body->param.keyword->required_num;
+
+        for(i = 0; i < required_num; i++, ans_iterator++)
+        {
+            ID key = keywords[i];
+            ans[ans_iterator] = fast_join(',', 2, "KEYREQ", rb_id2name(key));
+        }
+        for(i = required_num; i < kw_num; i++, ans_iterator++)
+        {
+            ID key = keywords[i];
+            ans[ans_iterator] = fast_join(',', 2, "KEY", rb_id2name(key));
+        }
+    }
+
+    for(i = 0; i < has_kwrest; i++, ans_iterator++)
+    {
+        const char* name = rb_id2name(cfp->iseq->body->local_table[ans_iterator]);
+
+        ans[ans_iterator] = fast_join(',', 2, "KEYREST", name);
+    }
+
+    for(i = 0; i < has_block; i++, ans_iterator++)
+    {
+        const char* name = rb_id2name(cfp->iseq->body->local_table[ans_iterator]);
+        ans[ans_iterator] = fast_join(',', 2, "BLOCK", name);
+    }
+
+    char *answer = fast_join_array(';', ans_iterator, ans);
+
+    for(i = 0; i < ans_iterator; i++) {
+        free(ans[i]);
+    }
+    free(ans);
+
+    VALUE rb_answer = rb_str_new_cstr(answer);
+
+    free(answer);
+
+    return rb_answer;
+}
+
 static char*
 get_args_info()
 {
@@ -426,30 +528,25 @@ get_args_info()
 
     for(i = 0; i < lead_num; i++, ans_iterator++, types_iterator--)
     {
-        const char* name = rb_id2name(cfp->iseq->body->local_table[ans_iterator]);
-        ans[ans_iterator] = fast_join(',', 3, "REQ", types[types_iterator], name);
+        ans[ans_iterator] = fast_join(',', 1, types[types_iterator]);
     }
 
     for(i = 0; i < opt_num; i++, ans_iterator++, types_iterator--)
     {
-        const char* name = rb_id2name(cfp->iseq->body->local_table[ans_iterator]);
-        ans[ans_iterator] = fast_join(',', 3, "OPT", types[types_iterator], name);
+        ans[ans_iterator] = fast_join(',', 1, types[types_iterator]);
     }
 
     for(i = 0; i < has_rest; i++, ans_iterator++, types_iterator--)
     {
-        const char* name = rb_id2name(cfp->iseq->body->local_table[ans_iterator]);
-
         char* type;
         type = types[types_iterator];
 
-        ans[ans_iterator] = fast_join(',', 3, "REST", type, name);
+        ans[ans_iterator] = fast_join(',', 1, type);
     }
 
     for(i = 0; i < post_num; i++, ans_iterator++, types_iterator--)
     {
-        const char* name = rb_id2name(cfp->iseq->body->local_table[ans_iterator]);
-        ans[ans_iterator] = fast_join(',', 3, "POST", types[types_iterator], name);
+        ans[ans_iterator] = fast_join(',', 1, types[types_iterator]);
     }
 
 
@@ -464,12 +561,12 @@ get_args_info()
         for(i = 0; i < required_num; i++, ans_iterator++, types_iterator--)
         {
             ID key = keywords[i];
-            ans[ans_iterator] = fast_join(',', 3, "KEYREQ", types[types_iterator], rb_id2name(key));
+            ans[ans_iterator] = fast_join(',', 2, types[types_iterator], rb_id2name(key));
         }
         for(i = required_num; i < kw_num; i++, ans_iterator++, types_iterator--)
         {
             ID key = keywords[i];
-            ans[ans_iterator] = fast_join(',', 3, "KEY", types[types_iterator], rb_id2name(key));
+            ans[ans_iterator] = fast_join(',', 2, types[types_iterator], rb_id2name(key));
         }
     }
 
@@ -479,28 +576,16 @@ get_args_info()
     for(i = 0; i < has_kwrest; i++, ans_iterator++, types_iterator--)
     {
         const char* name = rb_id2name(cfp->iseq->body->local_table[ans_iterator]);
-        LOG("%s\n", calc_sane_class_name(*(ep + types_ids[types_iterator])));
-        LOG("%d\n", rb_hash_size(*(ep + types_ids[types_iterator])));
         char* type;
 
         type = types[types_iterator];
 
-        ans[ans_iterator] = fast_join(',', 3, "KEYREST", type, name);
+        ans[ans_iterator] = fast_join(',', 2, type, name);
     }
 
     for(i = 0; i < has_block; i++, ans_iterator++, types_iterator--)
     {
-        const char* name = rb_id2name(cfp->iseq->body->local_table[ans_iterator]);
-        ans[ans_iterator] = fast_join(',', 3, "BLOCK", types[types_iterator], name);
-    }
-
-    int answer_size = 0;
-
-    for(i = 0; i < ans_iterator; i++)
-    {
-        answer_size += strlen(ans[i]);
-        if(i + 1 < ans_iterator)
-            answer_size++;
+        ans[ans_iterator] = fast_join(',', 2, "BLOCK", types[types_iterator]);
     }
 
     LOG("%d\n", ans_iterator)

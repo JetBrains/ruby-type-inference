@@ -19,7 +19,7 @@ public class RTupleBuilder {
 
     private final String myReturnTypeName;
 
-    private RTupleBuilder(ServerResponseBean bean) {
+    private RTupleBuilder(ServerSignatureResponseBean bean) {
 
         myMethodInfo = MethodInfoKt.MethodInfo(
                 ClassInfoKt.ClassInfo(GemInfoKt.GemInfoOrNull(bean.gem_name, bean.gem_version), beautifyClassName(bean.receiver_name)),
@@ -83,7 +83,7 @@ public class RTupleBuilder {
 
     @Nullable
     public static RTuple fromJson(@NotNull String json) {
-        final ServerResponseBean result = GSON.fromJson(json, ServerResponseBean.class);
+        final ServerSignatureResponseBean result = GSON.fromJson(json, ServerSignatureResponseBean.class);
         return result != null ? new RTupleBuilder(result).build() : null;
     }
 

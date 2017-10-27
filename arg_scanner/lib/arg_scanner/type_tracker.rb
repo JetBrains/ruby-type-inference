@@ -55,6 +55,9 @@ module ArgScanner
 
     def initialize
       @cache = Set.new
+      @method_cache = Hash.new
+      @class_cache = Hash.new
+
       @socket = TCPSocket.new('127.0.0.1', 7777)
       @mutex = Mutex.new
       @prefix = ENV["ARG_SCANNER_PREFIX"]
@@ -73,6 +76,8 @@ module ArgScanner
     attr_accessor :enable_debug
     attr_accessor :performance_monitor
     attr_accessor :cache
+    attr_accessor :method_cache
+    attr_accessor :class_cache
     attr_accessor :socket
     attr_accessor :mutex
     attr_accessor :prefix
@@ -109,7 +114,29 @@ module ArgScanner
       #handle_call(VALUE self, VALUE lineno, VALUE method_name, VALUE path)
       if prefix.nil? || tp.path.start_with?(prefix)
         performance_monitor.on_call unless performance_monitor.nil?
-        signature = ArgScanner.handle_call(tp.lineno, tp.method_id, tp.path)
+
+        method_id = tp.method_id
+        method_cached_id = nil
+
+        defined_class = tp.defined_class
+        receiver_name = defined_class.name ? defined_class : defined_class.ancestors.first
+        return if !receiver_name || !receiver_name.to_s || receiver_name.to_s.length > 200
+
+        key = "\"method_name\":\"#{method_id}\",\"receiver_name\":\"#{receiver_name}\""
+
+        if !method_cache.has_key? key
+          new_method_cached_id = method_cache.size
+          method_cache[key] = new_method_cached_id
+          receiver_name = defined_class.name ? defined_class : defined_class.ancestors.first
+
+          json = "{\"id\":\"#{new_method_cached_id}\",#{key},\"param_info\":\"#{ArgScanner.get_param_info}\"}"
+          puts json
+          put_to_socket(json)
+        end
+
+        method_cached_id = method_cache[key]
+
+        signature = ArgScanner.handle_call(tp.lineno, method_cached_id, tp.path)
         signatures.push(signature)
       else
         signatures.push(false)
@@ -126,16 +153,9 @@ module ArgScanner
 
         performance_monitor.on_handled_return unless performance_monitor.nil?
 
-        defined_class = tp.defined_class
-        return if !defined_class || defined_class.singleton_class?
-
-        receiver_name = defined_class.name ? defined_class : defined_class.ancestors.first
         return_type_name = tp.return_value.class
-
-        return if !receiver_name || !receiver_name.to_s || receiver_name.to_s.length > 200
-
         json = ArgScanner.handle_return(signature, return_type_name) +
-          "\"receiver_name\":\"#{receiver_name}\",\"return_type_name\":\"#{return_type_name}\","
+            "\"return_type_name\":\"#{return_type_name}\","
 
         if cache.add?(json)
           gem_name, gem_version = TypeTracker.extract_gem_name_and_version(tp.path)
