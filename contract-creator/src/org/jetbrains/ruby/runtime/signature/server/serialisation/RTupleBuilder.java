@@ -9,6 +9,11 @@ import java.util.*;
 
 public class RTupleBuilder {
     private static final Gson GSON = new Gson();
+    private static Map<Integer, ServerMethodNameResponseBean> cachedMethods = new HashMap<>();
+
+    public static void addMethodToCache(ServerMethodNameResponseBean bean) {
+        cachedMethods.put(bean.id, bean);
+    }
 
     @NotNull
     private final MethodInfo myMethodInfo;
@@ -21,11 +26,14 @@ public class RTupleBuilder {
 
     private RTupleBuilder(ServerSignatureResponseBean bean) {
 
+        ServerMethodNameResponseBean method = cachedMethods.get(bean.method_id);
+
         myMethodInfo = MethodInfoKt.MethodInfo(
-                ClassInfoKt.ClassInfo(GemInfoKt.GemInfoOrNull(bean.gem_name, bean.gem_version), beautifyClassName(bean.receiver_name)),
-                bean.method_name,
-                RVisibility.valueOf(bean.visibility),
-                new Location(bean.path, bean.lineno));
+                ClassInfoKt.ClassInfo(GemInfoKt.GemInfoOrNull(method.gem_name, method.gem_version), beautifyClassName(method.receiver_name)),
+                method.method_name,
+                //TODO hohohaha
+                RVisibility.valueOf("PUBLIC"),
+                new Location(method.path, method.lineno));
 
 
         final int argc;
@@ -40,7 +48,7 @@ public class RTupleBuilder {
         //this.myArgsTypes.addAll(Arrays.asList(argsTypeName.split("\\s*;\\s*")));
 
 
-        String argsInfo = bean.args_info;
+        String argsInfo = method.param_info;
         myArgsInfo = new ArrayList<>();
         if (!argsInfo.equals("")) {
             for (String argument : Arrays.asList(argsInfo.split("\\s*;\\s*"))) {

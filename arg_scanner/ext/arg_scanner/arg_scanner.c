@@ -169,14 +169,11 @@ handle_return(VALUE self, VALUE signature, VALUE return_type_name)
     assert(strlen(args_info) < 1000);
 
     snprintf(json_mes, 2000,
-        "{\"method_name\":\"%d\",\"call_info_argc\":\"%d\",\"call_info_kw_args\":\"%s\",\"args_info\":\"%s\",\"visibility\":\"%s\",\"path\":\"%s\",\"lineno\":\"%d\",",
+        "{\"method_id\":\"%d\",\"call_info_argc\":\"%d\",\"call_info_kw_args\":\"%s\",\"args_info\":\"%s\",",
         sign->method_name_id,
         sign->call_info_argc,
         call_info_kw_args,
-        args_info,
-        "PUBLIC",
-        StringValuePtr(sign->path),
-        sign->lineno);
+        args_info);
 
     LOG("%s \n", json_mes);
 
@@ -538,10 +535,7 @@ get_args_info()
 
     for(i = 0; i < has_rest; i++, ans_iterator++, types_iterator--)
     {
-        char* type;
-        type = types[types_iterator];
-
-        ans[ans_iterator] = fast_join(',', 1, type);
+        ans[ans_iterator] = fast_join(',', 1, types[types_iterator]);
     }
 
     for(i = 0; i < post_num; i++, ans_iterator++, types_iterator--)

@@ -35,7 +35,6 @@ object SignatureServer {
 
     private val queue = ArrayBlockingQueue<String>(10024)
     private val isReady = AtomicBoolean(true)
-    private val cachedMethodNames = mutableMapOf<Int, String>()
 
     val readTime = AtomicLong(0)
     val jsonTome = AtomicLong(0)
@@ -105,6 +104,7 @@ object SignatureServer {
                     parseMethodJson(jsonString)
                 }
                 else {
+                    val currRTuple = ben(jsonTome) { RTupleBuilder.fromJson(jsonString) }
                     parseRTupleJson(jsonString)
                 }
             } catch (e: JsonParseException) {

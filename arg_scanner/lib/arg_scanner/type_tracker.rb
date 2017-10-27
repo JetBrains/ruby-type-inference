@@ -158,6 +158,7 @@ module ArgScanner
             "\"return_type_name\":\"#{return_type_name}\","
 
         if cache.add?(json)
+          #puts json
           gem_name, gem_version = TypeTracker.extract_gem_name_and_version(tp.path)
           json += '"gem_name":"' + gem_name.to_s + '","gem_version":"' + gem_version.to_s + '"}'
           put_to_socket(json)
