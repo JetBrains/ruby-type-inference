@@ -1,11 +1,5 @@
 package org.jetbrains.ruby.codeInsight.types.signature
 
-
-object MethodInfoContraint {
-    val LENGTH_OF_NAME = 100
-    val LENGTH_OF_PATH = 1000
-}
-
 interface MethodInfo {
     val classInfo: ClassInfo
     val name: String
@@ -18,14 +12,19 @@ interface MethodInfo {
                     override val location: Location?) : MethodInfo
 
     fun validate(): Boolean {
-        if (name.length > MethodInfoContraint.LENGTH_OF_NAME) {
+        if (name.length > LENGTH_OF_NAME) {
             return false
         }
         val loc = location
-        if (loc == null || loc.path.length > MethodInfoContraint.LENGTH_OF_PATH) {
+        if (loc == null || loc.path.length > LENGTH_OF_PATH) {
             return false
         }
-        return classInfo.validate();
+        return classInfo.validate()
+    }
+
+    companion object {
+        val LENGTH_OF_NAME = 100
+        val LENGTH_OF_PATH = 1000
     }
 }
 
