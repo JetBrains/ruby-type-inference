@@ -20,7 +20,6 @@ import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.Symbol;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.SymbolUtil;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.impl.REmptyType;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.primitive.RBooleanType;
-import org.jetbrains.plugins.ruby.ruby.codeInsight.types.primitive.RNilType;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RPossibleCall;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RPsiElement;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RubyPsiUtil;
@@ -200,8 +199,8 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
         final Set<String> returnTypes = contract.Companion.getAllReturnTypes(contract);
         final RType trueType = RBooleanType.getTrueType(project);
         final RType falseType = RBooleanType.getFalseType(project);
-        final RType booleanType = RTypeUtil.union(trueType, falseType);
-        final RNilType nilType = RNilType.create(project);
+        final RType booleanType = RTypeFactory.createBoolType(project);
+        final RType nilType = RTypeFactory.createNilType(project);
 
         final RType retType = returnTypes.stream().map((it) -> {
             if (it.equals(nilType.getName())) {
@@ -291,22 +290,30 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
         RType returnVal = returnTypes.stream()
                 .map(name -> RTypeFactory.createTypeByFQN(call.getProject(), name))
                 .reduce(REmptyType.INSTANCE, RTypeUtil::union);
-        if (returnVal != REmptyType.INSTANCE) {
-            StringBuilder builder = new StringBuilder();
-            for (Set<String> typeArgument : typeArguments) {
-                builder.append("(");
-                for (String typename : typeArgument) {
-                    builder.append(typename);
-                    builder.append(", ");
-                }
-                builder.append(") ");
-            }
-            builder.append("-> ");
-            builder.append(returnVal.getName());
-            LOG.warn(builder.toString());
+        if (LOG.isDebugEnabled() && returnVal != REmptyType.INSTANCE) {
+            debugReturnType(typeArguments, returnVal);
         }
         return returnVal;
 
+    }
+
+    private void debugReturnType(final @NotNull List<Set<String>> typeArguments,
+                                 final @NotNull RType returnVal) {
+        final StringBuilder builder = new StringBuilder();
+        for (Set<String> typeArgument : typeArguments) {
+            builder.append("(");
+
+            List<String> typeArgumentList = new ArrayList<>(typeArgument);
+            Collections.sort(typeArgumentList);
+            for (String typename : typeArgumentList) {
+                builder.append(typename);
+                builder.append(", ");
+            }
+            builder.append(") ");
+        }
+        builder.append("-> ");
+        builder.append(returnVal.getName());
+        LOG.warn(builder.toString());
     }
 
     private void addReadTypesList(Map<SignatureNode, List<Set<String>>> nextLayer, List<Set<String>> readTypeSets, SignatureNode to) {
@@ -384,7 +391,7 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
             arg = ((RAssoc) arg).getValue();
         }
 
-        final Set<String> argTypeNames = new LinkedHashSet<>();
+        final Set<String> argTypeNames = new HashSet<>();
         if (arg instanceof RExpression) {
             RType type = ((RExpression) arg).getType();
             if (type instanceof RUnionType) {
