@@ -5,11 +5,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.yourkit.util.FileUtil;
-import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.exposed.sql.SchemaUtils;
 import org.jetbrains.exposed.sql.Transaction;
-import org.jetbrains.exposed.sql.transactions.ThreadLocalTransactionManager;
 import org.jetbrains.exposed.sql.transactions.TransactionManager;
 import org.jetbrains.plugins.ruby.ruby.run.LocalRunner;
 import org.jetbrains.plugins.ruby.ruby.run.RubyCommandLine;
@@ -33,8 +31,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static org.jetbrains.exposed.sql.transactions.TransactionApiKt.DEFAULT_ISOLATION_LEVEL;
-
 public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestCase {
 
     private static final Logger LOGGER = Logger.getInstance("CallStatCompletionTest");
@@ -47,12 +43,7 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        DatabaseProvider.INSTANCE.connect(true, connection -> Unit.INSTANCE,
-                database -> {
-                    ThreadLocalTransactionManager manager = new ThreadLocalTransactionManager(database, DEFAULT_ISOLATION_LEVEL);
-                    TransactionManager.Companion.setManager(manager);
-                    return manager;
-                });
+        DatabaseProvider.INSTANCE.connect(true);
         final Transaction transaction = TransactionManager.Companion.getManager().newTransaction(4);
         SchemaUtils.INSTANCE.create(GemInfoTable.INSTANCE, ClassInfoTable.INSTANCE, MethodInfoTable.INSTANCE, SignatureTable.INSTANCE);
         transaction.commit();

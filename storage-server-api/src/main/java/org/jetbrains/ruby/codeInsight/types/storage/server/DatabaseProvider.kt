@@ -1,8 +1,6 @@
 package org.jetbrains.ruby.codeInsight.types.storage.server
 
 import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.transactions.TransactionManager
-import java.sql.Connection
 
 object DatabaseProvider {
     private val IN_MEMORY_URL = "jdbc:h2:mem:test"
@@ -16,42 +14,13 @@ object DatabaseProvider {
     private val MYSQL_PASSWORD = System.getProperty("mysql.user.password", "rubymine")
 
 
-    fun connect(inMemory: Boolean = false,
-                setupConnection: ((Connection) -> Unit)? = null,
-                manager: ((Database) -> TransactionManager)? = null) {
+    fun connect(inMemory: Boolean = false) {
         if (inMemory) {
-            if (setupConnection == null && manager == null) {
-                Database.connect(IN_MEMORY_URL, driver = IN_MEMORY_DRIVER)
-            } else if (manager == null) {
-                Database.connect(IN_MEMORY_URL, driver = IN_MEMORY_DRIVER, setupConnection = setupConnection!!)
-            } else if (setupConnection == null) {
-                Database.connect(IN_MEMORY_URL, driver = IN_MEMORY_DRIVER, manager = manager)
-            } else {
-                Database.connect(IN_MEMORY_URL, driver = IN_MEMORY_DRIVER,
-                        setupConnection = setupConnection, manager = manager)
-            }
+            Database.connect(IN_MEMORY_URL, driver = IN_MEMORY_DRIVER)
         } else {
-            if (setupConnection == null && manager == null) {
-                Database.connect(MYSQL_URL, driver = MYSQL_DRIVER,
-                        user = MYSQL_USER,
-                        password = MYSQL_PASSWORD)
-            } else if (manager == null) {
-                Database.connect(MYSQL_URL, driver = MYSQL_DRIVER,
-                        user = MYSQL_USER,
-                        password = MYSQL_PASSWORD,
-                        setupConnection = setupConnection!!)
-            } else if (setupConnection == null) {
-                Database.connect(MYSQL_URL, driver = MYSQL_DRIVER,
-                        user = MYSQL_USER,
-                        password = MYSQL_PASSWORD,
-                        manager = manager)
-            } else {
-                Database.connect(MYSQL_URL, driver = MYSQL_DRIVER,
-                        user = MYSQL_USER,
-                        password = MYSQL_PASSWORD,
-                        setupConnection = setupConnection,
-                        manager = manager)
-            }
+            Database.connect(MYSQL_URL, driver = MYSQL_DRIVER,
+                    user = MYSQL_USER,
+                    password = MYSQL_PASSWORD)
         }
     }
 }
