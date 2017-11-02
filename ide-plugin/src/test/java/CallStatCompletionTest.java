@@ -27,6 +27,8 @@ import org.junit.Assert;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -102,7 +104,10 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
     }
 
     private void executeScript(@NotNull String runnableScriptName) {
-        final String scriptPath = PathManager.getAbsolutePath("ide-plugin/" + getTestDataPath() + "/" + runnableScriptName);
+        String scriptPath = PathManager.getAbsolutePath(getTestDataPath() + "/" + runnableScriptName);
+        if (!Files.exists(Paths.get(scriptPath))) {
+            scriptPath =  PathManager.getAbsolutePath("ide-plugin/" + getTestDataPath() + "/" + runnableScriptName);
+        }
 
         final Module module = myFixture.getModule();
 
