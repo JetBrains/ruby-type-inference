@@ -203,4 +203,28 @@ class RSignatureProviderTest : TestCase() {
         assertEquals(2, signatureInfo2!!.contract.nodeCount)
     }
 
+    object SignatureTestData {
+        val simpleContract = """
+1 arg 0
+4
+3
+1 0 a
+2 0 b
+2 0 c
+1
+3 0 d
+1
+3 1 0
+0
+            """
+
+        val trivialContract = """
+0
+2
+1
+1 0 a
+0
+"""
+
+    }
 }
