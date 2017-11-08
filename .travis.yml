@@ -2,11 +2,12 @@ language: ruby
 dist: trusty
 os:
   - linux
-  - osx
+#  - osx
 
 rvm:
   - 2.3.3
-  - 2.4.0
+  - 2.4.2
+  - ruby-head
 
 services:
   - mysql
