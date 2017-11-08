@@ -83,18 +83,8 @@ public class RMethodSyntheticSymbol extends SymbolImpl implements RMethodSymbol 
     }
 
     @Override
-    public int getMinParameterCount(@Nullable final PsiElement invocationPoint) {
-        return RMethodBase.getMinNumberOfArgumentsFromArgumentInfos(myArgsInfo);
-    }
-
-    @Override
-    public int getMaxParameterCount(@Nullable final PsiElement invocationPoint) {
-        return RMethodBase.getMaxNumberOfArgumentsFromArgumentInfos(myArgsInfo);
-    }
-
-    @Override
-    public boolean hasCodeBlockArgument() {
-        return !myArgsInfo.isEmpty() && myArgsInfo.get(myArgsInfo.size() - 1).getType() == ArgumentInfo.Type.BLOCK;
+    public @Nullable List<ArgumentInfo> getArgumentInfos() {
+        return myArgsInfo;
     }
 
     @Nullable
