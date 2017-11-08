@@ -8,6 +8,12 @@
 
 //#define DEBUG_ARG_SCANNER 1
 
+#if RUBY_API_VERSION_CODE >= 20500
+    #define TH_CFP(thread) ((rb_control_frame_t *)(thread)->ec.cfp)
+#else
+    #define TH_CFP(thread) ((rb_control_frame_t *)(thread)->cfp)
+#endif
+
 #ifdef DEBUG_ARG_SCANNER
     #define LOG(f, args...) { fprintf(stderr, "DEBUG: '%s'=", #args); fprintf(stderr, f, ##args); fflush(stderr); }
 #else
@@ -186,7 +192,7 @@ get_call_info()
     call_info_t *info;
 
     thread = ruby_current_thread;
-    cfp = thread->cfp;
+    cfp = TH_CFP(thread);
     info = malloc(sizeof(call_info_t));
     //info = ALLOC(call_info_t);
     //info = malloc;
@@ -365,7 +371,7 @@ get_args_info()
     rb_control_frame_t *cfp;
 
     thread = ruby_current_thread;
-    cfp = thread->cfp;
+    cfp = TH_CFP(thread);
 
     cfp += 3;
 
@@ -550,7 +556,7 @@ is_call_info_needed()
     rb_control_frame_t *cfp;
 
     thread = ruby_current_thread;
-    cfp = thread->cfp;
+    cfp = TH_CFP(thread);
     cfp += 3;
 
     return (cfp->iseq->body->param.flags.has_opt
