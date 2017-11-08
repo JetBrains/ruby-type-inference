@@ -3,6 +3,7 @@ package org.jetbrains.plugins.ruby.ruby.codeInsight.types;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -18,6 +19,7 @@ import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.RMethodSynt
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.Symbol;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.SymbolUtil;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.impl.REmptyType;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.types.primitive.RBooleanType;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RPossibleCall;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RPsiElement;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RubyPsiUtil;
@@ -41,6 +43,10 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
+
+    private static final Logger LOG = Logger.getInstance(RubyStatTypeProviderImpl.class);
+    private static final boolean USE_ONLY_RETURN_TYPES = true;
+
 
     private int countMask(List<Set<String>> readTypes, String type, int currPosition) {
         int ans = 0;
@@ -166,6 +172,56 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
 
     @NotNull
     public RType createTypeByCallAndArgs(@NotNull final RExpression call, @NotNull final List<RPsiElement> callArgs) {
+        if (USE_ONLY_RETURN_TYPES) {
+            return createTypeByReturnType(call);
+        } else {
+            return createTypeByArgs(call, callArgs);
+        }
+    }
+    @NotNull
+    private RType createTypeByReturnType(@NotNull final RExpression call) {
+        Project project = call.getProject();
+
+        final PsiElement callElement = call instanceof RCall ? ((RCall) call).getPsiCommand() : call;
+
+        SignatureServer callStatServer = SignatureServer.INSTANCE;
+
+        final MethodInfo methodInfo = findMethodInfo(callElement);
+        if (methodInfo == null) {
+            return REmptyType.INSTANCE;
+        }
+        SignatureContract contract = callStatServer.getContract(methodInfo);
+
+        if (contract == null) {
+            return REmptyType.INSTANCE;
+        }
+
+        final Set<String> returnTypes = contract.Companion.getAllReturnTypes(contract);
+        final RType trueType = RBooleanType.getTrueType(project);
+        final RType falseType = RBooleanType.getFalseType(project);
+        final RType booleanType = RTypeFactory.createBoolType(project);
+        final RType nilType = RTypeFactory.createNilType(project);
+
+        final RType retType = returnTypes.stream().map((it) -> {
+            if (it.equals(nilType.getName())) {
+                return null;
+            }
+            if (it.equals(trueType.getName()) || it.equals(falseType.getName())) {
+                return booleanType;
+            }
+            return RTypeFactory.createTypeByFQN(project, it);
+        }).filter(Objects::nonNull).reduce(RTypeUtil::intersect).orElse(REmptyType.INSTANCE);
+
+        if (retType != REmptyType.INSTANCE && LOG.isDebugEnabled()) {
+            LOG.debug(String.format("%s: %s %s", call.getContainingFile().getVirtualFile().getPath(),
+                    call.getText(), retType.getPresentableName()));
+        }
+        return retType;
+    }
+
+
+    @NotNull
+    private RType createTypeByArgs(@NotNull final RExpression call, @NotNull final List<RPsiElement> callArgs) {
 
         final PsiElement callElement = call instanceof RCall ? ((RCall) call).getPsiCommand() : call;
 
@@ -193,43 +249,71 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
 
             if ((arg instanceof RAssoc) ^ (paramInfos.get(i1).getModifier() == ParameterInfo.Type.KEY ||
                     paramInfos.get(i1).getModifier() == ParameterInfo.Type.KEYREQ)) {
-                Logger.getInstance(RubyStatTypeProviderImpl.class).error("wtf");
+                return REmptyType.INSTANCE;
             }
         }
 
+        Map<SignatureNode, List<Set<String>>> currNodesAndReadTypes = new HashMap<>();
+        currNodesAndReadTypes.put(contract.getStartNode(), new ArrayList<>());
 
-            Map<SignatureNode, List<Set<String>>> currNodesAndReadTypes = new HashMap<>();
-            currNodesAndReadTypes.put(contract.getStartNode(), new ArrayList<>());
+        boolean[] isArgumentPresent = RTupleBuilder.calcPresentArguments(paramInfos, callArgs.size(), kwArgs.keySet());
 
-            boolean[] isArgumentPresent = RTupleBuilder.calcPresentArguments(paramInfos, callArgs.size(), kwArgs.keySet());
+        List<Set<String>> typeArguments = new ArrayList<>();
 
-            for (int i = 0; i < isArgumentPresent.length; i++) {
-                if (isArgumentPresent[i]) {
-                    if (paramInfos.get(i).getModifier() == ParameterInfo.Type.KEY ||
-                            paramInfos.get(i).getModifier() == ParameterInfo.Type.KEYREQ) {
-                        RPsiElement currElement = kwArgs.get(paramInfos.get(i).getName());
-
-                        currNodesAndReadTypes = getNextLevel(currNodesAndReadTypes, getArgTypeNames(currElement), i);
-                    } else {
-                        RPsiElement currElement = simpleArgs.poll();
-                        currNodesAndReadTypes = getNextLevel(currNodesAndReadTypes, getArgTypeNames(currElement), i);
-                    }
+        for (int i = 0; i < isArgumentPresent.length; i++) {
+            if (isArgumentPresent[i]) {
+                RPsiElement currElement;
+                if (paramInfos.get(i).getModifier() == ParameterInfo.Type.KEY ||
+                        paramInfos.get(i).getModifier() == ParameterInfo.Type.KEYREQ) {
+                    currElement = kwArgs.get(paramInfos.get(i).getName());
                 } else {
-                    currNodesAndReadTypes = getNextLevelByString(currNodesAndReadTypes, "-", i);
+                    currElement = simpleArgs.poll();
                 }
+                final Set<String> argTypeNames = getArgTypeNames(currElement);
+                typeArguments.add(argTypeNames);
+                currNodesAndReadTypes = getNextLevel(currNodesAndReadTypes, argTypeNames, i);
+            } else {
+                Set<String> tmpSet = new HashSet<>();
+                tmpSet.add("-");
+                typeArguments.add(tmpSet);
+                currNodesAndReadTypes = getNextLevel(currNodesAndReadTypes, tmpSet, i);
             }
+        }
 
-            final Set<String> returnTypes = new HashSet<>();
-            currNodesAndReadTypes.forEach((node, readTypeSets) -> {
-                for (final ContractTransition transition : node.getTransitions().keySet()) {
-                    returnTypes.addAll(transition.getValue(readTypeSets));
-                }
-            });
+        final Set<String> returnTypes = new HashSet<>();
+        currNodesAndReadTypes.forEach((node, readTypeSets) -> {
+            for (final ContractTransition transition : node.getTransitions().keySet()) {
+                returnTypes.addAll(transition.getValue(readTypeSets));
+            }
+        });
 
-            return returnTypes.stream()
-                    .map(name -> RTypeFactory.createTypeByFQN(call.getProject(), name))
-                    .reduce(REmptyType.INSTANCE, RTypeUtil::union);
+        RType returnVal = returnTypes.stream()
+                .map(name -> RTypeFactory.createTypeByFQN(call.getProject(), name))
+                .reduce(REmptyType.INSTANCE, RTypeUtil::union);
+        if (LOG.isDebugEnabled() && returnVal != REmptyType.INSTANCE) {
+            debugReturnType(typeArguments, returnVal);
+        }
+        return returnVal;
 
+    }
+
+    private void debugReturnType(final @NotNull List<Set<String>> typeArguments,
+                                 final @NotNull RType returnVal) {
+        final StringBuilder builder = new StringBuilder();
+        for (Set<String> typeArgument : typeArguments) {
+            builder.append("(");
+
+            List<String> typeArgumentList = new ArrayList<>(typeArgument);
+            Collections.sort(typeArgumentList);
+            for (String typename : typeArgumentList) {
+                builder.append(typename);
+                builder.append(", ");
+            }
+            builder.append(") ");
+        }
+        builder.append("-> ");
+        builder.append(returnVal.getName());
+        LOG.warn(builder.toString());
     }
 
     private void addReadTypesList(Map<SignatureNode, List<Set<String>>> nextLayer, List<Set<String>> readTypeSets, SignatureNode to) {

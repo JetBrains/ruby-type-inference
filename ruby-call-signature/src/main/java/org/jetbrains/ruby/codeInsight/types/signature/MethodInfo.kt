@@ -10,6 +10,22 @@ interface MethodInfo {
                     override val name: String,
                     override val visibility: RVisibility,
                     override val location: Location?) : MethodInfo
+
+    fun validate(): Boolean {
+        if (name.length > LENGTH_OF_NAME) {
+            return false
+        }
+        val loc = location
+        if (loc == null || loc.path.length > LENGTH_OF_PATH) {
+            return false
+        }
+        return classInfo.validate()
+    }
+
+    companion object {
+        val LENGTH_OF_NAME = 100
+        val LENGTH_OF_PATH = 1000
+    }
 }
 
 fun MethodInfo(classInfo: ClassInfo, name: String, visibility: RVisibility) = MethodInfo.Impl(classInfo, name, visibility, null)

@@ -21,6 +21,9 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/ruby-type-inference.iml" filepath="$PROJECT_DIR$/.idea/modules/ruby-type-inference.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/ruby-type-inference_main.iml" filepath="$PROJECT_DIR$/.idea/modules/ruby-type-inference_main.iml" group="ruby-type-inference" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/ruby-type-inference_test.iml" filepath="$PROJECT_DIR$/.idea/modules/ruby-type-inference_test.iml" group="ruby-type-inference" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/signature-viewer.iml" filepath="$PROJECT_DIR$/.idea/modules/signature-viewer.iml" group="signature-viewer" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/signature-viewer/signature-viewer_main.iml" filepath="$PROJECT_DIR$/.idea/modules/signature-viewer/signature-viewer_main.iml" group="signature-viewer" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/signature-viewer/signature-viewer_test.iml" filepath="$PROJECT_DIR$/.idea/modules/signature-viewer/signature-viewer_test.iml" group="signature-viewer" />
       <module fileurl="file://$PROJECT_DIR$/ruby-call-signature/src/test/src.iml" filepath="$PROJECT_DIR$/ruby-call-signature/src/test/src.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/storage-server-api/storage-server-api.iml" filepath="$PROJECT_DIR$/.idea/modules/storage-server-api/storage-server-api.iml" group="storage-server-api" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/storage-server-api/storage-server-api_main.iml" filepath="$PROJECT_DIR$/.idea/modules/storage-server-api/storage-server-api_main.iml" group="storage-server-api" />

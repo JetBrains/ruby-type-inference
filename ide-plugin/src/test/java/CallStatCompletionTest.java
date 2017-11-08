@@ -5,12 +5,12 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.yourkit.util.FileUtil;
-import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.exposed.sql.Database;
 import org.jetbrains.exposed.sql.SchemaUtils;
 import org.jetbrains.exposed.sql.Transaction;
 import org.jetbrains.exposed.sql.transactions.ThreadLocalTransactionManager;
+import org.jetbrains.exposed.sql.transactions.ThreadLocalTransactionManagerKt;
 import org.jetbrains.exposed.sql.transactions.TransactionManager;
 import org.jetbrains.plugins.ruby.ruby.run.LocalRunner;
 import org.jetbrains.plugins.ruby.ruby.run.RubyCommandLine;
@@ -18,6 +18,7 @@ import org.jetbrains.ruby.codeInsight.types.signature.*;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.serialization.SignatureContractSerializationKt;
 import org.jetbrains.ruby.codeInsight.types.signature.serialization.StringDataOutput;
+import org.jetbrains.ruby.codeInsight.types.storage.server.DatabaseProvider;
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.ClassInfoTable;
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.GemInfoTable;
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.MethodInfoTable;
@@ -27,11 +28,11 @@ import org.junit.Assert;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-
-import static org.jetbrains.exposed.sql.transactions.TransactionApiKt.DEFAULT_ISOLATION_LEVEL;
 
 public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestCase {
 
@@ -45,21 +46,19 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        Database.Companion.connect("jdbc:h2:mem:test", "org.h2.Driver", "", "", connection -> Unit.INSTANCE,
-                database -> {
-                    ThreadLocalTransactionManager manager = new ThreadLocalTransactionManager(database, DEFAULT_ISOLATION_LEVEL);
-                    TransactionManager.Companion.setManager(manager);
-                    return manager;
-                });
-        final Transaction transaction = TransactionManager.Companion.getManager().newTransaction(4);
-        SchemaUtils.INSTANCE.create(GemInfoTable.INSTANCE, ClassInfoTable.INSTANCE, MethodInfoTable.INSTANCE, SignatureTable.INSTANCE);
-        transaction.commit();
+        ThreadLocalTransactionManagerKt.transaction((Function1<Transaction, Void>) transaction -> {
+            SchemaUtils.INSTANCE.create(GemInfoTable.INSTANCE, ClassInfoTable.INSTANCE, MethodInfoTable.INSTANCE, SignatureTable.INSTANCE);
+            return null;
+        });
     }
 
     @Override
     protected void tearDown() throws Exception {
         try {
-            SchemaUtils.INSTANCE.drop(GemInfoTable.INSTANCE, ClassInfoTable.INSTANCE, MethodInfoTable.INSTANCE, SignatureTable.INSTANCE);
+            ThreadLocalTransactionManagerKt.transaction((Function1<Transaction, Void>) transaction -> {
+                SchemaUtils.INSTANCE.drop(GemInfoTable.INSTANCE, ClassInfoTable.INSTANCE, MethodInfoTable.INSTANCE, SignatureTable.INSTANCE);
+                return null;
+            });
         } finally {
             super.tearDown();
         }
@@ -102,7 +101,10 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
     }
 
     private void executeScript(@NotNull String runnableScriptName) {
-        final String scriptPath = PathManager.getAbsolutePath("ide-plugin/" + getTestDataPath() + "/" + runnableScriptName);
+        String scriptPath = PathManager.getAbsolutePath(getTestDataPath() + "/" + runnableScriptName);
+        if (!Files.exists(Paths.get(scriptPath))) {
+            scriptPath =  PathManager.getAbsolutePath("ide-plugin/" + getTestDataPath() + "/" + runnableScriptName);
+        }
 
         final Module module = myFixture.getModule();
 

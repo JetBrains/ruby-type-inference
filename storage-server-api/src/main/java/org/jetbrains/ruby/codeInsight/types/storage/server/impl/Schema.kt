@@ -11,8 +11,8 @@ import java.sql.Blob
 import kotlin.reflect.KProperty
 
 object GemInfoTable : IntIdTable() {
-    val name = varchar("name", 50).index()
-    val version = varchar("version", 50)
+    val name = varchar("name", GemInfo.LENGTH_OF_GEMNAME).index()
+    val version = varchar("version", GemInfo.LENGTH_OF_GEMVERSION)
 }
 
 class GemInfoData(id: EntityID<Int>) : IntEntity(id), GemInfo {
@@ -26,7 +26,7 @@ class GemInfoData(id: EntityID<Int>) : IntEntity(id), GemInfo {
 
 object ClassInfoTable : IntIdTable() {
     val gemInfo = reference("gem_info", GemInfoTable, ReferenceOption.CASCADE).nullable()
-    val fqn = varchar("fqn", 200)
+    val fqn = varchar("fqn", ClassInfo.LENGTH_OF_FQN)
 }
 
 class ClassInfoData(id: EntityID<Int>) : IntEntity(id), ClassInfo {
@@ -40,9 +40,9 @@ class ClassInfoData(id: EntityID<Int>) : IntEntity(id), ClassInfo {
 
 object MethodInfoTable : IntIdTable() {
     val classInfo = reference("class_info", ClassInfoTable, ReferenceOption.CASCADE)
-    val name = varchar("name", 100)
+    val name = varchar("name", MethodInfo.LENGTH_OF_NAME)
     val visibility = enumeration("visibility", RVisibility::class.java)
-    val locationFile = varchar("location_file", 1000).nullable()
+    val locationFile = varchar("location_file", MethodInfo.LENGTH_OF_PATH).nullable()
     val locationLineno = integer("location_lineno").default(0)
 }
 

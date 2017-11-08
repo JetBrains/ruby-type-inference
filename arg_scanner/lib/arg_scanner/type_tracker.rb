@@ -1,10 +1,53 @@
 require 'set'
 require 'socket'
 require 'singleton'
+require 'thread'
 
 require_relative 'options'
 
 module ArgScanner
+
+  class TypeTrackerPerformanceMonitor
+    def initialize
+      @enable_debug = ENV["ARG_SCANNER_DEBUG"]
+      @call_counter = 0
+      @handled_call_counter = 0
+      @submitted_call_counter = 0
+      @old_handled_call_counter = 0
+      @time = Time.now
+    end
+
+
+    def on_call
+      @submitted_call_counter += 1
+    end
+
+    def on_return
+      @call_counter += 1
+
+      if enable_debug && call_counter % 100000 == 0
+        $stderr.puts("calls #{call_counter} handled #{handled_call_counter} submitted #{submitted_call_counter}"\
+                     "delta  #{handled_call_counter - old_handled_call_counter} time #{Time.now - @time}")
+        @old_handled_call_counter = handled_call_counter
+        @time = Time.now
+      end
+    end
+
+    def on_handled_return
+      @handled_call_counter += 1
+    end
+
+    private
+
+    attr_accessor :submitted_call_counter
+    attr_accessor :handled_call_counter
+    attr_accessor :old_handled_call_counter
+    attr_accessor :call_counter
+    attr_accessor :enable_debug
+
+  end
+
+
   class TypeTracker
     include Singleton
 
@@ -13,7 +56,10 @@ module ArgScanner
     def initialize
       @cache = Set.new
       @socket = TCPSocket.new('127.0.0.1', 7777)
-
+      @mutex = Mutex.new
+      @prefix = ENV["ARG_SCANNER_PREFIX"]
+      @enable_debug = ENV["ARG_SCANNER_DEBUG"]
+      @performance_monitor = if @enable_debug then TypeTrackerPerformanceMonitor.new else nil end
       TracePoint.trace(:call, :return) do |tp|
         case tp.event
           when :call
@@ -24,8 +70,13 @@ module ArgScanner
       end
     end
 
+    attr_accessor :enable_debug
+    attr_accessor :performance_monitor
     attr_accessor :cache
     attr_accessor :socket
+    attr_accessor :mutex
+    attr_accessor :prefix
+
 
 
     # @param [String] path
@@ -50,20 +101,30 @@ module ArgScanner
     end
 
     def put_to_socket(message)
-      socket.puts(message)
+      mutex.synchronize { socket.puts(message) }
     end
 
     private
     def handle_call(tp)
       #handle_call(VALUE self, VALUE lineno, VALUE method_name, VALUE path)
-      signature = ArgScanner.handle_call(tp.lineno, tp.method_id, tp.path)
-      signatures.push(signature)
+      if prefix.nil? || tp.path.start_with?(prefix)
+        performance_monitor.on_call unless performance_monitor.nil?
+        signature = ArgScanner.handle_call(tp.lineno, tp.method_id, tp.path)
+        signatures.push(signature)
+      else
+        signatures.push(false)
+      end
     end
 
     def handle_return(tp)
       sigi = signatures
+      performance_monitor.on_return unless performance_monitor.nil?
+
       unless sigi.empty?
         signature = sigi.pop
+        return unless signature
+
+        performance_monitor.on_handled_return unless performance_monitor.nil?
 
         defined_class = tp.defined_class
         return if !defined_class || defined_class.singleton_class?
@@ -74,7 +135,7 @@ module ArgScanner
         return if !receiver_name || !receiver_name.to_s || receiver_name.to_s.length > 200
 
         json = ArgScanner.handle_return(signature, return_type_name) +
-            "\"receiver_name\":\"#{receiver_name}\",\"return_type_name\":\"#{return_type_name}\","
+          "\"receiver_name\":\"#{receiver_name}\",\"return_type_name\":\"#{return_type_name}\","
 
         if cache.add?(json)
           gem_name, gem_version = TypeTracker.extract_gem_name_and_version(tp.path)

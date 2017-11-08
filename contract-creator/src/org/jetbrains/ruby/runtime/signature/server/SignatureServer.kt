@@ -1,11 +1,10 @@
 package org.jetbrains.ruby.runtime.signature.server
 
 import com.google.gson.JsonParseException
-import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
-import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.ruby.codeInsight.types.signature.*
+import org.jetbrains.ruby.codeInsight.types.storage.server.DatabaseProvider
 import org.jetbrains.ruby.codeInsight.types.storage.server.DiffPreservingStorage
 import org.jetbrains.ruby.codeInsight.types.storage.server.RSignatureStorage
 import org.jetbrains.ruby.codeInsight.types.storage.server.SignatureStorageImpl
@@ -42,11 +41,22 @@ object SignatureServer {
     @JvmStatic
     fun main(args: Array<String>) {
 
-        Database.connect("jdbc:h2:mem:test", driver = "org.h2.Driver")
-        val transaction = TransactionManager.manager.newTransaction()
-        SchemaUtils.create(GemInfoTable, ClassInfoTable, MethodInfoTable, SignatureTable)
-        transaction.commit()
-        runServer()
+        DatabaseProvider.connect()
+
+        transaction { SchemaUtils.create(GemInfoTable, ClassInfoTable, MethodInfoTable, SignatureTable) }
+
+        Thread {
+            val server = SignatureServer
+            while (true) {
+                try {
+                    server.runServer()
+                } catch (e: Exception) {
+                    System.err.println(e)
+                }
+
+            }
+
+        }.start()
     }
 
     fun getContract(info: MethodInfo): SignatureContract? {
@@ -57,11 +67,11 @@ object SignatureServer {
         return getMethodByClass(receiverName, methodName)?.let { mainContainer.getSignature(it)?.contract }
     }
 
-    fun getStorage() = mainContainer
-
     fun getMethodByClass(className: String, methodName: String): MethodInfo? {
         return mainContainer.getRegisteredMethods(ClassInfo(className)).find { it.name == methodName }
     }
+
+    fun getStorage() = mainContainer
 
     fun isProcessingRequests() = !isReady.get()
 
@@ -70,36 +80,52 @@ object SignatureServer {
 
         SocketDispatcher().start()
 
-        while (true) {
-            val jsonString = queue.poll(5, TimeUnit.SECONDS)
-            if (jsonString == null) {
-                flushNewTuplesToMainStorage()
-                if (queue.isEmpty()) isReady.set(true)
-                continue
+        try {
+            while (true) {
+                pollJson()
             }
+        } finally {
+            LOGGER.warning("Exiting...")
+        }
+    }
 
-            try {
-                val currRTuple = ben(jsonTome) { RTupleBuilder.fromJson(jsonString) }
+    private fun pollJson() {
+        val jsonString = queue.poll(5, TimeUnit.SECONDS)
+        if (jsonString == null) {
+            flushNewTuplesToMainStorage()
+            if (queue.isEmpty()) isReady.set(true)
+            return
+        }
 
-                if (currRTuple?.methodInfo?.classInfo?.classFQN?.startsWith("#<") == true) {
-                    continue
-                }
+        try {
+            parseJson(jsonString)
+        } catch (e: JsonParseException) {
+            LOGGER.severe("!$jsonString!\n$e")
+        }
+    }
 
-                ben(addTime) {
-                    if (currRTuple != null
-                            && !SignatureServer.newSignaturesContainer.acceptTuple(currRTuple) // optimization
-                            && !SignatureServer.mainContainer.acceptTuple(currRTuple)) {
-                        SignatureServer.newSignaturesContainer.addTuple(currRTuple)
-                    }
-                }
-            } catch (e: JsonParseException) {
-                LOGGER.severe("!$jsonString!\n$e")
+    private fun parseJson(jsonString: String) {
+        val currRTuple = ben(jsonTome) { RTupleBuilder.fromJson(jsonString) }
+
+        if (currRTuple?.methodInfo?.classInfo?.classFQN?.startsWith("#<") == true) {
+            return
+        }
+
+        ben(addTime) {
+            if (currRTuple != null
+                    && !newSignaturesContainer.acceptTuple(currRTuple) // optimization
+                    && !mainContainer.acceptTuple(currRTuple)) {
+                newSignaturesContainer.addTuple(currRTuple)
             }
         }
     }
 
     private fun flushNewTuplesToMainStorage() {
         for (methodInfo in newSignaturesContainer.registeredMethods) {
+            if (!methodInfo.validate()) {
+                LOGGER.warning("validation failed, cannot store " + methodInfo.toString())
+                continue
+            }
             newSignaturesContainer.getSignature(methodInfo)?.let { newSignature ->
                 transaction {
                     val storedSignature = mainContainer.getSignature(methodInfo)
@@ -124,13 +150,10 @@ object SignatureServer {
         override fun run() {
             try {
                 val br = BufferedReader(InputStreamReader(socket.getInputStream()))
-
                 while (true) {
+                    onLowQueueCapacity()
                     val currString = ben(readTime) { br.readLine() }
                             ?: break
-                    if (queue.size > queue.remainingCapacity()) {
-                        LOGGER.info("Queue capacity is low")
-                    }
                     queue.put(currString)
                     isReady.set(false)
                 }
@@ -142,7 +165,31 @@ object SignatureServer {
                 } catch (e: IOException) {
                     LOGGER.severe("Can't close a socket")
                 }
+                onExit(handlerNumber)
+            }
+        }
 
+        companion object {
+
+            private var iter = 0L
+            private var millis = System.currentTimeMillis()
+
+            fun onLowQueueCapacity() {
+                ++iter
+                val remainingCapacity = queue.remainingCapacity()
+                val mask = (1L shl 12) - 1L
+                if (iter and mask == 0L) {
+                    val timeInterval = System.currentTimeMillis() - millis
+                    millis = System.currentTimeMillis()
+                    LOGGER.info( "[" + iter.toString() + "]" +" per second: " +
+                            ((mask +1) * 1000 / timeInterval).toString())
+                    if (queue.size > remainingCapacity) {
+                        LOGGER.info("Queue capacity is low: " + remainingCapacity)
+                    }
+                }
+            }
+
+            fun onExit(handlerNumber: Int) {
                 LOGGER.info("Connection with client# $handlerNumber closed")
 
                 LOGGER.info("Stats: ")

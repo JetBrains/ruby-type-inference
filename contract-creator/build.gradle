@@ -3,9 +3,11 @@ sourceSets {
 }
 
 dependencies {
-    compile project(':ruby-call-signature'), project(':storage-server-api')
+    compile project(':ruby-call-signature')
+    compile project(':storage-server-api')
 
-    compile 'com.h2database:h2:1.4.193'
+//    compile 'com.h2database:h2:1.4.193'
+    compile group: 'mysql', name: 'mysql-connector-java', version: '6.0.6'
 }
 
 task runServer(type: JavaExec) {
