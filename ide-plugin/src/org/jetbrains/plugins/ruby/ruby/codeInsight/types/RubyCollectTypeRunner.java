@@ -11,9 +11,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.ruby.run.configuration.AbstractRubyRunConfiguration;
 import org.jetbrains.plugins.ruby.ruby.run.configuration.CollectTypeExecSettings;
 import org.jetbrains.plugins.ruby.ruby.run.configuration.RubyAbstractCommandLineState;
-import org.jetbrains.plugins.ruby.ruby.run.configuration.RubyRunner;
+import org.jetbrains.plugins.ruby.ruby.run.configuration.RubyProgramRunner;
 
-public class RubyCollectTypeRunner extends RubyRunner {
+public class RubyCollectTypeRunner extends RubyProgramRunner {
     @NotNull
     private static final String RUBY_COLLECT_TYPE_RUNNER_ID = "RubyCollectType";
 

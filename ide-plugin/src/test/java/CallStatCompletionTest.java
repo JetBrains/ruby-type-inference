@@ -9,16 +9,13 @@ import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.exposed.sql.SchemaUtils;
 import org.jetbrains.exposed.sql.Transaction;
-import org.jetbrains.exposed.sql.transactions.ThreadLocalTransactionManager;
 import org.jetbrains.exposed.sql.transactions.ThreadLocalTransactionManagerKt;
-import org.jetbrains.exposed.sql.transactions.TransactionManager;
-import org.jetbrains.plugins.ruby.ruby.run.LocalRunner;
 import org.jetbrains.plugins.ruby.ruby.run.RubyCommandLine;
+import org.jetbrains.plugins.ruby.ruby.run.RubyLocalRunner;
 import org.jetbrains.ruby.codeInsight.types.signature.*;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.serialization.SignatureContractSerializationKt;
 import org.jetbrains.ruby.codeInsight.types.signature.serialization.StringDataOutput;
-import org.jetbrains.ruby.codeInsight.types.storage.server.DatabaseProvider;
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.ClassInfoTable;
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.GemInfoTable;
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.MethodInfoTable;
@@ -109,13 +106,13 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
         final Module module = myFixture.getModule();
 
         try {
-            LOGGER.warn(getProcessOutput(new RubyCommandLine(LocalRunner.getRunner(module), false)
+            LOGGER.warn(getProcessOutput(new RubyCommandLine(RubyLocalRunner.getRunner(module), false)
                     .withWorkDirectory("../arg_scanner")
                     .withExePath("rake")
                     .withParameters("install")
                     .createProcess()));
 
-            LOGGER.warn(getProcessOutput(new RubyCommandLine(LocalRunner.getRunner(module), false)
+            LOGGER.warn(getProcessOutput(new RubyCommandLine(RubyLocalRunner.getRunner(module), false)
                     .withExePath("arg-scanner")
                     .withParameters("ruby", scriptPath)
                     .createProcess()));
