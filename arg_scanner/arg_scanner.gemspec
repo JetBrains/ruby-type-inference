@@ -6,8 +6,8 @@ require 'arg_scanner/version'
 Gem::Specification.new do |spec|
   spec.name = "arg_scanner"
   spec.version = ArgScanner::VERSION
-  spec.authors = ["Nickolay Viuginov", "Valentin Fondaratov"]
-  spec.email = ["viuginov.nickolay@gmail.com", "fondarat@gmail.com"]
+  spec.authors = ["Nickolay Viuginov", "Valentin Fondaratov", "Vladimir Koshelev"]
+  spec.email = ["viuginov.nickolay@gmail.com", "fondarat@gmail.com", "vkkoshelev@gmail.com"]
 
   spec.summary = %q{Program execution tracker to retrieve data types information}
   spec.homepage = "https://github.com/jetbrains/ruby-type-inference"
@@ -34,4 +34,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rake", "~> 12.0"
   spec.add_development_dependency "rake-compiler"
   spec.add_development_dependency "debase-ruby_core_source", ">= 0.10.0"
+  spec.add_development_dependency "require_all", "~> 1.4.0"
 end
