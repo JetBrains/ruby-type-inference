@@ -3,6 +3,10 @@ package org.jetbrains.plugins.ruby.ruby.run.configuration;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -27,11 +31,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationExtension {
+    private static final Logger LOG = Logger.getInstance(CollectTypeRunConfigurationExtension.class);
     private static final String ARG_SCANNER_GEM_NAME = "arg_scanner";
 
     private static final String ARG_SCANNER_REQUIRE_SCRIPT = "arg_scanner/starter";
 
     private static final String ROOTS_ENV_KEY = "ARG_SCANNER_PROJECT_ROOTS";
+
+    private static final String DISABLE_TYPE_TRACKER_KEY = "ARG_SCANNER_DISABLE_TYPE_TRACKER";
+
+    private static final String DIR_FOR_STATE_TRACKER_KEY = "ARG_SCANNER_STATE_TRACKER_DIR";
 
     @NonNls
     @NotNull
@@ -58,7 +67,7 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
     protected boolean isEnabledFor(@NotNull final AbstractRubyRunConfiguration applicableConfiguration,
                                    @Nullable final RunnerSettings runnerSettings) {
         final CollectTypeExecSettings config = CollectTypeExecSettings.getFrom(applicableConfiguration);
-        return config.isCollectTypeExecEnabled;
+        return config.isArgScannerEnabled();
     }
 
     @Override
@@ -76,8 +85,17 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
             return;
         }
 
+
         final Map<String, String> env = cmdLine.getEnvironment();
         final String rubyOpt = StringUtil.notNullize(env.get(RubyUtil.RUBYOPT));
+        final CollectTypeExecSettings collectTypeSettings = CollectTypeExecSettings.getFrom(configuration);
+        if (collectTypeSettings.isTypeTrackerEnabled()) {
+            env.put(DISABLE_TYPE_TRACKER_KEY, "");
+        }
+        if (collectTypeSettings.isStateTrackerEnabled()) {
+            env.put(DIR_FOR_STATE_TRACKER_KEY, collectTypeSettings.getStateTrackerPath());
+        }
+
         final String newRubyOpt = rubyOpt + includeKey + " -r" + ARG_SCANNER_REQUIRE_SCRIPT;
 
         final Module[] rubyModules = RModuleUtil.getInstance().getAllModulesWithRubySupport(configuration.getProject());
@@ -86,7 +104,6 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
             return StringUtil.join(contentRoots, VirtualFile::getPath, ":");
         }, ":");
         env.put(ROOTS_ENV_KEY, localCodeRoots);
-
         cmdLine.withEnvironment(RubyUtil.RUBYOPT, newRubyOpt);
     }
 
@@ -143,5 +160,22 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
     @Override
     protected <P extends AbstractRubyRunConfiguration> SettingsEditor<P> createEditor(@NotNull final P configuration) {
         return null;
+    }
+
+    @Override
+    protected void attachToProcess(@NotNull AbstractRubyRunConfiguration configuration,
+                                   @NotNull ProcessHandler handler, @Nullable RunnerSettings runnerSettings) {
+        final CollectTypeExecSettings settings = CollectTypeExecSettings.getFrom(configuration);
+        if (settings.isStateTrackerEnabled()) {
+            handler.addProcessListener(
+                    new ProcessAdapter() {
+                        @Override
+                        public void processTerminated(@NotNull ProcessEvent event) {
+                            //TODO add json parsing here
+
+                        }
+                    }
+            );
+        }
     }
 }

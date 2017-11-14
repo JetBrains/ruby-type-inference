@@ -8,6 +8,7 @@ import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.table.TableView
 import com.intellij.util.text.VersionComparatorUtil
+import com.intellij.util.ui.CheckBox
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListTableModel
@@ -30,6 +31,9 @@ class RubyTypeContractsConfigurableUI(settings: RubyTypeContractsSettings) : Con
     private val registeredGems = ArrayList(SignatureServer.getStorage().registeredGems)
 
     private val perGemSettingsMap = HashMap(settings.perGemSettingsMap)
+
+    private val typeTrackerEnabled = settings.typeTrackerEnabled
+    private val stateTrackerEnabled = settings.stateTrackerEnabled
 
     private val tableModel = ListTableModel<GemInfo>(
             object : ColumnInfo<GemInfo, String>("Gem Name") {
@@ -93,6 +97,8 @@ class RubyTypeContractsConfigurableUI(settings: RubyTypeContractsSettings) : Con
 
     override fun isModified(settings: RubyTypeContractsSettings): Boolean {
         return perGemSettingsMap != settings.perGemSettingsMap || toBeRemovedGems.isNotEmpty()
+                || settings.stateTrackerEnabled != stateTrackerEnabled
+                || settings.typeTrackerEnabled != typeTrackerEnabled
     }
 
     override fun apply(settings: RubyTypeContractsSettings) {
@@ -105,7 +111,8 @@ class RubyTypeContractsConfigurableUI(settings: RubyTypeContractsSettings) : Con
                 registeredGems.removeAll(toBeRemovedGems)
             }
         }
-
+        settings.stateTrackerEnabled = stateTrackerEnabled
+        settings.typeTrackerEnabled = typeTrackerEnabled
         settings.perGemSettingsMap = HashMap(perGemSettingsMap)
         refill()
     }
@@ -125,6 +132,8 @@ class RubyTypeContractsConfigurableUI(settings: RubyTypeContractsSettings) : Con
                 }
                 .disableAddAction()
                 .disableUpDownActions().createPanel())
+        panel.add(CheckBox("Enable StateTracker", this, "stateTrackerEnabled"))
+        panel.add(CheckBox("Enable TypeTracker", this, "typeTrackerEnabled"))
         return panel
     }
 

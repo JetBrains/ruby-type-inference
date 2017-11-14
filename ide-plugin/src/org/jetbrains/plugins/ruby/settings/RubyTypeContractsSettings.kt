@@ -16,7 +16,11 @@ data class RubyTypeContractsSettings @JvmOverloads constructor(
         @Attribute
         var localSourcesTrackingPolicy: LocalSourcesTrackingPolicy = LocalSourcesTrackingPolicy.ACCUMULATE,
         @MapAnnotation
-        var perGemSettingsMap: MutableMap<GemInfoBean, PerGemSettings> = HashMap()) : PersistentStateComponent<RubyTypeContractsSettings> {
+        var perGemSettingsMap: MutableMap<GemInfoBean, PerGemSettings> = HashMap(),
+        @Attribute("typeTrackerEnabled")
+        var typeTrackerEnabled: Boolean = false,
+        @Attribute("stateTrackerEnabled")
+        var stateTrackerEnabled: Boolean = true) : PersistentStateComponent<RubyTypeContractsSettings> {
     override fun loadState(state: RubyTypeContractsSettings?) {
         if (state == null) return
 
