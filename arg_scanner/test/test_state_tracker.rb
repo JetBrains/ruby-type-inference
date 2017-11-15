@@ -14,7 +14,7 @@ class MyTest < Test::Unit::TestCase
       file.close
       begin
         FileUtils.makedirs(dirname)
-        system("ARG_SCANNER_STATE_TRACKER_DIR=\"#{dirname}\" ARG_SCANNER_DISABLE_TYPE_TRACKER=\"\" irb -r\"#{File.dirname(__dir__)}/lib/arg_scanner/starter.rb\"  <<< exit 1>&2 2> /dev/null")
+        system("echo exit | ARG_SCANNER_STATE_TRACKER_DIR=\"#{dirname}\" ARG_SCANNER_DISABLE_TYPE_TRACKER=\"\" irb -r\"#{File.dirname(__dir__)}/lib/arg_scanner/starter.rb\"  2> /dev/null")
         files = Dir["#{dirname}/*.json"]
         @@json = JSON.parse(File.read(files[0]))
       ensure
