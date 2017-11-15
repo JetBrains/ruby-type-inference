@@ -390,8 +390,6 @@ get_param_info_rb(VALUE self)
 
     const char **ans = (const char **)malloc(param_size * sizeof(const char*));
 
-    //fprintf(stderr, "param info: %d\n", param_size);
-
     if(param_size == 0)
         return 0;
 
