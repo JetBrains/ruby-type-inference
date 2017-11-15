@@ -20,6 +20,13 @@
     #define LOG(...) {}
 #endif
 
+
+#if RUBY_API_VERSION_CODE >= 20500
+    #define TH_CFP(thread) ((rb_control_frame_t *)(thread)->ec.cfp)
+#else
+    #define TH_CFP(thread) ((rb_control_frame_t *)(thread)->cfp)
+#endif
+
 #define ruby_current_thread ((rb_thread_t *)RTYPEDDATA_DATA(rb_thread_current()))
 typedef struct rb_trace_arg_struct rb_trace_arg_t;
 
@@ -367,7 +374,7 @@ get_param_info_rb(VALUE self)
     rb_control_frame_t *cfp;
 
     thread = ruby_current_thread;
-    cfp = thread->cfp;
+    cfp = TH_CFP(thread);
 
     cfp += 3;
 
@@ -382,6 +389,8 @@ get_param_info_rb(VALUE self)
     unsigned int has_block = cfp->iseq->body->param.flags.has_block;
 
     const char **ans = (const char **)malloc(param_size * sizeof(const char*));
+
+    //fprintf(stderr, "param info: %d\n", param_size);
 
     if(param_size == 0)
         return 0;
@@ -554,13 +563,11 @@ get_args_info()
 
         for(i = 0; i < required_num; i++, ans_iterator++, types_iterator--)
         {
-            ID key = keywords[i];
-            ans[ans_iterator] = fast_join(',', 2, types[types_iterator], rb_id2name(key));
+            ans[ans_iterator] = fast_join(',', 1, types[types_iterator]);
         }
         for(i = required_num; i < kw_num; i++, ans_iterator++, types_iterator--)
         {
-            ID key = keywords[i];
-            ans[ans_iterator] = fast_join(',', 2, types[types_iterator], rb_id2name(key));
+            ans[ans_iterator] = fast_join(',', 1, types[types_iterator]);
         }
     }
 
@@ -574,12 +581,12 @@ get_args_info()
 
         type = types[types_iterator];
 
-        ans[ans_iterator] = fast_join(',', 2, type, name);
+        ans[ans_iterator] = fast_join(',', 1, type, name);
     }
 
     for(i = 0; i < has_block; i++, ans_iterator++, types_iterator--)
     {
-        ans[ans_iterator] = fast_join(',', 2, "BLOCK", types[types_iterator]);
+        ans[ans_iterator] = fast_join(',', 1, types[types_iterator]);
     }
 
     LOG("%d\n", ans_iterator)
