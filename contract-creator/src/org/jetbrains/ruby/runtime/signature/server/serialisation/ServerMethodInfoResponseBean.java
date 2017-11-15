@@ -1,7 +1,7 @@
 package org.jetbrains.ruby.runtime.signature.server.serialisation;
 
 @SuppressWarnings("InstanceVariableNamingConvention")
-public class ServerMethodNameResponseBean {
+public class ServerMethodInfoResponseBean {
     public int id;
     public String method_name;
     public String receiver_name;

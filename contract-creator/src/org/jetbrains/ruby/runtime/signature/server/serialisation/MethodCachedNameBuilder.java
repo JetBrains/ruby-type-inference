@@ -7,7 +7,7 @@ public class MethodCachedNameBuilder {
     private static final Gson GSON = new Gson();
 
     @NotNull
-    public static ServerMethodNameResponseBean fromJson(@NotNull String json) {
-        return GSON.fromJson(json, ServerMethodNameResponseBean.class);
+    public static ServerMethodInfoResponseBean fromJson(@NotNull String json) {
+        return GSON.fromJson(json, ServerMethodInfoResponseBean.class);
     }
 }

@@ -9,9 +9,9 @@ import java.util.*;
 
 public class RTupleBuilder {
     private static final Gson GSON = new Gson();
-    private static Map<Integer, ServerMethodNameResponseBean> cachedMethods = new HashMap<>();
+    private static Map<Integer, ServerMethodInfoResponseBean> cachedMethods = new HashMap<>();
 
-    public static void addMethodToCache(ServerMethodNameResponseBean bean) {
+    public static void addMethodToCache(ServerMethodInfoResponseBean bean) {
         cachedMethods.put(bean.id, bean);
     }
 
@@ -26,7 +26,7 @@ public class RTupleBuilder {
 
     private RTupleBuilder(ServerSignatureResponseBean bean) {
 
-        ServerMethodNameResponseBean method = cachedMethods.get(bean.method_id);
+        ServerMethodInfoResponseBean method = cachedMethods.get(bean.method_id);
 
         myMethodInfo = MethodInfoKt.MethodInfo(
                 ClassInfoKt.ClassInfo(GemInfoKt.GemInfoOrNull(method.gem_name, method.gem_version), beautifyClassName(method.receiver_name)),
@@ -50,14 +50,24 @@ public class RTupleBuilder {
 
         String argsInfo = method.param_info;
         myArgsInfo = new ArrayList<>();
+
         if (!argsInfo.equals("")) {
-            for (String argument : Arrays.asList(argsInfo.split("\\s*;\\s*"))) {
+            List<String> methodCallTypes = Arrays.asList(bean.args_info.split("\\s*;\\s*"));
+            //TODO better to store method infos with parsed param infos (to prevent reparse)
+            List<String> methodArgs = Arrays.asList(argsInfo.split("\\s*;\\s*"));
+
+            assert (methodCallTypes.size() == methodArgs.size());
+
+            for (int i = 0; i < methodArgs.size(); i++) {
+                String argument = methodArgs.get(i);
+                String type = methodCallTypes.get(i);
+
                 List<String> parts = Arrays.asList(argument.split("\\s*,\\s*"));
 
                 String name = null;
 
-                if (parts.size() > 2 && !parts.get(2).equals("nil"))
-                    name = parts.get(2);
+                if (parts.size() > 1 && !parts.get(1).equals("nil"))
+                    name = parts.get(1);
 
                 if (name == null) {
                     // TODO[viuginick] investigate nullability
@@ -66,7 +76,7 @@ public class RTupleBuilder {
                 }
 
                 myArgsInfo.add(new ParameterInfo(name, ParameterInfo.Type.valueOf(parts.get(0))));
-                myArgsTypes.add(parts.get(1));
+                myArgsTypes.add(type);
             }
         }
 
