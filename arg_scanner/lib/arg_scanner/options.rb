@@ -13,11 +13,7 @@ module ArgScanner
     ENV['ARG_SCANNER_LOCAL_VERSION'] = self.local_version.to_s
     ENV['ARG_SCANNER_NO_LOCAL'] = self.no_local ? "1" : nil
     ENV['ARG_SCANNER_PROJECT_ROOTS'] = self.project_roots.join ':'
-    unless self.no_type_tracker.nil?
-      ENV['ARG_SCANNER_DISABLE_TYPE_TRACKER'] = ""
-    end
-    unless self.state_tracker_dir.nil?
-      ENV['ARG_SCANNER_STATE_TRACKER_DIR'] = self.state_tracker_dir
-    end
+    ENV['ARG_SCANNER_DISABLE_TYPE_TRACKER'] = self.no_type_tracker ? "1" : nil
+    ENV['ARG_SCANNER_STATE_TRACKER_DIR'] = self.state_tracker_dir
   end
 end

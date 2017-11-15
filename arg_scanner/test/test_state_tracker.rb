@@ -24,18 +24,21 @@ class MyTest < Test::Unit::TestCase
   end
 
   def test_has_struct
-    assert_not_nil get_class_with_name("Struct")
+    assert_not_nil(get_class_with_name("Struct"))
   end
 
   def test_symbol_is_fine
     symbol = get_class_with_name("Symbol")
-    assert_not_nil symbol
+    assert_not_nil(symbol)
     assert_equal(symbol["type"], "Class")
     assert_equal(symbol["superclass"], "Object")
     assert_not_nil(symbol["singleton_class_included"].find_index("Kernel"))
     assert_not_nil(symbol["included"].find_index("Comparable"))
     assert_not_nil(get_class_method(symbol, "all_symbols"))
     assert_not_nil(get_instance_method(symbol, "upcase"))
+    parameters = get_instance_method(symbol, "upcase")['parameters']
+    assert_not_nil(parameters)
+    assert_equal(parameters[0], ["rest"])
   end
 
   private

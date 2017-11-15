@@ -27,7 +27,7 @@ option_parser = OptionParser.new do |opts|
   opts.on("--no-type-tracker", "disable type tracker") do
     options.no_type_tracker = true
   end
-  opts.on("--state-tracker-dir=[Dir]", String, "enable state tracker and specify it output directory") do |dir|
+  opts.on("--state-tracker-dir=[Dir]", String, "enable state tracker and specify it output directory (disabled by default)") do |dir|
     options.state_tracker_dir = dir
   end
 
