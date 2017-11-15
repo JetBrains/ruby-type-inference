@@ -35,10 +35,15 @@ class MyTest < Test::Unit::TestCase
     assert_not_nil(symbol["singleton_class_included"].find_index("Kernel"))
     assert_not_nil(symbol["included"].find_index("Comparable"))
     assert_not_nil(get_class_method(symbol, "all_symbols"))
-    assert_not_nil(get_instance_method(symbol, "upcase"))
-    parameters = get_instance_method(symbol, "upcase")['parameters']
+    assert_not_nil(get_instance_method(symbol, "match"))
+    parameters = get_instance_method(symbol, "match")['parameters']
     assert_not_nil(parameters)
-    assert_equal(parameters[0], ["rest"])
+    if RUBY_VERSION < "2.4.0"
+      assert_equal(parameters[0][0], "req")
+    else
+      assert_equal(parameters[0][0], "rest")
+    end
+
   end
 
   private
