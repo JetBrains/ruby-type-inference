@@ -47,7 +47,7 @@ allprojects {
 }
 
 subprojects {
-    if (it.name in ['storage-server-api', 'lambda-update-handler', 'lambda-put-handler', 'contract-creator']) {
+    if (it.name in ['storage-server-api', 'lambda-update-handler', 'lambda-put-handler', 'contract-creator', 'state-tracker']) {
         dependencies {
             compile 'com.google.code.gson:gson:2.8.0'
         }

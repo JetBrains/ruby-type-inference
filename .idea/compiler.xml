@@ -26,6 +26,8 @@
       <module name="ruby-type-inference_test" target="1.8" />
       <module name="signature-viewer_main" target="1.8" />
       <module name="signature-viewer_test" target="1.8" />
+      <module name="state-tracker_main" target="1.8" />
+      <module name="state-tracker_test" target="1.8" />
       <module name="storage-server-api_main" target="1.8" />
       <module name="storage-server-api_test" target="1.8" />
     </bytecodeTargetLevel>

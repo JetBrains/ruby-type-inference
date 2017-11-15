@@ -1,0 +1,1865 @@
+{
+  "modules": [
+    {
+      "name": "Gem::Resolver::Molinillo::Resolver::Resolution",
+      "type": "Class",
+      "singleton_class_included": [
+        "RequireAll",
+        "Kernel"
+      ],
+      "included": [
+        "Gem::Resolver::Molinillo::Delegates::SpecificationProvider",
+        "Gem::Resolver::Molinillo::Delegates::ResolutionState",
+        "RequireAll",
+        "Kernel"
+      ],
+      "class_methods": [
+
+      ],
+      "instance_methods": [
+        {
+          "name": "base",
+          "parameters": [
+
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/site_ruby/2.4.0/rubygems/resolver/molinillo/lib/molinillo/resolution.rb",
+          "line": 37
+        },
+        {
+          "name": "resolve",
+          "parameters": [
+
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/site_ruby/2.4.0/rubygems/resolver/molinillo/lib/molinillo/resolution.rb",
+          "line": 63
+        },
+        {
+          "name": "specification_provider",
+          "parameters": [
+
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/site_ruby/2.4.0/rubygems/resolver/molinillo/lib/molinillo/resolution.rb",
+          "line": 29
+        },
+        {
+          "name": "resolver_ui",
+          "parameters": [
+
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/site_ruby/2.4.0/rubygems/resolver/molinillo/lib/molinillo/resolution.rb",
+          "line": 33
+        },
+        {
+          "name": "original_requested",
+          "parameters": [
+
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/site_ruby/2.4.0/rubygems/resolver/molinillo/lib/molinillo/resolution.rb",
+          "line": 40
+        },
+        {
+          "name": "iteration_rate=",
+          "parameters": [
+            [
+              "req"
+            ]
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/site_ruby/2.4.0/rubygems/resolver/molinillo/lib/molinillo/resolution.rb",
+          "line": 88
+        },
+        {
+          "name": "started_at=",
+          "parameters": [
+            [
+              "req"
+            ]
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/site_ruby/2.4.0/rubygems/resolver/molinillo/lib/molinillo/resolution.rb",
+          "line": 92
+        },
+        {
+          "name": "states=",
+          "parameters": [
+            [
+              "req"
+            ]
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/site_ruby/2.4.0/rubygems/resolver/molinillo/lib/molinillo/resolution.rb",
+          "line": 96
+        }
+      ],
+      "superclass": "Object"
+    },
+    {
+      "name": "CGI",
+      "type": "Class",
+      "singleton_class_included": [
+        "CGI::Escape",
+        "CGI::Util",
+        "RequireAll",
+        "Kernel"
+      ],
+      "included": [
+        "RequireAll",
+        "Kernel"
+      ],
+      "class_methods": [
+        {
+          "name": "parse",
+          "parameters": [
+            [
+              "req",
+              "query"
+            ]
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/2.4.0/cgi/core.rb",
+          "line": 375
+        },
+        {
+          "name": "accept_charset",
+          "parameters": [
+
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/2.4.0/cgi/core.rb",
+          "line": 740
+        },
+        {
+          "name": "accept_charset=",
+          "parameters": [
+            [
+              "req",
+              "accept_charset"
+            ]
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/2.4.0/cgi/core.rb",
+          "line": 745
+        }
+      ],
+      "instance_methods": [
+        {
+          "name": "print",
+          "parameters": [
+            [
+              "rest",
+              "options"
+            ]
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/2.4.0/cgi/core.rb",
+          "line": 365
+        },
+        {
+          "name": "out",
+          "parameters": [
+            [
+              "opt",
+              "options"
+            ]
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/2.4.0/cgi/core.rb",
+          "line": 349
+        },
+        {
+          "name": "header",
+          "parameters": [
+            [
+              "opt",
+              "options"
+            ]
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/2.4.0/cgi/core.rb",
+          "line": 153
+        },
+        {
+          "name": "http_header",
+          "parameters": [
+            [
+              "opt",
+              "options"
+            ]
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/2.4.0/cgi/core.rb",
+          "line": 153
+        },
+        {
+          "name": "nph?",
+          "parameters": [
+
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/2.4.0/cgi/core.rb",
+          "line": 256
+        },
+        {
+          "name": "accept_charset",
+          "parameters": [
+
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/2.4.0/cgi/core.rb",
+          "line": 750
+        }
+      ],
+      "superclass": "Object"
+    },
+    {
+      "name": "Timeout::Error",
+      "type": "Class",
+      "singleton_class_included": [
+        "RequireAll",
+        "Kernel"
+      ],
+      "included": [
+        "RequireAll",
+        "Kernel"
+      ],
+      "class_methods": [
+        {
+          "name": "catch",
+          "parameters": [
+            [
+              "rest",
+              "args"
+            ]
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/2.4.0/timeout.rb",
+          "line": 30
+        }
+      ],
+      "instance_methods": [
+        {
+          "name": "exception",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/2.4.0/timeout.rb",
+          "line": 36
+        },
+        {
+          "name": "thread",
+          "parameters": [
+
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/2.4.0/timeout.rb",
+          "line": 28
+        }
+      ],
+      "superclass": "RuntimeError"
+    },
+    {
+      "name": "Dir::Tmpname",
+      "type": "Module",
+      "singleton_class_included": [
+        "RequireAll",
+        "Kernel"
+      ],
+      "included": [
+
+      ],
+      "class_methods": [
+        {
+          "name": "create",
+          "parameters": [
+            [
+              "req",
+              "basename"
+            ],
+            [
+              "opt",
+              "tmpdir"
+            ],
+            [
+              "key",
+              "max_try"
+            ],
+            [
+              "keyrest",
+              "opts"
+            ]
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/2.4.0/tmpdir.rb",
+          "line": 121
+        },
+        {
+          "name": "tmpdir",
+          "parameters": [
+
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/2.4.0/tmpdir.rb",
+          "line": 105
+        },
+        {
+          "name": "make_tmpname",
+          "parameters": [
+            [
+              "req"
+            ],
+            [
+              "req",
+              "n"
+            ]
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/2.4.0/tmpdir.rb",
+          "line": 109
+        }
+      ],
+      "instance_methods": [
+
+      ]
+    },
+    {
+      "name": "RequireAll",
+      "type": "Module",
+      "singleton_class_included": [
+        "RequireAll",
+        "Kernel"
+      ],
+      "included": [
+
+      ],
+      "class_methods": [
+
+      ],
+      "instance_methods": [
+        {
+          "name": "require_all",
+          "parameters": [
+            [
+              "rest",
+              "args"
+            ]
+          ],
+          "path": "/Users/vkkoshelev/.rvm/gems/ruby-2.4.1/gems/require_all-1.4.0/lib/require_all.rb",
+          "line": 34
+        },
+        {
+          "name": "require_rel",
+          "parameters": [
+            [
+              "rest",
+              "paths"
+            ]
+          ],
+          "path": "/Users/vkkoshelev/.rvm/gems/ruby-2.4.1/gems/require_all-1.4.0/lib/require_all.rb",
+          "line": 146
+        },
+        {
+          "name": "load_all",
+          "parameters": [
+            [
+              "rest",
+              "paths"
+            ]
+          ],
+          "path": "/Users/vkkoshelev/.rvm/gems/ruby-2.4.1/gems/require_all-1.4.0/lib/require_all.rb",
+          "line": 158
+        },
+        {
+          "name": "load_rel",
+          "parameters": [
+            [
+              "rest",
+              "paths"
+            ]
+          ],
+          "path": "/Users/vkkoshelev/.rvm/gems/ruby-2.4.1/gems/require_all-1.4.0/lib/require_all.rb",
+          "line": 164
+        },
+        {
+          "name": "autoload_all",
+          "parameters": [
+            [
+              "rest",
+              "paths"
+            ]
+          ],
+          "path": "/Users/vkkoshelev/.rvm/gems/ruby-2.4.1/gems/require_all-1.4.0/lib/require_all.rb",
+          "line": 210
+        },
+        {
+          "name": "autoload_rel",
+          "parameters": [
+            [
+              "rest",
+              "paths"
+            ]
+          ],
+          "path": "/Users/vkkoshelev/.rvm/gems/ruby-2.4.1/gems/require_all-1.4.0/lib/require_all.rb",
+          "line": 224
+        }
+      ]
+    },
+    {
+      "name": "Kernel",
+      "type": "Module",
+      "singleton_class_included": [
+        "RequireAll",
+        "Kernel"
+      ],
+      "included": [
+
+      ],
+      "class_methods": [
+        {
+          "name": "`",
+          "parameters": [
+            [
+              "req"
+            ]
+          ]
+        },
+        {
+          "name": "gets",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "proc",
+          "parameters": [
+
+          ]
+        },
+        {
+          "name": "lambda",
+          "parameters": [
+
+          ]
+        },
+        {
+          "name": "sprintf",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "format",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "Integer",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "Float",
+          "parameters": [
+            [
+              "req"
+            ]
+          ]
+        },
+        {
+          "name": "String",
+          "parameters": [
+            [
+              "req"
+            ]
+          ]
+        },
+        {
+          "name": "Array",
+          "parameters": [
+            [
+              "req"
+            ]
+          ]
+        },
+        {
+          "name": "Hash",
+          "parameters": [
+            [
+              "req"
+            ]
+          ]
+        },
+        {
+          "name": "select",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "local_variables",
+          "parameters": [
+
+          ]
+        },
+        {
+          "name": "warn",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "raise",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "fail",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "global_variables",
+          "parameters": [
+
+          ]
+        },
+        {
+          "name": "__method__",
+          "parameters": [
+
+          ]
+        },
+        {
+          "name": "__callee__",
+          "parameters": [
+
+          ]
+        },
+        {
+          "name": "__dir__",
+          "parameters": [
+
+          ]
+        },
+        {
+          "name": "eval",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "iterator?",
+          "parameters": [
+
+          ]
+        },
+        {
+          "name": "block_given?",
+          "parameters": [
+
+          ]
+        },
+        {
+          "name": "catch",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "throw",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "loop",
+          "parameters": [
+
+          ]
+        },
+        {
+          "name": "trace_var",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "untrace_var",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "at_exit",
+          "parameters": [
+
+          ]
+        },
+        {
+          "name": "load",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "syscall",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "open",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "printf",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "print",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "putc",
+          "parameters": [
+            [
+              "req"
+            ]
+          ]
+        },
+        {
+          "name": "puts",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "readline",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "readlines",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "p",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "test",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "rand",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "srand",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "trap",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "require",
+          "parameters": [
+            [
+              "req"
+            ]
+          ]
+        },
+        {
+          "name": "require_relative",
+          "parameters": [
+            [
+              "req"
+            ]
+          ]
+        },
+        {
+          "name": "autoload",
+          "parameters": [
+            [
+              "req"
+            ],
+            [
+              "req"
+            ]
+          ]
+        },
+        {
+          "name": "autoload?",
+          "parameters": [
+            [
+              "req"
+            ]
+          ]
+        },
+        {
+          "name": "binding",
+          "parameters": [
+
+          ]
+        },
+        {
+          "name": "caller",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "caller_locations",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "fork",
+          "parameters": [
+
+          ]
+        },
+        {
+          "name": "exit",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "sleep",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "exec",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "exit!",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "system",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "spawn",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "abort",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "Rational",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "Complex",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "set_trace_func",
+          "parameters": [
+            [
+              "req"
+            ]
+          ]
+        },
+        {
+          "name": "URI",
+          "parameters": [
+            [
+              "req",
+              "uri"
+            ]
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/2.4.0/uri/common.rb",
+          "line": 733
+        }
+      ],
+      "instance_methods": [
+        {
+          "name": "instance_of?",
+          "parameters": [
+            [
+              "req"
+            ]
+          ]
+        },
+        {
+          "name": "kind_of?",
+          "parameters": [
+            [
+              "req"
+            ]
+          ]
+        },
+        {
+          "name": "is_a?",
+          "parameters": [
+            [
+              "req"
+            ]
+          ]
+        },
+        {
+          "name": "tap",
+          "parameters": [
+
+          ]
+        },
+        {
+          "name": "public_send",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "method",
+          "parameters": [
+            [
+              "req"
+            ]
+          ]
+        },
+        {
+          "name": "public_method",
+          "parameters": [
+            [
+              "req"
+            ]
+          ]
+        },
+        {
+          "name": "singleton_method",
+          "parameters": [
+            [
+              "req"
+            ]
+          ]
+        },
+        {
+          "name": "remove_instance_variable",
+          "parameters": [
+            [
+              "req"
+            ]
+          ]
+        },
+        {
+          "name": "define_singleton_method",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "instance_variable_set",
+          "parameters": [
+            [
+              "req"
+            ],
+            [
+              "req"
+            ]
+          ]
+        },
+        {
+          "name": "extend",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "to_enum",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "enum_for",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "<=>",
+          "parameters": [
+            [
+              "req"
+            ]
+          ]
+        },
+        {
+          "name": "===",
+          "parameters": [
+            [
+              "req"
+            ]
+          ]
+        },
+        {
+          "name": "=~",
+          "parameters": [
+            [
+              "req"
+            ]
+          ]
+        },
+        {
+          "name": "!~",
+          "parameters": [
+            [
+              "req"
+            ]
+          ]
+        },
+        {
+          "name": "eql?",
+          "parameters": [
+            [
+              "req"
+            ]
+          ]
+        },
+        {
+          "name": "respond_to?",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "freeze",
+          "parameters": [
+
+          ]
+        },
+        {
+          "name": "inspect",
+          "parameters": [
+
+          ]
+        },
+        {
+          "name": "object_id",
+          "parameters": [
+
+          ]
+        },
+        {
+          "name": "send",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "display",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "to_s",
+          "parameters": [
+
+          ]
+        },
+        {
+          "name": "nil?",
+          "parameters": [
+
+          ]
+        },
+        {
+          "name": "hash",
+          "parameters": [
+
+          ]
+        },
+        {
+          "name": "class",
+          "parameters": [
+
+          ]
+        },
+        {
+          "name": "singleton_class",
+          "parameters": [
+
+          ]
+        },
+        {
+          "name": "clone",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "dup",
+          "parameters": [
+
+          ]
+        },
+        {
+          "name": "itself",
+          "parameters": [
+
+          ]
+        },
+        {
+          "name": "taint",
+          "parameters": [
+
+          ]
+        },
+        {
+          "name": "tainted?",
+          "parameters": [
+
+          ]
+        },
+        {
+          "name": "untaint",
+          "parameters": [
+
+          ]
+        },
+        {
+          "name": "untrust",
+          "parameters": [
+
+          ]
+        },
+        {
+          "name": "untrusted?",
+          "parameters": [
+
+          ]
+        },
+        {
+          "name": "trust",
+          "parameters": [
+
+          ]
+        },
+        {
+          "name": "frozen?",
+          "parameters": [
+
+          ]
+        },
+        {
+          "name": "methods",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "singleton_methods",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "protected_methods",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "private_methods",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "public_methods",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "instance_variable_get",
+          "parameters": [
+            [
+              "req"
+            ]
+          ]
+        },
+        {
+          "name": "instance_variables",
+          "parameters": [
+
+          ]
+        },
+        {
+          "name": "instance_variable_defined?",
+          "parameters": [
+            [
+              "req"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Gem::Resolver::Molinillo::Delegates::SpecificationProvider",
+      "type": "Module",
+      "singleton_class_included": [
+        "RequireAll",
+        "Kernel"
+      ],
+      "included": [
+
+      ],
+      "class_methods": [
+
+      ],
+      "instance_methods": [
+        {
+          "name": "search_for",
+          "parameters": [
+            [
+              "req",
+              "dependency"
+            ]
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/site_ruby/2.4.0/rubygems/resolver/molinillo/lib/molinillo/delegates/specification_provider.rb",
+          "line": 8
+        },
+        {
+          "name": "dependencies_for",
+          "parameters": [
+            [
+              "req",
+              "specification"
+            ]
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/site_ruby/2.4.0/rubygems/resolver/molinillo/lib/molinillo/delegates/specification_provider.rb",
+          "line": 15
+        },
+        {
+          "name": "requirement_satisfied_by?",
+          "parameters": [
+            [
+              "req",
+              "requirement"
+            ],
+            [
+              "req",
+              "activated"
+            ],
+            [
+              "req",
+              "spec"
+            ]
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/site_ruby/2.4.0/rubygems/resolver/molinillo/lib/molinillo/delegates/specification_provider.rb",
+          "line": 22
+        },
+        {
+          "name": "name_for",
+          "parameters": [
+            [
+              "req",
+              "dependency"
+            ]
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/site_ruby/2.4.0/rubygems/resolver/molinillo/lib/molinillo/delegates/specification_provider.rb",
+          "line": 29
+        },
+        {
+          "name": "allow_missing?",
+          "parameters": [
+            [
+              "req",
+              "dependency"
+            ]
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/site_ruby/2.4.0/rubygems/resolver/molinillo/lib/molinillo/delegates/specification_provider.rb",
+          "line": 57
+        },
+        {
+          "name": "sort_dependencies",
+          "parameters": [
+            [
+              "req",
+              "dependencies"
+            ],
+            [
+              "req",
+              "activated"
+            ],
+            [
+              "req",
+              "conflicts"
+            ]
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/site_ruby/2.4.0/rubygems/resolver/molinillo/lib/molinillo/delegates/specification_provider.rb",
+          "line": 50
+        },
+        {
+          "name": "name_for_explicit_dependency_source",
+          "parameters": [
+
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/site_ruby/2.4.0/rubygems/resolver/molinillo/lib/molinillo/delegates/specification_provider.rb",
+          "line": 36
+        },
+        {
+          "name": "name_for_locking_dependency_source",
+          "parameters": [
+
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/site_ruby/2.4.0/rubygems/resolver/molinillo/lib/molinillo/delegates/specification_provider.rb",
+          "line": 43
+        }
+      ]
+    },
+    {
+      "name": "Gem::Resolver::Molinillo::Delegates::ResolutionState",
+      "type": "Module",
+      "singleton_class_included": [
+        "RequireAll",
+        "Kernel"
+      ],
+      "included": [
+
+      ],
+      "class_methods": [
+
+      ],
+      "instance_methods": [
+        {
+          "name": "name",
+          "parameters": [
+
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/site_ruby/2.4.0/rubygems/resolver/molinillo/lib/molinillo/delegates/resolution_state.rb",
+          "line": 8
+        },
+        {
+          "name": "requirements",
+          "parameters": [
+
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/site_ruby/2.4.0/rubygems/resolver/molinillo/lib/molinillo/delegates/resolution_state.rb",
+          "line": 14
+        },
+        {
+          "name": "requirement",
+          "parameters": [
+
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/site_ruby/2.4.0/rubygems/resolver/molinillo/lib/molinillo/delegates/resolution_state.rb",
+          "line": 26
+        },
+        {
+          "name": "conflicts",
+          "parameters": [
+
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/site_ruby/2.4.0/rubygems/resolver/molinillo/lib/molinillo/delegates/resolution_state.rb",
+          "line": 44
+        },
+        {
+          "name": "activated",
+          "parameters": [
+
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/site_ruby/2.4.0/rubygems/resolver/molinillo/lib/molinillo/delegates/resolution_state.rb",
+          "line": 20
+        },
+        {
+          "name": "depth",
+          "parameters": [
+
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/site_ruby/2.4.0/rubygems/resolver/molinillo/lib/molinillo/delegates/resolution_state.rb",
+          "line": 38
+        },
+        {
+          "name": "possibilities",
+          "parameters": [
+
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/site_ruby/2.4.0/rubygems/resolver/molinillo/lib/molinillo/delegates/resolution_state.rb",
+          "line": 32
+        }
+      ]
+    },
+    {
+      "name": "Object",
+      "type": "Class",
+      "singleton_class_included": [
+        "RequireAll",
+        "Kernel"
+      ],
+      "included": [
+        "RequireAll",
+        "Kernel"
+      ],
+      "class_methods": [
+
+      ],
+      "instance_methods": [
+
+      ],
+      "superclass": "BasicObject"
+    },
+    {
+      "name": "CGI::Escape",
+      "type": "Module",
+      "singleton_class_included": [
+        "RequireAll",
+        "Kernel"
+      ],
+      "included": [
+
+      ],
+      "class_methods": [
+
+      ],
+      "instance_methods": [
+        {
+          "name": "escape",
+          "parameters": [
+            [
+              "req"
+            ]
+          ]
+        },
+        {
+          "name": "unescape",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "escapeHTML",
+          "parameters": [
+            [
+              "req"
+            ]
+          ]
+        },
+        {
+          "name": "unescapeHTML",
+          "parameters": [
+            [
+              "req"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "name": "CGI::Util",
+      "type": "Module",
+      "singleton_class_included": [
+        "RequireAll",
+        "Kernel"
+      ],
+      "included": [
+        "CGI::Escape"
+      ],
+      "class_methods": [
+
+      ],
+      "instance_methods": [
+        {
+          "name": "escape",
+          "parameters": [
+            [
+              "req"
+            ]
+          ]
+        },
+        {
+          "name": "h",
+          "parameters": [
+            [
+              "req"
+            ]
+          ]
+        },
+        {
+          "name": "unescape",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "rfc1123_date",
+          "parameters": [
+            [
+              "req",
+              "time"
+            ]
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/2.4.0/cgi/util.rb",
+          "line": 183
+        },
+        {
+          "name": "escapeHTML",
+          "parameters": [
+            [
+              "req"
+            ]
+          ]
+        },
+        {
+          "name": "unescapeHTML",
+          "parameters": [
+            [
+              "req"
+            ]
+          ]
+        },
+        {
+          "name": "escape_html",
+          "parameters": [
+            [
+              "req"
+            ]
+          ]
+        },
+        {
+          "name": "unescape_html",
+          "parameters": [
+            [
+              "req"
+            ]
+          ]
+        },
+        {
+          "name": "escapeElement",
+          "parameters": [
+            [
+              "req",
+              "string"
+            ],
+            [
+              "rest",
+              "elements"
+            ]
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/2.4.0/cgi/util.rb",
+          "line": 136
+        },
+        {
+          "name": "unescapeElement",
+          "parameters": [
+            [
+              "req",
+              "string"
+            ],
+            [
+              "rest",
+              "elements"
+            ]
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/2.4.0/cgi/util.rb",
+          "line": 156
+        },
+        {
+          "name": "escape_element",
+          "parameters": [
+            [
+              "req",
+              "string"
+            ],
+            [
+              "rest",
+              "elements"
+            ]
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/2.4.0/cgi/util.rb",
+          "line": 136
+        },
+        {
+          "name": "unescape_element",
+          "parameters": [
+            [
+              "req",
+              "string"
+            ],
+            [
+              "rest",
+              "elements"
+            ]
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/2.4.0/cgi/util.rb",
+          "line": 156
+        },
+        {
+          "name": "pretty",
+          "parameters": [
+            [
+              "req",
+              "string"
+            ],
+            [
+              "opt",
+              "shift"
+            ]
+          ],
+          "path": "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/2.4.0/cgi/util.rb",
+          "line": 207
+        }
+      ]
+    },
+    {
+      "name": "RuntimeError",
+      "type": "Class",
+      "singleton_class_included": [
+        "RequireAll",
+        "Kernel"
+      ],
+      "included": [
+        "RequireAll",
+        "Kernel"
+      ],
+      "class_methods": [
+
+      ],
+      "instance_methods": [
+
+      ],
+      "superclass": "StandardError"
+    },
+    {
+      "name": "BasicObject",
+      "type": "Class",
+      "singleton_class_included": [
+        "RequireAll",
+        "Kernel"
+      ],
+      "included": [
+
+      ],
+      "class_methods": [
+
+      ],
+      "instance_methods": [
+        {
+          "name": "!",
+          "parameters": [
+
+          ]
+        },
+        {
+          "name": "==",
+          "parameters": [
+            [
+              "req"
+            ]
+          ]
+        },
+        {
+          "name": "!=",
+          "parameters": [
+            [
+              "req"
+            ]
+          ]
+        },
+        {
+          "name": "__send__",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "equal?",
+          "parameters": [
+            [
+              "req"
+            ]
+          ]
+        },
+        {
+          "name": "instance_eval",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "instance_exec",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "__id__",
+          "parameters": [
+
+          ]
+        }
+      ],
+      "superclass": null
+    },
+    {
+      "name": "StandardError",
+      "type": "Class",
+      "singleton_class_included": [
+        "RequireAll",
+        "Kernel"
+      ],
+      "included": [
+        "RequireAll",
+        "Kernel"
+      ],
+      "class_methods": [
+
+      ],
+      "instance_methods": [
+
+      ],
+      "superclass": "Exception"
+    },
+    {
+      "name": "Exception",
+      "type": "Class",
+      "singleton_class_included": [
+        "RequireAll",
+        "Kernel"
+      ],
+      "included": [
+        "RequireAll",
+        "Kernel"
+      ],
+      "class_methods": [
+        {
+          "name": "exception",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        }
+      ],
+      "instance_methods": [
+        {
+          "name": "==",
+          "parameters": [
+            [
+              "req"
+            ]
+          ]
+        },
+        {
+          "name": "respond_to?",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "inspect",
+          "parameters": [
+
+          ]
+        },
+        {
+          "name": "to_s",
+          "parameters": [
+
+          ]
+        },
+        {
+          "name": "exception",
+          "parameters": [
+            [
+              "rest"
+            ]
+          ]
+        },
+        {
+          "name": "message",
+          "parameters": [
+
+          ]
+        },
+        {
+          "name": "backtrace",
+          "parameters": [
+
+          ]
+        },
+        {
+          "name": "backtrace_locations",
+          "parameters": [
+
+          ]
+        },
+        {
+          "name": "set_backtrace",
+          "parameters": [
+            [
+              "req"
+            ]
+          ]
+        },
+        {
+          "name": "cause",
+          "parameters": [
+
+          ]
+        }
+      ],
+      "superclass": "Object"
+    }
+  ],
+  "load_path": [
+    "/Users/vkkoshelev/.rvm/gems/ruby-2.4.1@global/gems/did_you_mean-1.1.0/lib",
+    "/Users/vkkoshelev/.rvm/gems/ruby-2.4.1/gems/require_all-1.4.0/lib",
+    "/Users/vkkoshelev/.rvm/gems/ruby-2.4.1/gems/json-2.1.0/lib",
+    "/Users/vkkoshelev/.rvm/gems/ruby-2.4.1/extensions/x86_64-darwin-16/2.4.0/json-2.1.0",
+    "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/site_ruby/2.4.0",
+    "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/site_ruby/2.4.0/x86_64-darwin16",
+    "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/site_ruby",
+    "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/vendor_ruby/2.4.0",
+    "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/vendor_ruby/2.4.0/x86_64-darwin16",
+    "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/vendor_ruby",
+    "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/2.4.0",
+    "/Users/vkkoshelev/.rvm/rubies/ruby-2.4.1/lib/ruby/2.4.0/x86_64-darwin16"
+  ]
+}
