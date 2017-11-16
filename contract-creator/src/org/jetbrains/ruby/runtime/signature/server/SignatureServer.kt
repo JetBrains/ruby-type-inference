@@ -12,8 +12,8 @@ import org.jetbrains.ruby.codeInsight.types.storage.server.impl.ClassInfoTable
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.GemInfoTable
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.MethodInfoTable
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.SignatureTable
-import org.jetbrains.ruby.runtime.signature.server.serialisation.RTupleBuilder
 import org.jetbrains.ruby.runtime.signature.server.serialisation.MethodCachedNameBuilder
+import org.jetbrains.ruby.runtime.signature.server.serialisation.RTupleBuilder
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
@@ -99,23 +99,22 @@ object SignatureServer {
             return
         }
 
-            try {
-                if (jsonString.startsWith("{\"id\"")) {
-                    parseMethodJson(jsonString)
-                }
-                else {
-                    val currRTuple = ben(jsonTome) { RTupleBuilder.fromJson(jsonString) }
-                    parseRTupleJson(jsonString)
-                }
-            } catch (e: JsonParseException) {
-                LOGGER.severe("!$jsonString!\n$e")
+        try {
+            if (jsonString.startsWith("{\"id\"")) {
+                parseMethodJson(jsonString)
+            } else {
+                val currRTuple = ben(jsonTome) { RTupleBuilder.fromJson(jsonString) }
+                parseRTupleJson(jsonString)
             }
+        } catch (e: JsonParseException) {
+            LOGGER.severe("!$jsonString!\n$e")
         }
     }
 
+
     private fun parseMethodJson(jsonString: String) {
         val result = ben(SignatureServer.jsonTome) { MethodCachedNameBuilder.fromJson(jsonString) }
-        SignatureServer.cachedMethodNames.put(result.id, result.method_name)
+        RTupleBuilder.addMethodToCache(result)
     }
 
     private fun parseRTupleJson(jsonString: String) {
@@ -195,8 +194,8 @@ object SignatureServer {
                 if (iter and mask == 0L) {
                     val timeInterval = System.currentTimeMillis() - millis
                     millis = System.currentTimeMillis()
-                    LOGGER.info( "[" + iter.toString() + "]" +" per second: " +
-                            ((mask +1) * 1000 / timeInterval).toString())
+                    LOGGER.info("[" + iter.toString() + "]" + " per second: " +
+                            ((mask + 1) * 1000 / timeInterval).toString())
                     if (queue.size > remainingCapacity) {
                         LOGGER.info("Queue capacity is low: " + remainingCapacity)
                     }
@@ -226,12 +225,11 @@ object SignatureServer {
     }
 }
 
-fun <T> ben(x: AtomicLong, F: ()->T): T {
+fun <T> ben(x: AtomicLong, F: () -> T): T {
     val start = System.nanoTime()
     try {
         return F.invoke()
-    }
-    finally {
+    } finally {
         x.addAndGet(System.nanoTime() - start)
     }
 }
