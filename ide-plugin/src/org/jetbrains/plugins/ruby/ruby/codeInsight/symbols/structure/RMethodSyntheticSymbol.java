@@ -107,8 +107,7 @@ public class RMethodSyntheticSymbol extends SymbolImpl implements RMethodSymbol 
                 type = ArgumentInfo.Type.HASH;
                 break;
             case KEY_REQ:
-                //TODO FIXME update ruby plugin and use appropriate type here
-                type = ArgumentInfo.Type.SIMPLE;
+                type = ArgumentInfo.Type.KEYREQ;
                 break;
             case BLOCK:
                 type = ArgumentInfo.Type.BLOCK;
