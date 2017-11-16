@@ -103,7 +103,6 @@ object SignatureServer {
             if (jsonString.startsWith("{\"id\"")) {
                 parseMethodJson(jsonString)
             } else {
-                val currRTuple = ben(jsonTome) { RTupleBuilder.fromJson(jsonString) }
                 parseRTupleJson(jsonString)
             }
         } catch (e: JsonParseException) {

@@ -45,8 +45,6 @@ public class RTupleBuilder {
         myReturnTypeName = bean.return_type_name;
 
         myArgsTypes = new ArrayList<>();
-        //this.myArgsTypes.addAll(Arrays.asList(argsTypeName.split("\\s*;\\s*")));
-
 
         String argsInfo = method.param_info;
         myArgsInfo = new ArrayList<>();
