@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.gem.util.GemSearchUtil;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.resolve.ResolveUtil;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.stateTracker.RubyClassHierarchyWithCaching;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.Type;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.fqn.FQN;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.RMethodSyntheticSymbol;
@@ -38,9 +39,9 @@ import org.jetbrains.ruby.codeInsight.types.storage.server.RSignatureProvider;
 import org.jetbrains.ruby.codeInsight.types.storage.server.StorageException;
 import org.jetbrains.ruby.runtime.signature.server.SignatureServer;
 import org.jetbrains.ruby.runtime.signature.server.serialisation.RTupleBuilder;
+import org.jetbrains.ruby.stateTracker.RubyMethod;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
 
@@ -114,27 +115,27 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
         if (typeName == null) {
             return null;
         }
-        final Module module = ((RSymbolType) type).getSymbol().getModule();
+        final Symbol symbol = ((RSymbolType) type).getSymbol();
+        final Module module = symbol.getModule();
         if (module == null) {
             return null;
         }
 
-        SignatureServer callStatServer = SignatureServer.INSTANCE;
-        final MethodInfo method = findMethodInfo(name, typeName, module, callStatServer.getStorage());
+        final RubyClassHierarchyWithCaching rubyClassHierarchy = module.getUserData(RubyClassHierarchyWithCaching.Companion.getKEY());
 
-        if (method == null) {
+        if (rubyClassHierarchy == null) {
             return null;
         }
-        final SignatureContract contract = callStatServer.getContract(method);
-        if (contract == null) {
+
+        //Let's assume that we're a looking for a instance method
+
+        RubyMethod rubyMethod = rubyClassHierarchy.lookupInstanceMethodWithCaching(symbol.getFQNWithNesting().getFullPath(), name);
+
+        if (rubyMethod == null) {
             return null;
         }
-        return new RMethodSyntheticSymbol(((RSymbolType) type).getSymbol().getProject(),
-                method,
-                Type.INSTANCE_METHOD,
-                ((RSymbolType) type).getSymbol(),
-                contract.getArgsInfo().stream().map(RubyStatTypeProviderImpl::toArgInfo).collect(Collectors.toList())
-        );
+
+        return new RMethodSyntheticSymbol(module.getProject(), Type.INSTANCE_METHOD, rubyMethod, symbol);
     }
 
     @Nullable

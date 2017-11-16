@@ -17,13 +17,15 @@ import org.jetbrains.plugins.ruby.ruby.codeInsight.types.RType;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.ArgumentInfo;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.Visibility;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.impl.controlStructures.methods.RCommandArgumentListImpl;
-import org.jetbrains.plugins.ruby.ruby.lang.psi.impl.controlStructures.methods.RMethodBase;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.methodCall.RCall;
 import org.jetbrains.ruby.codeInsight.types.signature.MethodInfo;
+import org.jetbrains.ruby.stateTracker.Location;
+import org.jetbrains.ruby.stateTracker.RubyMethod;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class RMethodSyntheticSymbol extends SymbolImpl implements RMethodSymbol {
     @NotNull
@@ -64,6 +66,58 @@ public class RMethodSyntheticSymbol extends SymbolImpl implements RMethodSymbol 
 
         }
     };
+
+    public RMethodSyntheticSymbol(@NotNull final Project project,
+                                  @NotNull final Type type,
+                                  @NotNull final RubyMethod rubyMethod,
+                                  @Nullable final Symbol parent) {
+        super(project, rubyMethod.getName(), type, parent);
+        myVisibility = Visibility.PUBLIC;
+        myArgsInfo = toArgsInfo(rubyMethod.getArguments());
+        final Location location = rubyMethod.getLocation();
+        if (location != null) {
+            myPath = location.getPath();
+            myLineno = location.getLineNo();
+        } else {
+            myPath = "";
+            myLineno = 0;
+        }
+    }
+
+    private List<ArgumentInfo> toArgsInfo(List<RubyMethod.ArgInfo> arguments) {
+        return arguments.stream().map(RMethodSyntheticSymbol::toArgumentInfo).collect(Collectors.toList());
+    }
+
+    private static ArgumentInfo toArgumentInfo(final @NotNull RubyMethod.ArgInfo argInfo) {
+        ArgumentInfo.Type type;
+        switch (argInfo.getKind()) {
+            case REQ:
+                type = ArgumentInfo.Type.SIMPLE;
+                break;
+            case OPT:
+                type = ArgumentInfo.Type.PREDEFINED;
+                break;
+            case REST:
+                type = ArgumentInfo.Type.ARRAY;
+                break;
+            case KEY:
+                type = ArgumentInfo.Type.NAMED;
+                break;
+            case KEY_REST:
+                type = ArgumentInfo.Type.HASH;
+                break;
+            case KEY_REQ:
+                //TODO FIXME update ruby plugin and use appropriate type here
+                type = ArgumentInfo.Type.SIMPLE;
+                break;
+            case BLOCK:
+                type = ArgumentInfo.Type.BLOCK;
+                break;
+            default:
+                throw new IllegalArgumentException(argInfo.getKind().toString());
+        }
+        return new ArgumentInfo(argInfo.getName(), type);
+    }
 
     public RMethodSyntheticSymbol(@NotNull final Project project,
                                   @NotNull final MethodInfo methodInfo,

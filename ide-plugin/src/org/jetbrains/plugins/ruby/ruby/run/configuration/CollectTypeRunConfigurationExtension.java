@@ -13,6 +13,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
@@ -25,10 +26,13 @@ import org.jetbrains.plugins.ruby.gem.GemInstallUtil;
 import org.jetbrains.plugins.ruby.gem.util.GemSearchUtil;
 import org.jetbrains.plugins.ruby.ruby.RModuleUtil;
 import org.jetbrains.plugins.ruby.ruby.RubyUtil;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.stateTracker.RubyClassHierarchyWithCaching;
+import org.jetbrains.ruby.stateTracker.RubyClassHierarchy;
+import org.jetbrains.ruby.stateTracker.RubyClassHierarchyLoader;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
 
 public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationExtension {
     private static final Logger LOG = Logger.getInstance(CollectTypeRunConfigurationExtension.class);
@@ -168,14 +172,47 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
         final CollectTypeExecSettings settings = CollectTypeExecSettings.getFrom(configuration);
         if (settings.isStateTrackerEnabled()) {
             handler.addProcessListener(
-                    new ProcessAdapter() {
-                        @Override
-                        public void processTerminated(@NotNull ProcessEvent event) {
-                            //TODO add json parsing here
-
-                        }
+                new ProcessAdapter() {
+                    @Override
+                    public void processTerminated(@NotNull ProcessEvent event) {
+                        processStateTrackerResult(settings, configuration);
                     }
+                }
             );
         }
+    }
+
+    private void processStateTrackerResult(final @NotNull CollectTypeExecSettings settings,
+                                           final @NotNull AbstractRubyRunConfiguration configuration) {
+        String directoryPath = settings.getStateTrackerPath();
+        assert directoryPath != null;
+        File directory = new File(directoryPath);
+        try {
+            File[] listOfFiles = directory.listFiles();
+            if (listOfFiles == null) {
+                return;
+            }
+            Optional<File> file = Arrays.stream(listOfFiles).filter((it) -> it.getName().endsWith("json")).max(
+                    Comparator.comparingLong(File::length));
+            if (!file.isPresent()) {
+                return;
+            }
+            final Module module = configuration.getModule();
+            if (module == null) {
+                return;
+            }
+            try {
+                String data = FileUtil.loadFile(file.get());
+                final RubyClassHierarchy rubyClassHierarchy = RubyClassHierarchyLoader.INSTANCE.fromJson(data);
+                module.putUserData(RubyClassHierarchyWithCaching.Companion.getKEY(),
+                        new RubyClassHierarchyWithCaching(rubyClassHierarchy));
+
+            } catch (IOException e) {
+                LOG.warn(e);
+            }
+        } finally {
+            FileUtil.delete(directory);
+        }
+
     }
 }

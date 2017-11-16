@@ -7,6 +7,7 @@ interface RubyClassHierarchy {
 
     class Impl(override val loadPaths: List<String>, rubyModules: List<RubyModule>) : RubyClassHierarchy {
         private val name2modules  = rubyModules.associateBy( {it.name} , {it})
+
         override fun getRubyModule(fqn: String): RubyModule? {
             return name2modules[fqn]
         }
@@ -20,17 +21,17 @@ interface RubyModule {
     val classMethods: List<RubyMethod>
     val instanceMethods: List<RubyMethod>
 
-    data class Impl(override val name: String,
-                    override val classIncluded: List<RubyModule>,
-                    override val instanceIncluded: List<RubyModule>,
-                    override val classMethods: List<RubyMethod>,
-                    override val instanceMethods: List<RubyMethod>) : RubyModule
+    class Impl(override val name: String,
+               override val classIncluded: List<RubyModule>,
+               override val instanceIncluded: List<RubyModule>,
+               override val classMethods: List<RubyMethod>,
+               override val instanceMethods: List<RubyMethod>) : RubyModule
 }
 
 interface RubyClass: RubyModule {
     val superClass : RubyClass
 
-    data class Impl(override val name: String,
+    class Impl(override val name: String,
                     override val classIncluded: List<RubyModule>,
                     override val instanceIncluded: List<RubyModule>,
                     override val classMethods: List<RubyMethod>,
@@ -59,8 +60,8 @@ interface RubyMethod {
     val location: Location?
     val arguments: List<ArgInfo>
     data class ArgInfo(val kind: ArgumentKind, val name: String)
-    data class Impl(override val name: String, override val location: Location?,
-                    override val arguments: List<ArgInfo>) : RubyMethod
+    class Impl(override val name: String, override val location: Location?,
+               override val arguments: List<ArgInfo>) : RubyMethod
     enum class ArgumentKind {
         REQ,
         OPT,
