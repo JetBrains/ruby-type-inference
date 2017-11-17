@@ -112,7 +112,7 @@ object SignatureServer {
 
 
     private fun parseMethodJson(jsonString: String) {
-        val result = ben(SignatureServer.jsonTome) { MethodCachedNameBuilder.fromJson(jsonString) }
+        val result = MethodCachedNameBuilder.fromJson(jsonString)
         RTupleBuilder.addMethodToCache(result)
     }
 

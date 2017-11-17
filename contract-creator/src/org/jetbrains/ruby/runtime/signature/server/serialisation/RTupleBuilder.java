@@ -9,10 +9,10 @@ import java.util.*;
 
 public class RTupleBuilder {
     private static final Gson GSON = new Gson();
-    private static Map<Integer, ServerMethodInfoResponseBean> cachedMethods = new HashMap<>();
+    private static Map<Integer, RCachedMethod> cachedMethods = new HashMap<>();
 
-    public static void addMethodToCache(ServerMethodInfoResponseBean bean) {
-        cachedMethods.put(bean.id, bean);
+    public static void addMethodToCache(RCachedMethod cachedMethodInfo) {
+        cachedMethods.put(cachedMethodInfo.getId(), cachedMethodInfo);
     }
 
     @NotNull
@@ -26,15 +26,8 @@ public class RTupleBuilder {
 
     private RTupleBuilder(ServerSignatureResponseBean bean) {
 
-        ServerMethodInfoResponseBean method = cachedMethods.get(bean.method_id);
-
-        myMethodInfo = MethodInfoKt.MethodInfo(
-                ClassInfoKt.ClassInfo(GemInfoKt.GemInfoOrNull(method.gem_name, method.gem_version), beautifyClassName(method.receiver_name)),
-                method.method_name,
-                //TODO hohohaha
-                RVisibility.valueOf("PUBLIC"),
-                new Location(method.path, method.lineno));
-
+        RCachedMethod cachedMethod = cachedMethods.get(bean.method_id);
+        myMethodInfo = cachedMethod.getMethodInfo();
 
         final int argc;
         if (!bean.call_info_argc.equals(""))
@@ -46,10 +39,10 @@ public class RTupleBuilder {
 
         myArgsTypes = new ArrayList<>();
 
-        String argsInfo = method.param_info;
+        String argsInfo = cachedMethod.getArgsInfoString();
         myArgsInfo = new ArrayList<>();
 
-        if (!argsInfo.equals("")) {
+        if (!bean.args_info.equals("")) {
             List<String> methodCallTypes = Arrays.asList(bean.args_info.split("\\s*;\\s*"));
             //TODO better to store method infos with parsed param infos (to prevent reparse)
             List<String> methodArgs = Arrays.asList(argsInfo.split("\\s*;\\s*"));
@@ -88,13 +81,6 @@ public class RTupleBuilder {
                 }
             }
         }
-    }
-
-    private String beautifyClassName(String bean) {
-        if (bean.length() > 90) {
-            return bean.substring(0, 90) + "...";
-        }
-        return bean;
     }
 
     @Nullable

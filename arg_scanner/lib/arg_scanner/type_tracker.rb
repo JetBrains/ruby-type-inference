@@ -128,8 +128,12 @@ module ArgScanner
           method_cache[key] = new_method_cached_id
           receiver_name = defined_class.name ? defined_class : defined_class.ancestors.first
 
-          json = "{\"id\":\"#{new_method_cached_id}\",#{key},\"param_info\":\"#{ArgScanner.get_param_info}\"}"
-          puts json
+          json = "{\"id\":\"#{new_method_cached_id}\",#{key},\"param_info\":\"#{ArgScanner.get_param_info}\","
+          gem_name, gem_version = TypeTracker.extract_gem_name_and_version(tp.path)
+          json += '"gem_name":"' + gem_name.to_s + '","gem_version":"' + gem_version.to_s +
+              '","path":"' + tp.path + '","lineno":"' + tp.lineno.to_s + '"}'
+
+          #puts json
           put_to_socket(json)
         end
 
@@ -152,12 +156,12 @@ module ArgScanner
 
         return_type_name = tp.return_value.class
         json = ArgScanner.handle_return(signature, return_type_name) +
-            "\"return_type_name\":\"#{return_type_name}\","
+            "\"return_type_name\":\"#{return_type_name}\"}"
 
         if cache.add?(json)
           #puts json
-          gem_name, gem_version = TypeTracker.extract_gem_name_and_version(tp.path)
-          json += '"gem_name":"' + gem_name.to_s + '","gem_version":"' + gem_version.to_s + '"}'
+          #gem_name, gem_version = TypeTracker.extract_gem_name_and_version(tp.path)
+          #json += '"gem_name":"' + gem_name.to_s + '","gem_version":"' + gem_version.to_s + '"}'
           put_to_socket(json)
         end
       end

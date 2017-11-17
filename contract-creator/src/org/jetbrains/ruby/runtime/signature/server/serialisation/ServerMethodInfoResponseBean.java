@@ -1,14 +1,14 @@
 package org.jetbrains.ruby.runtime.signature.server.serialisation;
 
 @SuppressWarnings("InstanceVariableNamingConvention")
-public class ServerMethodInfoResponseBean {
-    public int id;
-    public String method_name;
-    public String receiver_name;
-    public String param_info;
+class ServerMethodInfoResponseBean {
+    int id;
+    String method_name;
+    String receiver_name;
+    String param_info;
 
-    public String gem_name;
-    public String gem_version;
-    public String path;
-    public int lineno;
+    String gem_name;
+    String gem_version;
+    String path;
+    int lineno;
 }
