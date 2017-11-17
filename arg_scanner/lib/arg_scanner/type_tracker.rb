@@ -116,7 +116,6 @@ module ArgScanner
         performance_monitor.on_call unless performance_monitor.nil?
 
         method_id = tp.method_id
-        method_cached_id = nil
 
         defined_class = tp.defined_class
         receiver_name = defined_class.name ? defined_class : defined_class.ancestors.first
@@ -134,9 +133,7 @@ module ArgScanner
           put_to_socket(json)
         end
 
-        method_cached_id = method_cache[key]
-
-        signature = ArgScanner.handle_call(tp.lineno, method_cached_id, tp.path)
+        signature = ArgScanner.handle_call(tp.lineno, method_cache[key], tp.path)
         signatures.push(signature)
       else
         signatures.push(false)
