@@ -40,6 +40,7 @@
     <extensions defaultExtensionNs="org.jetbrains.plugins.ruby">
 
         <rubyStatTypeProvider implementation="org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyStatTypeProviderImpl"/>
+        <symbolProvider implementation="org.jetbrains.plugins.ruby.ruby.codeInsight.stateTracker.TypeHierarchySymbolProvider"/>
 
         <runConfigurationExtension
                 implementation="org.jetbrains.plugins.ruby.ruby.run.configuration.CollectTypeRunConfigurationExtension"/>

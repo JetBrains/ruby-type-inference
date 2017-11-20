@@ -1,8 +1,10 @@
 package org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableLazyValue;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -12,8 +14,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ruby.rdoc.yard.psi.RangeInDocumentFakePsiElement;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.Type;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.RType;
+import org.jetbrains.plugins.ruby.ruby.lang.psi.RPsiElement;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.ArgumentInfo;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.Visibility;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.impl.controlStructures.methods.RCommandArgumentListImpl;
@@ -57,12 +61,37 @@ public class RMethodSyntheticSymbol extends SymbolImpl implements RMethodSymbol 
             if (document == null) {
                 return null;
             }
-            try {
-                final int offset = document.getLineStartOffset(myLineno);
-                return file.findElementAt(offset);
-            } catch (Exception e) {
-                return null;
-            }
+            return ReadAction.compute( () -> {
+                try {
+                    int offset = document.getLineStartOffset(myLineno);
+                    int nextLineOffset = document.getLineEndOffset(myLineno);
+                    int curOffset = offset;
+                    PsiElement psiElement;
+                    do {
+                        psiElement = file.findElementAt(curOffset);
+                        if (psiElement == null) {
+                            return null;
+                        }
+                        curOffset = psiElement.getTextRange().getEndOffset();
+                    } while (!(psiElement instanceof RPsiElement) && curOffset < nextLineOffset);
+
+                    if (psiElement instanceof RPsiElement) {
+                        return psiElement;
+                    }
+
+                    psiElement = file.findElementAt(offset);
+                    if (psiElement == null) {
+                        return null;
+                    }
+                    final int startElementOffset = psiElement.getTextRange().getStartOffset();
+                    final int endElementOffset = psiElement.getTextRange().getEndOffset();
+                    int start = offset - startElementOffset;
+                    int end = Math.min(nextLineOffset - startElementOffset, endElementOffset - startElementOffset);
+                    return new RangeInDocumentFakePsiElement(psiElement, new TextRange(start, end));
+                } catch (Exception e) {
+                    return null;
+                }
+            });
 
         }
     };

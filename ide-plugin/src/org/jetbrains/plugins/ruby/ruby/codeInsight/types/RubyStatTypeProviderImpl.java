@@ -13,10 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.gem.util.GemSearchUtil;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.resolve.ResolveUtil;
-import org.jetbrains.plugins.ruby.ruby.codeInsight.stateTracker.RubyClassHierarchyWithCaching;
-import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.Type;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.fqn.FQN;
-import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.RMethodSyntheticSymbol;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.Symbol;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.SymbolUtil;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.impl.REmptyType;
@@ -39,7 +36,6 @@ import org.jetbrains.ruby.codeInsight.types.storage.server.RSignatureProvider;
 import org.jetbrains.ruby.codeInsight.types.storage.server.StorageException;
 import org.jetbrains.ruby.runtime.signature.server.SignatureServer;
 import org.jetbrains.ruby.runtime.signature.server.serialisation.RTupleBuilder;
-import org.jetbrains.ruby.stateTracker.RubyMethod;
 
 import java.util.*;
 
@@ -105,39 +101,6 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
         return getNextLevel(currNodesAndReadTypes, tmpSet, pos);
     }
 
-    @Override
-    @Nullable
-    public Symbol findMethodForType(@NotNull RType type, @NotNull String name) {
-        if (!(type instanceof RSymbolType)) {
-            return null;
-        }
-        final String typeName = type.getName();
-        if (typeName == null) {
-            return null;
-        }
-        final Symbol symbol = ((RSymbolType) type).getSymbol();
-        final Module module = symbol.getModule();
-        if (module == null) {
-            return null;
-        }
-
-        final RubyClassHierarchyWithCaching rubyClassHierarchy = module.getUserData(RubyClassHierarchyWithCaching.Companion.getKEY());
-
-        if (rubyClassHierarchy == null) {
-            return null;
-        }
-
-        //Let's assume that we're a looking for a instance method
-
-        RubyMethod rubyMethod = rubyClassHierarchy.lookupInstanceMethodWithCaching(symbol.getFQNWithNesting().getFullPath(), name);
-
-        if (rubyMethod == null) {
-            return null;
-        }
-
-        return new RMethodSyntheticSymbol(module.getProject(), Type.INSTANCE_METHOD, rubyMethod, symbol);
-    }
-
     @Nullable
     public static MethodInfo findMethodInfo(@NotNull String name,
                                             @NotNull String typeName,
@@ -179,6 +142,12 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
             return createTypeByArgs(call, callArgs);
         }
     }
+
+    @Override
+    public @Nullable Symbol findMethodForType(@NotNull RType type, @NotNull String name) {
+        return null;
+    }
+
     @NotNull
     private RType createTypeByReturnType(@NotNull final RExpression call) {
         Project project = call.getProject();
