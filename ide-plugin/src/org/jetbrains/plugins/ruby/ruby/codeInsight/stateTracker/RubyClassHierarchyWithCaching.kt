@@ -25,6 +25,10 @@ class RubyClassHierarchyWithCaching private constructor(private val rubyClassHie
     private val lookupCache = ContainerUtil.createConcurrentWeakMap<Pair<String, String>, CachedValue>()
     private val membersCache = ContainerUtil.createConcurrentWeakMap<String, Set<Symbol>>()
 
+    fun getTypeForConstant(constant: String): RubyConstant? {
+        return rubyClassHierachy.topLevelConstants[constant]
+    }
+
     fun lookupInstanceMethodWithCaching(moduleName: String, methodName: String) : RubyMethod? {
         val module = rubyClassHierachy.getRubyModule(moduleName) ?: return null
         return lookupInstanceMethodWithCaching(module, methodName)

@@ -64,6 +64,18 @@ class RubyClassHierarchyLoaderTest : TestCase() {
     }
 
     @Test
+    fun testConstants() {
+        assertNotNull(classHierarchy)
+        classHierarchy?.let {
+            val elem = it.topLevelConstants["STDIN"]
+            assertNotNull(elem)
+            assertTrue(elem!!.extended.isEmpty())
+            assertTrue(elem.name == "STDIN")
+            assertTrue(elem.type == "IO")
+        }
+    }
+
+    @Test
     fun testParameters() {
         assertNotNull(classHierarchy)
         classHierarchy?.let {

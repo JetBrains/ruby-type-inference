@@ -1,4 +1,12 @@
 {
+  "top_level_constants": [
+    {
+      "class_name": "IO",
+      "extended": [],
+      "name": "STDIN"
+    }
+  ],
+
   "modules": [
     {
       "name": "Gem::Resolver::Molinillo::Resolver::Resolution",

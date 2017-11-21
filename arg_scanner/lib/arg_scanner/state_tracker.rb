@@ -25,11 +25,37 @@ module ArgScanner
     private
     def print_json(file)
       result = {
+        :top_level_constants => parse_top_level_constants,
         :modules => modules_to_json,
         :load_path => $:
       }
       require "json"
       file.puts(JSON.dump(result))
+    end
+
+    def parse_top_level_constants
+      Module.constants.select { |const| Module.const_defined?(const)}.map do |const|
+        begin
+          value = Module.const_get(const)
+          (!value.is_a? Module) ? {
+              :name => const,
+              :class_name => value.class,
+              :extended => get_extra_methods(value)} : nil
+        rescue Exception => e
+        end
+      end.compact
+    end
+
+    def get_extra_methods(value)
+      begin
+       (value.methods - value.class.public_instance_methods).map do |method_name|
+           method = value.public_method(method_name)
+           method.owner
+       end.uniq
+      rescue Exception => e
+        value.methods - value.class.instance_methods
+      end
+
     end
 
     def get_constants_of_class(constants, parent, klass)

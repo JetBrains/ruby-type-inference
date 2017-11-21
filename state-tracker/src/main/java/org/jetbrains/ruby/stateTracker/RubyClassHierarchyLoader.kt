@@ -11,7 +11,12 @@ object RubyClassHierarchyLoader {
     fun fromJson(json : String) : RubyClassHierarchy {
         val root = gson.fromJson(json, Root::class.java)
         return RubyClassHierarchy.Impl(root.load_path,
-                                       MapHelper(TopsortHelper(root.modules).topsort()).map())
+                                       MapHelper(TopsortHelper(root.modules).topsort()).map(),
+                                       root.top_level_constants.associate { Pair(it.name, RubyConstant.Impl(
+                                               it.name,
+                                               it.class_name,
+                                               it.extended
+                                       )) })
     }
 
     private data class Method(var name: String,
@@ -27,7 +32,12 @@ object RubyClassHierarchyLoader {
                               var class_methods: List<Method>,
                               var instance_methods: List<Method>)
 
-    private data class Root(var load_path: List<String>, var modules: List<Module>)
+    private data class TopLevelConstant(var name: String,
+                                        var class_name: String,
+                                        var extended: List<String>)
+
+    private data class Root(var top_level_constants: List<TopLevelConstant>,
+                            var load_path: List<String>, var modules: List<Module>)
 
     private class MapHelper(val topsortedList: List<Module>) {
         private val name2RubyModule = HashMap<String, RubyModule>()

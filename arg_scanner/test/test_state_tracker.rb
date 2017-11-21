@@ -38,12 +38,20 @@ class MyTest < Test::Unit::TestCase
     assert_not_nil(get_instance_method(symbol, "match"))
     parameters = get_instance_method(symbol, "match")['parameters']
     assert_not_nil(parameters)
-    if RUBY_VERSION < "2.4.0"
-      assert_equal(parameters[0][0], "req")
-    else
-      assert_equal(parameters[0][0], "rest")
-    end
+    assert_equal(parameters[0][0], (RUBY_VERSION < "2.4.0") ?  "req" : "rest")
+  end
 
+  def test_loaded_path_is_fine
+    assert_not_nil(@@json["load_path"])
+    assert_not_nil(@@json["load_path"][0])
+  end
+
+  def test_constant_is_fine
+    assert_not_nil(@@json["top_level_constants"])
+    assert_not_nil(@@json["top_level_constants"][0])
+    assert_not_nil(@@json["top_level_constants"][0]["name"])
+    assert_not_nil(@@json["top_level_constants"][0]["class_name"])
+    assert_not_nil(@@json["top_level_constants"][0]["extended"])
   end
 
   private

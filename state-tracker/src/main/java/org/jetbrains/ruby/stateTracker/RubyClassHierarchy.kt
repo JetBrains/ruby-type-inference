@@ -3,9 +3,13 @@ package org.jetbrains.ruby.stateTracker
 interface RubyClassHierarchy {
     val loadPaths: List<String>
 
+    val topLevelConstants: Map<String, RubyConstant>
+
     fun getRubyModule(fqn: String) : RubyModule?
 
-    class Impl(override val loadPaths: List<String>, rubyModules: List<RubyModule>) : RubyClassHierarchy {
+    class Impl(override val loadPaths: List<String>, rubyModules: List<RubyModule>,
+               override val topLevelConstants: Map<String, RubyConstant>) : RubyClassHierarchy {
+
         private val name2modules  = rubyModules.associateBy( {it.name} , {it})
 
         override fun getRubyModule(fqn: String): RubyModule? {
@@ -14,8 +18,17 @@ interface RubyClassHierarchy {
     }
 }
 
+interface RubyConstant {
+    val name: String
+    val type: String
+    val extended: List<String>
+    data class Impl(override val name: String,
+                    override val type: String,
+                    override val extended: List<String>) : RubyConstant
+}
+
 interface RubyModule {
-    val name : String
+    val name: String
     val classIncluded: List<RubyModule>
     val instanceIncluded: List<RubyModule>
     val classMethods: List<RubyMethod>
