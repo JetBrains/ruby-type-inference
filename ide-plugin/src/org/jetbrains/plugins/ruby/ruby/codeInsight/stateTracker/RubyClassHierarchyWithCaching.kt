@@ -1,6 +1,9 @@
 package org.jetbrains.plugins.ruby.ruby.codeInsight.stateTracker
 
+import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.Type
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.Types
@@ -8,14 +11,17 @@ import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.fqn.FQN
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.RMethodSyntheticSymbol
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.Symbol
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.SymbolUtil
-import org.jetbrains.ruby.stateTracker.RubyClass
-import org.jetbrains.ruby.stateTracker.RubyClassHierarchy
-import org.jetbrains.ruby.stateTracker.RubyMethod
-import org.jetbrains.ruby.stateTracker.RubyModule
+import org.jetbrains.plugins.ruby.settings.RubyTypeContractsSettings
+import org.jetbrains.ruby.stateTracker.*
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.nio.file.Paths
 import java.util.concurrent.ConcurrentMap
+import java.util.zip.GZIPInputStream
+import java.util.zip.GZIPOutputStream
 
-
-class RubyClassHierarchyWithCaching(private val rubyClassHierachy: RubyClassHierarchy) {
+class RubyClassHierarchyWithCaching private constructor(private val rubyClassHierachy: RubyClassHierarchy) {
     private val lookupCache = ContainerUtil.createConcurrentWeakMap<Pair<String, String>, CachedValue>()
     private val membersCache = ContainerUtil.createConcurrentWeakMap<String, Set<Symbol>>()
 
@@ -99,11 +105,57 @@ class RubyClassHierarchyWithCaching(private val rubyClassHierachy: RubyClassHier
         cache.put(key, result)
     }
 
-
-
     data class CachedValue(val rubyMethod: RubyMethod?)
 
     companion object {
-        val KEY = Key<RubyClassHierarchyWithCaching>("org.jetbrains.plugins.ruby.ruby.codeInsight.stateTracker.TypeHierarchy")
+        private val CLASS_HIERARCHY_KEY = Key<RubyClassHierarchyWithCaching>("org.jetbrains.plugins.ruby.ruby.codeInsight.stateTracker.ClassHierarchy")
+
+        private val RUBY_TYPE_INFERENCE_DIRECTORY = Paths.get(System.getProperty("idea.system.path"), "ruby-type-inference")
+        private val CLASS_HIERARCHY_FILENAME = "-class-hierarchy.json.gz"
+
+        fun loadFromSystemDirectory(module: Module): RubyClassHierarchyWithCaching? {
+            val file = File(RUBY_TYPE_INFERENCE_DIRECTORY.toFile(),
+                    module.project.name + "-" + module.name + CLASS_HIERARCHY_FILENAME)
+            if (!file.exists()) {
+                return null
+            }
+            FileInputStream(file).use {
+                GZIPInputStream(it).use {
+                    val json = it.reader(Charsets.UTF_8).use{ it.readText() }
+                    return createClassHierarchyFromJson(json, module)
+                }
+            }
+        }
+
+        @Synchronized
+        fun updateAndSaveToSystemDirectory(json: String, module: Module) {
+            createClassHierarchyFromJson(json, module)
+            val dir = RUBY_TYPE_INFERENCE_DIRECTORY.toFile()
+            FileUtil.createDirectory(dir)
+            FileOutputStream(File(dir, module.project.name + "-" + module.name + CLASS_HIERARCHY_FILENAME)).use {
+                GZIPOutputStream(it).use {
+                    it.writer(Charsets.UTF_8).use { it.write(json) }
+                }
+            }
+        }
+
+        private fun createClassHierarchyFromJson(json: String, module: Module) : RubyClassHierarchyWithCaching {
+            val rubyClassHierarchy = RubyClassHierarchyWithCaching(RubyClassHierarchyLoader.fromJson(json))
+            module.putUserData(RubyClassHierarchyWithCaching.CLASS_HIERARCHY_KEY,
+                    rubyClassHierarchy)
+            return rubyClassHierarchy
+
+        }
+
+        fun getInstance(module: Module): RubyClassHierarchyWithCaching? {
+            if (!ServiceManager.getService(module.project, RubyTypeContractsSettings::class.java).stateTrackerEnabled) {
+                return null
+            }
+            val ret = module.getUserData(CLASS_HIERARCHY_KEY)
+            if (ret != null) {
+                return ret
+            }
+            return null
+        }
     }
 }

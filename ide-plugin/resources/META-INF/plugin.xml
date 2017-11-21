@@ -27,9 +27,12 @@
 
         <applicationService serviceImplementation="org.jetbrains.plugins.ruby.ruby.codeInsight.SignatureService"/>
         <applicationService serviceImplementation="org.jetbrains.plugins.ruby.settings.RubyTypeContractsSettings"/>
+
         <intentionAction>
             <className>org.jetbrains.plugins.ruby.ruby.intentions.AddContractAnnotationIntention</className>
         </intentionAction>
+
+        <postStartupActivity implementation="org.jetbrains.plugins.ruby.ruby.codeInsight.TrackerDataLoader"/>
 
         <applicationConfigurable groupId="language"
                                  groupWeight="130"
@@ -40,7 +43,9 @@
     <extensions defaultExtensionNs="org.jetbrains.plugins.ruby">
 
         <rubyStatTypeProvider implementation="org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyStatTypeProviderImpl"/>
-        <symbolProvider implementation="org.jetbrains.plugins.ruby.ruby.codeInsight.stateTracker.TypeHierarchySymbolProvider"/>
+        <rubyTypeProvider implementation="org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyReturnTypeProvider"/>
+
+        <symbolProvider implementation="org.jetbrains.plugins.ruby.ruby.codeInsight.stateTracker.ClassHierarchySymbolProvider"/>
 
         <runConfigurationExtension
                 implementation="org.jetbrains.plugins.ruby.ruby.run.configuration.CollectTypeRunConfigurationExtension"/>

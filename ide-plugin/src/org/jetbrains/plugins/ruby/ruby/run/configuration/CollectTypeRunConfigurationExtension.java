@@ -27,8 +27,6 @@ import org.jetbrains.plugins.ruby.gem.util.GemSearchUtil;
 import org.jetbrains.plugins.ruby.ruby.RModuleUtil;
 import org.jetbrains.plugins.ruby.ruby.RubyUtil;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.stateTracker.RubyClassHierarchyWithCaching;
-import org.jetbrains.ruby.stateTracker.RubyClassHierarchy;
-import org.jetbrains.ruby.stateTracker.RubyClassHierarchyLoader;
 
 import java.io.File;
 import java.io.IOException;
@@ -203,16 +201,12 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
             }
             try {
                 String data = FileUtil.loadFile(file.get());
-                final RubyClassHierarchy rubyClassHierarchy = RubyClassHierarchyLoader.INSTANCE.fromJson(data);
-                module.putUserData(RubyClassHierarchyWithCaching.Companion.getKEY(),
-                        new RubyClassHierarchyWithCaching(rubyClassHierarchy));
-
+                RubyClassHierarchyWithCaching.Companion.updateAndSaveToSystemDirectory(data, module);
             } catch (IOException e) {
                 LOG.warn(e);
             }
         } finally {
             FileUtil.delete(directory);
         }
-
     }
 }

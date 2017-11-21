@@ -403,7 +403,7 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
                 type = ArgumentInfo.Type.ARRAY;
                 break;
             case KEYREQ:
-                type = ArgumentInfo.Type.NAMED;
+                type = ArgumentInfo.Type.KEYREQ;
                 break;
             case KEY:
                 type = ArgumentInfo.Type.NAMED;
