@@ -1,5 +1,5 @@
 require "set"
-require "require_all"
+require_relative "require_all"
 
 
 module ArgScanner
@@ -10,7 +10,7 @@ module ArgScanner
         dir = "." if dir.nil? || dir == ""
         path = dir + "/" + "classes-#{Time.now.strftime('%Y-%m-%d_%H-%M-%S')}-#{Process.pid}.json"
         begin
-          require_all Rails.root.join('lib')
+          RequireAll.require_all Rails.root.join('lib')
         rescue => e
         end
         begin
