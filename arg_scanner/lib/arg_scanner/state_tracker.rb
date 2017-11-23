@@ -6,7 +6,7 @@ module ArgScanner
   class StateTracker
     def initialize
       at_exit do
-        dir = ENV["ARG_SCANNER_STATE_TRACKER_DIR"]
+        dir = ENV["ARG_SCANNER_DIR"]
         dir = "." if dir.nil? || dir == ""
         path = dir + "/" + "classes-#{Time.now.strftime('%Y-%m-%d_%H-%M-%S')}-#{Process.pid}.json"
         begin

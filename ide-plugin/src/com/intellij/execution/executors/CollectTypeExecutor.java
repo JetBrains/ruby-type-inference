@@ -23,7 +23,7 @@ public class CollectTypeExecutor extends Executor {
 //        final Icon icon = IconLoader.findIcon(iconURL);
 //        myIcon = icon != null ? icon : AllIcons.General.Error
 
-        myIcon = AllIcons.General.Error;
+        myIcon = AllIcons.General.ExternalToolsSmall;
 
         ServiceManager.getService(SignatureService.class);
     }

@@ -11,7 +11,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.ruby.run.configuration.AbstractRubyRunConfiguration;
-import org.jetbrains.plugins.ruby.ruby.run.configuration.CollectTypeExecSettings;
+import org.jetbrains.plugins.ruby.ruby.run.configuration.CollectExecSettings;
 import org.jetbrains.plugins.ruby.ruby.run.configuration.RubyAbstractCommandLineState;
 import org.jetbrains.plugins.ruby.ruby.run.configuration.RubyProgramRunner;
 import org.jetbrains.plugins.ruby.settings.RubyTypeContractsSettings;
@@ -32,12 +32,14 @@ public class RubyCollectTypeRunner extends RubyProgramRunner {
             RubyTypeContractsSettings rubyTypeContractsSettings =
                     ServiceManager.getService(env.getProject(), RubyTypeContractsSettings.class);
             final AbstractRubyRunConfiguration newConfig = ((RubyAbstractCommandLineState) state).getConfig().clone();
-            String pathToState = rubyTypeContractsSettings.getStateTrackerEnabled() ? tryGenerateTmpDirPath() : null;
+            final boolean isReturnTypeTrackerEnabled = !rubyTypeContractsSettings.getTypeTrackerEnabled();
+            String pathToState = isReturnTypeTrackerEnabled ? tryGenerateTmpDirPath() : null;
 
-            CollectTypeExecSettings.putTo(newConfig,
-                    CollectTypeExecSettings.createSettings(true,
-                            rubyTypeContractsSettings.getTypeTrackerEnabled(),
-                            rubyTypeContractsSettings.getStateTrackerEnabled() && pathToState != null,
+            CollectExecSettings.putTo(newConfig,
+                    CollectExecSettings.createSettings(true,
+                            !isReturnTypeTrackerEnabled,
+                            isReturnTypeTrackerEnabled,
+                            false,
                             pathToState
                             ));
             final RunProfileState newState = newConfig.getState(env.getExecutor(), env);
@@ -49,10 +51,9 @@ public class RubyCollectTypeRunner extends RubyProgramRunner {
         return null;
     }
 
-
     private String tryGenerateTmpDirPath() {
         try {
-            File tmpDir = FileUtil.createTempDirectory("state-tracker", "");
+            File tmpDir = FileUtil.createTempDirectory("type-tracker", "");
             return tmpDir.getAbsolutePath();
         } catch (IOException ignored) {
             return null;

@@ -32,8 +32,9 @@ class RubyTypeContractsConfigurableUI(settings: RubyTypeContractsSettings) : Con
 
     private val perGemSettingsMap = HashMap(settings.perGemSettingsMap)
 
-    private val typeTrackerEnabled = settings.typeTrackerEnabled
-    private val stateTrackerEnabled = settings.stateTrackerEnabled
+    private var typeTrackerEnabled = settings.typeTrackerEnabled
+    private var returnTypeTrackerEnabled = settings.returnTypeTrackerEnabled
+    private var stateTrackerEnabled = settings.stateTrackerEnabled
 
     private val tableModel = ListTableModel<GemInfo>(
             object : ColumnInfo<GemInfo, String>("Gem Name") {
@@ -91,6 +92,9 @@ class RubyTypeContractsConfigurableUI(settings: RubyTypeContractsSettings) : Con
     override fun reset(settings: RubyTypeContractsSettings) {
         perGemSettingsMap.clear()
         perGemSettingsMap.putAll(settings.perGemSettingsMap)
+        typeTrackerEnabled = settings.typeTrackerEnabled
+        returnTypeTrackerEnabled = settings.returnTypeTrackerEnabled
+        stateTrackerEnabled = settings.stateTrackerEnabled
         toBeRemovedGems.clear()
         refill()
     }
@@ -99,6 +103,7 @@ class RubyTypeContractsConfigurableUI(settings: RubyTypeContractsSettings) : Con
         return perGemSettingsMap != settings.perGemSettingsMap || toBeRemovedGems.isNotEmpty()
                 || settings.stateTrackerEnabled != stateTrackerEnabled
                 || settings.typeTrackerEnabled != typeTrackerEnabled
+                || settings.returnTypeTrackerEnabled != returnTypeTrackerEnabled
     }
 
     override fun apply(settings: RubyTypeContractsSettings) {
@@ -113,6 +118,7 @@ class RubyTypeContractsConfigurableUI(settings: RubyTypeContractsSettings) : Con
         }
         settings.stateTrackerEnabled = stateTrackerEnabled
         settings.typeTrackerEnabled = typeTrackerEnabled
+        settings.returnTypeTrackerEnabled = returnTypeTrackerEnabled
         settings.perGemSettingsMap = HashMap(perGemSettingsMap)
         refill()
     }
@@ -132,8 +138,9 @@ class RubyTypeContractsConfigurableUI(settings: RubyTypeContractsSettings) : Con
                 }
                 .disableAddAction()
                 .disableUpDownActions().createPanel())
-        panel.add(CheckBox("Enable StateTracker", this, "stateTrackerEnabled"))
-        panel.add(CheckBox("Enable TypeTracker", this, "typeTrackerEnabled"))
+        panel.add(CheckBox("Use state tracker results for completion", this, "stateTrackerEnabled"))
+        panel.add(CheckBox("Use return type tracker results for completion", this, "returnTypeTrackerEnabled"))
+        panel.add(CheckBox("Use type tracker instead of return type tracker", this, "typeTrackerEnabled"))
         return panel
     }
 

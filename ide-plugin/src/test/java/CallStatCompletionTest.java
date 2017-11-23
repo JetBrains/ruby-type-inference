@@ -114,7 +114,7 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
 
             LOGGER.warn(getProcessOutput(new RubyCommandLine(RubyLocalRunner.getRunner(module), false)
                     .withExePath("arg-scanner")
-                    .withParameters("ruby", scriptPath)
+                    .withParameters("--type-tracker", "ruby", scriptPath)
                     .createProcess()));
         } catch (ExecutionException | InterruptedException e) {
             LOGGER.error(e.getMessage());

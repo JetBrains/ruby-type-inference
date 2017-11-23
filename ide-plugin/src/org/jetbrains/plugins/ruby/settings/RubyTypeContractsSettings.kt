@@ -20,7 +20,11 @@ data class RubyTypeContractsSettings @JvmOverloads constructor(
         @Attribute("typeTrackerEnabled")
         var typeTrackerEnabled: Boolean = false,
         @Attribute("stateTrackerEnabled")
-        var stateTrackerEnabled: Boolean = true) : PersistentStateComponent<RubyTypeContractsSettings> {
+        var stateTrackerEnabled: Boolean = true,
+        @Attribute("returnTypeTrackerEnabled")
+        var returnTypeTrackerEnabled: Boolean = true)
+
+    : PersistentStateComponent<RubyTypeContractsSettings> {
     override fun loadState(state: RubyTypeContractsSettings?) {
         if (state == null) {
             return

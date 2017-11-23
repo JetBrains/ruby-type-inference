@@ -3,7 +3,6 @@ package org.jetbrains.plugins.ruby.ruby.codeInsight.types;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -17,7 +16,6 @@ import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.fqn.FQN;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.Symbol;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.SymbolUtil;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.impl.REmptyType;
-import org.jetbrains.plugins.ruby.ruby.codeInsight.types.primitive.RBooleanType;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RPossibleCall;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RPsiElement;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RubyPsiUtil;
@@ -42,7 +40,6 @@ import java.util.*;
 public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
 
     private static final Logger LOG = Logger.getInstance(RubyStatTypeProviderImpl.class);
-    private static final boolean USE_ONLY_RETURN_TYPES = true;
 
 
     private int countMask(List<Set<String>> readTypes, String type, int currPosition) {
@@ -93,14 +90,6 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
         return nextLayer;
     }
 
-    private Map<SignatureNode, List<Set<String>>> getNextLevelByString(Map<SignatureNode, List<Set<String>>> currNodesAndReadTypes, String argName, int pos) {
-
-        Set<String> tmpSet = new HashSet<>();
-        tmpSet.add(argName);
-
-        return getNextLevel(currNodesAndReadTypes, tmpSet, pos);
-    }
-
     @Nullable
     public static MethodInfo findMethodInfo(@NotNull String name,
                                             @NotNull String typeName,
@@ -136,59 +125,13 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
 
     @NotNull
     public RType createTypeByCallAndArgs(@NotNull final RExpression call, @NotNull final List<RPsiElement> callArgs) {
-        if (USE_ONLY_RETURN_TYPES) {
-            return createTypeByReturnType(call);
-        } else {
-            return createTypeByArgs(call, callArgs);
-        }
+        return createTypeByArgs(call, callArgs);
     }
 
     @Override
     public @Nullable Symbol findMethodForType(@NotNull RType type, @NotNull String name) {
         return null;
     }
-
-    @NotNull
-    private RType createTypeByReturnType(@NotNull final RExpression call) {
-        Project project = call.getProject();
-
-        final PsiElement callElement = call instanceof RCall ? ((RCall) call).getPsiCommand() : call;
-
-        SignatureServer callStatServer = SignatureServer.INSTANCE;
-
-        final MethodInfo methodInfo = findMethodInfo(callElement);
-        if (methodInfo == null) {
-            return REmptyType.INSTANCE;
-        }
-        SignatureContract contract = callStatServer.getContract(methodInfo);
-
-        if (contract == null) {
-            return REmptyType.INSTANCE;
-        }
-
-        final Set<String> returnTypes = contract.Companion.getAllReturnTypes(contract);
-        final RType trueType = RBooleanType.getTrueType(project);
-        final RType falseType = RBooleanType.getFalseType(project);
-        final RType booleanType = RTypeFactory.createBoolType(project);
-        final RType nilType = RTypeFactory.createNilType(project);
-
-        final RType retType = returnTypes.stream().map((it) -> {
-            if (it.equals(nilType.getName())) {
-                return null;
-            }
-            if (it.equals(trueType.getName()) || it.equals(falseType.getName())) {
-                return booleanType;
-            }
-            return RTypeFactory.createTypeByFQN(project, it);
-        }).filter(Objects::nonNull).reduce(RTypeUtil::intersect).orElse(REmptyType.INSTANCE);
-
-        if (retType != REmptyType.INSTANCE && LOG.isDebugEnabled()) {
-            LOG.debug(String.format("%s: %s %s", call.getContainingFile().getVirtualFile().getPath(),
-                    call.getText(), retType.getPresentableName()));
-        }
-        return retType;
-    }
-
 
     @NotNull
     private RType createTypeByArgs(@NotNull final RExpression call, @NotNull final List<RPsiElement> callArgs) {

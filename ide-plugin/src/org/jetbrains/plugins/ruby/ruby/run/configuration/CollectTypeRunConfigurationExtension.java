@@ -27,6 +27,7 @@ import org.jetbrains.plugins.ruby.gem.util.GemSearchUtil;
 import org.jetbrains.plugins.ruby.ruby.RModuleUtil;
 import org.jetbrains.plugins.ruby.ruby.RubyUtil;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.stateTracker.RubyClassHierarchyWithCaching;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyReturnTypeData;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,9 +41,13 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
 
     private static final String ROOTS_ENV_KEY = "ARG_SCANNER_PROJECT_ROOTS";
 
-    private static final String DISABLE_TYPE_TRACKER_KEY = "ARG_SCANNER_DISABLE_TYPE_TRACKER";
+    private static final String ENABLE_TYPE_TRACKER_KEY = "ARG_SCANNER_ENABLE_TYPE_TRACKER";
 
-    private static final String DIR_FOR_STATE_TRACKER_KEY = "ARG_SCANNER_STATE_TRACKER_DIR";
+    private static final String ENABLE_STATE_TRACKER_KEY = "ARG_SCANNER_ENABLE_STATE_TRACKER";
+
+    private static final String ENABLE_RETURN_TYPE_TRACKER_KEY = "ARG_SCANNER_ENABLE_RETURN_TYPE_TRACKER";
+
+    private static final String OUTPUT_DIRECTORY = "ARG_SCANNER_DIR";
 
     @NonNls
     @NotNull
@@ -68,7 +73,7 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
     @Override
     protected boolean isEnabledFor(@NotNull final AbstractRubyRunConfiguration applicableConfiguration,
                                    @Nullable final RunnerSettings runnerSettings) {
-        final CollectTypeExecSettings config = CollectTypeExecSettings.getFrom(applicableConfiguration);
+        final CollectExecSettings config = CollectExecSettings.getFrom(applicableConfiguration);
         return config.isArgScannerEnabled();
     }
 
@@ -90,12 +95,18 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
 
         final Map<String, String> env = cmdLine.getEnvironment();
         final String rubyOpt = StringUtil.notNullize(env.get(RubyUtil.RUBYOPT));
-        final CollectTypeExecSettings collectTypeSettings = CollectTypeExecSettings.getFrom(configuration);
+        final CollectExecSettings collectTypeSettings = CollectExecSettings.getFrom(configuration);
         if (collectTypeSettings.isTypeTrackerEnabled()) {
-            env.put(DISABLE_TYPE_TRACKER_KEY, "");
+            env.put(ENABLE_TYPE_TRACKER_KEY, "1");
         }
         if (collectTypeSettings.isStateTrackerEnabled()) {
-            env.put(DIR_FOR_STATE_TRACKER_KEY, collectTypeSettings.getStateTrackerPath());
+            env.put(ENABLE_STATE_TRACKER_KEY, "1");
+        }
+        if (collectTypeSettings.isReturnTypeTrackerEnabled()) {
+            env.put(ENABLE_RETURN_TYPE_TRACKER_KEY, "1");
+        }
+        if (collectTypeSettings.getOutputDirectory() != null) {
+            env.put(OUTPUT_DIRECTORY, collectTypeSettings.getOutputDirectory());
         }
 
         final String newRubyOpt = rubyOpt + includeKey + " -r" + ARG_SCANNER_REQUIRE_SCRIPT;
@@ -167,8 +178,8 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
     @Override
     protected void attachToProcess(@NotNull AbstractRubyRunConfiguration configuration,
                                    @NotNull ProcessHandler handler, @Nullable RunnerSettings runnerSettings) {
-        final CollectTypeExecSettings settings = CollectTypeExecSettings.getFrom(configuration);
-        if (settings.isStateTrackerEnabled()) {
+        final CollectExecSettings settings = CollectExecSettings.getFrom(configuration);
+        if (settings.isStateTrackerEnabled() || settings.isReturnTypeTrackerEnabled()) {
             handler.addProcessListener(
                 new ProcessAdapter() {
                     @Override
@@ -180,9 +191,9 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
         }
     }
 
-    private void processStateTrackerResult(final @NotNull CollectTypeExecSettings settings,
+    private void processStateTrackerResult(final @NotNull CollectExecSettings settings,
                                            final @NotNull AbstractRubyRunConfiguration configuration) {
-        String directoryPath = settings.getStateTrackerPath();
+        String directoryPath = settings.getOutputDirectory();
         assert directoryPath != null;
         File directory = new File(directoryPath);
         try {
@@ -201,7 +212,13 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
             }
             try {
                 String data = FileUtil.loadFile(file.get());
-                RubyClassHierarchyWithCaching.Companion.updateAndSaveToSystemDirectory(data, module);
+                if (settings.isStateTrackerEnabled()) {
+                    RubyClassHierarchyWithCaching.Companion.updateAndSaveToSystemDirectory(data, module);
+                }
+                if (settings.isReturnTypeTrackerEnabled()) {
+                    RubyReturnTypeData.Companion.updateAndSaveToSystemDirectory(data, module);
+                }
+
             } catch (IOException e) {
                 LOG.warn(e);
             }
@@ -209,4 +226,6 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
             FileUtil.delete(directory);
         }
     }
+
+
 }
