@@ -1,25 +1,20 @@
 <idea-plugin>
     <id>org.jetbrains.ruby-runtime-stats</id>
-    <name>Ruby Stat Type Inference</name>
-    <version>1.0</version>
+    <name>Ruby Dynamic Code Insight</name>
+    <version>0.1</version>
     <vendor email="" url="http://www.jetbrains.com">JetBrains</vendor>
     <depends>com.intellij.modules.ruby</depends>
     <description><![CDATA[
-      TODO
+        <p>This plugin provides additional Code Insight intelligence to improve resolution, find usages and refactoring
+        capabilities.</p>
+
+        <p>The data is obtained via user project execution altered by a special tracker which stores symbol
+        hierarchy, method return types, etc.</p>
     ]]></description>
 
     <change-notes><![CDATA[
     ]]>
     </change-notes>
-
-    <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html for description -->
-    <idea-version since-build="141.0"/>
-
-    <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
-         on how to target different products -->
-    <!-- uncomment to enable plugin in all products
-    <depends>com.intellij.modules.lang</depends>
-    -->
 
     <extensions defaultExtensionNs="com.intellij">
         <executor implementation="com.intellij.execution.executors.CollectTypeExecutor"/>
