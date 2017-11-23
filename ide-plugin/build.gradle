@@ -9,17 +9,21 @@ plugins {
 }
 
 dependencies {
-    def withoutSlf = {
+    def withoutKotlinAndMySql = {
+        exclude group: 'org.jetbrains.kotlin'
+        exclude group: 'mysql'
+    }
+    def withoutSlfAndKotlinAndMySql = {
         exclude group: 'org.slf4j'//, module: 'slf4j-api'
+        exclude group: 'org.jetbrains.kotlin'
+        exclude group: 'mysql'
     }
 
-    compile project(':ruby-call-signature')
-    compile project(':storage-server-api'), withoutSlf
-    compile project(':contract-creator'), withoutSlf
-    compile project(':state-tracker'), withoutSlf
+    compile project(':ruby-call-signature'), withoutKotlinAndMySql
+    compile project(':storage-server-api'), withoutSlfAndKotlinAndMySql
+    compile project(':contract-creator'), withoutSlfAndKotlinAndMySql
+    compile project(':state-tracker'), withoutSlfAndKotlinAndMySql
 
-    // https://mvnrepository.com/artifact/mysql/mysql-connector-java
-    compile group: 'mysql', name: 'mysql-connector-java', version: '6.0.6'
     // https://mvnrepository.com/artifact/com.h2database/h2
     compile group: 'com.h2database', name: 'h2', version: '1.4.196'
 

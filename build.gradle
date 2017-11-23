@@ -21,10 +21,13 @@ allprojects {
     apply plugin: 'java'
     apply plugin: 'kotlin'
 
+    def project = it
     dependencies {
-        compile 'org.jetbrains:annotations:15.0'
-        compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-        compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
+        if (project.name != 'ide-plugin') {
+            compile 'org.jetbrains:annotations:15.0'
+            compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+            compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
+        }
 
         testCompile 'junit:junit:4.12'
         testCompile 'com.h2database:h2:1.4.193'
