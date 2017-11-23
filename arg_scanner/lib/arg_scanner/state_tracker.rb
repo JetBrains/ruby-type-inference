@@ -11,11 +11,11 @@ module ArgScanner
         path = dir + "/" + "classes-#{Time.now.strftime('%Y-%m-%d_%H-%M-%S')}-#{Process.pid}.json"
         begin
           RequireAll.require_all Rails.root.join('lib')
-        rescue => e
+        rescue Exception => e
         end
         begin
           Rails.application.eager_load!
-        rescue => e
+        rescue Exception => e
         end
 
         File.open(path,"w") { |file| print_json(file) }
@@ -102,6 +102,8 @@ module ArgScanner
         ret[:line] = method.source_location[1]
       end
       ret
+    rescue Exception => e
+      nil
     end
 
     def module_to_json(mod)
@@ -110,15 +112,17 @@ module ArgScanner
         :type => mod.class.to_s,
         :singleton_class_included => mod.singleton_class.included_modules,
         :included => mod.included_modules,
-        :class_methods => mod.methods(false).map {|method| method_to_json(mod.method(method))},
-        :instance_methods => mod.instance_methods(false).map {|method| method_to_json(mod.instance_method(method))}
+        :class_methods => mod.methods(false).map {|method| method_to_json(mod.method(method))}.compact,
+        :instance_methods => mod.instance_methods(false).map {|method| method_to_json(mod.instance_method(method))}.compact
       }
       ret[:superclass] = mod.superclass if mod.is_a? Class
       ret
+    rescue Exception => e
+      nil
     end
 
     def modules_to_json
-      get_all_modules.map {|mod| module_to_json(mod)}
+      get_all_modules.map {|mod| module_to_json(mod)}.compact
     end
   end
 end
