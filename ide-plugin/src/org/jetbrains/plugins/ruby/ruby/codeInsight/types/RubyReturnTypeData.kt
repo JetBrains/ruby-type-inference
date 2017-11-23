@@ -4,11 +4,11 @@ import com.google.gson.Gson
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Key
+import org.jetbrains.plugins.ruby.ruby.persistent.TypeInferenceDirectory
 import org.jetbrains.plugins.ruby.settings.RubyTypeContractsSettings
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
-import java.nio.file.Paths
 import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
 
@@ -38,7 +38,6 @@ interface RubyReturnTypeData {
         private val gson = Gson()
 
         private val KEY = Key<RubyReturnTypeData>("org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyReturnTypeData")
-        private val RUBY_TYPE_INFERENCE_DIRECTORY = Paths.get(System.getProperty("idea.system.path"), "ruby-type-inference")
         private val RETURN_TYPE_FILENAME="-calls.json.gz"
 
         fun getInstance(module: Module): RubyReturnTypeData? {
@@ -57,7 +56,8 @@ interface RubyReturnTypeData {
 
         @Synchronized
         fun updateAndSaveToSystemDirectory(json: String, module: Module) {
-            val file = File(RUBY_TYPE_INFERENCE_DIRECTORY.toFile(), module.project.name + "-" + module.name + RETURN_TYPE_FILENAME)
+            val file = File(TypeInferenceDirectory.RUBY_TYPE_INFERENCE_DIRECTORY.toFile(),
+                    module.project.name + "-" + module.name + RETURN_TYPE_FILENAME)
             FileOutputStream(file).use {
                 GZIPOutputStream(it).use {
                     it.writer(Charsets.UTF_8).use { it.write(json) }
@@ -67,7 +67,8 @@ interface RubyReturnTypeData {
         }
 
         private fun tryLoadJson(module: Module): RubyReturnTypeData? {
-            val file = File(RUBY_TYPE_INFERENCE_DIRECTORY.toFile(), module.project.name + "-" + module.name + RETURN_TYPE_FILENAME)
+            val file = File(TypeInferenceDirectory.RUBY_TYPE_INFERENCE_DIRECTORY.toFile(),
+                    module.project.name + "-" + module.name + RETURN_TYPE_FILENAME)
             if (!file.exists()) {
                 return null
             }

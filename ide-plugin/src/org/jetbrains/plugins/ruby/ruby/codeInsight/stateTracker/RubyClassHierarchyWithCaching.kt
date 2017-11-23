@@ -3,7 +3,6 @@ package org.jetbrains.plugins.ruby.ruby.codeInsight.stateTracker
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.Type
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.Types
@@ -11,12 +10,12 @@ import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.fqn.FQN
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.RMethodSyntheticSymbol
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.Symbol
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.SymbolUtil
+import org.jetbrains.plugins.ruby.ruby.persistent.TypeInferenceDirectory
 import org.jetbrains.plugins.ruby.settings.RubyTypeContractsSettings
 import org.jetbrains.ruby.stateTracker.*
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
-import java.nio.file.Paths
 import java.util.concurrent.ConcurrentMap
 import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
@@ -114,11 +113,10 @@ class RubyClassHierarchyWithCaching private constructor(private val rubyClassHie
     companion object {
         private val CLASS_HIERARCHY_KEY = Key<RubyClassHierarchyWithCaching>("org.jetbrains.plugins.ruby.ruby.codeInsight.stateTracker.ClassHierarchy")
 
-        private val RUBY_TYPE_INFERENCE_DIRECTORY = Paths.get(System.getProperty("idea.system.path"), "ruby-type-inference")
         private val CLASS_HIERARCHY_FILENAME = "-class-hierarchy.json.gz"
 
         fun loadFromSystemDirectory(module: Module): RubyClassHierarchyWithCaching? {
-            val file = File(RUBY_TYPE_INFERENCE_DIRECTORY.toFile(),
+            val file = File(TypeInferenceDirectory.RUBY_TYPE_INFERENCE_DIRECTORY.toFile(),
                     module.project.name + "-" + module.name + CLASS_HIERARCHY_FILENAME)
             if (!file.exists()) {
                 return null
@@ -134,9 +132,8 @@ class RubyClassHierarchyWithCaching private constructor(private val rubyClassHie
         @Synchronized
         fun updateAndSaveToSystemDirectory(json: String, module: Module) {
             createClassHierarchyFromJson(json, module)
-            val dir = RUBY_TYPE_INFERENCE_DIRECTORY.toFile()
-            FileUtil.createDirectory(dir)
-            FileOutputStream(File(dir, module.project.name + "-" + module.name + CLASS_HIERARCHY_FILENAME)).use {
+            FileOutputStream(File(TypeInferenceDirectory.RUBY_TYPE_INFERENCE_DIRECTORY.toFile(),
+                    module.project.name + "-" + module.name + CLASS_HIERARCHY_FILENAME)).use {
                 GZIPOutputStream(it).use {
                     it.writer(Charsets.UTF_8).use { it.write(json) }
                 }

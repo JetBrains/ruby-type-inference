@@ -4,7 +4,7 @@ import org.jetbrains.exposed.sql.Database
 
 object DatabaseProvider {
     private val IN_MEMORY_URL = "jdbc:h2:mem:test"
-    private val IN_MEMORY_DRIVER = "org.h2.Driver"
+    private val H2_DRIVER = "org.h2.Driver"
     private val MYSQL_URL = System.getProperty("mysql.url",
             "jdbc:mysql://localhost:3306/" +
                     "ruby_type_contracts" +
@@ -14,9 +14,11 @@ object DatabaseProvider {
     private val MYSQL_PASSWORD = System.getProperty("mysql.user.password", "rubymine")
 
 
-    fun connect(inMemory: Boolean = false) {
+    fun connect(inMemory: Boolean = false, filePath: String? = null) {
         if (inMemory) {
-            Database.connect(IN_MEMORY_URL, driver = IN_MEMORY_DRIVER)
+            Database.connect(IN_MEMORY_URL, driver = H2_DRIVER)
+        } else if (filePath != null) {
+            Database.connect("jdbc:h2:" + filePath, driver = H2_DRIVER)
         } else {
             Database.connect(MYSQL_URL, driver = MYSQL_DRIVER,
                     user = MYSQL_USER,
