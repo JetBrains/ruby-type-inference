@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.ruby.ruby.run.configuration;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.process.ProcessAdapter;
@@ -17,7 +16,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.gem.GemDependency;
@@ -49,10 +47,6 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
 
     private static final String OUTPUT_DIRECTORY = "ARG_SCANNER_DIR";
 
-    @NonNls
-    @NotNull
-    private static final String ID = "CollectTypeRunConfigurationExtension";
-
     @Override
     protected void readExternal(@NotNull final AbstractRubyRunConfiguration runConfiguration,
                                 @NotNull final Element element) throws InvalidDataException {
@@ -81,7 +75,7 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
     protected void patchCommandLine(@NotNull final AbstractRubyRunConfiguration configuration,
                                     @Nullable final RunnerSettings runnerSettings,
                                     @NotNull final GeneralCommandLine cmdLine,
-                                    @NotNull final String runnerId) throws ExecutionException {
+                                    @NotNull final String runnerId) {
         final Module module = configuration.getModule();
         if (module == null) {
             return;
