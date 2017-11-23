@@ -3,12 +3,17 @@ package org.jetbrains.plugins.ruby.ruby.run.configuration;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
@@ -21,17 +26,28 @@ import org.jetbrains.plugins.ruby.gem.GemInstallUtil;
 import org.jetbrains.plugins.ruby.gem.util.GemSearchUtil;
 import org.jetbrains.plugins.ruby.ruby.RModuleUtil;
 import org.jetbrains.plugins.ruby.ruby.RubyUtil;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.stateTracker.RubyClassHierarchyWithCaching;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyReturnTypeData;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
 
 public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationExtension {
+    private static final Logger LOG = Logger.getInstance(CollectTypeRunConfigurationExtension.class);
     private static final String ARG_SCANNER_GEM_NAME = "arg_scanner";
 
     private static final String ARG_SCANNER_REQUIRE_SCRIPT = "arg_scanner/starter";
 
     private static final String ROOTS_ENV_KEY = "ARG_SCANNER_PROJECT_ROOTS";
+
+    private static final String ENABLE_TYPE_TRACKER_KEY = "ARG_SCANNER_ENABLE_TYPE_TRACKER";
+
+    private static final String ENABLE_STATE_TRACKER_KEY = "ARG_SCANNER_ENABLE_STATE_TRACKER";
+
+    private static final String ENABLE_RETURN_TYPE_TRACKER_KEY = "ARG_SCANNER_ENABLE_RETURN_TYPE_TRACKER";
+
+    private static final String OUTPUT_DIRECTORY = "ARG_SCANNER_DIR";
 
     @NonNls
     @NotNull
@@ -57,8 +73,8 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
     @Override
     protected boolean isEnabledFor(@NotNull final AbstractRubyRunConfiguration applicableConfiguration,
                                    @Nullable final RunnerSettings runnerSettings) {
-        final CollectTypeExecSettings config = CollectTypeExecSettings.getFrom(applicableConfiguration);
-        return config.isCollectTypeExecEnabled;
+        final CollectExecSettings config = CollectExecSettings.getFrom(applicableConfiguration);
+        return config.isArgScannerEnabled();
     }
 
     @Override
@@ -76,8 +92,23 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
             return;
         }
 
+
         final Map<String, String> env = cmdLine.getEnvironment();
         final String rubyOpt = StringUtil.notNullize(env.get(RubyUtil.RUBYOPT));
+        final CollectExecSettings collectTypeSettings = CollectExecSettings.getFrom(configuration);
+        if (collectTypeSettings.isTypeTrackerEnabled()) {
+            env.put(ENABLE_TYPE_TRACKER_KEY, "1");
+        }
+        if (collectTypeSettings.isStateTrackerEnabled()) {
+            env.put(ENABLE_STATE_TRACKER_KEY, "1");
+        }
+        if (collectTypeSettings.isReturnTypeTrackerEnabled()) {
+            env.put(ENABLE_RETURN_TYPE_TRACKER_KEY, "1");
+        }
+        if (collectTypeSettings.getOutputDirectory() != null) {
+            env.put(OUTPUT_DIRECTORY, collectTypeSettings.getOutputDirectory());
+        }
+
         final String newRubyOpt = rubyOpt + includeKey + " -r" + ARG_SCANNER_REQUIRE_SCRIPT;
 
         final Module[] rubyModules = RModuleUtil.getInstance().getAllModulesWithRubySupport(configuration.getProject());
@@ -86,7 +117,6 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
             return StringUtil.join(contentRoots, VirtualFile::getPath, ":");
         }, ":");
         env.put(ROOTS_ENV_KEY, localCodeRoots);
-
         cmdLine.withEnvironment(RubyUtil.RUBYOPT, newRubyOpt);
     }
 
@@ -144,4 +174,58 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
     protected <P extends AbstractRubyRunConfiguration> SettingsEditor<P> createEditor(@NotNull final P configuration) {
         return null;
     }
+
+    @Override
+    protected void attachToProcess(@NotNull AbstractRubyRunConfiguration configuration,
+                                   @NotNull ProcessHandler handler, @Nullable RunnerSettings runnerSettings) {
+        final CollectExecSettings settings = CollectExecSettings.getFrom(configuration);
+        if (settings.isStateTrackerEnabled() || settings.isReturnTypeTrackerEnabled()) {
+            handler.addProcessListener(
+                new ProcessAdapter() {
+                    @Override
+                    public void processTerminated(@NotNull ProcessEvent event) {
+                        processStateTrackerResult(settings, configuration);
+                    }
+                }
+            );
+        }
+    }
+
+    private void processStateTrackerResult(final @NotNull CollectExecSettings settings,
+                                           final @NotNull AbstractRubyRunConfiguration configuration) {
+        String directoryPath = settings.getOutputDirectory();
+        assert directoryPath != null;
+        File directory = new File(directoryPath);
+        try {
+            File[] listOfFiles = directory.listFiles();
+            if (listOfFiles == null) {
+                return;
+            }
+            Optional<File> file = Arrays.stream(listOfFiles).filter((it) -> it.getName().endsWith("json")).max(
+                    Comparator.comparingLong(File::length));
+            if (!file.isPresent()) {
+                return;
+            }
+            final Module module = configuration.getModule();
+            if (module == null) {
+                return;
+            }
+            try {
+                String data = FileUtil.loadFile(file.get());
+                if (settings.isStateTrackerEnabled()) {
+                    RubyClassHierarchyWithCaching.Companion.updateAndSaveToSystemDirectory(data, module);
+                }
+                if (settings.isReturnTypeTrackerEnabled()) {
+                    RubyReturnTypeData.Companion.updateAndSaveToSystemDirectory(data, module);
+                }
+
+            } catch (IOException e) {
+                LOG.warn(e);
+            }
+        } finally {
+            FileUtil.delete(directory);
+        }
+    }
+
+
 }

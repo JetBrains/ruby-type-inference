@@ -8,6 +8,7 @@ import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.table.TableView
 import com.intellij.util.text.VersionComparatorUtil
+import com.intellij.util.ui.CheckBox
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListTableModel
@@ -30,6 +31,10 @@ class RubyTypeContractsConfigurableUI(settings: RubyTypeContractsSettings) : Con
     private val registeredGems = ArrayList(SignatureServer.getStorage().registeredGems)
 
     private val perGemSettingsMap = HashMap(settings.perGemSettingsMap)
+
+    private var typeTrackerEnabled = settings.typeTrackerEnabled
+    private var returnTypeTrackerEnabled = settings.returnTypeTrackerEnabled
+    private var stateTrackerEnabled = settings.stateTrackerEnabled
 
     private val tableModel = ListTableModel<GemInfo>(
             object : ColumnInfo<GemInfo, String>("Gem Name") {
@@ -87,12 +92,18 @@ class RubyTypeContractsConfigurableUI(settings: RubyTypeContractsSettings) : Con
     override fun reset(settings: RubyTypeContractsSettings) {
         perGemSettingsMap.clear()
         perGemSettingsMap.putAll(settings.perGemSettingsMap)
+        typeTrackerEnabled = settings.typeTrackerEnabled
+        returnTypeTrackerEnabled = settings.returnTypeTrackerEnabled
+        stateTrackerEnabled = settings.stateTrackerEnabled
         toBeRemovedGems.clear()
         refill()
     }
 
     override fun isModified(settings: RubyTypeContractsSettings): Boolean {
         return perGemSettingsMap != settings.perGemSettingsMap || toBeRemovedGems.isNotEmpty()
+                || settings.stateTrackerEnabled != stateTrackerEnabled
+                || settings.typeTrackerEnabled != typeTrackerEnabled
+                || settings.returnTypeTrackerEnabled != returnTypeTrackerEnabled
     }
 
     override fun apply(settings: RubyTypeContractsSettings) {
@@ -105,7 +116,9 @@ class RubyTypeContractsConfigurableUI(settings: RubyTypeContractsSettings) : Con
                 registeredGems.removeAll(toBeRemovedGems)
             }
         }
-
+        settings.stateTrackerEnabled = stateTrackerEnabled
+        settings.typeTrackerEnabled = typeTrackerEnabled
+        settings.returnTypeTrackerEnabled = returnTypeTrackerEnabled
         settings.perGemSettingsMap = HashMap(perGemSettingsMap)
         refill()
     }
@@ -125,6 +138,9 @@ class RubyTypeContractsConfigurableUI(settings: RubyTypeContractsSettings) : Con
                 }
                 .disableAddAction()
                 .disableUpDownActions().createPanel())
+        panel.add(CheckBox("Use state tracker results for completion", this, "stateTrackerEnabled"))
+        panel.add(CheckBox("Use return type tracker results for completion", this, "returnTypeTrackerEnabled"))
+        panel.add(CheckBox("Use type tracker instead of return type tracker", this, "typeTrackerEnabled"))
         return panel
     }
 

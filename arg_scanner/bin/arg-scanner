@@ -2,10 +2,12 @@
 
 require 'optparse'
 require 'arg_scanner/options'
+require 'arg_scanner/version'
 
 options = ArgScanner::OPTIONS
 option_parser = OptionParser.new do |opts|
-  opts.banner = <<~EOB
+  opts.banner = "arg-scanner #{ArgScanner::VERSION}" + <<~EOB
+  
     Usage: arg-scanner [OPTIONS] <ruby cmdline> 
     arg-scanner is a ruby script mediator supposed to be run from the command line or IDE.
         The data will be sent to a signature server so it must be running during arg-scanner execution.
@@ -22,6 +24,30 @@ option_parser = OptionParser.new do |opts|
   opts.on("--no-local", "local source treatment: ignore, do not send data from local sources") do
     options.no_local = true
   end
+  opts.on("--type-tracker", "enable type tracker") do
+    options.enable_type_tracker = true
+  end
+  opts.on("--state-tracker", "enable state tracker") do
+    options.enable_state_tracker = true
+  end
+  opts.on("--return-type-tracker", "enable return type tracker") do
+    options.enable_return_type_tracker = true
+  end
+
+  opts.on("--no-type-tracker", "disable type tracker") do
+    options.enable_type_tracker = false
+  end
+  opts.on("--no-state-tracker", "disable state tracker") do
+    options.enable_state_tracker = false
+  end
+  opts.on("--no-return-type-tracker", "disable return type tracker") do
+    options.enable_return_type_tracker = false
+  end
+
+  opts.on("--output-dir=[Dir]", String, "specify output directory (ignored by type tracker)") do |dir|
+    options.output_dir = dir
+  end
+
 end
 
 begin
