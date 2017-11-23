@@ -15,7 +15,7 @@ import java.io.File
 
 class SignatureService {
     init {
-        DatabaseProvider.connect(filePath = File(TypeInferenceDirectory.RUBY_TYPE_INFERENCE_DIRECTORY.toFile(), "ruby-type-inference.db").absolutePath)
+        DatabaseProvider.connect(filePath = File(TypeInferenceDirectory.RUBY_TYPE_INFERENCE_DIRECTORY.toFile(), "ruby-type-inference").absolutePath)
         transaction {
             SchemaUtils.create(GemInfoTable, ClassInfoTable, MethodInfoTable, SignatureTable)
         }
