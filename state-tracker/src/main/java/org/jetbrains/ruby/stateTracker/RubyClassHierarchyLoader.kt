@@ -94,7 +94,7 @@ object RubyClassHierarchyLoader {
                 methods.map {
                     RubyMethod.Impl(
                             it.name,
-                            if (it.path != null) {
+                            if (it.path != null && it.line != null) {
                                 Location.Impl(it.path!!, it.line!!.toInt())
                             } else null,
                             it.parameters.map {
