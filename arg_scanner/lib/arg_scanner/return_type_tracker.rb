@@ -1,22 +1,28 @@
 require 'set'
+require_relative "workspace"
 
 module ArgScanner
   class ReturnTypeTracker
     def initialize
       @result = Set.new
-      TracePoint.new(:return) do |tp|
+      @workspace = Workspace.new
+      @workspace.on_process_start
+      @trace_point = TracePoint.new(:return) do |tp|
         @result.add( {
           def: tp.defined_class,
           name: tp.method_id,
           ret: tp.return_value.class
         })
-      end.enable
+      end
+      @trace_point.enable
       at_exit do
-        dir = ENV["ARG_SCANNER_DIR"]
-        dir = "." if dir.nil? || dir == ""
-        path = dir + "/calls-#{Time.now.strftime('%Y-%m-%d_%H-%M-%S')}-#{Process.pid}.json"
-        require 'json'
-        File.open(path,"w") { |file| file.puts(JSON.dump(@result.to_a)) }
+        @trace_point.disable
+        begin
+          require 'json'
+          @workspace.open_output_json("calls") { |file| file.puts(JSON.dump(@result.to_a)) }
+        ensure
+          @workspace.on_process_exit
+        end
       end
     end
   end

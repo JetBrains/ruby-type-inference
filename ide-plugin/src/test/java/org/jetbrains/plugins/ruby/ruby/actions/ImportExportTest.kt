@@ -22,7 +22,7 @@ import org.jetbrains.ruby.codeInsight.types.storage.server.impl.SignatureTable
 import org.jetbrains.ruby.runtime.signature.server.SignatureServer
 import java.io.File
 
-class ImportExportTest : LightPlatformCodeInsightFixtureTestCase() {
+class  ImportExportTest : LightPlatformCodeInsightFixtureTestCase() {
     private var transaction: Transaction? = null
 
     private var tempFile: File? = null

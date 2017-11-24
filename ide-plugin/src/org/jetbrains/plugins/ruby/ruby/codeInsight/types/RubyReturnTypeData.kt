@@ -55,7 +55,8 @@ interface RubyReturnTypeData {
         }
 
         @Synchronized
-        fun updateAndSaveToSystemDirectory(json: String, module: Module) {
+        fun updateAndSaveToSystemDirectory(jsons: List<String>, module: Module) {
+            val json = joinJsons(jsons)
             val file = File(TypeInferenceDirectory.RUBY_TYPE_INFERENCE_DIRECTORY.toFile(),
                     module.project.name + "-" + module.name + RETURN_TYPE_FILENAME)
             FileOutputStream(file).use {
@@ -64,6 +65,11 @@ interface RubyReturnTypeData {
                     module.putUserData(KEY, RubyReturnTypeData.createFromJson(json))
                 }
             }
+        }
+
+        private fun joinJsons(jsons: List<String>): String {
+            return gson.toJson(jsons.map{gson.fromJson(it, Array<Schema>::class.java).toList()}.
+                    reduce {a, b -> a.union(b).toList()})
         }
 
         private fun tryLoadJson(module: Module): RubyReturnTypeData? {

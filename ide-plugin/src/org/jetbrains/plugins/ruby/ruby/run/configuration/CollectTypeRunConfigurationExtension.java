@@ -5,6 +5,7 @@ import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
@@ -15,6 +16,8 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Alarm;
+import com.intellij.util.AlarmFactory;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +33,7 @@ import org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyReturnTypeData;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationExtension {
     private static final Logger LOG = Logger.getInstance(CollectTypeRunConfigurationExtension.class);
@@ -46,6 +50,11 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
     private static final String ENABLE_RETURN_TYPE_TRACKER_KEY = "ARG_SCANNER_ENABLE_RETURN_TYPE_TRACKER";
 
     private static final String OUTPUT_DIRECTORY = "ARG_SCANNER_DIR";
+
+    private static final int MAX_RETRY_NO = 15;
+
+    private static final int RETRY_TIMEOUT = 2000;
+
 
     @Override
     protected void readExternal(@NotNull final AbstractRubyRunConfiguration runConfiguration,
@@ -185,40 +194,60 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
         }
     }
 
+    private boolean checkForPidFiles(final @NotNull File directory) {
+        File[] listOfFiles = directory.listFiles();
+        return listOfFiles != null && Arrays.stream(listOfFiles).anyMatch((it) -> it.getName().endsWith(".pid"));
+    }
+
+    private void waitAllProcess(final @NotNull File directory,
+                                final @NotNull Runnable task,
+                                final @NotNull Disposable parent,
+                                int tryNo) {
+        if (!checkForPidFiles(directory) || tryNo > MAX_RETRY_NO) {
+            task.run();
+        } else {
+            AlarmFactory.getInstance().create(Alarm.ThreadToUse.POOLED_THREAD, parent).addRequest(
+                    () -> waitAllProcess(directory, task, parent,tryNo + 1), RETRY_TIMEOUT);
+        }
+    }
+
     private void processStateTrackerResult(final @NotNull CollectExecSettings settings,
                                            final @NotNull AbstractRubyRunConfiguration configuration) {
         String directoryPath = settings.getOutputDirectory();
         assert directoryPath != null;
         File directory = new File(directoryPath);
-        try {
-            File[] listOfFiles = directory.listFiles();
-            if (listOfFiles == null) {
-                return;
-            }
-            Optional<File> file = Arrays.stream(listOfFiles).filter((it) -> it.getName().endsWith("json")).max(
-                    Comparator.comparingLong(File::length));
-            if (!file.isPresent()) {
-                return;
-            }
-            final Module module = configuration.getModule();
-            if (module == null) {
-                return;
-            }
+        final Module module = configuration.getModule();
+        if (module == null) {
+            return;
+        }
+        waitAllProcess(directory, () -> {
             try {
-                String data = FileUtil.loadFile(file.get());
-                if (settings.isStateTrackerEnabled()) {
-                    RubyClassHierarchyWithCaching.Companion.updateAndSaveToSystemDirectory(data, module);
-                }
-                if (settings.isReturnTypeTrackerEnabled()) {
-                    RubyReturnTypeData.Companion.updateAndSaveToSystemDirectory(data, module);
+                File[] listOfFiles = directory.listFiles();
+                if (listOfFiles == null) {
+                    return;
                 }
 
-            } catch (IOException e) {
-                LOG.warn(e);
+                final List<String> jsons = Arrays.stream(listOfFiles).filter((it) -> it.getName().endsWith("json")).map((it) -> {
+                    try {
+                        return FileUtil.loadFile(it);
+                    } catch (IOException e) {
+                        LOG.warn(e);
+                        return null;
+                    }
+                }).filter(Objects::nonNull).collect(Collectors.toList());
+                if (jsons.isEmpty()) {
+                    return;
+                }
+                if (settings.isStateTrackerEnabled()) {
+                    RubyClassHierarchyWithCaching.Companion.updateAndSaveToSystemDirectory(jsons, module);
+                }
+                if (settings.isReturnTypeTrackerEnabled()) {
+                    RubyReturnTypeData.Companion.updateAndSaveToSystemDirectory(jsons, module);
+                }
+            } finally {
+                FileUtil.delete(directory);
             }
-        } finally {
-            FileUtil.delete(directory);
-        }
+        },  module, 0);
     }
 
 

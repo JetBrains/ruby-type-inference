@@ -1,28 +1,35 @@
 require "set"
 require_relative "require_all"
+require_relative "workspace"
 
 
 module ArgScanner
   class StateTracker
     def initialize
+      @workspace = Workspace.new
+      @workspace.on_process_start
       at_exit do
-        dir = ENV["ARG_SCANNER_DIR"]
-        dir = "." if dir.nil? || dir == ""
-        path = dir + "/" + "classes-#{Time.now.strftime('%Y-%m-%d_%H-%M-%S')}-#{Process.pid}.json"
         begin
-          RequireAll.require_all Rails.root.join('lib')
-        rescue Exception => e
+          require_extra_libs
+          @workspace.open_output_json("classes") { |file| print_json(file) }
+        ensure
+          @workspace.on_process_exit
         end
-        begin
-          Rails.application.eager_load!
-        rescue Exception => e
-        end
-
-        File.open(path,"w") { |file| print_json(file) }
       end
     end
 
     private
+    def require_extra_libs
+      begin
+        RequireAll.require_all Rails.root.join('lib')
+      rescue Exception => e
+      end
+      begin
+        Rails.application.eager_load!
+      rescue Exception => e
+      end
+    end
+
     def print_json(file)
       result = {
         :top_level_constants => parse_top_level_constants,

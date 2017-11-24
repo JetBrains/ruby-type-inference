@@ -130,7 +130,8 @@ class RubyClassHierarchyWithCaching private constructor(private val rubyClassHie
         }
 
         @Synchronized
-        fun updateAndSaveToSystemDirectory(json: String, module: Module) {
+        fun updateAndSaveToSystemDirectory(jsons: List<String>, module: Module) {
+            val json = RubyClassHierarchyLoader.mergeJsons(jsons)
             createClassHierarchyFromJson(json, module)
             FileOutputStream(File(TypeInferenceDirectory.RUBY_TYPE_INFERENCE_DIRECTORY.toFile(),
                     module.project.name + "-" + module.name + CLASS_HIERARCHY_FILENAME)).use {

@@ -8,8 +8,13 @@ object RubyClassHierarchyLoader {
 
     private val gson = Gson()
 
-    fun fromJson(json : String) : RubyClassHierarchy {
-        val root = gson.fromJson(json, Root::class.java)
+
+    fun mergeJsons(jsons: List<String>): String {
+        return gson.toJson(jsons.map { gson.fromJson(it, Root::class.java) }.reduce { a, b -> joinRoots(a, b) })
+    }
+
+    fun fromJson(json: String): RubyClassHierarchy {
+        val root = gson.fromJson(json, Root::class.java);
         return RubyClassHierarchy.Impl(root.load_path,
                                        MapHelper(TopsortHelper(root.modules).topsort()).map(),
                                        root.top_level_constants.associate { Pair(it.name, RubyConstant.Impl(
@@ -19,10 +24,27 @@ object RubyClassHierarchyLoader {
                                        )) })
     }
 
+    private fun joinRoots(one: Root, another: Root) : Root {
+        return Root( joinTopLevelConstants(one.top_level_constants, another.top_level_constants),
+                     joinLoadPath(one.load_path, another.load_path),
+                     joinModules(one.modules, another.modules)
+        )
+    }
+
+    private fun joinTopLevelConstants(one: List<TopLevelConstant>, another: List<TopLevelConstant>): List<TopLevelConstant> {
+        return one.union(another).associateBy(TopLevelConstant::name).values.toList()
+    }
+
+    private fun joinLoadPath(one: List<String>, another: List<String>): List<String> = one.union(another).toList()
+
+    private fun joinModules(one: List<Module>, another: List<Module>): List<Module> {
+        return one.union(another).associateBy(Module::name).values.toList()
+    }
+
     private data class Method(var name: String,
-                              var path: String?,
-                              var line: String?,
-                              var parameters: List<List<String>>)
+                      var path: String?,
+                      var line: String?,
+                      var parameters: List<List<String>>)
 
     private data class Module(var name: String,
                               var type: String,
