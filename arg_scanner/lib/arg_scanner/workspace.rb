@@ -15,12 +15,12 @@ module ArgScanner
       path = @dir + "/#{prefix}-#{Time.now.strftime('%Y-%m-%d_%H-%M-%S')}-#{Process.pid}.json"
       path_tmp_name = path + ".temp"
       File.open(path_tmp_name, "w") { |file| yield file }
-      require 'FileUtils'
+      require 'fileutils'
       FileUtils.mv(path_tmp_name, path)
     end
 
     def on_process_exit
-      require 'FileUtils'
+      require 'fileutils'
       FileUtils.rm(@pid_file)
     end
 
