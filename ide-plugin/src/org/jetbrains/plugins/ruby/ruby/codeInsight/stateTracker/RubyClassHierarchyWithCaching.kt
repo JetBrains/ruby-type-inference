@@ -20,7 +20,7 @@ import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
 
 class RubyClassHierarchyWithCaching private constructor(private val rubyClassHierachy: RubyClassHierarchy) {
-    private val lookupCache = ContainerUtil.createConcurrentWeakMap<Pair<String, String>, CachedValue>()
+    private val lookupCache = ContainerUtil.createConcurrentWeakMap<Pair<String, String>, RubyMethod>()
     private val membersCache = ContainerUtil.createConcurrentWeakMap<String, Set<Symbol>>()
 
     fun getTypeForConstant(constant: String): RubyConstant? {
@@ -33,8 +33,7 @@ class RubyClassHierarchyWithCaching private constructor(private val rubyClassHie
     }
 
     private fun lookupInstanceMethodWithCaching(module: RubyModule, methodName: String) : RubyMethod? {
-        val pair = Pair(module.name, methodName)
-        return lookupCache.computeIfAbsent(pair) { CachedValue(lookupInstanceMethod(module, methodName)) }.rubyMethod
+        return lookupCache.computeIfAbsent(Pair(module.name, methodName)) { lookupInstanceMethod(module, methodName) }
     }
 
     private fun lookupInstanceMethod(module: RubyModule, methodName: String): RubyMethod? {
@@ -79,8 +78,6 @@ class RubyClassHierarchyWithCaching private constructor(private val rubyClassHie
 
         return set
     }
-
-    data class CachedValue(val rubyMethod: RubyMethod?)
 
     companion object {
         private val CLASS_HIERARCHY_KEY = Key<RubyClassHierarchyWithCaching>("org.jetbrains.plugins.ruby.ruby.codeInsight.stateTracker.ClassHierarchy")
