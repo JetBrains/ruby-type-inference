@@ -21,7 +21,7 @@ class RubyCollectStateRunner : RubyProgramRunner() {
 
     @Throws(ExecutionException::class)
     override fun doExecute(state: RunProfileState,
-                           env: ExecutionEnvironment): RunContentDescriptor? {
+                           environment: ExecutionEnvironment): RunContentDescriptor? {
         if (state is RubyAbstractCommandLineState) {
             val newConfig = state.config.clone()
             val pathToState =  tryGenerateTmpDirPath()
@@ -33,9 +33,9 @@ class RubyCollectStateRunner : RubyProgramRunner() {
                             true,
                             pathToState
                     ))
-            val newState = newConfig.getState(env.executor, env)
+            val newState = newConfig.getState(environment.executor, environment)
             if (newState != null) {
-                return super.doExecute(newState, env)
+                return super.doExecute(newState, environment)
             }
         }
 
