@@ -16,7 +16,6 @@ import org.jetbrains.ruby.stateTracker.*
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
-import java.util.concurrent.ConcurrentMap
 import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
 
@@ -28,11 +27,6 @@ class RubyClassHierarchyWithCaching private constructor(private val rubyClassHie
         return rubyClassHierachy.topLevelConstants[constant]
     }
 
-    fun lookupInstanceMethodWithCaching(moduleName: String, methodName: String) : RubyMethod? {
-        val module = rubyClassHierachy.getRubyModule(moduleName) ?: return null
-        return lookupInstanceMethodWithCaching(module, methodName)
-    }
-
     fun getMembersWithCaching(moduleName: String, topLevel: Symbol) : Set<Symbol> {
         val module = rubyClassHierachy.getRubyModule(moduleName) ?: return emptySet()
         return getMembersWithCaching(module, topLevel)
@@ -40,14 +34,7 @@ class RubyClassHierarchyWithCaching private constructor(private val rubyClassHie
 
     private fun lookupInstanceMethodWithCaching(module: RubyModule, methodName: String) : RubyMethod? {
         val pair = Pair(module.name, methodName)
-        val cached = lookupCache[pair]
-        return if (cached == null) {
-            val result = lookupInstanceMethod(module, methodName)
-            updateCache(pair, CachedValue(result), lookupCache)
-            result
-        } else {
-            cached.rubyMethod
-        }
+        return lookupCache.computeIfAbsent(pair) { CachedValue(lookupInstanceMethod(module, methodName)) }.rubyMethod
     }
 
     private fun lookupInstanceMethod(module: RubyModule, methodName: String): RubyMethod? {
@@ -74,14 +61,7 @@ class RubyClassHierarchyWithCaching private constructor(private val rubyClassHie
     }
 
     private fun getMembersWithCaching(module: RubyModule, topLevel: Symbol) : Set<Symbol> {
-        val cached = membersCache[module.name]
-        return if (cached != null) {
-            cached
-        } else {
-            val result = getMembers(module, topLevel)
-            updateCache(module.name, result, membersCache)
-            result
-        }
+        return membersCache.computeIfAbsent(module.name) { getMembers(module, topLevel) }
     }
 
     private fun getMembers(module: RubyModule, topLevel: Symbol) : Set<Symbol> {
@@ -98,14 +78,6 @@ class RubyClassHierarchyWithCaching private constructor(private val rubyClassHie
         }
 
         return set
-    }
-
-    private fun <K, V> updateCache(key: K, result: V, cache: ConcurrentMap<K, V>) {
-        val cached = cache[key]
-        if (cached === result) {
-            return
-        }
-        cache.put(key, result)
     }
 
     data class CachedValue(val rubyMethod: RubyMethod?)
