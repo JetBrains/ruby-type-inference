@@ -18,15 +18,14 @@ interface RubyReturnTypeData {
     private data class Schema(var def : String, var name : String, var ret: String)
 
     private class Impl(calls: Array<Schema>) : RubyReturnTypeData {
-        private val method2Types = HashMap<Pair<String, String>, MutableList<String>>()
+        private val method2Types: HashMap<Pair<String, String>, out List<String>>
         init {
+            val result = HashMap<Pair<String, String>, MutableList<String>>()
             calls.forEach {
                 val pair = Pair(it.def, it.name)
-                if (!method2Types.containsKey(pair)) {
-                    method2Types[pair] = ArrayList()
-                }
-                method2Types[pair]!!.add(it.ret)
+                result.computeIfAbsent(pair, { ArrayList() }).add(it.ret)
             }
+            method2Types = result
         }
 
         override fun getTypeByFQNAndMethodName(fqn: String, name: String): List<String>? {

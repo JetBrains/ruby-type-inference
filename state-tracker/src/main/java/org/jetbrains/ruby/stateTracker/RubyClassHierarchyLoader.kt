@@ -14,7 +14,7 @@ object RubyClassHierarchyLoader {
     }
 
     fun fromJson(json: String): RubyClassHierarchy {
-        val root = gson.fromJson(json, Root::class.java);
+        val root = gson.fromJson(json, Root::class.java)
         return RubyClassHierarchy.Impl(root.load_path,
                                        MapHelper(TopsortHelper(root.modules).topsort()).map(),
                                        root.top_level_constants.associate { Pair(it.name, RubyConstant.Impl(
@@ -87,7 +87,7 @@ object RubyClassHierarchyLoader {
         }
 
         private fun toRubyModules(names: List<String>): List<RubyModule> =
-                names.map { name2RubyModule[it] }.filterNotNull()
+                names.mapNotNull { name2RubyModule[it] }
 
 
         private fun toRubyMethods(methods: List<Method>): List<RubyMethod> =
@@ -107,9 +107,10 @@ object RubyClassHierarchyLoader {
         private fun minimizeIncluded(module: Module, includeGetter: (Module) -> (List<String>)): List<String> {
             val toRemove = HashSet<String>()
             includeGetter(module).forEach {
-                if (it != module.name && !toRemove.contains(it) && name2Module.containsKey(it)) {
-                    val mod = name2Module[it]!!
-                    toRemove.addAll(includeGetter(mod))
+                if (it != module.name && !toRemove.contains(it)) {
+                    name2Module[it]?.let {
+                        toRemove.addAll(includeGetter(it))
+                    }
                 }
             }
             return includeGetter(module).filter { !toRemove.contains(it) }
@@ -135,8 +136,7 @@ object RubyClassHierarchyLoader {
         }
 
         private fun tryVisit(name: String) {
-            if (!visited.contains(name)) {
-                visited.add(name)
+            if (visited.add(name)) {
                 name2Module[name]?.let { dfs(it) }
             }
         }
