@@ -12,6 +12,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.rdoc.yard.psi.RangeInDocumentFakePsiElement;
@@ -40,61 +42,6 @@ public class RMethodSyntheticSymbol extends SymbolImpl implements RMethodSymbol 
     private final String myPath;
 
     private final int myLineno;
-
-    @NotNull
-    private final NullableLazyValue<PsiElement> declarationElement = new NullableLazyValue<PsiElement>() {
-        @Nullable
-        @Override
-        protected PsiElement compute() {
-            if (myPath == null) {
-                return null;
-            }
-            final VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(VfsUtilCore.pathToUrl(myPath));
-            if (virtualFile == null) {
-                return null;
-            }
-            final PsiFile file = PsiManager.getInstance(getProject()).findFile(virtualFile);
-            if (file == null) {
-                return null;
-            }
-            final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-            if (document == null) {
-                return null;
-            }
-            return ReadAction.compute( () -> {
-                try {
-                    int offset = document.getLineStartOffset(myLineno);
-                    int nextLineOffset = document.getLineEndOffset(myLineno);
-                    int curOffset = offset;
-                    PsiElement psiElement;
-                    do {
-                        psiElement = file.findElementAt(curOffset);
-                        if (psiElement == null) {
-                            return null;
-                        }
-                        curOffset = psiElement.getTextRange().getEndOffset();
-                    } while (!(psiElement instanceof RPsiElement) && curOffset < nextLineOffset);
-
-                    if (psiElement instanceof RPsiElement) {
-                        return psiElement;
-                    }
-
-                    psiElement = file.findElementAt(offset);
-                    if (psiElement == null) {
-                        return null;
-                    }
-                    final int startElementOffset = psiElement.getTextRange().getStartOffset();
-                    final int endElementOffset = psiElement.getTextRange().getEndOffset();
-                    int start = offset - startElementOffset;
-                    int end = Math.min(nextLineOffset - startElementOffset, endElementOffset - startElementOffset);
-                    return new RangeInDocumentFakePsiElement(psiElement, new TextRange(start, end));
-                } catch (Exception e) {
-                    return null;
-                }
-            });
-
-        }
-    };
 
     public RMethodSyntheticSymbol(@NotNull final Project project,
                                   @NotNull final Type type,
@@ -165,7 +112,8 @@ public class RMethodSyntheticSymbol extends SymbolImpl implements RMethodSymbol 
     }
 
     @Override
-    public @Nullable List<ArgumentInfo> getArgumentInfos() {
+    public @Nullable
+    List<ArgumentInfo> getArgumentInfos() {
         return myArgsInfo;
     }
 
@@ -198,7 +146,21 @@ public class RMethodSyntheticSymbol extends SymbolImpl implements RMethodSymbol 
 
     @Override
     public PsiElement getPsiElement() {
-        return declarationElement.getValue();
+        if (myPath == null) {
+            return null;
+        }
+        final VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(VfsUtilCore.pathToUrl(myPath));
+        if (virtualFile == null) {
+            return null;
+        }
+
+        final PsiFile file = PsiManager.getInstance(getProject()).findFile(virtualFile);
+        if (file == null) {
+            return null;
+        }
+
+        return CachedValuesManager.getCachedValue(file, () ->
+                CachedValueProvider.Result.create(calcElement(file), file));
     }
 
     @NotNull
@@ -206,5 +168,40 @@ public class RMethodSyntheticSymbol extends SymbolImpl implements RMethodSymbol 
     public Collection<PsiElement> getAllDeclarations(PsiElement invocationPoint) {
         final PsiElement psiElement = getPsiElement();
         return psiElement == null ? Collections.emptyList() : Collections.singletonList(psiElement);
+    }
+
+    @Nullable
+    private PsiElement calcElement(@NotNull PsiFile file) {
+        final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
+        if (document == null) {
+            return null;
+        }
+        return ReadAction.compute(() -> {
+            int offset = document.getLineStartOffset(myLineno);
+            int nextLineOffset = document.getLineEndOffset(myLineno);
+            int curOffset = offset;
+            PsiElement psiElement;
+            do {
+                psiElement = file.findElementAt(curOffset);
+                if (psiElement == null) {
+                    return null;
+                }
+                curOffset = psiElement.getTextRange().getEndOffset();
+            } while (!(psiElement instanceof RPsiElement) && curOffset < nextLineOffset);
+
+            if (psiElement instanceof RPsiElement) {
+                return psiElement;
+            }
+
+            psiElement = file.findElementAt(offset);
+            if (psiElement == null) {
+                return null;
+            }
+            final int startElementOffset = psiElement.getTextRange().getStartOffset();
+            final int endElementOffset = psiElement.getTextRange().getEndOffset();
+            int start = offset - startElementOffset;
+            int end = Math.min(nextLineOffset - startElementOffset, endElementOffset - startElementOffset);
+            return new RangeInDocumentFakePsiElement(psiElement, new TextRange(start, end));
+        });
     }
 }
