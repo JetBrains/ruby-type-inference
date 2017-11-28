@@ -1,0 +1,40 @@
+{
+  "top_level_constants": [
+    {
+      "class_name": "IO",
+      "extended": [],
+      "name": "STDIN"
+    }
+  ],
+  "load_path": [
+    "/Users/vkkoshelev/.rvm/gems/ruby-2.4.1@global/gems/did_you_mean-1.1.0/li"
+  ],
+
+  "modules": [
+    {
+      "name": "AAAA",
+      "type": "BBBB",
+      "singleton_class_included": [
+      ],
+      "included": [
+      ],
+      "class_methods": [
+      ],
+      "instance_methods": [
+      ]
+    },
+    {
+      "name": "BBBB",
+      "type": "Module",
+      "singleton_class_included": [
+      ],
+      "included": [
+      ],
+      "class_methods": [
+      ],
+      "instance_methods": [
+      ],
+      "superclass": "Module"
+    }
+  ]
+}

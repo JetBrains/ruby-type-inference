@@ -48,7 +48,7 @@ object RubyClassHierarchyLoader {
 
     private data class Module(var name: String,
                               var type: String,
-                              var superclass: String,
+                              var superclass: String?,
                               var singleton_class_included: List<String>,
                               var included: List<String>,
                               var class_methods: List<Method>,
@@ -69,21 +69,32 @@ object RubyClassHierarchyLoader {
 
         private fun toRubyModule(module: Module): RubyModule {
             val rubyModule = when (module.type) {
-                "Module" -> RubyModule.Impl(module.name,
-                        toRubyModules(minimizeIncluded(module, { m -> m.singleton_class_included })),
-                        toRubyModules(minimizeIncluded(module, { m -> m.included })),
-                        toRubyMethods(module.class_methods),
-                        toRubyMethods(module.instance_methods))
-                "Class" -> RubyClass.Impl(module.name,
-                        toRubyModules(minimizeIncluded(module, { m -> m.singleton_class_included })),
-                        toRubyModules(minimizeIncluded(module, { m -> m.included })),
-                        toRubyMethods(module.class_methods),
-                        toRubyMethods(module.instance_methods),
-                        (name2RubyModule[module.superclass] ?: RubyClass.EMPTY) as RubyClass)
-                else -> throw IllegalArgumentException("Unknown module type ${module.type}")
+                "Module" -> createModule(module)
+                "Class" -> createClass(module)
+                //TODO some module/class objects can have type derived from Module/Class.
+                //For example: RSpec::Rails::AssertionDelegator
+                //lets have a look at superclass
+                else -> if (module.superclass.isNullOrBlank()) createModule(module) else createClass(module)
             }
             name2RubyModule[rubyModule.name] = rubyModule
             return rubyModule
+        }
+
+        private fun createClass(module: Module): RubyClass.Impl {
+            return RubyClass.Impl(module.name,
+                    toRubyModules(minimizeIncluded(module, { m -> m.singleton_class_included })),
+                    toRubyModules(minimizeIncluded(module, { m -> m.included })),
+                    toRubyMethods(module.class_methods),
+                    toRubyMethods(module.instance_methods),
+                    (name2RubyModule[module.superclass] ?: RubyClass.EMPTY) as RubyClass)
+        }
+
+        private fun createModule(module: Module): RubyModule.Impl {
+            return RubyModule.Impl(module.name,
+                    toRubyModules(minimizeIncluded(module, { m -> m.singleton_class_included })),
+                    toRubyModules(minimizeIncluded(module, { m -> m.included })),
+                    toRubyMethods(module.class_methods),
+                    toRubyMethods(module.instance_methods))
         }
 
         private fun toRubyModules(names: List<String>): List<RubyModule> =
@@ -135,7 +146,8 @@ object RubyClassHierarchyLoader {
             result.add(module)
         }
 
-        private fun tryVisit(name: String) {
+        private fun tryVisit(name: String?) {
+            if (name == null) return
             if (visited.add(name)) {
                 name2Module[name]?.let { dfs(it) }
             }
