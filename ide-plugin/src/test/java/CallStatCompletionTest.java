@@ -23,8 +23,10 @@ import org.jetbrains.ruby.codeInsight.types.storage.server.impl.SignatureTable;
 import org.jetbrains.ruby.runtime.signature.server.SignatureServer;
 import org.junit.Assert;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -98,11 +100,15 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
     }
 
     private void executeScript(@NotNull String runnableScriptName) {
-        String scriptPath = PathManager.getAbsolutePath(getTestDataPath() + "/" + runnableScriptName);
-        if (!Files.exists(Paths.get(scriptPath))) {
-            scriptPath =  PathManager.getAbsolutePath("ide-plugin/" + getTestDataPath() + "/" + runnableScriptName);
+        URL url = getClass().getClassLoader().getResource(runnableScriptName);
+
+        if (url == null) {
+            RuntimeException e = new RuntimeException("Cannot find script: " + runnableScriptName);
+            LOGGER.error(e);
+            throw e;
         }
 
+        final String scriptPath = url.getPath();
         final Module module = myFixture.getModule();
 
         try {

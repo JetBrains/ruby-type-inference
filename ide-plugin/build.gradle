@@ -33,6 +33,7 @@ sourceSets {
     main.java.srcDirs = ['src']
     main.resources.srcDirs = ['resources']
     test.java.srcDirs = ['src/test/java']
+    test.resources.srcDirs=['src/test/testData']
 }
 
 intellij {
