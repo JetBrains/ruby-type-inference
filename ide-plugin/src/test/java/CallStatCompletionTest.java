@@ -3,7 +3,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.yourkit.util.FileUtil;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
@@ -12,6 +11,7 @@ import org.jetbrains.exposed.sql.Transaction;
 import org.jetbrains.exposed.sql.transactions.ThreadLocalTransactionManagerKt;
 import org.jetbrains.plugins.ruby.ruby.run.RubyCommandLine;
 import org.jetbrains.plugins.ruby.ruby.run.RubyLocalRunner;
+import org.jetbrains.plugins.ruby.ruby.testCases.RubyLightFixtureTestCase;
 import org.jetbrains.ruby.codeInsight.types.signature.*;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.serialization.SignatureContractSerializationKt;
@@ -31,7 +31,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestCase {
+public class CallStatCompletionTest extends RubyLightFixtureTestCase {
 
     private static final Logger LOGGER = Logger.getInstance("CallStatCompletionTest");
 

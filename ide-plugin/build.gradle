@@ -8,6 +8,10 @@ plugins {
     id "org.jetbrains.intellij" version "0.2.17"
 }
 
+repositories {
+    maven { url "https://www.jetbrains.com/intellij-repository/snapshots" }
+}
+
 dependencies {
     def withoutKotlinAndMySql = {
         exclude group: 'org.jetbrains.kotlin'
@@ -27,6 +31,8 @@ dependencies {
     // https://mvnrepository.com/artifact/com.h2database/h2
     compile group: 'com.h2database', name: 'h2', version: '1.4.196'
 
+    compile group: 'com.jetbrains.intellij.idea', name: 'ruby-test-framework', version: ideaVersion
+
 }
 
 sourceSets {
@@ -36,7 +42,7 @@ sourceSets {
 }
 
 intellij {
-    version ideaVersion
+    version "IU-$ideaVersion"
     pluginName 'ruby-runtime-stats'
     plugins = ["org.jetbrains.plugins.ruby:$rubyPluginVersion"]
 }
