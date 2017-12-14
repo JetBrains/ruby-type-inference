@@ -3,7 +3,6 @@ package org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -14,6 +13,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.rdoc.yard.psi.RangeInDocumentFakePsiElement;
@@ -24,7 +24,6 @@ import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.Argume
 import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.Visibility;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.impl.controlStructures.methods.RCommandArgumentListImpl;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.methodCall.RCall;
-import org.jetbrains.ruby.codeInsight.types.signature.MethodInfo;
 import org.jetbrains.ruby.stateTracker.Location;
 import org.jetbrains.ruby.stateTracker.RubyMethod;
 
@@ -94,21 +93,11 @@ public class RMethodSyntheticSymbol extends SymbolImpl implements RMethodSymbol 
         return new ArgumentInfo(argInfo.getName(), type);
     }
 
-    public RMethodSyntheticSymbol(@NotNull final Project project,
-                                  @NotNull final MethodInfo methodInfo,
-                                  @NotNull final Type type,
-                                  @Nullable final Symbol parent,
-                                  @NotNull final List<ArgumentInfo> argsInfo) {
-        super(project, methodInfo.getName(), type, parent);
-        myVisibility = Visibility.valueOf(methodInfo.getVisibility().name());
-        myArgsInfo = argsInfo;
-        if (methodInfo.getLocation() != null) {
-            myPath = methodInfo.getLocation().getPath();
-            myLineno = methodInfo.getLocation().getLineno();
-        } else {
-            myPath = null;
-            myLineno = 0;
-        }
+    @NotNull
+    @Override
+    public String getName() {
+        //noinspection ConstantConditions
+        return super.getName();
     }
 
     @Override
@@ -201,7 +190,28 @@ public class RMethodSyntheticSymbol extends SymbolImpl implements RMethodSymbol 
             final int endElementOffset = psiElement.getTextRange().getEndOffset();
             int start = offset - startElementOffset;
             int end = Math.min(nextLineOffset - startElementOffset, endElementOffset - startElementOffset);
-            return new RangeInDocumentFakePsiElement(psiElement, new TextRange(start, end));
+            return new MyFakeElement(psiElement, new TextRange(start, end), getName());
         });
+    }
+
+    private static class MyFakeElement extends RangeInDocumentFakePsiElement {
+        @NotNull
+        private final String myName;
+
+        MyFakeElement(@NotNull PsiElement parent, @NotNull TextRange rangeInParent, @NotNull String name) {
+            super(parent, rangeInParent);
+            myName = name;
+        }
+
+        @NotNull
+        @Override
+        public String getName() {
+            return myName;
+        }
+
+        @Override
+        public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
+            throw new IncorrectOperationException("not supported");
+        }
     }
 }
