@@ -1,7 +1,6 @@
 <idea-plugin>
     <id>org.jetbrains.ruby-runtime-stats</id>
     <name>Ruby Dynamic Code Insight</name>
-    <version>0.1</version>
     <vendor email="" url="http://www.jetbrains.com">JetBrains</vendor>
     <depends>com.intellij.modules.ruby</depends>
     <description><![CDATA[
