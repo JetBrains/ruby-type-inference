@@ -19,7 +19,6 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/ruby-call-signature/ruby-call-signature_main.iml" filepath="$PROJECT_DIR$/.idea/modules/ruby-call-signature/ruby-call-signature_main.iml" group="ruby-call-signature" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/ruby-call-signature/ruby-call-signature_test.iml" filepath="$PROJECT_DIR$/.idea/modules/ruby-call-signature/ruby-call-signature_test.iml" group="ruby-call-signature" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/ruby-type-inference.iml" filepath="$PROJECT_DIR$/.idea/modules/ruby-type-inference.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ruby-type-inference.iml" filepath="$PROJECT_DIR$/.idea/modules/ruby-type-inference.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/ruby-type-inference_main.iml" filepath="$PROJECT_DIR$/.idea/modules/ruby-type-inference_main.iml" group="ruby-type-inference" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/ruby-type-inference_test.iml" filepath="$PROJECT_DIR$/.idea/modules/ruby-type-inference_test.iml" group="ruby-type-inference" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/signature-viewer/signature-viewer.iml" filepath="$PROJECT_DIR$/.idea/modules/signature-viewer/signature-viewer.iml" group="signature-viewer" />
