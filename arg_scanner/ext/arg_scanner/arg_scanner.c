@@ -9,9 +9,13 @@
 //#define DEBUG_ARG_SCANNER 1
 
 #if RUBY_API_VERSION_CODE >= 20500
+  #if (RUBY_RELEASE_YEAR == 2017 && RUBY_RELEASE_MONTH == 10 && RUBY_RELEASE_DAY == 10) //workaround for 2.5.0-preview1
     #define TH_CFP(thread) ((rb_control_frame_t *)(thread)->ec.cfp)
+  #else
+    #define TH_CFP(thread) ((rb_control_frame_t *)(thread)->ec->cfp)
+  #endif
 #else
-    #define TH_CFP(thread) ((rb_control_frame_t *)(thread)->cfp)
+  #define TH_CFP(thread) ((rb_control_frame_t *)(thread)->cfp)
 #endif
 
 #ifdef DEBUG_ARG_SCANNER
