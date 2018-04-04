@@ -6,10 +6,10 @@ import com.intellij.openapi.util.Key
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.Type
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.Types
-import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.fqn.FQN
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.RMethodSyntheticSymbol
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.Symbol
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.SymbolUtil
+import org.jetbrains.plugins.ruby.ruby.codeInsight.types.Context
 import org.jetbrains.plugins.ruby.ruby.persistent.TypeInferenceDirectory
 import org.jetbrains.plugins.ruby.settings.RubyTypeContractsSettings
 import org.jetbrains.ruby.stateTracker.*
@@ -65,7 +65,7 @@ class RubyClassHierarchyWithCaching private constructor(private val rubyClassHie
 
     private fun getMembers(module: RubyModule, topLevel: Symbol) : Set<Symbol> {
         val set = HashSet<Symbol>()
-        val symbol = SymbolUtil.findSymbol(topLevel, FQN.Builder.fromString(module.name), Types.MODULE_OR_CLASS, null)
+        val symbol = SymbolUtil.findSymbolInHierarchy(topLevel, module.name, Types.MODULE_OR_CLASS, Context.CLASS, topLevel.psiElement)
         set.addAll(module.instanceMethods.map {  RMethodSyntheticSymbol(topLevel.project, Type.INSTANCE_METHOD, it, symbol) })
         set.addAll(module.classMethods.map {  RMethodSyntheticSymbol(topLevel.project, Type.CLASS_METHOD, it, symbol) })
 

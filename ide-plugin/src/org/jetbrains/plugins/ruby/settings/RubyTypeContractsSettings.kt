@@ -25,11 +25,7 @@ data class RubyTypeContractsSettings @JvmOverloads constructor(
         var returnTypeTrackerEnabled: Boolean = true)
 
     : PersistentStateComponent<RubyTypeContractsSettings> {
-    override fun loadState(state: RubyTypeContractsSettings?) {
-        if (state == null) {
-            return
-        }
-
+    override fun loadState(state: RubyTypeContractsSettings) {
         XmlSerializerUtil.copyBean(state, this)
     }
 
