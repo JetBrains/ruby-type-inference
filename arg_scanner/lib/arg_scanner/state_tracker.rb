@@ -75,8 +75,8 @@ module ArgScanner
       ret = {
         :name => mod.to_s,
         :type => mod.class.to_s,
-        :singleton_class_included => mod.singleton_class.included_modules,
-        :included => mod.included_modules,
+        :singleton_class_ancestors => mod.singleton_class.ancestors,
+        :ancestors => mod.ancestors,
         :class_methods => mod.methods(false).map {|method| method_to_json(mod.method(method))}.compact,
         :instance_methods => mod.instance_methods(false).map {|method| method_to_json(mod.instance_method(method))}.compact
       }
