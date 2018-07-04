@@ -54,49 +54,7 @@ module ArgScanner
     end
 
     def get_extra_methods(value)
-      begin
-       (value.methods - value.class.public_instance_methods).map do |method_name|
-           method = value.public_method(method_name)
-           method.owner
-       end.uniq
-      rescue Exception => e
-        value.methods - value.class.instance_methods
-      end
-
-    end
-
-    def get_constants_of_class(constants, parent, klass)
-        constants.select {|const| parent.const_defined?(const)}.map do |const|
-          begin
-            parent.const_get(const)
-          rescue Exception => e
-          end
-        end.select { |const| const.is_a? klass}
-    rescue => e
-      $stderr.puts(e)
-      []
-    end
-
-
-    def get_modules(mod)
-      get_constants_of_class(mod.constants, mod, Module)
-    end
-
-    def get_all_modules
-      queue = Queue.new
-      visited = Set.new
-      get_modules(Module).each {|mod| queue.push(mod); visited.add(mod)}
-
-      until queue.empty? do
-        mod = queue.pop
-        get_modules(mod).each do |child|
-          unless visited.include?(child)
-            queue.push(child)
-            visited.add(child)
-          end
-        end
-      end
-      visited
+      value.methods - value.public_methods
     end
 
     def method_to_json(method)
@@ -129,7 +87,7 @@ module ArgScanner
     end
 
     def modules_to_json
-      get_all_modules.map {|mod| module_to_json(mod)}.compact
+      ObjectSpace.each_object(Module).map {|mod| module_to_json(mod)}
     end
   end
 end
