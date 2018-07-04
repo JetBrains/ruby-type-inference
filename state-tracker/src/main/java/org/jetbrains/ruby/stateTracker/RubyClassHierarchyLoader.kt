@@ -49,8 +49,8 @@ object RubyClassHierarchyLoader {
     private data class Module(var name: String,
                               var type: String,
                               var superclass: String?,
-                              var singleton_class_ancestors: List<String>,
-                              var ancestors: List<String>,
+                              var singleton_class_ancestors: List<String>?,
+                              var ancestors: List<String>?,
                               var class_methods: List<Method>,
                               var instance_methods: List<Method>)
 
@@ -121,16 +121,14 @@ object RubyClassHierarchyLoader {
          * may return [Module.ancestors] or [Module.singleton_class_ancestors] by given [Module])
          * @return [List] where all non direct ancestors are excluded
          */
-        private fun removeAllNonDirectAncestors(module: Module, ancestorGetter: (Module) -> (List<String>)): List<String> {
+        private fun removeAllNonDirectAncestors(module: Module, ancestorGetter: (Module) -> (List<String>?)): List<String> {
             val toRemove = HashSet<String>()
-            ancestorGetter(module).forEach {
+            ancestorGetter(module)?.forEach {
                 if (it != module.name && !toRemove.contains(it)) {
-                    name2Module[it]?.let {
-                        toRemove.addAll(ancestorGetter(it))
-                    }
+                    name2Module[it]?.let { ancestorGetter(it)?.let { toRemove.addAll(it) } }
                 }
             }
-            return ancestorGetter(module).filter { !toRemove.contains(it) }
+            return ancestorGetter(module)?.filter { !toRemove.contains(it) } ?: listOf()
         }
     }
 
@@ -147,8 +145,8 @@ object RubyClassHierarchyLoader {
 
         private fun dfs(module: Module) {
             tryVisit(module.superclass)
-            module.ancestors.forEach {tryVisit(it)}
-            module.singleton_class_ancestors.forEach {tryVisit(it)}
+            module.ancestors?.forEach {tryVisit(it)}
+            module.singleton_class_ancestors?.forEach {tryVisit(it)}
             result.add(module)
         }
 
