@@ -49,8 +49,8 @@ object RubyClassHierarchyLoader {
     private data class Module(var name: String,
                               var type: String,
                               var superclass: String?,
-                              var singleton_class_included: List<String>,
-                              var included: List<String>,
+                              var singleton_class_ancestors: List<String>,
+                              var ancestors: List<String>,
                               var class_methods: List<Method>,
                               var instance_methods: List<Method>)
 
@@ -82,8 +82,8 @@ object RubyClassHierarchyLoader {
 
         private fun createClass(module: Module): RubyClass.Impl {
             return RubyClass.Impl(module.name,
-                    toRubyModules(removeAllNonExplicitIncludes(module) { m -> m.singleton_class_included }),
-                    toRubyModules(removeAllNonExplicitIncludes(module) { m -> m.included }),
+                    toRubyModules(removeAllNonDirectAncestors(module) { m -> m.singleton_class_ancestors }),
+                    toRubyModules(removeAllNonDirectAncestors(module) { m -> m.ancestors }),
                     toRubyMethods(module.class_methods),
                     toRubyMethods(module.instance_methods),
                     (name2RubyModule[module.superclass] ?: RubyClass.EMPTY) as RubyClass)
@@ -91,8 +91,8 @@ object RubyClassHierarchyLoader {
 
         private fun createModule(module: Module): RubyModule.Impl {
             return RubyModule.Impl(module.name,
-                    toRubyModules(removeAllNonExplicitIncludes(module) { m -> m.singleton_class_included }),
-                    toRubyModules(removeAllNonExplicitIncludes(module) { m -> m.included }),
+                    toRubyModules(removeAllNonDirectAncestors(module) { m -> m.singleton_class_ancestors }),
+                    toRubyModules(removeAllNonDirectAncestors(module) { m -> m.ancestors }),
                     toRubyMethods(module.class_methods),
                     toRubyMethods(module.instance_methods))
         }
@@ -115,13 +115,13 @@ object RubyClassHierarchyLoader {
                 }
 
         /**
-         * Removes all non explicit ruby module includes.
+         * Removes all non direct ancestors.
          *
-         * @param ancestorGetter the rule which by given [Module] gives it ruby module includes (for example it
-         * may return [Module.included] or [Module.singleton_class_included] by given [Module])
-         * @return [List] where all non explicit ruby module includes are excluded
+         * @param ancestorGetter the rule which by given [Module] gives it ancestor (for example it
+         * may return [Module.ancestors] or [Module.singleton_class_ancestors] by given [Module])
+         * @return [List] where all non direct ancestors are excluded
          */
-        private fun removeAllNonExplicitIncludes(module: Module, ancestorGetter: (Module) -> (List<String>)): List<String> {
+        private fun removeAllNonDirectAncestors(module: Module, ancestorGetter: (Module) -> (List<String>)): List<String> {
             val toRemove = HashSet<String>()
             ancestorGetter(module).forEach {
                 if (it != module.name && !toRemove.contains(it)) {
@@ -147,8 +147,8 @@ object RubyClassHierarchyLoader {
 
         private fun dfs(module: Module) {
             tryVisit(module.superclass)
-            module.included.forEach {tryVisit(it)}
-            module.singleton_class_included.forEach {tryVisit(it)}
+            module.ancestors.forEach {tryVisit(it)}
+            module.singleton_class_ancestors.forEach {tryVisit(it)}
             result.add(module)
         }
 
