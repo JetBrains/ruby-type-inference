@@ -82,8 +82,8 @@ object RubyClassHierarchyLoader {
 
         private fun createClass(module: Module): RubyClass.Impl {
             return RubyClass.Impl(module.name,
-                    toRubyModules(minimizeIncluded(module, { m -> m.singleton_class_included })),
-                    toRubyModules(minimizeIncluded(module, { m -> m.included })),
+                    toRubyModules(removeAllNonExplicitIncludes(module) { m -> m.singleton_class_included }),
+                    toRubyModules(removeAllNonExplicitIncludes(module) { m -> m.included }),
                     toRubyMethods(module.class_methods),
                     toRubyMethods(module.instance_methods),
                     (name2RubyModule[module.superclass] ?: RubyClass.EMPTY) as RubyClass)
@@ -91,8 +91,8 @@ object RubyClassHierarchyLoader {
 
         private fun createModule(module: Module): RubyModule.Impl {
             return RubyModule.Impl(module.name,
-                    toRubyModules(minimizeIncluded(module, { m -> m.singleton_class_included })),
-                    toRubyModules(minimizeIncluded(module, { m -> m.included })),
+                    toRubyModules(removeAllNonExplicitIncludes(module) { m -> m.singleton_class_included }),
+                    toRubyModules(removeAllNonExplicitIncludes(module) { m -> m.included }),
                     toRubyMethods(module.class_methods),
                     toRubyMethods(module.instance_methods))
         }
@@ -114,17 +114,23 @@ object RubyClassHierarchyLoader {
                             })
                 }
 
-
-        private fun minimizeIncluded(module: Module, includeGetter: (Module) -> (List<String>)): List<String> {
+        /**
+         * Removes all non explicit ruby module includes.
+         *
+         * @param ancestorGetter the rule which by given [Module] gives it ruby module includes (for example it
+         * may return [Module.included] or [Module.singleton_class_included] by given [Module])
+         * @return [List] where all non explicit ruby module includes are excluded
+         */
+        private fun removeAllNonExplicitIncludes(module: Module, ancestorGetter: (Module) -> (List<String>)): List<String> {
             val toRemove = HashSet<String>()
-            includeGetter(module).forEach {
+            ancestorGetter(module).forEach {
                 if (it != module.name && !toRemove.contains(it)) {
                     name2Module[it]?.let {
-                        toRemove.addAll(includeGetter(it))
+                        toRemove.addAll(ancestorGetter(it))
                     }
                 }
             }
-            return includeGetter(module).filter { !toRemove.contains(it) }
+            return ancestorGetter(module).filter { !toRemove.contains(it) }
         }
     }
 
@@ -135,7 +141,7 @@ object RubyClassHierarchyLoader {
 
         fun topsort(): List<Module> {
             visited.add("")
-            modules.forEach({ tryVisit(it.name)})
+            modules.forEach { tryVisit(it.name)}
             return result
         }
 
