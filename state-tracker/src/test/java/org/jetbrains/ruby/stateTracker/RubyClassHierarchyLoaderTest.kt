@@ -27,19 +27,19 @@ class RubyClassHierarchyLoaderTest : TestCase() {
         classHierarchy?.let {
             val module = it.getRubyModule("Gem::Resolver::Molinillo::Resolver::Resolution")
             assertNotNull(module)
-            assertTrue(module!!.instanceIncluded.any {it.name == "Kernel"})
-            assertTrue(module.instanceIncluded.any {it.name == "Gem::Resolver::Molinillo::Delegates::ResolutionState"})
+            assertTrue(module!!.instanceDirectAncestors.any {it.name == "Kernel"})
+            assertTrue(module.instanceDirectAncestors.any {it.name == "Gem::Resolver::Molinillo::Delegates::ResolutionState"})
         }
     }
 
     @Test
-    fun testIncludedAreMinimized() {
+    fun testAllNonDirectAncestorsAreExcluded() {
         assertNotNull(classHierarchy)
         classHierarchy?.let {
             val module = it.getRubyModule("CGI")
             assertNotNull(module)
-            assertTrue(module!!.classIncluded.none {it.name == "Kernel"})
-            assertTrue(module.classIncluded.any {it.name == "CGI::Util"})
+            assertTrue(module!!.classDirectAncestors.none {it.name == "Kernel"})
+            assertTrue(module.classDirectAncestors.any {it.name == "CGI::Util"})
         }
     }
 

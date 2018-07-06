@@ -29,14 +29,14 @@ interface RubyConstant {
 
 interface RubyModule {
     val name: String
-    val classIncluded: List<RubyModule>
-    val instanceIncluded: List<RubyModule>
+    val classDirectAncestors: List<RubyModule>
+    val instanceDirectAncestors: List<RubyModule>
     val classMethods: List<RubyMethod>
     val instanceMethods: List<RubyMethod>
 
     class Impl(override val name: String,
-               override val classIncluded: List<RubyModule>,
-               override val instanceIncluded: List<RubyModule>,
+               override val classDirectAncestors: List<RubyModule>,
+               override val instanceDirectAncestors: List<RubyModule>,
                override val classMethods: List<RubyMethod>,
                override val instanceMethods: List<RubyMethod>) : RubyModule
 }
@@ -45,19 +45,19 @@ interface RubyClass: RubyModule {
     val superClass : RubyClass
 
     class Impl(override val name: String,
-                    override val classIncluded: List<RubyModule>,
-                    override val instanceIncluded: List<RubyModule>,
-                    override val classMethods: List<RubyMethod>,
-                    override val instanceMethods: List<RubyMethod>,
-                    override val superClass: RubyClass) : RubyClass
+               override val classDirectAncestors: List<RubyModule>,
+               override val instanceDirectAncestors: List<RubyModule>,
+               override val classMethods: List<RubyMethod>,
+               override val instanceMethods: List<RubyMethod>,
+               override val superClass: RubyClass) : RubyClass
 
     companion object : RubyClass {
         val EMPTY = this
         override val name: String
             get() = ""
-        override val classIncluded: List<RubyModule>
+        override val classDirectAncestors: List<RubyModule>
             get() = emptyList()
-        override val instanceIncluded: List<RubyModule>
+        override val instanceDirectAncestors: List<RubyModule>
             get() = emptyList()
         override val classMethods: List<RubyMethod>
             get() = emptyList()
