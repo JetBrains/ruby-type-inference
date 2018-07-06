@@ -285,7 +285,7 @@ public class RubyStatTypeProviderImpl implements RubyStatTypeProvider {
             });
 
             if (result.isNull()) {
-                final Symbol receiverSymbol = SymbolUtil.getScopeContext(callElement);
+                final Symbol receiverSymbol = SymbolUtil.getScopeContextWithCaching(callElement);
                 if (receiverSymbol != null && SymbolUtil.isClassOrModuleSymbol(receiverSymbol.getType())) {
                     result.set(findMethodInfo(methodName, receiverSymbol.getFQNWithNesting().getFullPath(), module, SignatureServer.INSTANCE.getStorage()));
                 }

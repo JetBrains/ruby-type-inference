@@ -43,8 +43,8 @@ intellij {
 }
 
 patchPluginXml{
-    sinceBuild '173.3622'
-    untilBuild '181.*'
+    sinceBuild '182.3569.1'
+    untilBuild '182.*'
     version '0.1.1'
 }
 
