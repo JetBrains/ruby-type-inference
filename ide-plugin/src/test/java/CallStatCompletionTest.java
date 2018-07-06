@@ -63,13 +63,15 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
         }
     }
 
-    public void testSimple() {
-        doTest("sample_test", createMethodInfo("A", "foo"), "test1", "test2");
-    }
+// todo: test is disabled as new version of ruby plugin doesn't support this feature
+//    public void testSimple() {
+//        doTest("sample_test", createMethodInfo("A", "foo"), "test1", "test2");
+//    }
 
-    public void testKW() {
-        doTest("sample_kw_test", createMethodInfo("A", "foo1"), "test1", "test2");
-    }
+// todo: test is disabled as new version of ruby plugin doesn't support this feature
+//    public void testKW() {
+//        doTest("sample_kw_test", createMethodInfo("A", "foo1"), "test1", "test2");
+//    }
 
     public void testMultipleExecution() {
         executeScript("multiple_execution_test1.rb");
