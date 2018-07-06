@@ -7,6 +7,9 @@ import com.intellij.openapi.fileChooser.ex.FileSaverDialogImpl
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.SymbolUtil
+import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.util.SymbolScopeUtil
+import org.jetbrains.plugins.ruby.ruby.codeInsight.types.Context
 import org.jetbrains.plugins.ruby.settings.PerGemSettings
 import org.jetbrains.plugins.ruby.settings.RubyTypeContractsSettings
 import org.jetbrains.ruby.codeInsight.types.signature.GemInfo
