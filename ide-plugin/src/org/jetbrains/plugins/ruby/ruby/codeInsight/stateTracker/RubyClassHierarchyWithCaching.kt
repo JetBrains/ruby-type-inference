@@ -42,7 +42,7 @@ class RubyClassHierarchyWithCaching private constructor(private val rubyClassHie
             return ownResult
         }
 
-        module.instanceIncluded.forEach {
+        module.instanceDirectAncestors.forEach {
             val result = lookupInstanceMethodWithCaching(it, methodName)
             if (result != null) {
                 return result
@@ -69,8 +69,8 @@ class RubyClassHierarchyWithCaching private constructor(private val rubyClassHie
         set.addAll(module.instanceMethods.map {  RMethodSyntheticSymbol(topLevel.project, Type.INSTANCE_METHOD, it, symbol) })
         set.addAll(module.classMethods.map {  RMethodSyntheticSymbol(topLevel.project, Type.CLASS_METHOD, it, symbol) })
 
-        module.instanceIncluded.forEach { set.addAll(getMembersWithCaching(it, topLevel))}
-        module.classIncluded.forEach{ set.addAll(getMembersWithCaching(it, topLevel)) }
+        module.instanceDirectAncestors.forEach { set.addAll(getMembersWithCaching(it, topLevel))}
+        module.classDirectAncestors.forEach{ set.addAll(getMembersWithCaching(it, topLevel)) }
 
         if (module is RubyClass && module.superClass != RubyClass.EMPTY) {
             set.addAll(getMembersWithCaching(module.superClass, topLevel))

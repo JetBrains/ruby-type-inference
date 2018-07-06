@@ -139,7 +139,7 @@ object RubyClassHierarchyLoader {
 
         fun topsort(): List<Module> {
             visited.add("")
-            modules.forEach { tryVisit(it.name)}
+            modules.forEach { tryVisit(it.name) }
             return result
         }
 

@@ -11,11 +11,11 @@
     {
       "name": "Gem::Resolver::Molinillo::Resolver::Resolution",
       "type": "Class",
-      "singleton_class_included": [
+      "singleton_class_ancestors": [
         "RequireAll",
         "Kernel"
       ],
-      "included": [
+      "ancestors": [
         "Gem::Resolver::Molinillo::Delegates::SpecificationProvider",
         "Gem::Resolver::Molinillo::Delegates::ResolutionState",
         "RequireAll",
@@ -101,13 +101,13 @@
     {
       "name": "CGI",
       "type": "Class",
-      "singleton_class_included": [
+      "singleton_class_ancestors": [
         "CGI::Escape",
         "CGI::Util",
         "RequireAll",
         "Kernel"
       ],
-      "included": [
+      "ancestors": [
         "RequireAll",
         "Kernel"
       ],
@@ -210,11 +210,11 @@
     {
       "name": "Timeout::Error",
       "type": "Class",
-      "singleton_class_included": [
+      "singleton_class_ancestors": [
         "RequireAll",
         "Kernel"
       ],
-      "included": [
+      "ancestors": [
         "RequireAll",
         "Kernel"
       ],
@@ -256,11 +256,11 @@
     {
       "name": "Dir::Tmpname",
       "type": "Module",
-      "singleton_class_included": [
+      "singleton_class_ancestors": [
         "RequireAll",
         "Kernel"
       ],
-      "included": [
+      "ancestors": [
 
       ],
       "class_methods": [
@@ -317,11 +317,11 @@
     {
       "name": "RequireAll",
       "type": "Module",
-      "singleton_class_included": [
+      "singleton_class_ancestors": [
         "RequireAll",
         "Kernel"
       ],
-      "included": [
+      "ancestors": [
 
       ],
       "class_methods": [
@@ -399,11 +399,11 @@
     {
       "name": "Kernel",
       "type": "Module",
-      "singleton_class_included": [
+      "singleton_class_ancestors": [
         "RequireAll",
         "Kernel"
       ],
-      "included": [
+      "ancestors": [
 
       ],
       "class_methods": [
@@ -1239,11 +1239,11 @@
     {
       "name": "Gem::Resolver::Molinillo::Delegates::SpecificationProvider",
       "type": "Module",
-      "singleton_class_included": [
+      "singleton_class_ancestors": [
         "RequireAll",
         "Kernel"
       ],
-      "included": [
+      "ancestors": [
 
       ],
       "class_methods": [
@@ -1353,11 +1353,11 @@
     {
       "name": "Gem::Resolver::Molinillo::Delegates::ResolutionState",
       "type": "Module",
-      "singleton_class_included": [
+      "singleton_class_ancestors": [
         "RequireAll",
         "Kernel"
       ],
-      "included": [
+      "ancestors": [
 
       ],
       "class_methods": [
@@ -1425,11 +1425,11 @@
     {
       "name": "Object",
       "type": "Class",
-      "singleton_class_included": [
+      "singleton_class_ancestors": [
         "RequireAll",
         "Kernel"
       ],
-      "included": [
+      "ancestors": [
         "RequireAll",
         "Kernel"
       ],
@@ -1444,11 +1444,11 @@
     {
       "name": "CGI::Escape",
       "type": "Module",
-      "singleton_class_included": [
+      "singleton_class_ancestors": [
         "RequireAll",
         "Kernel"
       ],
-      "included": [
+      "ancestors": [
 
       ],
       "class_methods": [
@@ -1492,11 +1492,11 @@
     {
       "name": "CGI::Util",
       "type": "Module",
-      "singleton_class_included": [
+      "singleton_class_ancestors": [
         "RequireAll",
         "Kernel"
       ],
-      "included": [
+      "ancestors": [
         "CGI::Escape"
       ],
       "class_methods": [
@@ -1650,11 +1650,11 @@
     {
       "name": "RuntimeError",
       "type": "Class",
-      "singleton_class_included": [
+      "singleton_class_ancestors": [
         "RequireAll",
         "Kernel"
       ],
-      "included": [
+      "ancestors": [
         "RequireAll",
         "Kernel"
       ],
@@ -1669,11 +1669,11 @@
     {
       "name": "BasicObject",
       "type": "Class",
-      "singleton_class_included": [
+      "singleton_class_ancestors": [
         "RequireAll",
         "Kernel"
       ],
-      "included": [
+      "ancestors": [
 
       ],
       "class_methods": [
@@ -1746,11 +1746,11 @@
     {
       "name": "StandardError",
       "type": "Class",
-      "singleton_class_included": [
+      "singleton_class_ancestors": [
         "RequireAll",
         "Kernel"
       ],
-      "included": [
+      "ancestors": [
         "RequireAll",
         "Kernel"
       ],
@@ -1765,11 +1765,11 @@
     {
       "name": "Exception",
       "type": "Class",
-      "singleton_class_included": [
+      "singleton_class_ancestors": [
         "RequireAll",
         "Kernel"
       ],
-      "included": [
+      "ancestors": [
         "RequireAll",
         "Kernel"
       ],
