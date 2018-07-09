@@ -124,8 +124,14 @@ object RubyClassHierarchyLoader {
         private fun removeAllNonDirectAncestors(module: Module, ancestorGetter: (Module) -> (List<String>?)): List<String> {
             val toRemove = HashSet<String>()
             ancestorGetter(module)?.forEach {
-                if (it != module.name && !toRemove.contains(it)) {
-                    name2Module[it]?.let { ancestorGetter(it)?.let { toRemove.addAll(it) } }
+                val firstLevelAncestor: String = it
+                if (firstLevelAncestor != module.name && !toRemove.contains(firstLevelAncestor)) {
+                    name2Module[firstLevelAncestor]?.let {
+                        ancestorGetter(it)?.forEach {
+                            val secondLevelAncestor: String = it
+                            if (secondLevelAncestor != firstLevelAncestor) toRemove.add(secondLevelAncestor)
+                        }
+                    }
                 }
             }
             return ancestorGetter(module)?.filter { !toRemove.contains(it) } ?: listOf()
