@@ -16,6 +16,7 @@
         "Kernel"
       ],
       "ancestors": [
+        "Gem::Resolver::Molinillo::Resolver::Resolution",
         "Gem::Resolver::Molinillo::Delegates::SpecificationProvider",
         "Gem::Resolver::Molinillo::Delegates::ResolutionState",
         "RequireAll",
@@ -108,6 +109,7 @@
         "Kernel"
       ],
       "ancestors": [
+        "CGI",
         "RequireAll",
         "Kernel"
       ],
@@ -215,6 +217,7 @@
         "Kernel"
       ],
       "ancestors": [
+        "Timeout::Error",
         "RequireAll",
         "Kernel"
       ],
@@ -261,7 +264,7 @@
         "Kernel"
       ],
       "ancestors": [
-
+        "Dir::Tmpname"
       ],
       "class_methods": [
         {
@@ -322,7 +325,7 @@
         "Kernel"
       ],
       "ancestors": [
-
+        "RequireAll"
       ],
       "class_methods": [
 
@@ -404,7 +407,7 @@
         "Kernel"
       ],
       "ancestors": [
-
+        "Kernel"
       ],
       "class_methods": [
         {
@@ -1244,7 +1247,7 @@
         "Kernel"
       ],
       "ancestors": [
-
+        "Gem::Resolver::Molinillo::Delegates::SpecificationProvider"
       ],
       "class_methods": [
 
@@ -1358,7 +1361,7 @@
         "Kernel"
       ],
       "ancestors": [
-
+        "Gem::Resolver::Molinillo::Delegates::ResolutionState"
       ],
       "class_methods": [
 
@@ -1430,6 +1433,7 @@
         "Kernel"
       ],
       "ancestors": [
+        "Object",
         "RequireAll",
         "Kernel"
       ],
@@ -1449,7 +1453,7 @@
         "Kernel"
       ],
       "ancestors": [
-
+        "CGI::Escape"
       ],
       "class_methods": [
 
@@ -1497,6 +1501,7 @@
         "Kernel"
       ],
       "ancestors": [
+        "CGI::Util",
         "CGI::Escape"
       ],
       "class_methods": [
@@ -1655,6 +1660,7 @@
         "Kernel"
       ],
       "ancestors": [
+        "RuntimeError",
         "RequireAll",
         "Kernel"
       ],
@@ -1674,7 +1680,7 @@
         "Kernel"
       ],
       "ancestors": [
-
+        "BasicObject"
       ],
       "class_methods": [
 
@@ -1751,6 +1757,7 @@
         "Kernel"
       ],
       "ancestors": [
+        "StandardError",
         "RequireAll",
         "Kernel"
       ],
@@ -1770,6 +1777,7 @@
         "Kernel"
       ],
       "ancestors": [
+        "Exception",
         "RequireAll",
         "Kernel"
       ],
