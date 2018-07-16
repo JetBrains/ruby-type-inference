@@ -1,3 +1,4 @@
+import org.jetbrains.plugins.ruby.ruby.run.configuration.CollectExecSettings
 import java.io.File
 import java.io.IOException
 import java.io.PrintWriter
@@ -62,9 +63,9 @@ class TempFilePathProvider(private val initTempFileName: () -> String) {
  */
 object TempFiles {
     val tempFilePathProviderForModules = TempFilePathProvider {
-        "/tmp/modules${System.currentTimeMillis()}.json"
+        return@TempFilePathProvider createTempFile(prefix = "modules", suffix = ".json").absolutePath
     }
     val tempFilePathProviderForModuleAncestorsPair = TempFilePathProvider {
-        "/tmp/module-ancestors-pair${System.currentTimeMillis()}.json"
+        return@TempFilePathProvider createTempFile(prefix = "module-ancestors-pair", suffix = ".json").absolutePath
     }
 }
