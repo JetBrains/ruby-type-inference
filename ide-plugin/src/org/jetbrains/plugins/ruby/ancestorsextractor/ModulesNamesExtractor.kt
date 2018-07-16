@@ -7,18 +7,28 @@ import runRailsConsole
 import java.io.File
 import java.io.IOException
 
-interface ModulesNamesProvider {
-    fun getAllModulesNames(project: Project): List<String>?
+/**
+ * Extract all modules names from Ruby on Rails project.
+ */
+interface ModulesNamesExtractor {
+    /**
+     * Extract all modules names from Ruby on Rails project.
+     */
+    fun extractAllModulesNames(project: Project): List<String>?
 }
 
 /**
- * Implementation based on Ruby's ObjectSpace's each_object function
+ * Implementation based on Ruby's ObjectSpace.each_object function.
  * @see <a href="https://ruby-doc.org/core-2.2.0/ObjectSpace.html#method-c-each_object">ObjectSpace's each_object function</a>
  */
-class ModulesNamesProviderObjectSpaceImpl : ModulesNamesProvider {
+class ModulesNamesExtractorObjectSpaceImpl : ModulesNamesExtractor {
     private val gson = Gson()
 
-    override fun getAllModulesNames(project: Project): List<String>? {
+    /**
+     * Implementation of [ModulesNamesExtractor.extractAllModulesNames] based on Ruby's ObjectSpace.each_object function.
+     * @see <a href="https://ruby-doc.org/core-2.2.0/ObjectSpace.html#method-c-each_object">ObjectSpace's each_object function</a>
+     */
+    override fun extractAllModulesNames(project: Project): List<String>? {
         val basePath = project.basePath ?: return null
 
         runRailsConsole(basePath,
@@ -29,7 +39,6 @@ class ModulesNamesProviderObjectSpaceImpl : ModulesNamesProvider {
                 end
             """.trimIndent()
         )
-
 
         val file = File(TempFiles.tempFilePathProviderForModules.path)
         return try {
