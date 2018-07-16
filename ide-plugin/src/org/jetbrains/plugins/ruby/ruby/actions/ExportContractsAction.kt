@@ -1,11 +1,7 @@
 package org.jetbrains.plugins.ruby.ruby.actions
 
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.ServiceManager
-import com.intellij.openapi.fileChooser.FileSaverDescriptor
-import com.intellij.openapi.fileChooser.ex.FileSaverDialogImpl
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.plugins.ruby.settings.PerGemSettings
 import org.jetbrains.plugins.ruby.settings.RubyTypeContractsSettings
@@ -14,20 +10,15 @@ import org.jetbrains.ruby.codeInsight.types.storage.server.RSignatureStorage
 import org.jetbrains.ruby.runtime.signature.server.SignatureServer
 import java.io.File
 
-class ExportContractsAction : DumbAwareAction() {
-    override fun actionPerformed(e: AnActionEvent) {
-        val dialog = FileSaverDialogImpl(FileSaverDescriptor(
-                "Export Type Contracts",
-                "The selected file will be populated with binary contracts representation which might" +
-                        "be imported later",
-                "bin"), e.project)
-        val fileWrapper = dialog.save(null, "ruby_contracts.bin")
-                ?: return
-
-        ProgressManager.getInstance().runProcessWithProgressSynchronously({ ->
-            val perGemSettingsMap = ServiceManager.getService(RubyTypeContractsSettings::class.java).perGemSettingsMap
-            exportContractsToFile(fileWrapper.file.absolutePath, perGemSettingsMap)
-        }, "Exporting Contracts", false, e.project)
+class ExportContractsAction : BaseExportFileAction(
+        whatToExport = "Type Contracts",
+        defaultFileName = "ruby_contracts",
+        extensions = arrayOf("bin"),
+        description = "The selected file will be populated with binary contracts representation which might be imported later"
+) {
+    override fun backgroundProcess(project: Project, absoluteFilePath: String) {
+        val perGemSettingsMap = ServiceManager.getService(RubyTypeContractsSettings::class.java).perGemSettingsMap
+        exportContractsToFile(absoluteFilePath, perGemSettingsMap)
     }
 
     companion object {

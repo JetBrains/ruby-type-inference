@@ -23,10 +23,11 @@ abstract class BaseExportFileAction(
 
     /**
      * In this method implementation you can do you job needed for file export and then file exporting itself.
+     * @param absoluteFilePath Absolute file path which user have chosen to save file to.
      */
     protected abstract fun backgroundProcess(project: Project, absoluteFilePath: String)
 
-    override fun actionPerformed(e: AnActionEvent?) {
+    final override fun actionPerformed(e: AnActionEvent?) {
         val project = e?.project ?: return
         val dialog = FileSaverDialogImpl(FileSaverDescriptor(
                 "Export $whatToExport",
