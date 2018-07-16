@@ -15,7 +15,7 @@ abstract class BaseExportAncestorsAction(
         defaultFileName: String,
         private val extractor: AncestorsExtractor
 ) : BaseExportFileAction(whatToExport, defaultFileName, arrayOf("txt")) {
-    override fun backgroundProcess(project: Project, absoluteFilePath: String) {
+    override fun backgroundProcess() {
         val ancestors: List<RubyModule> = extractor.extractAncestors(project) ?: return
         PrintWriter(absoluteFilePath).use { printWriter ->
             ancestors.forEach {

@@ -16,7 +16,7 @@ class ExportContractsAction : BaseExportFileAction(
         extensions = arrayOf("bin"),
         description = "The selected file will be populated with binary contracts representation which might be imported later"
 ) {
-    override fun backgroundProcess(project: Project, absoluteFilePath: String) {
+    override fun backgroundProcess() {
         val perGemSettingsMap = ServiceManager.getService(RubyTypeContractsSettings::class.java).perGemSettingsMap
         exportContractsToFile(absoluteFilePath, perGemSettingsMap)
     }

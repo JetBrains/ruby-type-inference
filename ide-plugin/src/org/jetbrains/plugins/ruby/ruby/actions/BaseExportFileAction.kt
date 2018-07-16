@@ -22,10 +22,19 @@ abstract class BaseExportFileAction(
 ) : DumbAwareAction() {
 
     /**
-     * In this method implementation you can do you job needed for file export and then file exporting itself.
-     * @param absoluteFilePath Absolute file path which user have chosen to save file to.
+     * Absolute file path which user have chosen to save file to.
      */
-    protected abstract fun backgroundProcess(project: Project, absoluteFilePath: String)
+    protected lateinit var absoluteFilePath: String
+        private set
+
+    protected lateinit var project: Project
+        private set
+
+    /**
+     * In this method implementation you can do you job needed for file export and then file exporting itself.
+     * You may want to use [absoluteFilePath] and [project] while implementing this method.
+     */
+    protected abstract fun backgroundProcess()
 
     final override fun actionPerformed(e: AnActionEvent?) {
         val project = e?.project ?: return
@@ -35,18 +44,10 @@ abstract class BaseExportFileAction(
                 *extensions), project)
         val fileWrapper = dialog.save(null, defaultFileName) ?: return
 
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(
-                FileExporterRunnable(project, fileWrapper.file.absolutePath, this::backgroundProcess),
-                "Exporting $whatToExport", false, e.project)
-    }
+        this.absoluteFilePath = fileWrapper.file.absolutePath
+        this.project = project
 
-    private class FileExporterRunnable(
-            private val project: Project,
-            private val absoluteFilePath: String,
-            private val backgroundProcess: (project: Project, absoluteFilePath: String) -> Unit
-    ) : Runnable {
-        override fun run() {
-            backgroundProcess(project, absoluteFilePath)
-        }
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(this::backgroundProcess,
+                "Exporting $whatToExport", false, e.project)
     }
 }

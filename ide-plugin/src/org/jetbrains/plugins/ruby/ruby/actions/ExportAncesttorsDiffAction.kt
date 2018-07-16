@@ -8,7 +8,7 @@ import java.io.PrintWriter
 
 class ExportAncestorsDiffAction : BaseExportFileAction(whatToExport = "ancestors diff",
         defaultFileName = "ancestors-diff", extensions = arrayOf("txt")) {
-    override fun backgroundProcess(project: Project, absoluteFilePath: String) {
+    override fun backgroundProcess() {
         val byObjectSpace: List<RubyModule> = AncestorsExtractorByObjectSpace()
                 .extractAncestors(project) ?: return
 
