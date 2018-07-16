@@ -7,14 +7,23 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 
-abstract class ExportFileAction(
+/**
+ * Base class representing file export action with "save to" dialog
+ * @param whatToExport Will be shown in "save to" dialog
+ * @param defaultFileName Default file name in "save to" dialog
+ * @param extensions Array of available extensions for exported file
+ * @param description Description in "save to" dialog
+ */
+abstract class BaseExportFileAction(
         private val whatToExport: String,
         private val defaultFileName: String,
         private val extensions: Array<String>,
-        private val description: String = "",
-        private val canProgressBeCanceled: Boolean = false
+        private val description: String = ""
 ) : DumbAwareAction() {
 
+    /**
+     * In this method implementation you can do you job needed for file export and then file exporting itself.
+     */
     protected abstract fun backgroundProcess(project: Project, absoluteFilePath: String)
 
     override fun actionPerformed(e: AnActionEvent?) {
@@ -27,7 +36,7 @@ abstract class ExportFileAction(
 
         ProgressManager.getInstance().runProcessWithProgressSynchronously(
                 FileExporterRunnable(project, fileWrapper.file.absolutePath, this::backgroundProcess),
-                "Exporting $whatToExport", canProgressBeCanceled, e.project)
+                "Exporting $whatToExport", false, e.project)
     }
 
     private class FileExporterRunnable(

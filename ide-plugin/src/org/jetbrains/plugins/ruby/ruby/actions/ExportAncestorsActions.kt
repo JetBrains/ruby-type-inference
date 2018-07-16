@@ -7,11 +7,14 @@ import org.jetbrains.plugins.ruby.ancestorsextractor.AncestorsExtractorByRubyMin
 import org.jetbrains.plugins.ruby.ancestorsextractor.RubyModule
 import java.io.PrintWriter
 
-open class ExportAncestorsAction(
+/**
+ * Base class representation for exporting Ruby on Rails project's modules' ancestors
+ */
+abstract class BaseExportAncestorsAction(
         whatToExport: String,
         defaultFileName: String,
         private val extractor: AncestorsExtractor
-) : ExportFileAction(whatToExport, defaultFileName, arrayOf("txt")) {
+) : BaseExportFileAction(whatToExport, defaultFileName, arrayOf("txt")) {
     override fun backgroundProcess(project: Project, absoluteFilePath: String) {
         val ancestors: List<RubyModule> = extractor.extractAncestors(project) ?: return
         PrintWriter(absoluteFilePath).use { printWriter ->
@@ -26,13 +29,13 @@ open class ExportAncestorsAction(
     }
 }
 
-class ExportAncestorsByObjectSpaceAction : ExportAncestorsAction(
+class ExportAncestorsByObjectSpaceAction : BaseExportAncestorsAction(
         whatToExport = "ancestors by Objectspace",
         defaultFileName = "ancestors-by-objectspace",
         extractor = AncestorsExtractorByObjectSpace()
 )
 
-class ExportAncestorsByRubymineAction : ExportAncestorsAction(
+class ExportAncestorsByRubymineAction : BaseExportAncestorsAction(
         whatToExport = "ancestors by Rubymine",
         defaultFileName = "ancestors-by-rubymine",
         extractor = AncestorsExtractorByRubyMine()

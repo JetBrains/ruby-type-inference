@@ -6,7 +6,7 @@ import org.jetbrains.plugins.ruby.ancestorsextractor.AncestorsExtractorByRubyMin
 import org.jetbrains.plugins.ruby.ancestorsextractor.RubyModule
 import java.io.PrintWriter
 
-class ExportAncestorsDiffAction : ExportFileAction(whatToExport = "ancestors diff",
+class ExportAncestorsDiffAction : BaseExportFileAction(whatToExport = "ancestors diff",
         defaultFileName = "ancestors-diff", extensions = arrayOf("txt")) {
     override fun backgroundProcess(project: Project, absoluteFilePath: String) {
         val byObjectSpace: List<RubyModule> = AncestorsExtractorByObjectSpace()
