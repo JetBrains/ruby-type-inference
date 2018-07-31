@@ -63,7 +63,7 @@ static bool is_call_info_needed();
 
 static void call_info_t_free(void *s)
 {
-    if (((call_info_t *)s)->call_info_kw_args != 0)
+    if (((call_info_t *)s)->call_info_kw_args != NULL)
         free(((call_info_t *)s)->call_info_kw_args);
     free(s);
 }
@@ -135,7 +135,7 @@ handle_call(VALUE self, VALUE lineno, VALUE method_name, VALUE path)
         free(info);
     } else {
         sign->call_info_argc = -1;
-        sign->call_info_kw_args = 0;
+        sign->call_info_kw_args = NULL;
     }
 
     //return Data_Wrap_Struct(c_signature, signature_t_mark, signature_t_free, sign);
@@ -191,18 +191,15 @@ handle_return(VALUE self, VALUE signature, VALUE return_type_name)
 static call_info_t*
 get_call_info()
 {
-    rb_thread_t *thread;
-    rb_control_frame_t *cfp;
-    call_info_t *info;
+    rb_thread_t *thread = ruby_current_thread;
+    rb_control_frame_t *cfp = TH_CFP(thread);
+    call_info_t *info = (call_info_t *) malloc(sizeof(*info));
 
-    thread = ruby_current_thread;
-    cfp = TH_CFP(thread);
-    info = malloc(sizeof(call_info_t));
     //info = ALLOC(call_info_t);
     //info = malloc;
 
     info->call_info_argc = -1;
-    info->call_info_kw_args = 0;
+    info->call_info_kw_args = NULL;
 
     cfp += 4;
     cfp = my_rb_vm_get_binding_creatable_next_cfp(thread, cfp);
@@ -214,19 +211,19 @@ get_call_info()
             return info;
         }
 
-        const rb_iseq_t *iseq = cfp->iseq;
+        const rb_iseq_t *iseq;
+        iseq = (const rb_iseq_t *) cfp->iseq;
 
         ptrdiff_t pc = cfp->pc - cfp->iseq->body->iseq_encoded;
 
         const VALUE *iseq_original = rb_iseq_original_iseq((rb_iseq_t *)iseq);
 
-        int tmp = 0;
         int indent = 1;
 
         for(; indent < 6; indent++)
         {
             VALUE insn = iseq_original[pc - indent];
-            tmp = (int)insn;
+            int tmp = (int)insn;
 
             if(0 < tmp && tmp < 256)
             {
@@ -331,7 +328,7 @@ fast_join_array(char sep, size_t count, const char **strings)
         lengths[i + 1] = lengths[i] + length;
     }
 
-    result = (char*)malloc(sizeof(char) * (1 + lengths[count]));
+    result = (char *)malloc(sizeof(*result) * (1 + lengths[count]));
 
     for (i = 0; i < count; i++)
     {
@@ -405,7 +402,7 @@ get_args_info()
     if(param_size == 0)
         return 0;
 
-    const char **types = (const char **)malloc(param_size * sizeof(const char*));
+    const char **types = (const char **)malloc(param_size * sizeof(*types));
     size_t i, ans_iterator;
     int types_iterator;
 
@@ -426,7 +423,7 @@ get_args_info()
     if(has_kw)
         param_size--;
 
-    char **ans = (char** )malloc(param_size * sizeof(char*));
+    char **ans = (char **)malloc(param_size * sizeof(*ans));
 
     for(i = 0; i < lead_num; i++, ans_iterator++, types_iterator--)
     {
@@ -443,11 +440,7 @@ get_args_info()
     for(i = 0; i < has_rest; i++, ans_iterator++, types_iterator--)
     {
         const char* name = rb_id2name(cfp->iseq->body->local_table[ans_iterator]);
-
-        char* type;
-        type = types[types_iterator];
-
-        ans[ans_iterator] = fast_join(',', 3, "REST", type, name);
+        ans[ans_iterator] = fast_join(',', 3, "REST", types[types_iterator], name);
     }
 
     for(i = 0; i < post_num; i++, ans_iterator++, types_iterator--)
@@ -485,7 +478,7 @@ get_args_info()
         const char* name = rb_id2name(cfp->iseq->body->local_table[ans_iterator]);
         LOG("%s\n", calc_sane_class_name(*(ep + types_ids[types_iterator])));
         LOG("%d\n", rb_hash_size(*(ep + types_ids[types_iterator])));
-        char* type;
+        const char *type;
 
         type = types[types_iterator];
 
@@ -496,15 +489,6 @@ get_args_info()
     {
         const char* name = rb_id2name(cfp->iseq->body->local_table[ans_iterator]);
         ans[ans_iterator] = fast_join(',', 3, "BLOCK", types[types_iterator], name);
-    }
-
-    int answer_size = 0;
-
-    for(i = 0; i < ans_iterator; i++)
-    {
-        answer_size += strlen(ans[i]);
-        if(i + 1 < ans_iterator)
-            answer_size++;
     }
 
     LOG("%d\n", ans_iterator)
@@ -535,15 +519,16 @@ get_args_info_rb(VALUE self)
 static VALUE
 get_call_info_rb(VALUE self)
 {
-    if(is_call_info_needed())
+    if (is_call_info_needed())
     {
         call_info_t *info = get_call_info();
 
         VALUE ans;
         ans = rb_ary_new();
         rb_ary_push(ans, LONG2FIX(info->call_info_argc));
-        if(info->call_info_kw_args != 0)
+        if (info->call_info_kw_args != NULL) {
             rb_ary_push(ans, rb_str_new_cstr(info->call_info_kw_args));
+        }
 
         return ans;
     }

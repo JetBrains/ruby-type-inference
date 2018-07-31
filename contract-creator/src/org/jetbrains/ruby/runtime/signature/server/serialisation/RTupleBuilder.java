@@ -74,7 +74,8 @@ public class RTupleBuilder {
         }
     }
 
-    private String beautifyClassName(String bean) {
+    @NotNull
+    private String beautifyClassName(@NotNull String bean) {
         if (bean.length() > 90) {
             return bean.substring(0, 90) + "...";
         }
