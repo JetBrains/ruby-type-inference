@@ -339,7 +339,7 @@ fast_join_array(char sep, size_t count, const char **strings)
             if (i > 0)
                 result[start++] = sep;
 
-            memcpy(result + sizeof(char) * start, str, sizeof(char) * (lengths[i + 1] - start));
+            memcpy(result + start, str, sizeof(*result) * (lengths[i + 1] - start));
         }
     }
 
