@@ -22,8 +22,7 @@ config_file = File.join(File.dirname(__FILE__), 'config_options.rb')
 load config_file if File.exist?(config_file)
 
 if ENV['debase_debug']
-  $CFLAGS+=' -Wall -Werror'
-  $CFLAGS+=' -g3'
+  $CFLAGS+=' -Wall -Werror -g3'
 end
 
 dir_config("ruby")

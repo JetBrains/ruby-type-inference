@@ -1,3 +1,5 @@
+# starter.rb will be loaded with "ruby -r" option from bin/arg-scanner
+
 unless ENV["ARG_SCANNER_ENABLE_STATE_TRACKER"].nil?
   require_relative 'state_tracker'
   ArgScanner::StateTracker.new
