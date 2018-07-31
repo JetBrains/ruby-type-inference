@@ -5,8 +5,6 @@ class ServerResponseBean {
     String method_name;
     String call_info_mid;
     String receiver_name;
-    String gem_name;
-    String gem_version;
     String visibility;
     String return_type_name;
     String call_info_argc;

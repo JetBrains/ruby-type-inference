@@ -25,6 +25,9 @@ if ENV['debase_debug']
   $CFLAGS+=' -Wall -Werror -g3'
 end
 
+$CFLAGS += ' `pkg-config --cflags --libs glib-2.0`'
+$DLDFLAGS += ' `pkg-config --cflags --libs glib-2.0`'
+
 dir_config("ruby")
 if !Debase::RubyCoreSource.create_makefile_with_core(hdrs, "arg_scanner/arg_scanner")
   STDERR.print("Makefile creation failed\n")

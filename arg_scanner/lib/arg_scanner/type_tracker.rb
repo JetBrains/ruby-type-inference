@@ -54,9 +54,6 @@ module ArgScanner
     GEM_PATH_REVERSED_REGEX = /((?:[0-9A-Za-z]+\.)+\d+)-([A-Za-z0-9_-]+)/
 
     def initialize
-      @cache = Set.new
-      @socket = TCPSocket.new('127.0.0.1', 7777)
-      @mutex = Mutex.new
       @prefix = ENV["ARG_SCANNER_PREFIX"]
       @enable_debug = ENV["ARG_SCANNER_DEBUG"]
       @performance_monitor = if @enable_debug then TypeTrackerPerformanceMonitor.new else nil end
@@ -68,16 +65,13 @@ module ArgScanner
             handle_return(tp)
         end
       end
+
+      ObjectSpace.define_finalizer(self, proc { ArgScanner.destructor() })
     end
 
     attr_accessor :enable_debug
     attr_accessor :performance_monitor
-    attr_accessor :cache
-    attr_accessor :socket
-    attr_accessor :mutex
     attr_accessor :prefix
-
-
 
     # @param [String] path
     def self.extract_gem_name_and_version(path)
@@ -96,52 +90,23 @@ module ArgScanner
       Thread.current[:signatures] ||= Array.new
     end
 
-    def at_exit
-      socket.close
-    end
-
-    def put_to_socket(message)
-      mutex.synchronize { socket.puts(message) }
-    end
-
     private
     def handle_call(tp)
-      #handle_call(VALUE self, VALUE lineno, VALUE method_name, VALUE path)
-      if prefix.nil? || tp.path.start_with?(prefix)
-        performance_monitor.on_call unless performance_monitor.nil?
-        signature = ArgScanner.handle_call(tp.lineno, tp.method_id, tp.path)
-        signatures.push(signature)
+      # tp.defined_class.name is `null` for anonymous modules
+      if (@prefix.nil? || tp.path.start_with?(@prefix)) && tp.defined_class && !tp.defined_class.singleton_class?
+        @performance_monitor.on_call unless @performance_monitor.nil?
+        signatures << ArgScanner.handle_call(tp.lineno, tp.method_id.id2name, tp.path)
       else
-        signatures.push(false)
+        signatures << nil
       end
     end
 
     def handle_return(tp)
-      sigi = signatures
-      performance_monitor.on_return unless performance_monitor.nil?
-
-      unless sigi.empty?
-        signature = sigi.pop
-        return unless signature
-
-        performance_monitor.on_handled_return unless performance_monitor.nil?
-
-        defined_class = tp.defined_class
-        return if !defined_class || defined_class.singleton_class?
-
-        receiver_name = defined_class.name ? defined_class : defined_class.ancestors.first
-        return_type_name = tp.return_value.class
-
-        return if !receiver_name || !receiver_name.to_s || receiver_name.to_s.length > 200
-
-        json = ArgScanner.handle_return(signature, return_type_name) +
-          "\"receiver_name\":\"#{receiver_name}\",\"return_type_name\":\"#{return_type_name}\","
-
-        if cache.add?(json)
-          gem_name, gem_version = TypeTracker.extract_gem_name_and_version(tp.path)
-          json += '"gem_name":"' + gem_name.to_s + '","gem_version":"' + gem_version.to_s + '"}'
-          put_to_socket(json)
-        end
+      @performance_monitor.on_return unless @performance_monitor.nil?
+      signature = signatures.pop
+      if signature
+        @performance_monitor.on_handled_return unless @performance_monitor.nil?
+        ArgScanner.handle_return(signature, tp.defined_class.name, tp.return_value.class.name)
       end
     end
 
