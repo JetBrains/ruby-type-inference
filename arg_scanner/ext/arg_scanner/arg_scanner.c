@@ -513,7 +513,9 @@ static VALUE
 get_args_info_rb(VALUE self)
 {
     char *args_info = get_args_info();
-    return args_info ? rb_str_new_cstr(args_info) : Qnil;
+    VALUE ret = args_info ? rb_str_new_cstr(args_info) : Qnil;
+    free(args_info);
+    return ret;
 }
 
 static VALUE
@@ -529,6 +531,8 @@ get_call_info_rb(VALUE self)
         if (info->call_info_kw_args != NULL) {
             rb_ary_push(ans, rb_str_new_cstr(info->call_info_kw_args));
         }
+
+        call_info_t_free(info);
 
         return ans;
     }
