@@ -5,6 +5,9 @@
 #include <string.h>
 #include <assert.h>
 #include <stdarg.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <glib.h>
 
 //#define DEBUG_ARG_SCANNER 1
 
@@ -40,19 +43,26 @@ typedef struct
 
 typedef struct
 {
-    VALUE method_name;
-    char* args_info;
-    VALUE path;
-    char* call_info_kw_args;
+    char *receiver_name;
+    char *method_name;
+    char *args_info;
+    char *path;
+    char *call_info_kw_args;
     ssize_t call_info_argc;
     int lineno;
+    char *return_type_name;
 } signature_t;
 
 void Init_arg_scanner();
 
+static const char *EMPTY_VALUE = "";
+static const int SERVER_PORT = 7777;
+static GTree *sent_to_server_tree;
+static int socket_fd = -1;
 static char* get_args_info();
 static VALUE handle_call(VALUE self, VALUE lineno, VALUE method_name, VALUE path);
-static VALUE handle_return(VALUE self, VALUE signature, VALUE return_type_name);
+static VALUE handle_return(VALUE self, VALUE signature, VALUE receiver_name, VALUE return_type_name);
+static void destructor(VALUE self);
 
 // For testing
 static VALUE get_args_info_rb(VALUE self);
@@ -68,28 +78,88 @@ static void call_info_t_free(void *s)
     free(s);
 }
 
-static void signature_t_free(void *s)
+static void signature_t_free(signature_t *s)
 {
-    if (((signature_t *)s)->args_info != 0)
-        free(((signature_t *)s)->args_info);
-    if (((signature_t *)s)->call_info_kw_args != 0)
-        free(((signature_t *)s)->call_info_kw_args);
+    free(s->receiver_name);
+    free(s->method_name);
+    free(s->args_info);
+    free(s->path);
+    free(s->call_info_kw_args);
+    free(s->return_type_name);
     free(s);
 }
 
-static void
-signature_t_mark(signature_t *sig)
+// Free signature_t partially leaving parts that are used while comparison (compare_signature_t)
+// @see_also compare_signature_t
+static void signature_t_free_partially(signature_t *s)
 {
-    rb_gc_mark(sig->method_name);
-    rb_gc_mark(sig->path);
+    free(s->receiver_name);
+    s->receiver_name = NULL;
+
+    free(s->method_name);
+    s->method_name = NULL;
+
+    free(s->call_info_kw_args);
+    s->call_info_kw_args = NULL;
+}
+
+// Just one possible comparator. Feel free to change the way it compare (but do it meaningfully and
+// don't forget to change signature_t_free_partially accordingly)
+// @see_also signature_t_free_partially
+static int
+compare_signature_t(const signature_t *a, const signature_t *b) {
+    int ret;
+
+    ret = a->lineno - b->lineno;
+    if (ret != 0) return ret;
+
+    ret = strcmp(a->path, b->path);
+    if (ret != 0) return ret;
+
+    ret = strcmp(a->args_info != NULL ? a->args_info : "", b->args_info != NULL ? b->args_info : "");
+    if (ret != 0) return ret;
+
+    ret = strcmp(a->return_type_name, b->return_type_name);
+    if (ret != 0) return ret;
+
+    return 0;
+}
+
+// returns zero if no errors occured
+int init_socket() {
+    struct sockaddr_in serv_addr;
+    socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (socket_fd < 0) {
+        return 1;
+    }
+
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(SERVER_PORT);
+
+    if(inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) != 1) {
+        return 1;
+    }
+
+    return connect(socket_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
 }
 
 void Init_arg_scanner() {
     mArgScanner = rb_define_module("ArgScanner");
     rb_define_module_function(mArgScanner, "handle_call", handle_call, 3);
-    rb_define_module_function(mArgScanner, "handle_return", handle_return, 2);
+    rb_define_module_function(mArgScanner, "handle_return", handle_return, 3);
     rb_define_module_function(mArgScanner, "get_args_info", get_args_info_rb, 0);
     rb_define_module_function(mArgScanner, "get_call_info", get_call_info_rb, 0);
+    rb_define_module_function(mArgScanner, "destructor", destructor, 0);
+
+    if (init_socket()) {
+        perror("Are sure you've run server?, error message: ");
+        exit(1);
+    }
+
+    sent_to_server_tree = g_tree_new_full(/*key_compare_func =*/compare_signature_t,
+                                          /*key_compare_data =*/NULL,
+                                          /*key_destroy_func =*/signature_t_free,
+                                          /*value_destroy_func =*/NULL);
 }
 
 rb_control_frame_t *
@@ -107,23 +177,25 @@ my_rb_vm_get_binding_creatable_next_cfp(const rb_thread_t *th, const rb_control_
 static VALUE
 handle_call(VALUE self, VALUE lineno, VALUE method_name, VALUE path)
 {
-    //VALUE method_sym = rb_tracearg_method_id(trace_arg);
-    //VALUE path = trace_arg->path;
-    VALUE c_method_name = method_name;
-    VALUE c_path = path;
-    int c_lineno = FIX2INT(lineno);//trace_arg->lineno;
+    // Just for code safety
+    if (lineno == Qnil || method_name == Qnil || path == Qnil) {
+        return Qnil;
+    }
+    signature_t *sign = (signature_t *) calloc(1, sizeof(*sign));
 
-    signature_t *sign;
-    sign = ALLOC(signature_t);
-
-    sign->lineno = c_lineno;
-    sign->method_name = c_method_name;
-    sign->path = c_path;
+    sign->lineno = FIX2INT(lineno); // Convert Ruby's Fixnum to C language int
+    sign->method_name = strdup(StringValueCStr(method_name));
+    sign->path = strdup(StringValueCStr(path));
 
 #ifdef DEBUG_ARG_SCANNER
-    LOG("Getting args info for %s %s %d \n", rb_id2name(SYM2ID(sign->method_name)), StringValuePtr(sign->path), sign->lineno);
+    LOG("Getting args info for %s %s %d \n", sign->method_name, sign->path, sign->lineno);
 #endif
     sign->args_info = get_args_info();
+
+    if (sign->args_info != NULL && strlen(sign->args_info) >= 1000) {
+        signature_t_free(sign);
+        return Qnil;
+    }
 
     if (is_call_info_needed())
     {
@@ -138,54 +210,54 @@ handle_call(VALUE self, VALUE lineno, VALUE method_name, VALUE path)
         sign->call_info_kw_args = NULL;
     }
 
-    //return Data_Wrap_Struct(c_signature, signature_t_mark, signature_t_free, sign);
-    return Data_Wrap_Struct(c_signature, signature_t_mark, xfree, sign);
+    return Data_Wrap_Struct(c_signature,
+        NULL, /*free memory function is NULL because sent_to_server_tree will free it (see handle_return)*/NULL, sign);
 }
 
 static VALUE
-handle_return(VALUE self, VALUE signature, VALUE return_type_name)
+handle_return(VALUE self, VALUE signature, VALUE receiver_name, VALUE return_type_name)
 {
+    if (signature == Qnil || receiver_name == Qnil || return_type_name == Qnil) {
+        return Qnil;
+    }
+
     signature_t *sign;
-    const char *args_info;
-    const char *call_info_kw_args;
-    char json_mes[2000];
-
     Data_Get_Struct(signature, signature_t, sign);
+    sign->receiver_name = strdup(StringValueCStr(receiver_name));
+    sign->return_type_name = strdup(StringValueCStr(return_type_name));
 
-    args_info = sign->args_info;
-    if (!args_info)
-        args_info = "";
-    call_info_kw_args = sign->call_info_kw_args;
-    if (!call_info_kw_args)
-        call_info_kw_args = "";
+    if (g_tree_lookup(sent_to_server_tree, sign) == NULL) {
+        // GTree will free memory allocated by sign by itself
+        g_tree_insert(sent_to_server_tree, /*key = */sign, /*value = */EMPTY_VALUE);
 
+        char json[2048];
+        size_t json_size = sizeof(json) / sizeof(*json);
 
-#ifdef DEBUG_ARG_SCANNER
-    LOG("%s \n", rb_id2name(SYM2ID(sign->method_name)));
-    LOG("%d \n", sign->call_info_argc);
-    LOG("%s \n", call_info_kw_args);
-    LOG("%s \n", args_info);
-    LOG("%s \n", StringValuePtr(sign->path));
-    LOG("%d \n", sign->lineno);
-#endif
+        // json_len doesn't count terminating '\0'
+        int json_len = snprintf(json, json_size,
+            "{\"method_name\":\"%s\",\"call_info_argc\":\"%d\",\"call_info_kw_args\":\"%s\",\"args_info\":\"%s\""
+            ",\"visibility\":\"%s\",\"path\":\"%s\",\"lineno\":\"%d\",\"receiver_name\":\"%s\",\"return_type_name\":\"%s\"}\n",
+            sign->method_name,
+            sign->call_info_argc,
+            sign->call_info_kw_args != NULL ? sign->call_info_kw_args : "",
+            sign->args_info != NULL ? sign->args_info : "",
+            "PUBLIC",
+            sign->path,
+            sign->lineno,
+            sign->receiver_name,
+            sign->return_type_name);
+        // if json_len >= json_size then it means that string in snprintf truncated output
+        if (json_len >= json_size) {
+            return Qnil;
+        }
 
-    assert(strlen(args_info) < 1000);
+        signature_t_free_partially(sign);
 
-    snprintf(json_mes, 2000,
-        "{\"method_name\":\"%s\",\"call_info_argc\":\"%d\",\"call_info_kw_args\":\"%s\",\"args_info\":\"%s\",\"visibility\":\"%s\",\"path\":\"%s\",\"lineno\":\"%d\",",
-        rb_id2name(SYM2ID(sign->method_name)),
-        sign->call_info_argc,
-        call_info_kw_args,
-        //StringValuePtr(receiver_name),
-        args_info,
-        //StringValuePtr(return_type_name),
-        "PUBLIC",
-        StringValuePtr(sign->path),
-        sign->lineno);
-
-    LOG("%s \n", json_mes);
-
-    return rb_str_new_cstr(json_mes);
+        send(socket_fd, json, json_len, 0);
+    } else {
+        signature_t_free(sign);
+    }
+    return Qnil;
 }
 
 static call_info_t*
@@ -556,4 +628,10 @@ is_call_info_needed()
         || cfp->iseq->body->param.flags.has_kwrest
         || cfp->iseq->body->param.flags.has_rest
         || (cfp->iseq->body->param.keyword != NULL && cfp->iseq->body->param.keyword->required_num == 0));
+}
+
+static void
+destructor(VALUE self) {
+    g_tree_destroy(sent_to_server_tree);
+    close(socket_fd);
 }
