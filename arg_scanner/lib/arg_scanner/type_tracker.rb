@@ -52,6 +52,8 @@ module ArgScanner
     include Singleton
 
     def initialize
+      @catch_only_every_n_call = ENV['ARG_SCANNER_CATCH_ONLY_EVERY_N_CALL'].to_i
+      @method_ids_cache = Set.new
       @prefix = ENV["ARG_SCANNER_PREFIX"]
       @enable_debug = ENV["ARG_SCANNER_DEBUG"]
       @performance_monitor = if @enable_debug then TypeTrackerPerformanceMonitor.new else nil end
@@ -84,7 +86,8 @@ module ArgScanner
     private
     def handle_call(tp)
       # tp.defined_class.name is `null` for anonymous modules
-      if (@prefix.nil? || tp.path.start_with?(@prefix)) && tp.defined_class && !tp.defined_class.singleton_class?
+      if (@catch_only_every_n_call == 1 || @method_ids_cache.add?(tp.method_id) || rand(@catch_only_every_n_call) == 0) &&
+          (@prefix.nil? || tp.path.start_with?(@prefix)) && tp.defined_class && !tp.defined_class.singleton_class?
         @performance_monitor.on_call unless @performance_monitor.nil?
         signatures << ArgScanner.handle_call(tp.lineno, tp.method_id.id2name, tp.path)
       else
