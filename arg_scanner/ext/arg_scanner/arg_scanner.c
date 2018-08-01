@@ -62,7 +62,12 @@ static int socket_fd = -1;
 static char* get_args_info();
 static VALUE handle_call(VALUE self, VALUE lineno, VALUE method_name, VALUE path);
 static VALUE handle_return(VALUE self, VALUE signature, VALUE receiver_name, VALUE return_type_name);
-static void destructor(VALUE self);
+static VALUE destructor(VALUE self);
+
+// returns Qnil if ready; or string containing error message otherwise 
+static VALUE check_if_arg_scanner_ready(VALUE self);
+// errno status after socket creation attempt
+static int socket_errno = 0;
 
 // For testing
 static VALUE get_args_info_rb(VALUE self);
@@ -150,10 +155,10 @@ void Init_arg_scanner() {
     rb_define_module_function(mArgScanner, "get_args_info", get_args_info_rb, 0);
     rb_define_module_function(mArgScanner, "get_call_info", get_call_info_rb, 0);
     rb_define_module_function(mArgScanner, "destructor", destructor, 0);
+    rb_define_module_function(mArgScanner, "check_if_arg_scanner_ready", check_if_arg_scanner_ready, 0);
 
     if (init_socket()) {
-        perror("Are sure you've run server?, error message: ");
-        exit(1);
+        socket_errno = errno;
     }
 
     sent_to_server_tree = g_tree_new_full(/*key_compare_func =*/compare_signature_t,
@@ -630,8 +635,20 @@ is_call_info_needed()
         || (cfp->iseq->body->param.keyword != NULL && cfp->iseq->body->param.keyword->required_num == 0));
 }
 
-static void
+static VALUE 
+check_if_arg_scanner_ready(VALUE self) {
+    if (socket_errno != 0) {
+        char error_msg[1024];
+        snprintf(error_msg, sizeof(error_msg)/sizeof(*error_msg), 
+            "Are sure you've run server?, error message: %s", strerror(socket_errno));
+        return rb_str_new_cstr(error_msg);
+    }
+    return Qnil;
+}
+
+static VALUE
 destructor(VALUE self) {
     g_tree_destroy(sent_to_server_tree);
     close(socket_fd);
+    return Qnil;
 }
