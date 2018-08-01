@@ -51,8 +51,6 @@ module ArgScanner
   class TypeTracker
     include Singleton
 
-    GEM_PATH_REVERSED_REGEX = /((?:[0-9A-Za-z]+\.)+\d+)-([A-Za-z0-9_-]+)/
-
     def initialize
       @prefix = ENV["ARG_SCANNER_PREFIX"]
       @enable_debug = ENV["ARG_SCANNER_DEBUG"]
@@ -78,19 +76,6 @@ module ArgScanner
     attr_accessor :enable_debug
     attr_accessor :performance_monitor
     attr_accessor :prefix
-
-    # @param [String] path
-    def self.extract_gem_name_and_version(path)
-      if OPTIONS.project_roots && path.start_with?(*OPTIONS.project_roots)
-        return OPTIONS.no_local ? ['', ''] : ['LOCAL', OPTIONS.local_version]
-      end
-
-      reversed = path.reverse
-      return ['', ''] unless GEM_PATH_REVERSED_REGEX =~ reversed
-
-      name_and_version = Regexp.last_match
-      return name_and_version[2].reverse, name_and_version[1].reverse
-    end
 
     def signatures
       Thread.current[:signatures] ||= Array.new
