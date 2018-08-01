@@ -66,6 +66,12 @@ module ArgScanner
         end
       end
 
+      error_msg = ArgScanner.check_if_arg_scanner_ready()
+      if error_msg != nil
+        STDERR.puts error_msg
+        Process.exit(1)
+      end
+
       ObjectSpace.define_finalizer(self, proc { ArgScanner.destructor() })
     end
 
