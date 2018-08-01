@@ -9,8 +9,13 @@ deliver the following information:
 This information can be used then to calculate and use type contracts
 for the analysed methods.
 
-## Installation
+## Requirements
 
+##### libglib2.0-dev
+
+On Ubuntu run: ` $ sudo apt install libglib2.0-dev` 
+
+## Installation
 
 `arg_scanner` is meant to be used as a binary to run any other ruby executable
 manually so including it in the `Gemfile` is not necessary.
