@@ -14,16 +14,6 @@ option_parser = OptionParser.new do |opts|
   EOB
 
   opts.separator "Options:"
-  opts.on("-r", "--root=[ROOT]", String, "local project root(s) to distinguish from library sources (path1[:pathn]*)") do |paths|
-    options.project_roots = paths.split ':' if paths
-  end
-  opts.on("--local=[VERSION]", Integer,
-          "local source treatment: mark as fake gem with given VERSION, default: 0") do |local|
-    options.local_version = local.to_s
-  end
-  opts.on("--no-local", "local source treatment: ignore, do not send data from local sources") do
-    options.no_local = true
-  end
   opts.on("--type-tracker", "enable type tracker") do
     options.enable_type_tracker = true
   end

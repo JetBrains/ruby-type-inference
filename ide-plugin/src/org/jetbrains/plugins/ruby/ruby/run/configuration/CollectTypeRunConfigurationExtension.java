@@ -41,8 +41,6 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
 
     private static final String ARG_SCANNER_REQUIRE_SCRIPT = "arg_scanner/starter";
 
-    private static final String ROOTS_ENV_KEY = "ARG_SCANNER_PROJECT_ROOTS";
-
     private static final String ENABLE_TYPE_TRACKER_KEY = "ARG_SCANNER_ENABLE_TYPE_TRACKER";
 
     private static final String ENABLE_STATE_TRACKER_KEY = "ARG_SCANNER_ENABLE_STATE_TRACKER";
@@ -114,12 +112,6 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
 
         final String newRubyOpt = rubyOpt + includeKey + " -r" + ARG_SCANNER_REQUIRE_SCRIPT;
 
-        final Module[] rubyModules = RModuleUtil.getInstance().getAllModulesWithRubySupport(configuration.getProject());
-        final String localCodeRoots = StringUtil.join(rubyModules, it -> {
-            final VirtualFile[] contentRoots = ModuleRootManager.getInstance(it).getContentRoots();
-            return StringUtil.join(contentRoots, VirtualFile::getPath, ":");
-        }, ":");
-        env.put(ROOTS_ENV_KEY, localCodeRoots);
         cmdLine.withEnvironment(RubyUtil.RUBYOPT, newRubyOpt);
     }
 
