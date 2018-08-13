@@ -21,16 +21,14 @@ class SignatureService {
         }
 
         Thread {
-            val server = SignatureServer
             while (true) {
                 try {
-                    server.runServer()
+                    SignatureServer.runServer()
                 } catch (e: Exception) {
                     LOGGER.error(e)
                 }
 
             }
-
         }.start()
     }
 

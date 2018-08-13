@@ -15,13 +15,13 @@ object GemInfoTable : IntIdTable() {
     val version = varchar("version", GemInfo.LENGTH_OF_GEMVERSION)
 }
 
-class GemInfoData(id: EntityID<Int>) : IntEntity(id), GemInfo {
-    companion object : IntEntityClass<GemInfoData>(GemInfoTable)
+class GemInfoRow(id: EntityID<Int>) : IntEntity(id), GemInfo {
+    companion object : IntEntityClass<GemInfoRow>(GemInfoTable)
 
     override var name: String by GemInfoTable.name
     override var version: String by GemInfoTable.version
 
-    fun copy() = GemInfo(this)
+    fun copy(): GemInfo = GemInfo(this)
 }
 
 object ClassInfoTable : IntIdTable() {
@@ -29,13 +29,14 @@ object ClassInfoTable : IntIdTable() {
     val fqn = varchar("fqn", ClassInfo.LENGTH_OF_FQN)
 }
 
-class ClassInfoData(id: EntityID<Int>) : IntEntity(id), ClassInfo {
-    companion object : IntEntityClass<ClassInfoData>(ClassInfoTable)
 
-    override var gemInfo: GemInfoData? by GemInfoData optionalReferencedOn ClassInfoTable.gemInfo
-    override var classFQN: String by ClassInfoTable.fqn
+class ClassInfoRow(id: EntityID<Int>) : IntEntity(id), ClassInfo {
+    companion object : IntEntityClass<ClassInfoRow>(ClassInfoTable)
 
-    fun copy() = ClassInfo(this)
+    override val gemInfo: GemInfoRow? by GemInfoRow optionalReferencedOn ClassInfoTable.gemInfo
+    override val classFQN: String by ClassInfoTable.fqn
+
+    fun copy(): ClassInfo = ClassInfo(this)
 }
 
 object MethodInfoTable : IntIdTable() {
@@ -46,25 +47,25 @@ object MethodInfoTable : IntIdTable() {
     val locationLineno = integer("location_lineno").default(0)
 }
 
-class MethodInfoData(id: EntityID<Int>) : IntEntity(id), MethodInfo {
-    companion object : IntEntityClass<MethodInfoData>(MethodInfoTable)
+class MethodInfoRow(id: EntityID<Int>) : IntEntity(id), MethodInfo {
+    companion object : IntEntityClass<MethodInfoRow>(MethodInfoTable)
 
-    override var classInfo: ClassInfoData by ClassInfoData referencedOn MethodInfoTable.classInfo
+    override var classInfo: ClassInfoRow by ClassInfoRow referencedOn MethodInfoTable.classInfo
     override var name: String by MethodInfoTable.name
     override var visibility: RVisibility by MethodInfoTable.visibility
     override var location: Location? by object {
-        operator fun getValue(methodInfoData: MethodInfoData, property: KProperty<*>): Location? {
-            val file = MethodInfoTable.locationFile.getValue(methodInfoData, property)
-            return file?.let { Location(it, MethodInfoTable.locationLineno.getValue(methodInfoData, property)) }
+        operator fun getValue(methodInfoRow: MethodInfoRow, property: KProperty<*>): Location? {
+            val file = MethodInfoTable.locationFile.getValue(methodInfoRow, property)
+            return file?.let { Location(it, MethodInfoTable.locationLineno.getValue(methodInfoRow, property)) }
         }
 
-        operator fun setValue(methodInfoData: MethodInfoData, property: KProperty<*>, location: Location?) {
-            MethodInfoTable.locationFile.setValue(methodInfoData, property, location?.path)
-            MethodInfoTable.locationLineno.setValue(methodInfoData, property, location?.lineno ?: 0)
+        operator fun setValue(methodInfoRow: MethodInfoRow, property: KProperty<*>, location: Location?) {
+            MethodInfoTable.locationFile.setValue(methodInfoRow, property, location?.path)
+            MethodInfoTable.locationLineno.setValue(methodInfoRow, property, location?.lineno ?: 0)
         }
     }
 
-    fun copy() = MethodInfo(this)
+    fun copy(): MethodInfo = MethodInfo(this)
 }
 
 object SignatureTable : IntIdTable() {
@@ -72,13 +73,13 @@ object SignatureTable : IntIdTable() {
     val contract = blob("contract")
 }
 
-class SignatureContractData(id: EntityID<Int>) : IntEntity(id), SignatureInfo {
-    companion object : IntEntityClass<SignatureContractData>(SignatureTable)
+class SignatureContractRow(id: EntityID<Int>) : IntEntity(id), SignatureInfo {
+    companion object : IntEntityClass<SignatureContractRow>(SignatureTable)
 
-    override var methodInfo: MethodInfoData by MethodInfoData referencedOn SignatureTable.methodInfo
+    override var methodInfo: MethodInfoRow by MethodInfoRow referencedOn SignatureTable.methodInfo
     override var contract: SignatureContract by BlobDeserializer()
 
     var contractRaw: Blob by SignatureTable.contract
 
-    fun copy() = SignatureInfo(this)
+    fun copy(): SignatureInfo = SignatureInfo(this)
 }

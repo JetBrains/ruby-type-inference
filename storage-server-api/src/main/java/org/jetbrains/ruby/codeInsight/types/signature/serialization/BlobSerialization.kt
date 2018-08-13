@@ -3,7 +3,7 @@ package org.jetbrains.ruby.codeInsight.types.signature.serialization
 import org.jetbrains.exposed.dao.EntityHook
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.ruby.codeInsight.types.signature.SignatureContract
-import org.jetbrains.ruby.codeInsight.types.storage.server.impl.SignatureContractData
+import org.jetbrains.ruby.codeInsight.types.storage.server.impl.SignatureContractRow
 import java.io.DataInputStream
 import java.io.DataOutputStream
 import java.sql.Blob
@@ -25,10 +25,10 @@ class BlobDeserializer {
     @Volatile
     private var cachedContract: SignatureContract? = null
 
-    operator fun getValue(signatureContractData: SignatureContractData, property: KProperty<*>): SignatureContract {
+    operator fun getValue(signatureContractRow: SignatureContractRow, property: KProperty<*>): SignatureContract {
         cachedContract?.let { return it }
 
-        val blob = signatureContractData.contractRaw
+        val blob = signatureContractRow.contractRaw
         try {
             val result = SignatureContract(DataInputStream(blob.binaryStream))
             cachedContract = result
@@ -38,12 +38,12 @@ class BlobDeserializer {
         }
     }
 
-    operator fun setValue(signatureContractData: SignatureContractData, property: KProperty<*>, signatureContract: SignatureContract) {
+    operator fun setValue(signatureContractRow: SignatureContractRow, property: KProperty<*>, signatureContract: SignatureContract) {
         val blob = TransactionManager.current().connection.createBlob()
         openBlobs.add(blob)
 
         BlobSerializer.writeToBlob(signatureContract, blob)
-        signatureContractData.contractRaw = blob
+        signatureContractRow.contractRaw = blob
         cachedContract = signatureContract
     }
 }

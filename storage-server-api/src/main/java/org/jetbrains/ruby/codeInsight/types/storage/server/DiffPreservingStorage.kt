@@ -32,10 +32,9 @@ class DiffPreservingStorage<T : RSignatureStorage.Packet>(
     }
 
     override fun getRegisteredGems(): Collection<GemInfo> {
-        return HashSet<GemInfo>().let {
-            it.addAll(receivedDataStorage.registeredGems)
-            it.addAll(localDataStorage.registeredGems)
-            it
+        return HashSet<GemInfo>().apply {
+            addAll(receivedDataStorage.registeredGems)
+            addAll(localDataStorage.registeredGems)
         }
     }
 
@@ -46,26 +45,23 @@ class DiffPreservingStorage<T : RSignatureStorage.Packet>(
 
     // TODO cache location
     override fun getRegisteredClasses(gem: GemInfo): MutableCollection<ClassInfo> {
-        return HashSet<ClassInfo>().let {
-            it.addAll(receivedDataStorage.getRegisteredClasses(gem))
-            it.addAll(localDataStorage.getRegisteredClasses(gem))
-            it
+        return HashSet<ClassInfo>().apply {
+            addAll(receivedDataStorage.getRegisteredClasses(gem))
+            addAll(localDataStorage.getRegisteredClasses(gem))
         }
     }
 
     override fun getAllClassesWithFQN(fqn: String): MutableCollection<ClassInfo> {
-        return HashSet<ClassInfo>().let {
-            it.addAll(receivedDataStorage.getAllClassesWithFQN(fqn))
-            it.addAll(localDataStorage.getAllClassesWithFQN(fqn))
-            it
+        return HashSet<ClassInfo>().apply {
+            addAll(receivedDataStorage.getAllClassesWithFQN(fqn))
+            addAll(localDataStorage.getAllClassesWithFQN(fqn))
         }
     }
 
     override fun getRegisteredMethods(containerClass: ClassInfo): MutableCollection<MethodInfo> {
-        return HashSet<MethodInfo>().let {
-            it.addAll(receivedDataStorage.getRegisteredMethods(containerClass))
-            it.addAll(localDataStorage.getRegisteredMethods(containerClass))
-            it
+        return HashSet<MethodInfo>().apply {
+            addAll(receivedDataStorage.getRegisteredMethods(containerClass))
+            addAll(localDataStorage.getRegisteredMethods(containerClass))
         }
     }
 
