@@ -16,6 +16,7 @@ import org.jetbrains.ruby.codeInsight.types.signature.*;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.serialization.SignatureContractSerializationKt;
 import org.jetbrains.ruby.codeInsight.types.signature.serialization.StringDataOutput;
+import org.jetbrains.ruby.codeInsight.types.storage.server.DatabaseProvider;
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.ClassInfoTable;
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.GemInfoTable;
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.MethodInfoTable;
@@ -45,7 +46,7 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        ThreadLocalTransactionManagerKt.transaction((Function1<Transaction, Void>) transaction -> {
+        ThreadLocalTransactionManagerKt.transaction(null, (Function1<Transaction, Void>) transaction -> {
             SchemaUtils.INSTANCE.create(GemInfoTable.INSTANCE, ClassInfoTable.INSTANCE, MethodInfoTable.INSTANCE, SignatureTable.INSTANCE);
             return null;
         });
@@ -54,7 +55,7 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
     @Override
     protected void tearDown() throws Exception {
         try {
-            ThreadLocalTransactionManagerKt.transaction((Function1<Transaction, Void>) transaction -> {
+            ThreadLocalTransactionManagerKt.transaction(null, (Function1<Transaction, Void>) transaction -> {
                 SchemaUtils.INSTANCE.drop(GemInfoTable.INSTANCE, ClassInfoTable.INSTANCE, MethodInfoTable.INSTANCE, SignatureTable.INSTANCE);
                 return null;
             });

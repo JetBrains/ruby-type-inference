@@ -2,7 +2,6 @@ package org.jetbrains.ruby.codeInsight.types.storage.server.impl
 
 import org.jetbrains.exposed.dao.EntityID
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.ruby.codeInsight.types.signature.*
 import org.jetbrains.ruby.codeInsight.types.storage.server.RSignatureProvider
@@ -21,7 +20,7 @@ class RSignatureProviderImpl : RSignatureProvider {
                     .orderBy(GemInfoTable.version)
                     .limit(1)
                     .firstOrNull()
-                    ?.let { GemInfoRow.wrapRow(it, TransactionManager.current()) }
+                    ?.let { GemInfoRow.wrapRow(it) }
 
             val lowerBound = GemInfoTable.select {
                 GemInfoTable.name.eq(usedGem.name) and GemInfoTable.version.lessEq(usedGem.version)
@@ -29,7 +28,7 @@ class RSignatureProviderImpl : RSignatureProvider {
                     .orderBy(GemInfoTable.version, isAsc = false)
                     .limit(1)
                     .firstOrNull()
-                    ?.let { GemInfoRow.wrapRow(it, TransactionManager.current()) }
+                    ?.let { GemInfoRow.wrapRow(it) }
             return@transaction Pair(upperBound?.copy(), lowerBound?.copy())
         }
 
