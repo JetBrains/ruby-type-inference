@@ -35,7 +35,7 @@ object SignatureServer {
     private val queue = ArrayBlockingQueue<String>(10024)
     private val isReady = AtomicBoolean(true)
     val readTime = AtomicLong(0)
-    val jsonTome = AtomicLong(0)
+    val jsonTime = AtomicLong(0)
     val addTime = AtomicLong(0)
 
     @JvmStatic
@@ -46,16 +46,13 @@ object SignatureServer {
         transaction { SchemaUtils.create(GemInfoTable, ClassInfoTable, MethodInfoTable, SignatureTable) }
 
         Thread {
-            val server = SignatureServer
             while (true) {
                 try {
-                    server.runServer()
+                    SignatureServer.runServer()
                 } catch (e: Exception) {
                     System.err.println(e)
                 }
-
             }
-
         }.start()
     }
 
@@ -105,8 +102,9 @@ object SignatureServer {
     }
 
     private fun parseJson(jsonString: String) {
-        val currRTuple = ben(jsonTome) { RTupleBuilder.fromJson(jsonString) }
+        val currRTuple = ben(jsonTime) { RTupleBuilder.fromJson(jsonString) }
 
+        // filter, for example, such things #<Class:DidYouMean::Jaro>
         if (currRTuple?.methodInfo?.classInfo?.classFQN?.startsWith("#<") == true) {
             return
         }
@@ -126,14 +124,15 @@ object SignatureServer {
                 LOGGER.warning("validation failed, cannot store " + methodInfo.toString())
                 continue
             }
-            newSignaturesContainer.getSignature(methodInfo)?.let { newSignature ->
+            newSignaturesContainer.getSignature(methodInfo)?.let { newSignature: RSignatureContract ->
                 transaction {
                     val storedSignature = mainContainer.getSignature(methodInfo)
                     mainContainer.putSignature(SignatureInfo(methodInfo,
-                            if (storedSignature == null)
+                            if (storedSignature == null) {
                                 newSignature
-                            else
+                            } else {
                                 RSignatureContract.mergeMutably(storedSignature.contract, newSignature)
+                            }
                     ))
                 }
             }
@@ -194,7 +193,7 @@ object SignatureServer {
 
                 LOGGER.info("Stats: ")
                 LOGGER.info("add=" + addTime.toLong() * 1e-6)
-                LOGGER.info("json=" + jsonTome.toLong() * 1e-6)
+                LOGGER.info("json=" + jsonTime.toLong() * 1e-6)
                 LOGGER.info("read=" + readTime.toLong() * 1e-6)
             }
         }
@@ -203,7 +202,7 @@ object SignatureServer {
     private class SocketDispatcher : Thread() {
         override fun run() {
             var handlersCounter = 0
-            ServerSocket(7777).use { listener ->
+            ServerSocket(7777).use { listener: ServerSocket ->
                 while (true) {
                     SignatureHandler(listener.accept(), handlersCounter++).start()
                 }

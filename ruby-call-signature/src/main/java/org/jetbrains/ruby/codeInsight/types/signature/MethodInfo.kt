@@ -9,7 +9,7 @@ interface MethodInfo {
     data class Impl(override val classInfo: ClassInfo,
                     override val name: String,
                     override val visibility: RVisibility,
-                    override val location: Location?) : MethodInfo
+                    override val location: Location? = null) : MethodInfo
 
     fun validate(): Boolean {
         if (name.length > LENGTH_OF_NAME) {
@@ -28,9 +28,9 @@ interface MethodInfo {
     }
 }
 
-fun MethodInfo(classInfo: ClassInfo, name: String, visibility: RVisibility) = MethodInfo.Impl(classInfo, name, visibility, null)
-
-fun MethodInfo(classInfo: ClassInfo, name: String, visibility: RVisibility, location: Location) = MethodInfo.Impl(classInfo, name, visibility, location)
+@JvmOverloads
+fun MethodInfo(classInfo: ClassInfo, name: String, visibility: RVisibility, location: Location? = null) =
+        MethodInfo.Impl(classInfo, name, visibility, location)
 
 fun MethodInfo(copy: MethodInfo) = with(copy) { MethodInfo.Impl(ClassInfo(classInfo), name, visibility, location) }
 

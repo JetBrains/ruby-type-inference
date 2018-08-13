@@ -14,8 +14,8 @@ class SignatureContractMergeTest : SignatureContractTestBase() {
         val testTuple1 = generateRTuple(testArgs1, "String4")
         val testTuple2 = generateRTuple(testArgs2, "String4")
 
-        assertTrue(SignatureContract.Companion.accept(contract, testTuple1))
-        assertFalse(SignatureContract.Companion.accept(contract, testTuple2))
+        assertTrue(SignatureContract.accept(contract, testTuple1))
+        assertFalse(SignatureContract.accept(contract, testTuple2))
 
         checkSerialization(contract, MergeTestData.testSimpleMerge)
     }
@@ -29,8 +29,8 @@ class SignatureContractMergeTest : SignatureContractTestBase() {
 
         val contract = generateComplicatedContract()
 
-        assertFalse(SignatureContract.Companion.accept(contract, testTuple1))
-        assertTrue(SignatureContract.Companion.accept(contract, testTuple2))
+        assertFalse(SignatureContract.accept(contract, testTuple1))
+        assertTrue(SignatureContract.accept(contract, testTuple2))
 
         checkSerialization(contract, MergeTestData.testComplicatedMerge)
     }
@@ -47,7 +47,7 @@ class SignatureContractMergeTest : SignatureContractTestBase() {
         val testTuple1 = generateRTuple(testArgs1, "String4")
 
         val contract = generateAddContract()
-        assertTrue(SignatureContract.Companion.accept(contract, testTuple1))
+        assertTrue(SignatureContract.accept(contract, testTuple1))
 
         checkSerialization(contract, MergeTestData.testAddResult)
     }

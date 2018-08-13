@@ -1,16 +1,9 @@
 package org.jetbrains.ruby.codeInsight.types.signature
 
-import java.util.*
-
 class RSignatureContractContainer {
 
-    private val myContracts: MutableMap<MethodInfo, RSignatureContract>
-    private val myNumberOfCalls: MutableMap<MethodInfo, Int>
-
-    init {
-        myContracts = HashMap()
-        myNumberOfCalls = HashMap()
-    }
+    private val myContracts: MutableMap<MethodInfo, RSignatureContract> = HashMap()
+    private val myNumberOfCalls: MutableMap<MethodInfo, Int> = HashMap()
 
     fun acceptTuple(tuple: RTuple): Boolean {
         val currInfo = tuple.methodInfo

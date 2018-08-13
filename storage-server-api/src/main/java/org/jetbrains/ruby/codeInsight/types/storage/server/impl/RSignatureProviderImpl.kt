@@ -4,18 +4,13 @@ import org.jetbrains.exposed.dao.EntityID
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.ruby.codeInsight.types.signature.ClassInfo
-import org.jetbrains.ruby.codeInsight.types.signature.GemInfo
-import org.jetbrains.ruby.codeInsight.types.signature.MethodInfo
-import org.jetbrains.ruby.codeInsight.types.signature.SignatureInfo
+import org.jetbrains.ruby.codeInsight.types.signature.*
 import org.jetbrains.ruby.codeInsight.types.storage.server.RSignatureProvider
 import org.jetbrains.ruby.codeInsight.types.storage.server.StorageException
 
 class RSignatureProviderImpl : RSignatureProvider {
     override fun getRegisteredGems(): Collection<GemInfo> {
-        return transaction {
-            GemInfoData.all().toList().map { it.copy() }
-        }
+        return transaction { GemInfoRow.all() }.map { it.copy() }
     }
 
     override fun getClosestRegisteredGem(usedGem: GemInfo): GemInfo? {
@@ -26,7 +21,7 @@ class RSignatureProviderImpl : RSignatureProvider {
                     .orderBy(GemInfoTable.version)
                     .limit(1)
                     .firstOrNull()
-                    ?.let { GemInfoData.wrapRow(it, TransactionManager.current()) }
+                    ?.let { GemInfoRow.wrapRow(it, TransactionManager.current()) }
 
             val lowerBound = GemInfoTable.select {
                 GemInfoTable.name.eq(usedGem.name) and GemInfoTable.version.lessEq(usedGem.version)
@@ -34,8 +29,8 @@ class RSignatureProviderImpl : RSignatureProvider {
                     .orderBy(GemInfoTable.version, isAsc = false)
                     .limit(1)
                     .firstOrNull()
-                    ?.let { GemInfoData.wrapRow(it, TransactionManager.current()) }
-            Pair(upperBound?.copy(), lowerBound?.copy())
+                    ?.let { GemInfoRow.wrapRow(it, TransactionManager.current()) }
+            return@transaction Pair(upperBound?.copy(), lowerBound?.copy())
         }
 
         if (lowerBound == null || upperBound == null) {
@@ -48,7 +43,7 @@ class RSignatureProviderImpl : RSignatureProvider {
     override fun getRegisteredClasses(gem: GemInfo): Collection<ClassInfo> {
         return transaction {
             val gemId: EntityID<Int>
-            if (gem is GemInfoData) {
+            if (gem is GemInfoRow) {
                 gemId = gem.id
             } else {
                 gemId = GemInfoTable.slice(GemInfoTable.id)
@@ -60,20 +55,20 @@ class RSignatureProviderImpl : RSignatureProvider {
                         ?: return@transaction emptyList()
             }
 
-            ClassInfoData.find { ClassInfoTable.gemInfo.eq(gemId) }.toList().map { it.copy() }
+            return@transaction ClassInfoRow.find { ClassInfoTable.gemInfo eq gemId }.map { it.copy() }
         }
     }
 
     override fun getAllClassesWithFQN(fqn: String): Collection<ClassInfo> {
         return transaction {
-            ClassInfoData.find { ClassInfoTable.fqn eq fqn }.toList().map { it.copy() }
+            ClassInfoRow.find { ClassInfoTable.fqn eq fqn }.map { it.copy() }
         }
     }
 
     override fun getRegisteredMethods(containerClass: ClassInfo): Collection<MethodInfo> {
         return transaction {
             val classId: EntityID<Int>
-            if (containerClass is ClassInfoData) {
+            if (containerClass is ClassInfoRow) {
                 classId = containerClass.id
             } else {
                 val selectGemClause = getGemWhereClause(containerClass)
@@ -86,7 +81,7 @@ class RSignatureProviderImpl : RSignatureProvider {
                         ?: return@transaction emptyList()
             }
 
-            MethodInfoData.find { MethodInfoTable.classInfo.eq(classId) }.toList().map { it.copy() }
+            return@transaction MethodInfoRow.find { MethodInfoTable.classInfo eq classId }.map { it.copy() }
         }
     }
 
@@ -95,7 +90,7 @@ class RSignatureProviderImpl : RSignatureProvider {
             val methodId = findMethodId(method)
                     ?: return@transaction null
 
-            SignatureContractData.find { SignatureTable.methodInfo.eq(methodId) }.firstOrNull()?.copy()
+            return@transaction SignatureContractRow.find { SignatureTable.methodInfo eq methodId }.firstOrNull()?.copy()
         }
     }
 
@@ -112,7 +107,7 @@ class RSignatureProviderImpl : RSignatureProvider {
         return transaction {
             val lazyGemInfoId = lazy {
                 signatureInfo.methodInfo.classInfo.gemInfo?.let { givenGemInfo ->
-                    (givenGemInfo as? GemInfoData)?.id
+                    (givenGemInfo as? GemInfoRow)?.id
                             ?: with(GemInfoTable) {
                         select {
                             (name eq givenGemInfo.name) and (version eq givenGemInfo.version)
@@ -128,7 +123,7 @@ class RSignatureProviderImpl : RSignatureProvider {
 
             val lazyClassInfoId = lazy {
                 signatureInfo.methodInfo.classInfo.let { givenClassInfo ->
-                    (givenClassInfo as? ClassInfoData)?.id
+                    (givenClassInfo as? ClassInfoRow)?.id
                             ?: with(ClassInfoTable) {
                         select {
                             (fqn eq givenClassInfo.classFQN) and (gemInfo eq lazyGemInfoId.value)
@@ -144,9 +139,9 @@ class RSignatureProviderImpl : RSignatureProvider {
             }
 
             val methodInfoData = signatureInfo.methodInfo.let { givenMethodInfo ->
-                givenMethodInfo as? MethodInfoData
+                givenMethodInfo as? MethodInfoRow
                         ?: with(MethodInfoTable) {
-                    MethodInfoData.find {
+                    MethodInfoRow.find {
                         (name eq givenMethodInfo.name) and
                                 (visibility eq givenMethodInfo.visibility) and
                                 (locationFile eq givenMethodInfo.location?.path) and
@@ -161,24 +156,24 @@ class RSignatureProviderImpl : RSignatureProvider {
                     it[locationLineno] = givenMethodInfo.location?.lineno ?: 0
                     it[classInfo] = lazyClassInfoId.value
                 }?.let {
-                    MethodInfoData[it]
+                    MethodInfoRow[it]
                 }
                         ?: throw StorageException("Could not retrieve not insert method info: $givenMethodInfo")
             }
 
-            val existingContractData = SignatureContractData.find { SignatureTable.methodInfo eq methodInfoData.id }
+            val existingContractData = SignatureContractRow.find { SignatureTable.methodInfo eq methodInfoData.id }
                     .firstOrNull()
 
             if (existingContractData != null) {
                 existingContractData.contract = signatureInfo.contract
             } else {
-                SignatureContractData.new { this.methodInfo = methodInfoData; contract = signatureInfo.contract }
+                SignatureContractRow.new { this.methodInfo = methodInfoData; contract = signatureInfo.contract }
             }
         }
     }
 
     private fun findMethodId(method: MethodInfo): EntityID<Int>? {
-        if (method is MethodInfoData) {
+        if (method is MethodInfoRow) {
             return method.id
         }
 
@@ -221,6 +216,5 @@ private fun String.rawChar(index: Int): Int = if (index < length) this[index].to
 
 private fun longestCommonPrefixLength(str1: String, str2: String): Int {
     val minLength = Math.min(str1.length, str2.length)
-    return (0..minLength - 1).firstOrNull { str1[it] != str2[it] }
-            ?: minLength
+    return (0 until minLength).firstOrNull { str1[it] != str2[it] } ?: minLength
 }

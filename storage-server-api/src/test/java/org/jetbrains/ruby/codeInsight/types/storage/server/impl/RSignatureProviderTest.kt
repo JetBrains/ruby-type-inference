@@ -14,7 +14,7 @@ import org.jetbrains.ruby.codeInsight.types.storage.server.DatabaseProvider
 import org.junit.Test
 
 class RSignatureProviderTest : TestCase() {
-    var transaction: Transaction? = null
+    private var transaction: Transaction? = null
 
     override fun setUp() {
         DatabaseProvider.connect(true)
@@ -36,17 +36,17 @@ class RSignatureProviderTest : TestCase() {
     @Test
     fun testPutGet() {
         GemInfoTable.insert { it[name] = "rails"; it[version] = "5.0.0.beta1" }
-        val insertedGem = GemInfoData.all().first()
+        val insertedGem = GemInfoRow.all().first()
         assertEquals("rails", insertedGem.name)
         assertEquals("5.0.0.beta1", insertedGem.version)
 
         ClassInfoTable.insert { it[gemInfo] = insertedGem.id; it[fqn] = "ActiveRecord::Base" }
-        val insertedClass = ClassInfoData.all().first()
+        val insertedClass = ClassInfoRow.all().first()
         assertEquals("ActiveRecord::Base", insertedClass.classFQN)
         assertEquals("rails", insertedClass.gemInfo?.name)
 
         MethodInfoTable.insert { it[classInfo] = insertedClass.id; it[name] = "[]="; it[visibility] = RVisibility.PUBLIC }
-        val insertedMethod = MethodInfoData.all().first()
+        val insertedMethod = MethodInfoRow.all().first()
         assertEquals("[]=", insertedMethod.name)
         assertEquals(RVisibility.PUBLIC, insertedMethod.visibility)
         assertEquals("ActiveRecord::Base", insertedMethod.classInfo.classFQN)
@@ -204,7 +204,7 @@ class RSignatureProviderTest : TestCase() {
     }
 
     object SignatureTestData {
-        val simpleContract = """
+        const val simpleContract = """
 1 arg 0
 4
 3
@@ -218,7 +218,7 @@ class RSignatureProviderTest : TestCase() {
 0
             """
 
-        val trivialContract = """
+        const val trivialContract = """
 0
 2
 1
