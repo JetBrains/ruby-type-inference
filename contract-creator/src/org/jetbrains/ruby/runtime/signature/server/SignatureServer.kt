@@ -32,6 +32,7 @@ object SignatureServer {
 
     private val queue = ArrayBlockingQueue<String>(10024)
     private val isReady = AtomicBoolean(true)
+    private const val FLUSH_SIGNAL = "flush"
     val readTime = AtomicLong(0)
     val jsonTime = AtomicLong(0)
     val addTime = AtomicLong(0)
@@ -86,7 +87,7 @@ object SignatureServer {
 
     private fun pollJson() {
         val jsonString = queue.poll(5, TimeUnit.SECONDS)
-        if (jsonString == null) {
+        if (jsonString == null || jsonString == FLUSH_SIGNAL) {
             flushNewTuplesToMainStorage()
             if (queue.isEmpty()) isReady.set(true)
             return
@@ -168,6 +169,8 @@ object SignatureServer {
                 } catch (e: IOException) {
                     LOGGER.severe("Can't close a socket")
                 }
+                // Notify main thread that it was last string in queue
+                queue.put(FLUSH_SIGNAL)
                 onExit(handlerNumber)
             }
         }
