@@ -52,7 +52,8 @@ module ArgScanner
     include Singleton
 
     def initialize
-      @catch_only_every_n_call = ENV['ARG_SCANNER_CATCH_ONLY_EVERY_N_CALL'].to_i
+      @catch_only_every_n_call = ENV['ARG_SCANNER_CATCH_ONLY_EVERY_N_CALL']
+      @catch_only_every_n_call = @catch_only_every_n_call ? @catch_only_every_n_call.to_i : 1
       @method_ids_cache = Set.new
       @prefix = ENV["ARG_SCANNER_PREFIX"]
       @enable_debug = ENV["ARG_SCANNER_DEBUG"]
