@@ -32,7 +32,7 @@ class  ImportExportTest : LightPlatformCodeInsightFixtureTestCase() {
 
         DatabaseProvider.connect(true)
         transaction = TransactionManager.manager.newTransaction()
-        SchemaUtils.create(GemInfoTable, ClassInfoTable, MethodInfoTable, SignatureTable)
+        DatabaseProvider.createAllDatabases()
 
         val gem1 = GemInfoTable.insertAndGetId { it[name] = "test_gem"; it[version] = "1.2.3" }
         val gem2 = GemInfoTable.insertAndGetId { it[name] = "test_gem"; it[version] = "1.2.4" }
@@ -47,7 +47,7 @@ class  ImportExportTest : LightPlatformCodeInsightFixtureTestCase() {
 
     override fun tearDown() {
         try {
-            SchemaUtils.drop(GemInfoTable, ClassInfoTable, MethodInfoTable, SignatureTable)
+            DatabaseProvider.dropAllDatabases()
             tempFile?.delete()
         } finally {
             transaction?.commit()

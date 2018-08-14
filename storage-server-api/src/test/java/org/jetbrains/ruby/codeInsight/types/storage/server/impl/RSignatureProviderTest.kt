@@ -1,7 +1,6 @@
 package org.jetbrains.ruby.codeInsight.types.storage.server.impl
 
 import junit.framework.TestCase
-import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.Transaction
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.insertAndGetId
@@ -20,12 +19,12 @@ class RSignatureProviderTest : TestCase() {
         DatabaseProvider.connect(true)
         super.setUp()
         transaction = TransactionManager.manager.newTransaction()
-        SchemaUtils.create(GemInfoTable, ClassInfoTable, MethodInfoTable, SignatureTable)
+        DatabaseProvider.createAllDatabases()
     }
 
     override fun tearDown() {
         try {
-            SchemaUtils.drop(GemInfoTable, ClassInfoTable, MethodInfoTable, SignatureTable)
+            DatabaseProvider.dropAllDatabases()
         } finally {
             transaction?.commit()
         }
