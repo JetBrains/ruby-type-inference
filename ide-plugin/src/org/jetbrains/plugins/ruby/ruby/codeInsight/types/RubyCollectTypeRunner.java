@@ -32,13 +32,12 @@ public class RubyCollectTypeRunner extends RubyProgramRunner {
             RubyTypeContractsSettings rubyTypeContractsSettings =
                     ServiceManager.getService(env.getProject(), RubyTypeContractsSettings.class);
             final AbstractRubyRunConfiguration newConfig = ((RubyAbstractCommandLineState) state).getConfig().clone();
-            final boolean isReturnTypeTrackerEnabled = !rubyTypeContractsSettings.getTypeTrackerEnabled();
-            String pathToState = isReturnTypeTrackerEnabled ? tryGenerateTmpDirPath() : null;
+            String pathToState = tryGenerateTmpDirPath();
 
             CollectExecSettings.putTo(newConfig,
                     CollectExecSettings.createSettings(true,
-                            !isReturnTypeTrackerEnabled,
-                            isReturnTypeTrackerEnabled,
+                            rubyTypeContractsSettings.getTypeTrackerEnabled(),
+                            rubyTypeContractsSettings.getReturnTypeTrackerEnabled(),
                             false,
                             pathToState
                             ));
@@ -51,6 +50,7 @@ public class RubyCollectTypeRunner extends RubyProgramRunner {
         return null;
     }
 
+    @Nullable
     private String tryGenerateTmpDirPath() {
         try {
             File tmpDir = FileUtil.createTempDirectory("type-tracker", "");

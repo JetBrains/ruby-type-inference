@@ -1,11 +1,11 @@
 package org.jetbrains.ruby.codeInsight.types.storage.server.impl
 
-import org.jetbrains.exposed.dao.EntityID
-import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.deleteWhere
+import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.ruby.codeInsight.types.signature.*
 import org.jetbrains.ruby.codeInsight.types.storage.server.RSignatureProvider
-import org.jetbrains.ruby.codeInsight.types.storage.server.StorageException
 
 class RSignatureProviderImpl : RSignatureProvider {
     override fun getRegisteredGems(): Collection<GemInfo> {
@@ -41,18 +41,7 @@ class RSignatureProviderImpl : RSignatureProvider {
 
     override fun getRegisteredClasses(gem: GemInfo): Collection<ClassInfo> {
         return transaction {
-            val gemId: EntityID<Int>
-            if (gem is GemInfoRow) {
-                gemId = gem.id
-            } else {
-                gemId = GemInfoTable.slice(GemInfoTable.id)
-                        .select { GemInfoTable.name.eq(gem.name) and GemInfoTable.version.eq(gem.version) }
-                        .firstOrNull()
-                        ?.let {
-                            it[GemInfoTable.id]
-                        }
-                        ?: return@transaction emptyList()
-            }
+            val gemId = GemInfoTable.findRowId(gem) ?: return@transaction listOf()
 
             return@transaction ClassInfoRow.find { ClassInfoTable.gemInfo eq gemId }.map { it.copy() }
         }
@@ -66,19 +55,7 @@ class RSignatureProviderImpl : RSignatureProvider {
 
     override fun getRegisteredMethods(containerClass: ClassInfo): Collection<MethodInfo> {
         return transaction {
-            val classId: EntityID<Int>
-            if (containerClass is ClassInfoRow) {
-                classId = containerClass.id
-            } else {
-                val selectGemClause = getGemWhereClause(containerClass)
-                classId = (ClassInfoTable leftJoin GemInfoTable).slice(ClassInfoTable.id)
-                        .select { ClassInfoTable.fqn.eq(containerClass.classFQN) and selectGemClause() }
-                        .firstOrNull()
-                        ?.let {
-                            it[ClassInfoTable.id]
-                        }
-                        ?: return@transaction emptyList()
-            }
+            val classId = ClassInfoTable.findRowId(containerClass) ?: return@transaction listOf()
 
             return@transaction MethodInfoRow.find { MethodInfoTable.classInfo eq classId }.map { it.copy() }
         }
@@ -86,8 +63,7 @@ class RSignatureProviderImpl : RSignatureProvider {
 
     override fun getSignature(method: MethodInfo): SignatureInfo? {
         return transaction {
-            val methodId = findMethodId(method)
-                    ?: return@transaction null
+            val methodId = MethodInfoTable.findRowId(method) ?: return@transaction null
 
             return@transaction SignatureContractRow.find { SignatureTable.methodInfo eq methodId }.firstOrNull()?.copy()
         }
@@ -95,111 +71,23 @@ class RSignatureProviderImpl : RSignatureProvider {
 
     override fun deleteSignature(method: MethodInfo) {
         return transaction {
-            val methodId = findMethodId(method)
-                    ?: return@transaction
+            val methodId = MethodInfoTable.findRowId(method) ?: return@transaction
 
             SignatureTable.deleteWhere { SignatureTable.methodInfo eq methodId }
         }
     }
 
     override fun putSignature(signatureInfo: SignatureInfo) {
+        SignatureTable.insertInfoIfNotContains(signatureInfo)
+    }
+
+    override fun getRegisteredCallInfos(methodInfo: MethodInfo): List<CallInfo> {
         return transaction {
-            val lazyGemInfoId = lazy {
-                signatureInfo.methodInfo.classInfo.gemInfo?.let { givenGemInfo ->
-                    (givenGemInfo as? GemInfoRow)?.id
-                            ?: with(GemInfoTable) {
-                        select {
-                            (name eq givenGemInfo.name) and (version eq givenGemInfo.version)
-                        }.firstOrNull()?.get(id)
-                    }
-                            ?: GemInfoTable.insertAndGetId {
-                        it[name] = givenGemInfo.name
-                        it[version] = givenGemInfo.version
-                    }
-                            ?: throw StorageException("Could not retrieve nor insert gem info: $givenGemInfo")
-                }
-            }
+            val methodId = MethodInfoTable.findRowId(methodInfo) ?: return@transaction listOf()
 
-            val lazyClassInfoId = lazy {
-                signatureInfo.methodInfo.classInfo.let { givenClassInfo ->
-                    (givenClassInfo as? ClassInfoRow)?.id
-                            ?: with(ClassInfoTable) {
-                        select {
-                            (fqn eq givenClassInfo.classFQN) and (gemInfo eq lazyGemInfoId.value)
-                        }
-                                .firstOrNull()?.get(id)
-                    }
-                            ?: ClassInfoTable.insertAndGetId {
-                        it[fqn] = givenClassInfo.classFQN
-                        it[gemInfo] = lazyGemInfoId.value
-                    }
-                            ?: throw StorageException("Could not retrieve nor insert class info: $givenClassInfo")
-                }
-            }
-
-            val methodInfoData = signatureInfo.methodInfo.let { givenMethodInfo ->
-                givenMethodInfo as? MethodInfoRow
-                        ?: with(MethodInfoTable) {
-                    MethodInfoRow.find {
-                        (name eq givenMethodInfo.name) and
-                                (visibility eq givenMethodInfo.visibility) and
-                                (locationFile eq givenMethodInfo.location?.path) and
-                                (locationLineno eq (givenMethodInfo.location?.lineno ?: 0)) and
-                                (classInfo eq lazyClassInfoId.value)
-                    }.firstOrNull()
-                }
-                        ?: MethodInfoTable.insertAndGetId {
-                    it[name] = givenMethodInfo.name
-                    it[visibility] = givenMethodInfo.visibility
-                    it[locationFile] = givenMethodInfo.location?.path
-                    it[locationLineno] = givenMethodInfo.location?.lineno ?: 0
-                    it[classInfo] = lazyClassInfoId.value
-                }?.let {
-                    MethodInfoRow[it]
-                }
-                        ?: throw StorageException("Could not retrieve not insert method info: $givenMethodInfo")
-            }
-
-            val existingContractData = SignatureContractRow.find { SignatureTable.methodInfo eq methodInfoData.id }
-                    .firstOrNull()
-
-            if (existingContractData != null) {
-                existingContractData.contract = signatureInfo.contract
-            } else {
-                SignatureContractRow.new { this.methodInfo = methodInfoData; contract = signatureInfo.contract }
-            }
+            return@transaction CallInfoRow.find { CallInfoTable.methodInfoId eq methodId }.map { it.copy() }
         }
     }
-
-    private fun findMethodId(method: MethodInfo): EntityID<Int>? {
-        if (method is MethodInfoRow) {
-            return method.id
-        }
-
-        val selectGemClause = getGemWhereClause(method.classInfo)
-        return (MethodInfoTable innerJoin ClassInfoTable leftJoin GemInfoTable).slice(MethodInfoTable.id)
-                .select {
-                    MethodInfoTable.name.eq(method.name) and
-                            ClassInfoTable.fqn.eq(method.classInfo.classFQN) and
-                            selectGemClause()
-                }.firstOrNull()
-                ?.let {
-                    it[MethodInfoTable.id]
-                }
-    }
-
-    private fun getGemWhereClause(containerClass: ClassInfo): SqlExpressionBuilder.() -> Op<Boolean> {
-        val gemInfo = containerClass.gemInfo
-        if (gemInfo == null) {
-            return { ClassInfoTable.gemInfo.isNull() }
-        } else {
-            return {
-                GemInfoTable.name.eq(gemInfo.name) and
-                        GemInfoTable.version.eq(gemInfo.version)
-            }
-        }
-    }
-
 }
 
 fun firstStringCloser(gemVersion: String,
