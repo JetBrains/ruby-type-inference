@@ -1,6 +1,9 @@
 package org.jetbrains.ruby.codeInsight.types.storage.server
 
 import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.SchemaUtils
+import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.ruby.codeInsight.types.storage.server.impl.*
 
 object DatabaseProvider {
     private val IN_MEMORY_URL = "jdbc:h2:mem:test"
@@ -23,6 +26,18 @@ object DatabaseProvider {
             Database.connect(MYSQL_URL, driver = MYSQL_DRIVER,
                     user = MYSQL_USER,
                     password = MYSQL_PASSWORD)
+        }
+    }
+
+    fun createAllDatabases() {
+        transaction {
+            SchemaUtils.create(GemInfoTable, ClassInfoTable, MethodInfoTable, SignatureTable, CallInfoTable)
+        }
+    }
+
+    fun dropAllDatabases() {
+        transaction {
+            SchemaUtils.drop(GemInfoTable, ClassInfoTable, MethodInfoTable, SignatureTable, CallInfoTable)
         }
     }
 }

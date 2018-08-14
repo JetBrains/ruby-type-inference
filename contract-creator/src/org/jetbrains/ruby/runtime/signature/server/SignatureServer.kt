@@ -1,17 +1,12 @@
 package org.jetbrains.ruby.runtime.signature.server
 
 import com.google.gson.JsonParseException
-import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.ruby.codeInsight.types.signature.*
 import org.jetbrains.ruby.codeInsight.types.storage.server.DatabaseProvider
 import org.jetbrains.ruby.codeInsight.types.storage.server.DiffPreservingStorage
 import org.jetbrains.ruby.codeInsight.types.storage.server.RSignatureStorage
 import org.jetbrains.ruby.codeInsight.types.storage.server.SignatureStorageImpl
-import org.jetbrains.ruby.codeInsight.types.storage.server.impl.ClassInfoTable
-import org.jetbrains.ruby.codeInsight.types.storage.server.impl.GemInfoTable
-import org.jetbrains.ruby.codeInsight.types.storage.server.impl.MethodInfoTable
-import org.jetbrains.ruby.codeInsight.types.storage.server.impl.SignatureTable
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.CallInfoTable
 import org.jetbrains.ruby.runtime.signature.server.serialisation.RTupleBuilder
 import java.io.BufferedReader
@@ -46,7 +41,7 @@ object SignatureServer {
 
         DatabaseProvider.connect()
 
-        transaction { SchemaUtils.create(GemInfoTable, ClassInfoTable, MethodInfoTable, SignatureTable) }
+        transaction { DatabaseProvider.createAllDatabases() }
 
         Thread {
             while (true) {
