@@ -1,9 +1,6 @@
 package org.jetbrains.ruby.codeInsight.types.storage.server
 
-import org.jetbrains.ruby.codeInsight.types.signature.ClassInfo
-import org.jetbrains.ruby.codeInsight.types.signature.GemInfo
-import org.jetbrains.ruby.codeInsight.types.signature.MethodInfo
-import org.jetbrains.ruby.codeInsight.types.signature.SignatureInfo
+import org.jetbrains.ruby.codeInsight.types.signature.*
 
 class DiffPreservingStorage<T : RSignatureStorage.Packet>(
         private val receivedDataStorage: RSignatureStorage<T>,
@@ -68,6 +65,13 @@ class DiffPreservingStorage<T : RSignatureStorage.Packet>(
     override fun getSignature(method: MethodInfo): SignatureInfo? {
         return localDataStorage.getSignature(method)
                 ?: receivedDataStorage.getSignature(method)
+    }
+
+    override fun getRegisteredCallInfos(methodInfo: MethodInfo): MutableCollection<CallInfo> {
+        return HashSet<CallInfo>().apply {
+            addAll(localDataStorage.getRegisteredCallInfos(methodInfo))
+            addAll(receivedDataStorage.getRegisteredCallInfos(methodInfo))
+        }
     }
 
     override fun deleteSignature(method: MethodInfo) {

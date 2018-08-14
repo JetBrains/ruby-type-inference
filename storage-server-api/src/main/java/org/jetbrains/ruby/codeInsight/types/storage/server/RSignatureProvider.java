@@ -2,10 +2,7 @@ package org.jetbrains.ruby.codeInsight.types.storage.server;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.ruby.codeInsight.types.signature.ClassInfo;
-import org.jetbrains.ruby.codeInsight.types.signature.GemInfo;
-import org.jetbrains.ruby.codeInsight.types.signature.MethodInfo;
-import org.jetbrains.ruby.codeInsight.types.signature.SignatureInfo;
+import org.jetbrains.ruby.codeInsight.types.signature.*;
 
 import java.util.Collection;
 
@@ -43,6 +40,9 @@ public interface RSignatureProvider {
     @NotNull
     Collection<MethodInfo> getRegisteredMethods(@NotNull ClassInfo containerClass)
             throws StorageException;
+
+    @NotNull
+    Collection<CallInfo> getRegisteredCallInfos(@NotNull MethodInfo methodInfo) throws StorageException;
 
     @Nullable
     SignatureInfo getSignature(@NotNull MethodInfo method) throws StorageException;

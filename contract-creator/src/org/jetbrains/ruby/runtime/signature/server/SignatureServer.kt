@@ -12,12 +12,14 @@ import org.jetbrains.ruby.codeInsight.types.storage.server.impl.ClassInfoTable
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.GemInfoTable
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.MethodInfoTable
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.SignatureTable
+import org.jetbrains.ruby.codeInsight.types.storage.server.impl.CallInfoTable
 import org.jetbrains.ruby.runtime.signature.server.serialisation.RTupleBuilder
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
 import java.net.ServerSocket
 import java.net.Socket
+import java.util.*
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -31,6 +33,7 @@ object SignatureServer {
 
     private val mainContainer = DiffPreservingStorage(SignatureStorageImpl(), SignatureStorageImpl())
     private val newSignaturesContainer = RSignatureContractContainer()
+    private val callInfoContainer = LinkedList<CallInfo>()
 
     private val queue = ArrayBlockingQueue<String>(10024)
     private val isReady = AtomicBoolean(true)
@@ -110,10 +113,12 @@ object SignatureServer {
         }
 
         ben(addTime) {
-            if (currRTuple != null
-                    && !newSignaturesContainer.acceptTuple(currRTuple) // optimization
-                    && !mainContainer.acceptTuple(currRTuple)) {
-                newSignaturesContainer.addTuple(currRTuple)
+            if (currRTuple != null) {
+                if (!newSignaturesContainer.acceptTuple(currRTuple) // optimization
+                        && !mainContainer.acceptTuple(currRTuple)) {
+                    newSignaturesContainer.addTuple(currRTuple)
+                }
+                callInfoContainer.add(CallInfoImpl(currRTuple))
             }
         }
     }
@@ -137,6 +142,10 @@ object SignatureServer {
                 }
             }
         }
+        for (callInfo in callInfoContainer) {
+            CallInfoTable.insertInfoIfNotContains(callInfo)
+        }
+        callInfoContainer.clear()
         newSignaturesContainer.clear()
     }
 
