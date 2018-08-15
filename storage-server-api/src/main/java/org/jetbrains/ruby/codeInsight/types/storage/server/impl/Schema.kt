@@ -5,8 +5,6 @@ import org.jetbrains.exposed.dao.IntEntity
 import org.jetbrains.exposed.dao.IntEntityClass
 import org.jetbrains.exposed.dao.IntIdTable
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.like
 import org.jetbrains.exposed.sql.statements.InsertStatement
 import org.jetbrains.exposed.sql.statements.UpdateBuilder
 import org.jetbrains.exposed.sql.statements.UpdateStatement
@@ -54,12 +52,12 @@ abstract class IntIdTableWithPossibleDependency<in T, out F>(
 
     protected open fun removeInvalidInfo(validInfo: T) { }
     protected abstract fun writeInfoToBuilder(builder: UpdateBuilder<*>, info: T, dependencyId: EntityID<Int>?)
-    protected abstract fun createSearchCriteriaForInfo(info: T): Op<Boolean>
+    protected abstract fun SqlExpressionBuilder.createSearchCriteriaForInfo(info: T): Op<Boolean>
     protected abstract fun convertInfoToDependencyFormant(info: T): F?
 
     private data class TraverseResult(var joinedWithDependencies: ColumnSet, var searchCriteria: Op<Boolean>)
     private fun traverseDependencies(info: T): TraverseResult {
-        val searchCriteria = createSearchCriteriaForInfo(info)
+        val searchCriteria = SqlExpressionBuilder.createSearchCriteriaForInfo(info)
         val convertedInfo by lazy { convertInfoToDependencyFormant(info) }
         if (dependency == null || convertedInfo == null) {
             return TraverseResult(this, searchCriteria)
@@ -81,7 +79,7 @@ object GemInfoTable : IntIdTableWithoutDependency<GemInfo>() {
     val name = varchar("name", GemInfo.LENGTH_OF_GEMNAME).index()
     val version = varchar("version", GemInfo.LENGTH_OF_GEMVERSION)
 
-    override fun createSearchCriteriaForInfo(info: GemInfo): Op<Boolean> {
+    override fun SqlExpressionBuilder.createSearchCriteriaForInfo(info: GemInfo): Op<Boolean> {
         return (name eq info.name) and (version eq info.version)
     }
 
@@ -104,7 +102,7 @@ object ClassInfoTable : IntIdTableWithPossibleDependency<ClassInfo, GemInfo>(Gem
     val gemInfo = reference("gem_info", GemInfoTable, ReferenceOption.CASCADE).nullable()
     val fqn = varchar("fqn", ClassInfo.LENGTH_OF_FQN)
 
-    override fun createSearchCriteriaForInfo(info: ClassInfo): Op<Boolean> {
+    override fun SqlExpressionBuilder.createSearchCriteriaForInfo(info: ClassInfo): Op<Boolean> {
         // HACK: as soon as fqn in RubyMine is not fully qualified (search criteria must be: fqn eq info.classFQN)
         return fqn like "%${info.classFQN}"
     }
@@ -139,7 +137,7 @@ object MethodInfoTable : IntIdTableWithPossibleDependency<MethodInfo, ClassInfo>
         return info.classInfo
     }
 
-    override fun createSearchCriteriaForInfo(info: MethodInfo): Op<Boolean> {
+    override fun SqlExpressionBuilder.createSearchCriteriaForInfo(info: MethodInfo): Op<Boolean> {
         return name eq info.name
     }
 
@@ -185,14 +183,14 @@ object CallInfoTable : IntIdTableWithPossibleDependency<CallInfo, MethodInfo>(Me
     val methodInfoId = reference("method_info_id", MethodInfoTable, ReferenceOption.NO_ACTION)
 
     /**
-     * string containing types of arguments splitted by semicolon
+     * string containing types of arguments splitted by separator
      */
     var argsTypes = varchar("args_types", ARGS_TYPES_STRING_LENGTH)
 
     var numberOfArguments = integer("number_of_arguments")
 
-    override fun createSearchCriteriaForInfo(info: CallInfo): Op<Boolean> {
-        return argsTypes eq info.argumentsTypesJoinToString()
+    override fun SqlExpressionBuilder.createSearchCriteriaForInfo(info: CallInfo): Op<Boolean> {
+        return (argsTypes eq info.argumentsTypesJoinToString()) and (numberOfArguments eq info.argumentsTypes.size)
     }
 
     override fun convertInfoToDependencyFormant(info: CallInfo): MethodInfo? {
@@ -273,7 +271,7 @@ object SignatureTable : IntIdTableWithPossibleDependency<SignatureInfo, MethodIn
         builder[contract] = BlobSerializer.writeToBlob(info.contract, TransactionManager.current().connection.createBlob())
     }
 
-    override fun createSearchCriteriaForInfo(info: SignatureInfo): Op<Boolean> {
+    override fun SqlExpressionBuilder.createSearchCriteriaForInfo(info: SignatureInfo): Op<Boolean> {
         return contract eq BlobSerializer.writeToBlob(info.contract, TransactionManager.current().connection.createBlob())
     }
 
