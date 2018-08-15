@@ -1,23 +1,18 @@
 package org.jetbrains.plugins.ruby.ruby.codeInsight.types
 
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.psi.util.PsiUtilBase
 import org.jetbrains.plugins.ruby.ruby.codeInsight.AbstractRubyTypeProvider
 import org.jetbrains.plugins.ruby.ruby.codeInsight.resolve.ResolveUtil
-import org.jetbrains.plugins.ruby.ruby.codeInsight.resolve.scope.RElementWithFQN
 import org.jetbrains.plugins.ruby.ruby.codeInsight.stateTracker.RubyClassHierarchyWithCaching
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.Type
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.RMethodSymbol
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.Symbol
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.impl.REmptyType
-import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.classes.RClass
-import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.RMethod
-import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.modules.RModule
+import org.jetbrains.plugins.ruby.ruby.lang.psi.RubyPsiUtil
 import org.jetbrains.plugins.ruby.ruby.lang.psi.expressions.RExpression
 import org.jetbrains.plugins.ruby.ruby.lang.psi.variables.RIdentifier
-import org.jetbrains.ruby.codeInsight.types.signature.CallInfo
-import org.jetbrains.ruby.codeInsight.types.signature.ClassInfo
-import org.jetbrains.ruby.codeInsight.types.signature.MethodInfo
-import org.jetbrains.ruby.codeInsight.types.signature.RVisibility
+import org.jetbrains.ruby.codeInsight.types.signature.*
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.RSignatureProviderImpl
 
 class RubyReturnTypeProvider : AbstractRubyTypeProvider() {
@@ -49,13 +44,16 @@ class RubyReturnTypeProvider : AbstractRubyTypeProvider() {
             return originType
         }
         if (expr is RIdentifier && expr.isParameter) {
-            val method = expr.parentContainer as? RMethod ?: return null
-            val moduleName = (method.parentContainer as? RElementWithFQN)?.fqn?.fullPath ?: return null
+            val method = RubyPsiUtil.getContainingRMethod(expr) ?: return null
+            val methodLineNumber = PsiUtilBase.findEditor(method)?.document?.getLineNumber(method.textOffset)?.plus(1)
+            val rubyModuleName = RubyPsiUtil.getContainingRClassOrModule(method)?.fqn?.fullPath ?: return null
+            val numberOfArgs = method.arguments.size
             val indexOfArgument = method.arguments.indexOfFirst { it.identifier == expr }
 
-            val info = MethodInfo(ClassInfo(moduleName), method.fqn.shortName, RVisibility.PUBLIC)
+            val info = MethodInfo.Impl(ClassInfo(rubyModuleName), method.fqn.shortName, RVisibility.PUBLIC,
+                    methodLineNumber?.let { Location(method.containingFile.virtualFile.path, methodLineNumber) })
 
-            val callInfos: List<CallInfo> = RSignatureProviderImpl().getRegisteredCallInfos(info)
+            val callInfos: List<CallInfo> = RSignatureProviderImpl().getRegisteredCallInfos(info, numberOfArgs)
 
             return callInfos.map {
                 if (indexOfArgument in 0 until it.argumentsTypes.size) {
@@ -64,7 +62,6 @@ class RubyReturnTypeProvider : AbstractRubyTypeProvider() {
                     REmptyType.INSTANCE
                 }
             }.filter { it != REmptyType.INSTANCE }.distinctBy { it.name }.unionTypes()
-
         }
         return null
     }
