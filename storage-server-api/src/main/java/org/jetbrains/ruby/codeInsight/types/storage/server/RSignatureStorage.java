@@ -13,10 +13,13 @@ public interface RSignatureStorage<T extends RSignatureStorage.Packet> extends R
             final MethodInfo methodInfo = signatureInfo.getMethodInfo();
             final SignatureInfo oldSignature = getSignature(methodInfo);
 
-            putSignature(oldSignature == null ? signatureInfo : SignatureInfoKt.SignatureInfo(
-                    methodInfo,
-                    RSignatureContract.mergeMutably(oldSignature.getContract(), signatureInfo.getContract())
-            ));
+            RSignatureContract contract;
+            if (oldSignature != null &&
+                    (contract = RSignatureContract.mergeMutably(oldSignature.getContract(), signatureInfo.getContract())) != null) {
+                putSignature(SignatureInfoKt.SignatureInfo(methodInfo, contract));
+            } else {
+                putSignature(signatureInfo);
+            }
         }
     }
 

@@ -132,7 +132,7 @@ object SignatureServer {
                             if (storedSignature == null) {
                                 newSignature
                             } else {
-                                RSignatureContract.mergeMutably(storedSignature.contract, newSignature)
+                                RSignatureContract.mergeMutably(storedSignature.contract, newSignature) ?: newSignature
                             }
                     ))
                 }
