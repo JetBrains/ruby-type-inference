@@ -2,6 +2,7 @@ package org.jetbrains.ruby.codeInsight.types.signature;
 
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition;
 
@@ -27,9 +28,9 @@ public class RSignatureContract implements SignatureContract {
             myLevels.add(new ArrayList<>());
         }
 
-        myStartContractNode = createNodeAndAddToLevels(0);
+        myStartContractNode = Objects.requireNonNull(createNodeAndAddToLevels(0));
 
-        myTermNode = createNodeAndAddToLevels(myLevels.size() - 1);
+        myTermNode = Objects.requireNonNull(createNodeAndAddToLevels(myLevels.size() - 1));
 
         addRTuple(tuple);
     }
@@ -56,7 +57,7 @@ public class RSignatureContract implements SignatureContract {
         final Map<SignatureNode, kotlin.Pair<RSignatureContractNode, Integer>> oldNodesToNewWithLayerNumber = new HashMap<>();
         final Queue<SignatureNode> q = new ArrayDeque<>();
 
-        final RSignatureContractNode newStartNode = createNodeAndAddToLevels(0);
+        final RSignatureContractNode newStartNode = Objects.requireNonNull(createNodeAndAddToLevels(0));
         myLevels.get(0).add(newStartNode);
         oldNodesToNewWithLayerNumber.put(newStartNode, new kotlin.Pair<>(newStartNode, 0));
         q.add(source.getStartNode());
@@ -127,12 +128,18 @@ public class RSignatureContract implements SignatureContract {
         return new Immutable(newStartNode, oldToNew.size(), myArgsInfo);
     }
 
-    public synchronized void addRTuple(@NotNull RTuple tuple) {
-        RSignatureContractNode currNode = myStartContractNode;
+    /**
+     * @return true if succeeded; false otherwise
+     */
+    public synchronized boolean addRTuple(@NotNull RTuple tuple) {
+        final List<String> argsTypes = tuple.getArgsTypes();
+        if (argsTypes.size() != myArgsInfo.size()) {
+            return false;
+        }
 
         String returnType = tuple.getReturnTypeName();
 
-        final List<String> argsTypes = tuple.getArgsTypes();
+        RSignatureContractNode currNode = myStartContractNode;
         for (int argIndex = 0; argIndex < argsTypes.size(); argIndex++) {
             final String type = argsTypes.get(argIndex);
 
@@ -140,6 +147,9 @@ public class RSignatureContract implements SignatureContract {
 
             if (!currNode.getTransitions().containsKey(transition)) {
                 final RSignatureContractNode newNode = createNodeAndAddToLevels(argIndex + 1);
+                if (newNode == null) {
+                    return false;
+                }
 
                 currNode.addLink(transition, newNode);
 
@@ -153,6 +163,7 @@ public class RSignatureContract implements SignatureContract {
         final ContractTransition transition = calculateTransition(tuple.getArgsTypes(), tuple.getArgsTypes().size(), returnType);
 
         currNode.addLink(transition, myTermNode);
+        return true;
     }
 
     synchronized void minimize() {
@@ -222,7 +233,10 @@ public class RSignatureContract implements SignatureContract {
         }
     }
 
-    public synchronized void mergeWith(@NotNull SignatureContract additive) {
+    /**
+     * @return true if succeeded; false otherwise
+     */
+    public synchronized boolean mergeWith(@NotNull SignatureContract additive) {
         // TODO synchronize on additive (can't do this plainly due to the possible deadlock)???
         Set<PairOfNodes> used = new HashSet<>();
         Queue<Pair<PairOfNodes, Integer>> bfsQueue = new LinkedList<>();
@@ -261,8 +275,10 @@ public class RSignatureContract implements SignatureContract {
                     childNodesWithPows.put(node, oldPow - 1);
                 }
 
-
                 RSignatureContractNode node = createNodeAndAddToLevels(level + 1);
+                if (node == null) {
+                    return false;
+                }
 
                 if (oldNode.getTransitions().keySet().contains(transition)) {
                     SignatureNode nodeToClone = oldNode.getTransitions().get(transition);
@@ -278,29 +294,38 @@ public class RSignatureContract implements SignatureContract {
         }
 
         minimize();
+        return true;
     }
 
-    @NotNull
+    /**
+     * @return newly created {@link RSignatureContract} if index in 0 (inclusively) until myLevels.size() (exclusively);
+     * otherwise {@code null}
+     */
+    @Nullable
     private RSignatureContractNode createNodeAndAddToLevels(int index) {
-        RSignatureContractNode newNode = new RSignatureContractNode();
+        if (index >= myLevels.size()) {
+            return null;
+        }
 
         //TODO
         if(index == myLevels.size() - 1 && !myLevels.get(index).isEmpty()) {
             return myLevels.get(index).get(0);
         }
 
-        if (myLevels.size() <= index) {
-            throw new IndexOutOfBoundsException("Trying to add to the level " + index
-                    + " when the number of levels is " + myLevels.size());
-        }
+        RSignatureContractNode newNode = new RSignatureContractNode();
+
         myLevels.get(index).add(newNode);
         return newNode;
     }
 
+    @Nullable
     public static RSignatureContract mergeMutably(@NotNull SignatureContract first, @NotNull SignatureContract second) {
         if (first instanceof RSignatureContract) {
-            ((RSignatureContract) first).mergeWith(second);
-            return ((RSignatureContract) first);
+            if (((RSignatureContract) first).mergeWith(second)) {
+                return ((RSignatureContract) first);
+            } else {
+                return null;
+            }
         } else {
             return mergeMutably(new RSignatureContract(first), second);
         }
