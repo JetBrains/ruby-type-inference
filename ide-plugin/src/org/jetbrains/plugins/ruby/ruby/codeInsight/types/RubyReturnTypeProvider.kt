@@ -46,7 +46,7 @@ class RubyReturnTypeProvider : AbstractRubyTypeProvider() {
         if (expr is RIdentifier && expr.isParameter) {
             val method = RubyPsiUtil.getContainingRMethod(expr) ?: return null
             val methodLineNumber = PsiUtilBase.findEditor(method)?.document?.getLineNumber(method.textOffset)?.plus(1)
-            val rubyModuleName = RubyPsiUtil.getContainingRClassOrModule(method)?.fqn?.fullPath ?: return null
+            val rubyModuleName = RubyPsiUtil.getContainingRClassOrModule(method)?.fqn?.fullPath ?: "Object"
             val numberOfArgs = method.arguments.size
             val indexOfArgument = method.arguments.indexOfFirst { it.identifier == expr }
 
