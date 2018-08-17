@@ -32,7 +32,7 @@ object SignatureServer {
 
     private val queue = ArrayBlockingQueue<String>(10024)
     private val isReady = AtomicBoolean(true)
-    private const val FLUSH_SIGNAL = "flush"
+    private const val FLUSH_SIGNAL = "\u0000"
     val readTime = AtomicLong(0)
     val jsonTime = AtomicLong(0)
     val addTime = AtomicLong(0)
