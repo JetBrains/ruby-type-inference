@@ -16,9 +16,7 @@ import java.io.File
 class SignatureService {
     init {
         DatabaseProvider.connect(filePath = File(TypeInferenceDirectory.RUBY_TYPE_INFERENCE_DIRECTORY.toFile(), "ruby-type-inference").absolutePath)
-        transaction {
-            DatabaseProvider.createAllDatabases()
-        }
+        DatabaseProvider.createAllDatabases()
 
         Thread {
             while (true) {
