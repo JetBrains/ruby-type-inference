@@ -1,15 +1,10 @@
 import com.intellij.execution.ExecutionException;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.yourkit.util.FileUtil;
-import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.exposed.sql.SchemaUtils;
-import org.jetbrains.exposed.sql.Transaction;
-import org.jetbrains.exposed.sql.transactions.ThreadLocalTransactionManagerKt;
 import org.jetbrains.plugins.ruby.ruby.run.RubyCommandLine;
 import org.jetbrains.plugins.ruby.ruby.run.RubyLocalRunner;
 import org.jetbrains.ruby.codeInsight.types.signature.*;
@@ -17,26 +12,27 @@ import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.Contrac
 import org.jetbrains.ruby.codeInsight.types.signature.serialization.SignatureContractSerializationKt;
 import org.jetbrains.ruby.codeInsight.types.signature.serialization.StringDataOutput;
 import org.jetbrains.ruby.codeInsight.types.storage.server.DatabaseProvider;
-import org.jetbrains.ruby.codeInsight.types.storage.server.impl.ClassInfoTable;
-import org.jetbrains.ruby.codeInsight.types.storage.server.impl.GemInfoTable;
-import org.jetbrains.ruby.codeInsight.types.storage.server.impl.MethodInfoTable;
-import org.jetbrains.ruby.codeInsight.types.storage.server.impl.SignatureTable;
+import org.jetbrains.ruby.codeInsight.types.storage.server.RSignatureProvider;
+import org.jetbrains.ruby.codeInsight.types.storage.server.SignatureStorageImpl;
+import org.jetbrains.ruby.codeInsight.types.storage.server.StorageException;
 import org.jetbrains.ruby.runtime.signature.server.SignatureServer;
 import org.junit.Assert;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestCase {
 
     private static final Logger LOGGER = Logger.getInstance("CallStatCompletionTest");
+
+    private RSignatureProvider signatureProvider = new SignatureStorageImpl();
 
     @Override
     protected String getTestDataPath() {
@@ -46,6 +42,7 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        DatabaseProvider.INSTANCE.dropAllDatabases();
         DatabaseProvider.INSTANCE.createAllDatabases();
     }
 
@@ -67,6 +64,88 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
 //    public void testKW() {
 //        doTest("sample_kw_test", createMethodInfo("A", "foo1"), "test1", "test2");
 //    }
+
+    public void testSimpleCallInfoCollection() throws StorageException {
+        List<CallInfo> callInfos = runAndGetCallInfos("simple_call_info_collection_test.rb",
+                createMethodInfo("AClass", "foo"));
+        assertEquals(1, callInfos.size());
+        List<String> argumentsTypes = callInfos.get(0).getArgumentsTypes();
+        assertEquals(1, argumentsTypes.size());
+        assertEquals("String", argumentsTypes.get(0));
+    }
+
+    public void testSimpleCallInfosCollectionMultipleFunctinos() throws StorageException {
+        executeScript("simple_call_info_collection_test_multiple_functions_test.rb");
+        waitForServer();
+
+        List<CallInfo> fooCallInfos = new ArrayList<>(signatureProvider.getRegisteredCallInfos(
+                createMethodInfo("A", "foo"), null));
+        List<CallInfo> barCallInfos = new ArrayList<>(signatureProvider.getRegisteredCallInfos(
+                createMethodInfo("A", "bar"), null));
+
+        assertEquals(1, fooCallInfos.size());
+        assertEquals(2, fooCallInfos.stream().findAny().get().getNumberOfArguments());
+        List<String> fooArgumentsTypes = fooCallInfos.get(0).getArgumentsTypes();
+        assertEquals("String", fooArgumentsTypes.get(0));
+        assertEquals("Class", fooArgumentsTypes.get(1));
+
+        assertEquals(3, barCallInfos.size());
+        assertEquals(1, barCallInfos.stream().findAny().get().getNumberOfArguments());
+        List<String> barTypes = barCallInfos.stream().map(x -> x.getArgumentsTypes().get(0)).collect(Collectors.toList());
+        assertTrue(barTypes.contains("TrueClass"));
+        assertTrue(barTypes.contains("FalseClass"));
+        assertTrue(barTypes.contains("Symbol"));
+    }
+
+    public void testSimpleCallInfosCollectionWithMultipleArguments() throws StorageException {
+        List<CallInfo> callInfos = runAndGetCallInfos("simple_call_info_collection_with_multiple_arguments_test.rb",
+                createMethodInfo("AClass", "foo"));
+
+        assertEquals(1, callInfos.size());
+
+        List<String> argumentsTypes = callInfos.get(0).getArgumentsTypes();
+
+        assertEquals(2, argumentsTypes.size());
+        assertEquals("String", argumentsTypes.get(0));
+        assertEquals("TrueClass", argumentsTypes.get(1));
+    }
+
+    public void testSaveTypesBetweenLaunches() throws StorageException {
+        List<CallInfo> callInfos = runAndGetCallInfos("save_types_between_launches_test_part_1.rb",
+                createMethodInfo("A", "foo"));
+        assertEquals(2, callInfos.size());
+        assertEquals(1, callInfos.stream().findAny().get().getNumberOfArguments());
+
+        List<String> argumentsTypes = callInfos.stream().map(x -> x.getArgumentsTypes().get(0))
+                .collect(Collectors.toList());
+        assertTrue(argumentsTypes.contains("String"));
+        assertTrue(argumentsTypes.contains("Class"));
+
+        callInfos = runAndGetCallInfos("save_types_between_launches_test_part_2.rb",
+                createMethodInfo("A", "foo"));
+        assertEquals(3, callInfos.size());
+        assertEquals(1, callInfos.stream().findAny().get().getNumberOfArguments());
+
+        argumentsTypes = callInfos.stream().map(x -> x.getArgumentsTypes().get(0)).collect(Collectors.toList());
+        assertTrue(argumentsTypes.contains("String"));
+        assertTrue(argumentsTypes.contains("Class"));
+        assertTrue(argumentsTypes.contains("TrueClass"));
+    }
+
+    public void testForgetCallInfoWhenArgumentsNumberChanged() throws StorageException {
+        List<CallInfo> callInfos = runAndGetCallInfos("forget_call_info_when_arguments_number_changed_test_part_1.rb",
+                createMethodInfo("A", "foo"));
+        assertEquals(1, callInfos.size());
+        assertEquals(1, callInfos.stream().findAny().get().getNumberOfArguments());
+        assertEquals("String", callInfos.get(0).getArgumentsTypes().get(0));
+
+        callInfos = runAndGetCallInfos("forget_call_info_when_arguments_number_changed_test_part_2.rb",
+                createMethodInfo("A", "foo"));
+        assertEquals(1, callInfos.size());
+        assertEquals(2, callInfos.stream().findAny().get().getNumberOfArguments());
+        assertEquals("TrueClass", callInfos.get(0).getArgumentsTypes().get(0));
+        assertEquals("FalseClass", callInfos.get(0).getArgumentsTypes().get(1));
+    }
 
     public void testMultipleExecution() {
         executeScript("multiple_execution_test1.rb");
@@ -136,22 +215,14 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
         }
     }
 
-    private SignatureContract run(@NotNull String name, @NotNull MethodInfo methodInfo) {
-        final String scriptName = name + ".rb";
-        final String runnableScriptName = name + "_to_run.rb";
-
-        myFixture.configureByFiles(scriptName, runnableScriptName);
-
-        SignatureServer callStatServer = SignatureServer.INSTANCE;
-        executeScript(runnableScriptName);
-
+    private void waitForServer() {
         try {
             Thread.sleep(100);
         } catch (InterruptedException ignored) {
         }
 
         int cnt = 0;
-        while (callStatServer.isProcessingRequests() && cnt < 100) {
+        while (SignatureServer.INSTANCE.isProcessingRequests() && cnt < 100) {
             try {
                 Thread.sleep(1000);
                 cnt++;
@@ -159,8 +230,27 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
                 throw new RuntimeException(e);
             }
         }
+    }
 
-        return callStatServer.getContract(methodInfo);
+    private SignatureContract run(@NotNull String name, @NotNull MethodInfo methodInfo) {
+        final String scriptName = name + ".rb";
+        final String runnableScriptName = name + "_to_run.rb";
+
+        myFixture.configureByFiles(scriptName, runnableScriptName);
+
+        executeScript(runnableScriptName);
+
+        waitForServer();
+
+        return SignatureServer.INSTANCE.getContract(methodInfo);
+    }
+
+    @NotNull
+    private List<CallInfo> runAndGetCallInfos(@NotNull String executableScriptName,
+                                              @NotNull MethodInfo methodInfo) throws StorageException {
+        executeScript(executableScriptName);
+        waitForServer();
+        return new ArrayList<>(signatureProvider.getRegisteredCallInfos(methodInfo, null));
     }
 
     private void doTest(@NotNull String name, @NotNull MethodInfo methodInfo, String... items) {
