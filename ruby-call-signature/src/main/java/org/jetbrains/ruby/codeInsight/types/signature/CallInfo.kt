@@ -7,6 +7,9 @@ interface CallInfo {
     val argumentsTypes: List<String>
 
     fun argumentsTypesJoinToString(): String
+
+    val numberOfArguments: Int
+        get() = argumentsTypes.size
 }
 
 data class CallInfoImpl(override val methodInfo: MethodInfo, override val argumentsTypes: List<String>) : CallInfo {
