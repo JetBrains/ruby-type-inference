@@ -16,7 +16,6 @@ import java.net.ServerSocket
 import java.net.Socket
 import java.util.*
 import java.util.concurrent.ArrayBlockingQueue
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import java.util.logging.Logger
@@ -32,7 +31,8 @@ object SignatureServer {
 
     private val queue = ArrayBlockingQueue<String>(10024)
     private val isReady = AtomicBoolean(true)
-    private const val FLUSH_SIGNAL = "\u0000"
+    private var previousPollEndedWithFlush = false
+    private const val LOCAL_STORAGE_SIZE_LIMIT = 128
     val readTime = AtomicLong(0)
     val jsonTime = AtomicLong(0)
     val addTime = AtomicLong(0)
@@ -84,12 +84,16 @@ object SignatureServer {
     }
 
     private fun pollJson() {
-        val jsonString = queue.poll(5, TimeUnit.SECONDS)
-        if (jsonString == null || jsonString == FLUSH_SIGNAL) {
+        val jsonString by lazy { if (previousPollEndedWithFlush) queue.take() else queue.poll() }
+        if (callInfoContainer.size > LOCAL_STORAGE_SIZE_LIMIT ||
+                newSignaturesContainer.size > LOCAL_STORAGE_SIZE_LIMIT ||
+                jsonString == null) {
             flushNewTuplesToMainStorage()
+            previousPollEndedWithFlush = true
             if (queue.isEmpty()) isReady.set(true)
             return
         }
+        previousPollEndedWithFlush = false
 
         try {
             parseJson(jsonString)
@@ -167,8 +171,6 @@ object SignatureServer {
                 } catch (e: IOException) {
                     LOGGER.severe("Can't close a socket")
                 }
-                // Notify main thread that it was last string in queue
-                queue.put(FLUSH_SIGNAL)
                 onExit(handlerNumber)
             }
         }
