@@ -122,26 +122,23 @@ object SignatureServer {
     }
 
     private fun flushNewTuplesToMainStorage() {
-        for (methodInfo in newSignaturesContainer.registeredMethods) {
-            if (!methodInfo.validate()) {
-                LOGGER.warning("validation failed, cannot store " + methodInfo.toString())
-                continue
-            }
-            newSignaturesContainer.getSignature(methodInfo)?.let { newSignature: RSignatureContract ->
-                transaction {
+        transaction {
+            for (methodInfo in newSignaturesContainer.registeredMethods) {
+                if (!methodInfo.validate()) {
+                    LOGGER.warning("validation failed, cannot store " + methodInfo.toString())
+                    continue
+                }
+                newSignaturesContainer.getSignature(methodInfo)?.let { newSignature: RSignatureContract ->
                     val storedSignature = mainContainer.getSignature(methodInfo)
                     mainContainer.putSignature(SignatureInfo(methodInfo,
-                            if (storedSignature == null) {
-                                newSignature
-                            } else {
-                                RSignatureContract.mergeMutably(storedSignature.contract, newSignature) ?: newSignature
-                            }
+                            storedSignature?.let { RSignatureContract.mergeMutably(storedSignature.contract, newSignature) }
+                                    ?: newSignature
                     ))
                 }
             }
-        }
-        for (callInfo in callInfoContainer) {
-            CallInfoTable.insertInfoIfNotContains(callInfo)
+            for (callInfo in callInfoContainer) {
+                CallInfoTable.insertInfoIfNotContains(callInfo)
+            }
         }
         callInfoContainer.clear()
         newSignaturesContainer.clear()

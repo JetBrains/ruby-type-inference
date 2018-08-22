@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.io.FileUtil;
@@ -21,11 +20,11 @@ import com.intellij.util.AlarmFactory;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemIndependent;
 import org.jetbrains.plugins.ruby.gem.GemDependency;
 import org.jetbrains.plugins.ruby.gem.GemInfo;
 import org.jetbrains.plugins.ruby.gem.GemInstallUtil;
 import org.jetbrains.plugins.ruby.gem.util.GemSearchUtil;
-import org.jetbrains.plugins.ruby.ruby.RModuleUtil;
 import org.jetbrains.plugins.ruby.ruby.RubyUtil;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.stateTracker.RubyClassHierarchyWithCaching;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyReturnTypeData;
@@ -46,6 +45,8 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
     private static final String ENABLE_STATE_TRACKER_KEY = "ARG_SCANNER_ENABLE_STATE_TRACKER";
 
     private static final String ENABLE_RETURN_TYPE_TRACKER_KEY = "ARG_SCANNER_ENABLE_RETURN_TYPE_TRACKER";
+
+    private static final String PROJECT_ROOT_KEY = "ARG_SCANNER_PROJECT_ROOT";
 
     private static final String OUTPUT_DIRECTORY = "ARG_SCANNER_DIR";
 
@@ -108,6 +109,10 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
         }
         if (collectTypeSettings.getOutputDirectory() != null) {
             env.put(OUTPUT_DIRECTORY, collectTypeSettings.getOutputDirectory());
+        }
+        @SystemIndependent String basePath = configuration.getProject().getBasePath();
+        if (basePath != null) {
+            env.put(PROJECT_ROOT_KEY, basePath);
         }
 
         final String newRubyOpt = rubyOpt + includeKey + " -r" + ARG_SCANNER_REQUIRE_SCRIPT;

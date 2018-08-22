@@ -38,4 +38,7 @@ class RSignatureContractContainer {
     fun clear() {
         myContracts.clear()
     }
+
+    val size: Int
+        get() = myContracts.size
 }

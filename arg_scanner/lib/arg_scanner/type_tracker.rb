@@ -54,11 +54,15 @@ module ArgScanner
     def initialize
       @catch_only_every_n_call = ENV['ARG_SCANNER_CATCH_ONLY_EVERY_N_CALL']
       @catch_only_every_n_call = @catch_only_every_n_call ? @catch_only_every_n_call.to_i : 1
+      @project_root = ENV['ARG_SCANNER_PROJECT_ROOT']
       @method_ids_cache = Set.new
-      @prefix = ENV["ARG_SCANNER_PREFIX"]
       @enable_debug = ENV["ARG_SCANNER_DEBUG"]
       @performance_monitor = if @enable_debug then TypeTrackerPerformanceMonitor.new else nil end
       TracePoint.trace(:call, :return) do |tp|
+        if @project_root != nil && !tp.path.start_with?(@project_root)
+          next
+        end
+
         case tp.event
           when :call
             handle_call(tp)
@@ -86,9 +90,7 @@ module ArgScanner
 
     private
     def handle_call(tp)
-      # tp.defined_class.name is `null` for anonymous modules
-      if (@catch_only_every_n_call == 1 || @method_ids_cache.add?(tp.method_id) || rand(@catch_only_every_n_call) == 0) &&
-          (@prefix.nil? || tp.path.start_with?(@prefix)) && tp.defined_class && !tp.defined_class.singleton_class?
+      if @catch_only_every_n_call == 1 || @method_ids_cache.add?(tp.method_id) || rand(@catch_only_every_n_call) == 0
         @performance_monitor.on_call unless @performance_monitor.nil?
         signatures << ArgScanner.handle_call(tp.lineno, tp.method_id.id2name, tp.path)
       else

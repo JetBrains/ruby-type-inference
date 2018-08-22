@@ -41,6 +41,9 @@ option_parser = OptionParser.new do |opts|
   opts.on("--catch-only-every-N-call=[N]", Integer, "randomly catches only 1/N of all calls to speed up performance (by default N = 1)") do |n|
     options.catch_only_every_n_call = n
   end
+  opts.on("--project-root=[PATH]", String, "Specify project's root directory to catch calls only from this directory") do |path|
+    options.project_root = path
+  end
 
 end
 
