@@ -29,10 +29,6 @@ fun GemInfoOrNull(name: String, version: String) = GemInfo(name, version).let { 
 fun GemInfoFromFilePathOrNull(path: String): GemInfo? {
     val gemPathPattern = """([A-Za-z0-9_-]+)-(\d+[0-9A-Za-z.]+)"""
     val regex = Regex(gemPathPattern)
-    return try {
-        val (gemName, gemVersion) = regex.findAll(path).last().destructured
-        GemInfo(gemName, gemVersion)
-    } catch (ex: NoSuchElementException) { // if the sequence returned by regex.findAll is empty
-        null
-    }
+    val (gemName, gemVersion) = regex.findAll(path).lastOrNull()?.destructured ?: return null
+    return GemInfo(gemName, gemVersion)
 }

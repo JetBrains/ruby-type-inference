@@ -32,10 +32,7 @@ class RSignatureContractContainer {
         get() = myContracts.keys
 
     fun getSignature(info: MethodInfo): RSignatureContract? {
-        return myContracts[info]?.let {
-            it.minimize()
-            it
-        }
+        return myContracts[info]?.apply { minimize() }
     }
 
     fun clear() {

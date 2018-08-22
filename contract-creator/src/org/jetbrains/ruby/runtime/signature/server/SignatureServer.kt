@@ -39,16 +39,14 @@ object SignatureServer {
 
     @JvmStatic
     fun main(args: Array<String>) {
-
         DatabaseProvider.connect()
-
-        transaction { DatabaseProvider.createAllDatabases() }
+        DatabaseProvider.createAllDatabases()
 
         Thread {
             while (true) {
                 try {
                     SignatureServer.runServer()
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     System.err.println(e)
                 }
             }
