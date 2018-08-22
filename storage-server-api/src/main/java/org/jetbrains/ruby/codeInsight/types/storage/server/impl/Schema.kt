@@ -3,13 +3,9 @@ package org.jetbrains.ruby.codeInsight.types.storage.server.impl
 import org.jetbrains.exposed.dao.EntityID
 import org.jetbrains.exposed.dao.IntEntity
 import org.jetbrains.exposed.dao.IntEntityClass
-import org.jetbrains.exposed.dao.IntIdTable
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.statements.InsertStatement
 import org.jetbrains.exposed.sql.statements.UpdateBuilder
-import org.jetbrains.exposed.sql.statements.UpdateStatement
 import org.jetbrains.exposed.sql.transactions.TransactionManager
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.ruby.codeInsight.types.signature.*
 import org.jetbrains.ruby.codeInsight.types.signature.serialization.BlobDeserializer
 import org.jetbrains.ruby.codeInsight.types.signature.serialization.BlobSerializer
@@ -22,6 +18,10 @@ object GemInfoTable : IntIdTableWithoutDependency<GemInfo>() {
 
     override fun SqlExpressionBuilder.createSearchCriteriaForInfo(info: GemInfo): Op<Boolean> {
         return (name eq info.name) and (version eq info.version)
+    }
+
+    override fun validateInfo(info: GemInfo): Boolean {
+        return info.name.length <= GemInfo.LENGTH_OF_GEMNAME && info.version.length <= GemInfo.LENGTH_OF_GEMVERSION
     }
 
     override fun writeInfoToBuilder(builder: UpdateBuilder<*>, info: GemInfo, dependencyId: EntityID<Int>?) {
@@ -39,7 +39,7 @@ class GemInfoRow(id: EntityID<Int>) : IntEntity(id), GemInfo {
     fun copy(): GemInfo = GemInfo(this)
 }
 
-object ClassInfoTable : IntIdTableWithPossibleDependency<ClassInfo, GemInfo>(GemInfoTable) {
+object ClassInfoTable : IntIdTableWithNullableDependency<ClassInfo, GemInfo>(GemInfoTable) {
     val gemInfo = reference("gem_info", GemInfoTable, ReferenceOption.CASCADE).nullable()
     val fqn = varchar("fqn", ClassInfo.LENGTH_OF_FQN)
 
@@ -50,6 +50,10 @@ object ClassInfoTable : IntIdTableWithPossibleDependency<ClassInfo, GemInfo>(Gem
 
     override fun convertInfoToDependencyFormant(info: ClassInfo): GemInfo? {
         return info.gemInfo
+    }
+
+    override fun validateInfo(info: ClassInfo): Boolean {
+        return info.classFQN.length <= ClassInfo.LENGTH_OF_FQN
     }
 
     override fun writeInfoToBuilder(builder: UpdateBuilder<*>, info: ClassInfo, dependencyId: EntityID<Int>?) {
@@ -67,7 +71,7 @@ class ClassInfoRow(id: EntityID<Int>) : IntEntity(id), ClassInfo {
     fun copy(): ClassInfo = ClassInfo(this)
 }
 
-object MethodInfoTable : IntIdTableWithPossibleDependency<MethodInfo, ClassInfo>(ClassInfoTable) {
+object MethodInfoTable : IntIdTableWithDependency<MethodInfo, ClassInfo>(ClassInfoTable) {
     val classInfo = reference("class_info", ClassInfoTable, ReferenceOption.CASCADE)
     val name = varchar("name", MethodInfo.LENGTH_OF_NAME)
     val visibility = enumeration("visibility", RVisibility::class.java)
@@ -82,8 +86,13 @@ object MethodInfoTable : IntIdTableWithPossibleDependency<MethodInfo, ClassInfo>
         return name eq info.name
     }
 
-    override fun writeInfoToBuilder(builder: UpdateBuilder<*>, info: MethodInfo, dependencyId: EntityID<Int>?) {
-        builder[classInfo] = dependencyId ?: return
+    override fun validateInfo(info: MethodInfo): Boolean {
+        return info.name.length <= MethodInfo.LENGTH_OF_NAME &&
+                info.location?.let { it.path.length <= MethodInfo.LENGTH_OF_PATH } ?: true
+    }
+
+    override fun writeInfoToBuilderNotNullableDependency(builder: UpdateBuilder<*>, info: MethodInfo, dependencyId: EntityID<Int>) {
+        builder[classInfo] = dependencyId
         builder[name] = info.name
         builder[visibility] = info.visibility
         builder[locationFile] = info.location?.path
@@ -119,7 +128,7 @@ class MethodInfoRow(id: EntityID<Int>) : IntEntity(id), MethodInfo {
 /**
  * Represent SQL table which contains information about every Ruby method call
  */
-object CallInfoTable : IntIdTableWithPossibleDependency<CallInfo, MethodInfo>(MethodInfoTable) {
+object CallInfoTable : IntIdTableWithDependency<CallInfo, MethodInfo>(MethodInfoTable) {
     private const val ARGS_TYPES_STRING_LENGTH = 300
     val methodInfoId = reference("method_info_id", MethodInfoTable, ReferenceOption.NO_ACTION)
 
@@ -138,14 +147,13 @@ object CallInfoTable : IntIdTableWithPossibleDependency<CallInfo, MethodInfo>(Me
         return info.methodInfo
     }
 
-    override fun writeInfoToBuilder(builder: UpdateBuilder<*>, info: CallInfo, dependencyId: EntityID<Int>?) {
-        val argsTypesString = info.argumentsTypesJoinToString()
-        if (argsTypesString.length > CallInfoTable.ARGS_TYPES_STRING_LENGTH) {
-            return
-        }
+    override fun validateInfo(info: CallInfo): Boolean {
+        return info.argumentsTypesJoinToString().length <= CallInfoTable.ARGS_TYPES_STRING_LENGTH
+    }
 
-        builder[methodInfoId] = dependencyId ?: return
-        builder[argsTypes] = argsTypesString
+    override fun writeInfoToBuilderNotNullableDependency(builder: UpdateBuilder<*>, info: CallInfo, dependencyId: EntityID<Int>) {
+        builder[methodInfoId] = dependencyId
+        builder[argsTypes] = info.argumentsTypesJoinToString()
         builder[numberOfArguments] = info.argumentsTypes.size
     }
 
@@ -181,33 +189,27 @@ class CallInfoRow(id: EntityID<Int>) : IntEntity(id), CallInfo {
     fun copy(): CallInfo = CallInfoImpl(methodInfo, argumentsTypes)
 }
 
-object SignatureTable : IntIdTableWithPossibleDependency<SignatureInfo, MethodInfo>(MethodInfoTable) {
+object SignatureTable : IntIdTableWithDependency<SignatureInfo, MethodInfo>(MethodInfoTable) {
     val methodInfo = reference("method_info", MethodInfoTable, ReferenceOption.CASCADE)
     val contract = blob("contract")
 
     override fun insertInfoIfNotContains(info: SignatureInfo): EntityID<Int>? {
-        return transaction {
-            val methodInfoRow: MethodInfoRow = MethodInfoTable.insertInfoIfNotContains(info.methodInfo)
-                    ?.let { MethodInfoRow[it] } ?: return@transaction null
+        val methodInfoRow: MethodInfoRow = MethodInfoTable.insertInfoIfNotContains(info.methodInfo)
+                ?.let { MethodInfoRow[it] } ?: return null
 
-            val existingContractData = SignatureContractRow.find { SignatureTable.methodInfo eq methodInfoRow.id }
-                    .firstOrNull()
+        val existingContractData = SignatureContractRow.find { SignatureTable.methodInfo eq methodInfoRow.id }
+                .firstOrNull()
 
-            if (existingContractData != null) {
-                existingContractData.contract = info.contract
-            } else {
-                SignatureContractRow.new { this.methodInfo = methodInfoRow; contract = info.contract }
-            }
-
-            return@transaction SignatureContractRow.new { this.methodInfo = methodInfoRow; contract = info.contract }.id
+        if (existingContractData != null) {
+            existingContractData.contract = info.contract
+        } else {
+            SignatureContractRow.new { this.methodInfo = methodInfoRow; contract = info.contract }
         }
+
+        return SignatureContractRow.new { this.methodInfo = methodInfoRow; contract = info.contract }.id
     }
 
-    override fun writeInfoToBuilder(builder: UpdateBuilder<*>, info: SignatureInfo, dependencyId: EntityID<Int>?) {
-        if (dependencyId == null) {
-            return
-        }
-
+    override fun writeInfoToBuilderNotNullableDependency(builder: UpdateBuilder<*>, info: SignatureInfo, dependencyId: EntityID<Int>) {
         builder[methodInfo] = dependencyId
         builder[contract] = BlobSerializer.writeToBlob(info.contract, TransactionManager.current().connection.createBlob())
     }
