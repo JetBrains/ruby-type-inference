@@ -130,6 +130,7 @@ class MethodInfoRow(id: EntityID<Int>) : IntEntity(id), MethodInfo {
  */
 object CallInfoTable : IntIdTableWithDependency<CallInfo, MethodInfo>(MethodInfoTable) {
     private const val ARGS_TYPES_STRING_LENGTH = 300
+    private const val CALL_INFOS_LIMIT_FOR_PARTICULAR_METHOD = 10
     val methodInfoId = reference("method_info_id", MethodInfoTable, ReferenceOption.NO_ACTION)
 
     /**
@@ -138,6 +139,19 @@ object CallInfoTable : IntIdTableWithDependency<CallInfo, MethodInfo>(MethodInfo
     var argsTypes = varchar("args_types", ARGS_TYPES_STRING_LENGTH)
 
     var numberOfArguments = integer("number_of_arguments")
+
+    override fun insertInfoIfNotContains(info: CallInfo): EntityID<Int>? {
+        val count = MethodInfoTable.findRowId(info.methodInfo)?.let {
+            CallInfoTable.select {
+                CallInfoTable.methodInfoId eq it
+            }.count()
+        } ?: 0
+        if (count >= CALL_INFOS_LIMIT_FOR_PARTICULAR_METHOD) {
+            return null
+        } else {
+            return super.insertInfoIfNotContains(info)
+        }
+    }
 
     override fun SqlExpressionBuilder.createSearchCriteriaForInfo(info: CallInfo): Op<Boolean> {
         return (argsTypes eq info.argumentsTypesJoinToString()) and (numberOfArguments eq info.argumentsTypes.size)
