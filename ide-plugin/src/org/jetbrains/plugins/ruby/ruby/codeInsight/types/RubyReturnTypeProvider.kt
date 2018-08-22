@@ -67,14 +67,14 @@ class RubyReturnTypeProvider : AbstractRubyTypeProvider() {
     }
 }
 
-private fun List<RType>.unionTypes(startIndex: Int = 0, endIndex: Int = size - 1): RType {
-    if (endIndex < startIndex) {
+private fun List<RType>.unionTypes(): RType {
+    if (size == 0) {
         return REmptyType.INSTANCE
     }
 
-    if (startIndex == endIndex) {
-        return this[startIndex]
+    if (size == 1) {
+        return first()
     }
-    val m = (startIndex + endIndex) / 2
-    return RTypeUtil.union(this.unionTypes(startIndex, m), this.unionTypes(m + 1, endIndex))
+    val m = size / 2
+    return RTypeUtil.union(subList(0, m).unionTypes(), subList(m, size).unionTypes())
 }
