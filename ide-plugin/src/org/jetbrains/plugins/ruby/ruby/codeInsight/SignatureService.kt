@@ -3,9 +3,9 @@ package org.jetbrains.plugins.ruby.ruby.codeInsight
 import com.intellij.openapi.diagnostic.Logger
 import org.jetbrains.plugins.ruby.ruby.persistent.TypeInferenceDirectory
 import org.jetbrains.ruby.codeInsight.types.storage.server.DatabaseProvider
+import org.jetbrains.ruby.runtime.signature.server.AUTOMATICALLY_ALLOCATED_PORT
 import org.jetbrains.ruby.runtime.signature.server.SignatureServer
 import java.io.File
-
 
 class SignatureService {
     init {
@@ -15,7 +15,7 @@ class SignatureService {
         Thread {
             while (true) {
                 try {
-                    SignatureServer.runServer()
+                    SignatureServer.runServer(port = AUTOMATICALLY_ALLOCATED_PORT)
                 } catch (e: Exception) {
                     LOGGER.error(e)
                 }

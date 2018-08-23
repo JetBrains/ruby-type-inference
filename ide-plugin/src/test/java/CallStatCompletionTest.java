@@ -18,8 +18,7 @@ import org.jetbrains.ruby.codeInsight.types.storage.server.StorageException;
 import org.jetbrains.ruby.runtime.signature.server.SignatureServer;
 import org.junit.Assert;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -196,7 +195,8 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
 
             LOGGER.warn(getProcessOutput(new RubyCommandLine(RubyLocalRunner.getRunner(module), false)
                     .withExePath("arg-scanner")
-                    .withParameters("--type-tracker", "ruby", scriptPath)
+                    .withParameters("--server-port=" + SignatureServer.getPortNumber(),
+                            "--type-tracker", "ruby", scriptPath)
                     .createProcess()));
         } catch (ExecutionException | InterruptedException e) {
             LOGGER.error(e.getMessage());

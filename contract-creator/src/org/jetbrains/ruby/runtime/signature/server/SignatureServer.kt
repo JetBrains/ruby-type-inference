@@ -20,9 +20,14 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import java.util.logging.Logger
 
+/**
+ * Port number that is used to show server to allocate port automatically
+ */
+const val AUTOMATICALLY_ALLOCATED_PORT = 0
+
+const val DEFAULT_PORT_NUMBER = 7777
 
 object SignatureServer {
-
     private val LOGGER = Logger.getLogger("SignatureServer")
 
     private val mainContainer = DiffPreservingStorage(SignatureStorageImpl(), SignatureStorageImpl())
@@ -36,6 +41,10 @@ object SignatureServer {
     val readTime = AtomicLong(0)
     val jsonTime = AtomicLong(0)
     val addTime = AtomicLong(0)
+
+    @JvmStatic
+    var portNumber = DEFAULT_PORT_NUMBER
+        private set
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -69,7 +78,13 @@ object SignatureServer {
 
     fun isProcessingRequests() = !isReady.get()
 
-    fun runServer() {
+    /**
+     * Run server
+     * @param port specify port to run server on. (7777 is used as default port) you can also specify
+     * [AUTOMATICALLY_ALLOCATED_PORT] to use a port number that is automatically allocated
+     */
+    fun runServer(port: Int = portNumber) {
+        portNumber = port
         LOGGER.info("Starting server")
 
         SocketDispatcher().start()
@@ -206,7 +221,9 @@ object SignatureServer {
     private class SocketDispatcher : Thread() {
         override fun run() {
             var handlersCounter = 0
-            ServerSocket(7777).use { listener: ServerSocket ->
+            ServerSocket(portNumber).use { listener: ServerSocket ->
+                portNumber = listener.localPort
+                LOGGER.info("Used port is: ${listener.localPort}")
                 while (true) {
                     SignatureHandler(listener.accept(), handlersCounter++).start()
                 }

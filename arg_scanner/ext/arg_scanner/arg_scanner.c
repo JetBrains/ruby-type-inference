@@ -56,10 +56,11 @@ typedef struct
 void Init_arg_scanner();
 
 static const char *EMPTY_VALUE = "";
-static const int SERVER_PORT = 7777;
+static const int SERVER_DEFAULT_PORT = 7777;
 static GTree *sent_to_server_tree;
 static int socket_fd = -1;
 static char* get_args_info();
+static VALUE set_server_port(VALUE self, VALUE server_port);
 static VALUE handle_call(VALUE self, VALUE lineno, VALUE method_name, VALUE path);
 static VALUE handle_return(VALUE self, VALUE signature, VALUE receiver_name, VALUE return_type_name);
 static VALUE destructor(VALUE self);
@@ -131,7 +132,7 @@ compare_signature_t(const signature_t *a, const signature_t *b) {
 }
 
 // returns zero if no errors occured
-int init_socket() {
+int init_socket(int server_port) {
     struct sockaddr_in serv_addr;
     socket_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (socket_fd < 0) {
@@ -139,7 +140,7 @@ int init_socket() {
     }
 
     serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(SERVER_PORT);
+    serv_addr.sin_port = htons(server_port);
 
     if(inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) != 1) {
         return 1;
@@ -156,10 +157,7 @@ void Init_arg_scanner() {
     rb_define_module_function(mArgScanner, "get_call_info", get_call_info_rb, 0);
     rb_define_module_function(mArgScanner, "destructor", destructor, 0);
     rb_define_module_function(mArgScanner, "check_if_arg_scanner_ready", check_if_arg_scanner_ready, 0);
-
-    if (init_socket()) {
-        socket_errno = errno;
-    }
+    rb_define_module_function(mArgScanner, "set_server_port", set_server_port, 1);
 
     sent_to_server_tree = g_tree_new_full(/*key_compare_func =*/compare_signature_t,
                                           /*key_compare_data =*/NULL,
@@ -177,6 +175,17 @@ my_rb_vm_get_binding_creatable_next_cfp(const rb_thread_t *th, const rb_control_
 	    cfp = RUBY_VM_PREVIOUS_CONTROL_FRAME(cfp);
     }
     return 0;
+}
+
+static VALUE
+set_server_port(VALUE self, VALUE server_port)
+{
+    int server_port_c = (server_port == Qnil ? SERVER_DEFAULT_PORT : FIX2INT(server_port));
+
+    if (init_socket(server_port_c)) {
+        socket_errno = errno;
+    }
+    return Qnil;
 }
 
 static VALUE
