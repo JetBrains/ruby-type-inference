@@ -5,6 +5,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ruby.codeInsight.types.signature.*;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * <p>An interface that allows for transparent working with the signatures storage.</p>
@@ -48,6 +49,14 @@ public interface RSignatureProvider {
     @NotNull
     Collection<CallInfo> getRegisteredCallInfos(@NotNull MethodInfo methodInfo, @Nullable Integer numberOfArguments)
             throws StorageException;
+
+    /**
+     * Get registered return types for particular method call.
+     * @return {@link Collection} of type names
+     */
+    @NotNull
+    Collection<String> getRegisteredReturnTypesForMethodCall(@NotNull MethodInfo methodInfo,
+                                                             @NotNull List<String> argumentsTypes);
 
     @Nullable
     SignatureInfo getSignature(@NotNull MethodInfo method) throws StorageException;
