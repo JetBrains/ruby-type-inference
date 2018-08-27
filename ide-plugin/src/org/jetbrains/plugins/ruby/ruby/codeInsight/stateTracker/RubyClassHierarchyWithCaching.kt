@@ -9,7 +9,6 @@ import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.Types
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.RMethodSyntheticSymbol
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.Symbol
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.SymbolUtil
-import org.jetbrains.plugins.ruby.ruby.codeInsight.types.Context
 import org.jetbrains.plugins.ruby.ruby.persistent.TypeInferenceDirectory
 import org.jetbrains.plugins.ruby.settings.RubyTypeContractsSettings
 import org.jetbrains.ruby.stateTracker.*

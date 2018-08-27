@@ -12,7 +12,6 @@ public class CollectExecSettings {
     private boolean myArgScannerEnabled;
     private boolean myTypeTrackerEnabled;
     private boolean myStateTrackerEnabled;
-    private boolean myReturnTypeTrackerEnabled;
     @Nullable
     private String myOutputDirectory;
 
@@ -26,14 +25,6 @@ public class CollectExecSettings {
 
     public void setStateTrackerEnabled(boolean myStateTrackerEnabled) {
         this.myStateTrackerEnabled = myStateTrackerEnabled;
-    }
-
-    public boolean isReturnTypeTrackerEnabled() {
-        return myReturnTypeTrackerEnabled;
-    }
-
-    public void setReturnTypeTrackerEnabled(boolean myReturnTypeTrackerEnabled) {
-        this.myReturnTypeTrackerEnabled = myReturnTypeTrackerEnabled;
     }
 
     public void setArgScannerEnabled(boolean myArgScannerEnabled) {
@@ -60,7 +51,7 @@ public class CollectExecSettings {
     @NotNull
     public static CollectExecSettings getFrom(@NotNull final AbstractRubyRunConfiguration configuration) {
         final CollectExecSettings data = configuration.getCopyableUserData(COLLECT_TYPE_EXEC_SETTINGS);
-        return data != null ? data : createSettings(false, false, false, false, null);
+        return data != null ? data : createSettings(false, false, false, null);
     }
 
     public static void putTo(@NotNull final AbstractRubyRunConfiguration configuration,
@@ -70,14 +61,12 @@ public class CollectExecSettings {
 
     public static CollectExecSettings createSettings(final boolean argScannerEnabled,
                                                          final boolean typeTrackerEnabled,
-                                                         final boolean returnTypeTrackerEnabled,
                                                          final boolean stateTrackerEnabled,
                                                          final String tempDirectoryPath
     ) {
         final CollectExecSettings settings = new CollectExecSettings();
         settings.setArgScannerEnabled(argScannerEnabled);
         settings.setTypeTrackerEnabled(typeTrackerEnabled);
-        settings.setReturnTypeTrackerEnabled(returnTypeTrackerEnabled);
         settings.setReturnTypeTrackerPath(tempDirectoryPath);
         settings.setStateTrackerEnabled(stateTrackerEnabled);
 

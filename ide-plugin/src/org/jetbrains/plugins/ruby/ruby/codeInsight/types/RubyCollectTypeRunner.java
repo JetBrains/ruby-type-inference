@@ -37,7 +37,6 @@ public class RubyCollectTypeRunner extends RubyProgramRunner {
             CollectExecSettings.putTo(newConfig,
                     CollectExecSettings.createSettings(true,
                             rubyTypeContractsSettings.getTypeTrackerEnabled(),
-                            rubyTypeContractsSettings.getReturnTypeTrackerEnabled(),
                             false,
                             pathToState
                             ));
