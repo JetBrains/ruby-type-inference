@@ -23,14 +23,6 @@ class RubyReturnTypeProvider : AbstractRubyTypeProvider() {
 
     override fun createTypeByRExpression(expr: RExpression): RType? {
         val symbol = ResolveUtil.resolveToSymbolWithCaching(expr.reference, false)
-        if (symbol is RMethodSymbol) {
-            val module = ModuleUtilCore.findModuleForPsiElement(expr) ?: return null
-            val rubyReturnTypeData = RubyReturnTypeData.getInstance(module) ?: return null
-            val parent = symbol.parentSymbol ?: return null
-            val name = symbol.name ?: return null
-            val result = rubyReturnTypeData.getTypeByFQNAndMethodName(parent.fqnWithNesting.fullPath, name) ?: return null
-            return result.map { RTypeFactory.createTypeByFQN(expr.project, it) }.reduce { t, n -> RTypeUtil.union(t, n) }
-        }
         if (symbol?.type == Type.CONSTANT) {
             val module = ModuleUtilCore.findModuleForPsiElement(expr) ?: return null
             val classHierarchyWithCaching = RubyClassHierarchyWithCaching.getInstance(module) ?: return null

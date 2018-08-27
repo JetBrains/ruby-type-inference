@@ -27,8 +27,8 @@ import org.jetbrains.plugins.ruby.gem.GemInstallUtil;
 import org.jetbrains.plugins.ruby.gem.util.GemSearchUtil;
 import org.jetbrains.plugins.ruby.ruby.RubyUtil;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.stateTracker.RubyClassHierarchyWithCaching;
-import org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyReturnTypeData;
 import org.jetbrains.ruby.runtime.signature.server.SignatureServer;
+
 
 import java.io.File;
 import java.io.IOException;
@@ -44,8 +44,6 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
     private static final String ENABLE_TYPE_TRACKER_KEY = "ARG_SCANNER_ENABLE_TYPE_TRACKER";
 
     private static final String ENABLE_STATE_TRACKER_KEY = "ARG_SCANNER_ENABLE_STATE_TRACKER";
-
-    private static final String ENABLE_RETURN_TYPE_TRACKER_KEY = "ARG_SCANNER_ENABLE_RETURN_TYPE_TRACKER";
 
     private static final String PROJECT_ROOT_KEY = "ARG_SCANNER_PROJECT_ROOT";
 
@@ -106,9 +104,6 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
         }
         if (collectTypeSettings.isStateTrackerEnabled()) {
             env.put(ENABLE_STATE_TRACKER_KEY, "1");
-        }
-        if (collectTypeSettings.isReturnTypeTrackerEnabled()) {
-            env.put(ENABLE_RETURN_TYPE_TRACKER_KEY, "1");
         }
         if (collectTypeSettings.getOutputDirectory() != null) {
             env.put(OUTPUT_DIRECTORY, collectTypeSettings.getOutputDirectory());
@@ -183,7 +178,7 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
     protected void attachToProcess(@NotNull AbstractRubyRunConfiguration configuration,
                                    @NotNull ProcessHandler handler, @Nullable RunnerSettings runnerSettings) {
         final CollectExecSettings settings = CollectExecSettings.getFrom(configuration);
-        if (settings.isStateTrackerEnabled() || settings.isReturnTypeTrackerEnabled()) {
+        if (settings.isStateTrackerEnabled()) {
             handler.addProcessListener(
                 new ProcessAdapter() {
                     @Override
@@ -241,9 +236,6 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
                 }
                 if (settings.isStateTrackerEnabled()) {
                     RubyClassHierarchyWithCaching.Companion.updateAndSaveToSystemDirectory(jsons, module);
-                }
-                if (settings.isReturnTypeTrackerEnabled()) {
-                    RubyReturnTypeData.Companion.updateAndSaveToSystemDirectory(jsons, module);
                 }
             } finally {
                 FileUtil.delete(directory);

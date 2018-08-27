@@ -29,7 +29,6 @@ class RubyCollectStateRunner : RubyProgramRunner() {
             CollectExecSettings.putTo(newConfig,
                     CollectExecSettings.createSettings(true,
                             false,
-                            false,
                             true,
                             pathToState
                     ))
