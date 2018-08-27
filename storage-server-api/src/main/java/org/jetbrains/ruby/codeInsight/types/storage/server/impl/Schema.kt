@@ -130,15 +130,19 @@ class MethodInfoRow(id: EntityID<Int>) : IntEntity(id), MethodInfo {
  */
 object CallInfoTable : IntIdTableWithDependency<CallInfo, MethodInfo>(MethodInfoTable) {
     private const val ARGS_TYPES_STRING_LENGTH = 300
+    private const val RETURN_TYPE_STRING_LENGTH = 50
     private const val CALL_INFOS_LIMIT_FOR_PARTICULAR_METHOD = 10
+
     val methodInfoId = reference("method_info_id", MethodInfoTable, ReferenceOption.NO_ACTION)
 
     /**
      * string containing types of arguments splitted by separator
      */
-    var argsTypes = varchar("args_types", ARGS_TYPES_STRING_LENGTH)
+    val argsTypes = varchar("args_types", ARGS_TYPES_STRING_LENGTH)
 
-    var numberOfArguments = integer("number_of_arguments")
+    val numberOfArguments = integer("number_of_arguments")
+
+    val returnType = varchar("return_type", RETURN_TYPE_STRING_LENGTH)
 
     override fun insertInfoIfNotContains(info: CallInfo): EntityID<Int>? {
         val count = MethodInfoTable.findRowId(info.methodInfo)?.let {
@@ -154,7 +158,8 @@ object CallInfoTable : IntIdTableWithDependency<CallInfo, MethodInfo>(MethodInfo
     }
 
     override fun SqlExpressionBuilder.createSearchCriteriaForInfo(info: CallInfo): Op<Boolean> {
-        return (argsTypes eq info.argumentsTypesJoinToString()) and (numberOfArguments eq info.argumentsTypes.size)
+        return (argsTypes eq info.argumentsTypesJoinToString()) and (numberOfArguments eq info.numberOfArguments) and
+                (returnType eq info.returnType)
     }
 
     override fun convertInfoToDependencyFormant(info: CallInfo): MethodInfo? {
@@ -162,13 +167,15 @@ object CallInfoTable : IntIdTableWithDependency<CallInfo, MethodInfo>(MethodInfo
     }
 
     override fun validateInfo(info: CallInfo): Boolean {
-        return info.argumentsTypesJoinToString().length <= CallInfoTable.ARGS_TYPES_STRING_LENGTH
+        return info.argumentsTypesJoinToString().length <= ARGS_TYPES_STRING_LENGTH &&
+                info.returnType.length <= RETURN_TYPE_STRING_LENGTH
     }
 
     override fun writeInfoToBuilderNotNullableDependency(builder: UpdateBuilder<*>, info: CallInfo, dependencyId: EntityID<Int>) {
         builder[methodInfoId] = dependencyId
         builder[argsTypes] = info.argumentsTypesJoinToString()
-        builder[numberOfArguments] = info.argumentsTypes.size
+        builder[numberOfArguments] = info.numberOfArguments
+        builder[returnType] = info.returnType
     }
 
     override fun removeInvalidInfo(validInfo: CallInfo) {
@@ -191,16 +198,19 @@ class CallInfoRow(id: EntityID<Int>) : IntEntity(id), CallInfo {
         argsTypesRaw.split(ARGUMENTS_TYPES_SEPARATOR).filter { it != "" }
     }
 
+    override val returnType: String by CallInfoTable.returnType
+
     override fun argumentsTypesJoinToString(): String {
         return argsTypesRaw
     }
 
     override fun toString(): String {
         // just for pretty debugging :)
-        return argumentsTypes.joinToString(separator = ", ", prefix = "[", postfix = "]")
+        return "arguments: " + argumentsTypes.joinToString(separator = ", ", prefix = "[", postfix = "]") +
+                " return: $returnType"
     }
 
-    fun copy(): CallInfo = CallInfoImpl(methodInfo, argumentsTypes)
+    fun copy(): CallInfo = CallInfoImpl(methodInfo.copy(), argumentsTypes, returnType)
 }
 
 object SignatureTable : IntIdTableWithDependency<SignatureInfo, MethodInfo>(MethodInfoTable) {
