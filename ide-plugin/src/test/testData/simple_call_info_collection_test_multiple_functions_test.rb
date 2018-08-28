@@ -1,8 +1,10 @@
 class A
     def foo(a, b)
+        a || b
     end
 
     def bar(a)
+        a && A.new
     end
 end
 
