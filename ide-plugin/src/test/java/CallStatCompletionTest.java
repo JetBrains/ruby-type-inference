@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
 public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestCase {
@@ -135,6 +136,43 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
         assertEquals(1, callInfos.size());
         assertTrue(allCallInfosHaveNumberOfArguments(callInfos, 2));
         assertTrue(callInfosContainsUnique(callInfos, asList("TrueClass", "FalseClass"), "FalseClass"));
+    }
+
+    public void testCallInfoOfNestedClass() throws StorageException {
+        List<CallInfo> callInfos = runAndGetCallInfos("call_info_of_nested_class_test.rb",
+                createMethodInfo("M::A", "foo"));
+        assertEquals(1, callInfos.size());
+        assertTrue(allCallInfosHaveNumberOfArguments(callInfos, 1));
+        assertTrue(callInfosContainsUnique(callInfos, singletonList("M::A"), "M::A"));
+    }
+
+    public void testTopLevelMethodsCallInfoCollection() throws StorageException {
+        List<CallInfo> callInfos = runAndGetCallInfos("top_level_methods_call_info_collection_test.rb",
+                createMethodInfo("Object", "foo"));
+        assertEquals(4, callInfos.size());
+        assertTrue(allCallInfosHaveNumberOfArguments(callInfos, 2));
+        assertTrue(callInfosContainsUnique(callInfos, asList("TrueClass", "FalseClass"), "TrueClass"));
+        assertTrue(callInfosContainsUnique(callInfos, asList("FalseClass", "Symbol"), "Symbol"));
+        assertTrue(callInfosContainsUnique(callInfos, asList("String", "TrueClass"), "Regexp"));
+        assertTrue(callInfosContainsUnique(callInfos, asList("String", "TrueClass"), "String"));
+    }
+
+    public void testDuplicatesInCallInfoTable() throws StorageException {
+        List<CallInfo> callInfos = runAndGetCallInfos("duplicates_in_callinfo_table_test.rb",
+                createMethodInfo("Object", "foo"));
+        assertEquals(3, callInfos.size());
+        assertTrue(allCallInfosHaveNumberOfArguments(callInfos, 1));
+        assertTrue(callInfosContainsUnique(callInfos, singletonList("String"), "String"));
+        assertTrue(callInfosContainsUnique(callInfos, singletonList("String"), "FalseClass"));
+        assertTrue(callInfosContainsUnique(callInfos, singletonList("FalseClass"), "FalseClass"));
+    }
+
+    public void testMethodWithoutParameters() throws StorageException {
+        List<CallInfo> callInfos = runAndGetCallInfos("method_without_parameters_test.rb",
+                createMethodInfo("Object", "foo"));
+        assertEquals(1, callInfos.size());
+        assertTrue(allCallInfosHaveNumberOfArguments(callInfos, 0));
+        assertTrue(callInfosContainsUnique(callInfos, emptyList(), "String"));
     }
 
     public void testMultipleExecution() {
