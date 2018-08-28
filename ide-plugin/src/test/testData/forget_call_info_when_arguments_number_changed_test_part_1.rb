@@ -1,5 +1,6 @@
 class A
     def foo(a)
+        :symbol
     end
 end
 

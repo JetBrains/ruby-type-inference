@@ -1,5 +1,6 @@
 class A
     def foo(a, b)
+        b
     end
 end
 

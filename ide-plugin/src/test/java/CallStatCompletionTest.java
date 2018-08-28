@@ -25,7 +25,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
+
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 
 public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestCase {
 
@@ -68,12 +70,11 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
         List<CallInfo> callInfos = runAndGetCallInfos("simple_call_info_collection_test.rb",
                 createMethodInfo("AClass", "foo"));
         assertEquals(1, callInfos.size());
-        List<String> argumentsTypes = callInfos.get(0).getArgumentsTypes();
-        assertEquals(1, argumentsTypes.size());
-        assertEquals("String", argumentsTypes.get(0));
+        assertTrue(allCallInfosHaveNumberOfArguments(callInfos, 1));
+        assertTrue(callInfosContainsUnique(callInfos, singletonList("String"), "Symbol"));
     }
 
-    public void testSimpleCallInfosCollectionMultipleFunctinos() throws StorageException {
+    public void testSimpleCallInfosCollectionMultipleFunctions() throws StorageException {
         executeScript("simple_call_info_collection_test_multiple_functions_test.rb");
         waitForServer();
 
@@ -83,17 +84,14 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
                 createMethodInfo("A", "bar"), null));
 
         assertEquals(1, fooCallInfos.size());
-        assertEquals(2, fooCallInfos.stream().findAny().get().getNumberOfArguments());
-        List<String> fooArgumentsTypes = fooCallInfos.get(0).getArgumentsTypes();
-        assertEquals("String", fooArgumentsTypes.get(0));
-        assertEquals("Class", fooArgumentsTypes.get(1));
+        assertTrue(allCallInfosHaveNumberOfArguments(fooCallInfos, 2));
+        assertTrue(callInfosContainsUnique(fooCallInfos, asList("String", "Class"), "String"));
 
         assertEquals(3, barCallInfos.size());
-        assertEquals(1, barCallInfos.stream().findAny().get().getNumberOfArguments());
-        List<String> barTypes = barCallInfos.stream().map(x -> x.getArgumentsTypes().get(0)).collect(Collectors.toList());
-        assertTrue(barTypes.contains("TrueClass"));
-        assertTrue(barTypes.contains("FalseClass"));
-        assertTrue(barTypes.contains("Symbol"));
+        assertTrue(allCallInfosHaveNumberOfArguments(barCallInfos, 1));
+        assertTrue(callInfosContainsUnique(barCallInfos, singletonList("TrueClass"), "A"));
+        assertTrue(callInfosContainsUnique(barCallInfos, singletonList("FalseClass"), "FalseClass"));
+        assertTrue(callInfosContainsUnique(barCallInfos, singletonList("Symbol"), "A"));
     }
 
     public void testSimpleCallInfosCollectionWithMultipleArguments() throws StorageException {
@@ -101,49 +99,42 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
                 createMethodInfo("AClass", "foo"));
 
         assertEquals(1, callInfos.size());
-
-        List<String> argumentsTypes = callInfos.get(0).getArgumentsTypes();
-
-        assertEquals(2, argumentsTypes.size());
-        assertEquals("String", argumentsTypes.get(0));
-        assertEquals("TrueClass", argumentsTypes.get(1));
+        assertTrue(allCallInfosHaveNumberOfArguments(callInfos, 2));
+        assertTrue(callInfosContainsUnique(callInfos, asList("String", "TrueClass"), "Regexp"));
     }
 
     public void testSaveTypesBetweenLaunches() throws StorageException {
         List<CallInfo> callInfos = runAndGetCallInfos("save_types_between_launches_test_part_1.rb",
                 createMethodInfo("A", "foo"));
         assertEquals(2, callInfos.size());
-        assertEquals(1, callInfos.stream().findAny().get().getNumberOfArguments());
+        assertTrue(allCallInfosHaveNumberOfArguments(callInfos, 1));
 
-        List<String> argumentsTypes = callInfos.stream().map(x -> x.getArgumentsTypes().get(0))
-                .collect(Collectors.toList());
-        assertTrue(argumentsTypes.contains("String"));
-        assertTrue(argumentsTypes.contains("Class"));
+        assertTrue(callInfosContainsUnique(callInfos, singletonList("String"), "Symbol"));
+        assertTrue(callInfosContainsUnique(callInfos, singletonList("Class"), "A"));
 
         callInfos = runAndGetCallInfos("save_types_between_launches_test_part_2.rb",
                 createMethodInfo("A", "foo"));
-        assertEquals(3, callInfos.size());
-        assertEquals(1, callInfos.stream().findAny().get().getNumberOfArguments());
+        assertEquals(4, callInfos.size());
+        assertTrue(allCallInfosHaveNumberOfArguments(callInfos, 1));
 
-        argumentsTypes = callInfos.stream().map(x -> x.getArgumentsTypes().get(0)).collect(Collectors.toList());
-        assertTrue(argumentsTypes.contains("String"));
-        assertTrue(argumentsTypes.contains("Class"));
-        assertTrue(argumentsTypes.contains("TrueClass"));
+        assertTrue(callInfosContainsUnique(callInfos, singletonList("String"), "Symbol"));
+        assertTrue(callInfosContainsUnique(callInfos, singletonList("Class"), "A"));
+        assertTrue(callInfosContainsUnique(callInfos, singletonList("TrueClass"), "FalseClass"));
+        assertTrue(callInfosContainsUnique(callInfos, singletonList("String"), "Regexp"));
     }
 
     public void testForgetCallInfoWhenArgumentsNumberChanged() throws StorageException {
         List<CallInfo> callInfos = runAndGetCallInfos("forget_call_info_when_arguments_number_changed_test_part_1.rb",
                 createMethodInfo("A", "foo"));
         assertEquals(1, callInfos.size());
-        assertEquals(1, callInfos.stream().findAny().get().getNumberOfArguments());
-        assertEquals("String", callInfos.get(0).getArgumentsTypes().get(0));
+        assertTrue(allCallInfosHaveNumberOfArguments(callInfos, 1));
+        assertTrue(callInfosContainsUnique(callInfos, singletonList("String"), "Symbol"));
 
         callInfos = runAndGetCallInfos("forget_call_info_when_arguments_number_changed_test_part_2.rb",
                 createMethodInfo("A", "foo"));
         assertEquals(1, callInfos.size());
-        assertEquals(2, callInfos.stream().findAny().get().getNumberOfArguments());
-        assertEquals("TrueClass", callInfos.get(0).getArgumentsTypes().get(0));
-        assertEquals("FalseClass", callInfos.get(0).getArgumentsTypes().get(1));
+        assertTrue(allCallInfosHaveNumberOfArguments(callInfos, 2));
+        assertTrue(callInfosContainsUnique(callInfos, asList("TrueClass", "FalseClass"), "FalseClass"));
     }
 
     public void testMultipleExecution() {
@@ -159,7 +150,7 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
         assertEquals(1, edges.values().stream().distinct().count());
         Map<ContractTransition, SignatureNode> nextEdges = edges.values().iterator().next().getTransitions();
 
-        assertEquals(Collections.singleton("Abacaba"), nextEdges.keySet().iterator().next().getValue(Collections.singletonList(Collections.singleton("Abacaba"))));
+        assertEquals(Collections.singleton("Abacaba"), nextEdges.keySet().iterator().next().getValue(singletonList(Collections.singleton("Abacaba"))));
     }
 
     public void testRefLinks() {
@@ -272,4 +263,14 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
         return MethodInfoKt.MethodInfo(ClassInfoKt.ClassInfo(className), methodName, RVisibility.PUBLIC);
     }
 
+    private static boolean callInfosContainsUnique(final @NotNull List<CallInfo> callInfos,
+                                                   final @NotNull List<String> arguments,
+                                                   final @NotNull String returnType) {
+        return callInfos.stream().filter(callInfo -> callInfo.getArgumentsTypes().equals(arguments) &&
+                callInfo.getReturnType().equals(returnType)).count() == 1;
+    }
+
+    private static boolean allCallInfosHaveNumberOfArguments(final @NotNull List<CallInfo> callInfos, int numberOfArguments) {
+        return callInfos.stream().allMatch(callInfo -> callInfo.getNumberOfArguments() == numberOfArguments);
+    }
 }
