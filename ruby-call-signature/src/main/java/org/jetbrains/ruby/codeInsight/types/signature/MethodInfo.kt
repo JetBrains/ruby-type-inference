@@ -8,7 +8,7 @@ interface MethodInfo {
 
     data class Impl(override val classInfo: ClassInfo,
                     override val name: String,
-                    override val visibility: RVisibility,
+                    override val visibility: RVisibility = RVisibility.PUBLIC,
                     override val location: Location? = null) : MethodInfo
 
     fun validate(): Boolean {

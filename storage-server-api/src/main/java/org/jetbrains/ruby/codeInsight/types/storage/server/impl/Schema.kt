@@ -6,6 +6,7 @@ import org.jetbrains.exposed.dao.IntEntityClass
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.statements.UpdateBuilder
 import org.jetbrains.exposed.sql.transactions.TransactionManager
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.ruby.codeInsight.types.signature.*
 import org.jetbrains.ruby.codeInsight.types.signature.serialization.BlobDeserializer
 import org.jetbrains.ruby.codeInsight.types.signature.serialization.BlobSerializer
@@ -143,6 +144,17 @@ object CallInfoTable : IntIdTableWithDependency<CallInfo, MethodInfo>(MethodInfo
     val numberOfArguments = integer("number_of_arguments")
 
     val returnType = varchar("return_type", RETURN_TYPE_STRING_LENGTH)
+
+    /**
+     * Deletes all info from [CallInfoTable] related to [methodInfo].
+     * **Call this function only inside [transaction] block.**
+     */
+    fun deleteAllInfoRelatedTo(methodInfo: MethodInfo) {
+        val methodInfoId = MethodInfoTable.findRowId(methodInfo) ?: return
+        CallInfoTable.deleteWhere {
+            CallInfoTable.methodInfoId eq methodInfoId
+        }
+    }
 
     override fun insertInfoIfNotContains(info: CallInfo): EntityID<Int>? {
         val count = MethodInfoTable.findRowId(info.methodInfo)?.let {

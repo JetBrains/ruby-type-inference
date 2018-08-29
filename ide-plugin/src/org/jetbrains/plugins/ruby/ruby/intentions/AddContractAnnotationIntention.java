@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.ruby.ruby.intentions;
 
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -19,7 +18,9 @@ import org.jetbrains.plugins.ruby.ruby.codeInsight.types.CoreTypes;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyStatTypeProviderImpl;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RFile;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RubyElementFactory;
+import org.jetbrains.plugins.ruby.ruby.lang.psi.RubyPsiUtil;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.RMethod;
+import org.jetbrains.plugins.ruby.ruby.lang.psi.variables.RFName;
 import org.jetbrains.ruby.codeInsight.types.signature.MethodInfo;
 import org.jetbrains.ruby.codeInsight.types.signature.SignatureContract;
 import org.jetbrains.ruby.codeInsight.types.signature.SignatureNode;
@@ -34,28 +35,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class AddContractAnnotationIntention extends BaseIntentionAction {
-
-    @Nls
+public class AddContractAnnotationIntention extends BaseRubyMethodIntentionAction {
+    @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
     public String getFamilyName() {
-        return "Add type contract";
+        return getText();
     }
 
-    @NotNull
-    @Override
-    public String getText() {
-        return "Add type contract";
-    }
-
-    public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
-        final int offset = editor.getCaretModel().getOffset();
-        final PsiElement element = file.findElementAt(offset);
-        final RMethod method = PsiTreeUtil.getParentOfType(element, RMethod.class);
+    public boolean isAvailable(@NotNull final Project project, final @NotNull Editor editor, @NotNull final PsiFile file) {
+        if (!super.isAvailable(project, editor, file)) {
+            return false;
+        }
         if (!file.isWritable()) {
             return false;
         }
+        RFName rfName = getRFName(editor, file);
+        if (rfName == null) {
+            return false;
+        }
+        RMethod method = RubyPsiUtil.getContainingRMethod(rfName);
         if (method == null) {
             return false;
         }
@@ -143,4 +142,9 @@ public class AddContractAnnotationIntention extends BaseIntentionAction {
         }
     }
 
+    @NotNull
+    @Override
+    protected String getTextByRubyFunctionNamePsiElement(@Nullable RFName element) {
+        return "Add type contract";
+    }
 }

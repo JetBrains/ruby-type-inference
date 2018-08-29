@@ -30,6 +30,10 @@
             <className>org.jetbrains.plugins.ruby.ruby.intentions.AddContractAnnotationIntention</className>
         </intentionAction>
 
+        <intentionAction>
+            <className>org.jetbrains.plugins.ruby.ruby.intentions.RemoveCollectedInfoIntention</className>
+        </intentionAction>
+
         <postStartupActivity implementation="org.jetbrains.plugins.ruby.ruby.codeInsight.TrackerDataLoader"/>
 
         <applicationConfigurable groupId="language"
