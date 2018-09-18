@@ -1,0 +1,2 @@
+All ruby methods calls from ruby code located in this directory will be caught
+by type_tracker.rb even if '--project-root' key is passed to arg-scanner

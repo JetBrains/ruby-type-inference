@@ -49,6 +49,7 @@ module ArgScanner
 
 
   class TypeTracker
+    PATCHES_FOLDER_PATH = 'arg_scanner/patches/'
     include Singleton
 
     def initialize
@@ -66,7 +67,7 @@ module ArgScanner
       @enable_debug = ENV["ARG_SCANNER_DEBUG"]
       @performance_monitor = if @enable_debug then TypeTrackerPerformanceMonitor.new else nil end
       TracePoint.trace(:call, :return) do |tp|
-        if @project_root != nil && !tp.path.start_with?(@project_root)
+        if @project_root != nil && !tp.path.start_with?(@project_root)# && tp.path.rindex(PATCHES_FOLDER_PATH) == nil
           next
         end
 

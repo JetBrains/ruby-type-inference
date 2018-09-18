@@ -9,6 +9,7 @@ end
 unless ENV["ARG_SCANNER_ENABLE_TYPE_TRACKER"].nil?
   require_relative 'arg_scanner'
   require_relative 'type_tracker'
+  require_relative 'patches/attr_accessor_patch'
 
   # instantiating type tracker will enable calls tracing and sending the data
   ArgScanner::TypeTracker.instance
