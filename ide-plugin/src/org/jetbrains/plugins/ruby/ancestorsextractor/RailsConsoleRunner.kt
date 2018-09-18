@@ -10,9 +10,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.openapi.vfs.VirtualFileManager
+import org.jetbrains.plugins.ruby.ancestorsextractor.RailsConsoleRunner.Listener
 import org.jetbrains.plugins.ruby.rails.Rails3Constants
 import org.jetbrains.plugins.ruby.rails.Rails4Constants
+import org.jetbrains.plugins.ruby.ruby.RubyUtil
 import org.jetbrains.plugins.ruby.ruby.run.context.RubyScriptExecutionContext
 import java.io.File
 import java.io.IOException
@@ -114,11 +115,13 @@ class RailsConsoleRunner(
             }
         })
 
-        val processOutput = RubyScriptExecutionContext(Paths.get(projectDirPath, Rails4Constants.CONSOLE4_SCRIPT).toString(), sdk)
-                .withInterpreterOptions(*rubyConsoleArguments)
+        val processOutput = RubyScriptExecutionContext.create(Paths.get(projectDirPath, Rails4Constants.CONSOLE4_SCRIPT).toString(), sdk)
+//                .withInterpreterOptions(*rubyConsoleArguments) todo API doesn't exist anymore :(
+                // todo replace with .withInterpreterOptions when API becomes available
+                .withAdditionalEnvs(mapOf(RubyUtil.RUBYOPT to rubyConsoleArguments.joinToString(separator = " ")))
                 .withArguments(Rails3Constants.CONSOLE, *railsConsoleArguments)
                 .withExecutionMode(executionMode)
-                .withWorkingDir(VirtualFileManager.getInstance().findFileByUrl(projectDirPath)).executeScript()
+                .withWorkingDirPath(projectDirPath).executeScript()
                 ?: throw ExecutionException("Error occurred while launching rails console")
 
         listener?.irbConsoleExecuted()
