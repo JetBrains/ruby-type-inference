@@ -18,7 +18,8 @@ import org.jetbrains.ruby.codeInsight.types.storage.server.StorageException;
 import org.jetbrains.ruby.runtime.signature.server.SignatureServer;
 import org.junit.Assert;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,7 +35,7 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
 
     private static final Logger LOGGER = Logger.getInstance("CallStatCompletionTest");
 
-    private RSignatureProvider signatureProvider = new SignatureStorageImpl();
+    private final RSignatureProvider signatureProvider = new SignatureStorageImpl();
 
     @Override
     protected String getTestDataPath() {

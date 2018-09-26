@@ -57,6 +57,7 @@ class  ImportExportTest : LightPlatformCodeInsightFixtureTestCase() {
         super.tearDown()
     }
 
+    @Test
     fun testExportAllAndReimport() {
         TestCase.assertNotNull(tempFile)
 
@@ -89,6 +90,7 @@ class  ImportExportTest : LightPlatformCodeInsightFixtureTestCase() {
 
     }
 
+    @Test
     fun testExportAllowedAndReimport() {
         TestCase.assertNotNull(tempFile)
 

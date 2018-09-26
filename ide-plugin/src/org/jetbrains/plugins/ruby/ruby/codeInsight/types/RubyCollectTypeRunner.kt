@@ -19,9 +19,9 @@ class RubyCollectTypeRunner : RubyProgramRunner() {
 
     @Throws(ExecutionException::class)
     override fun doExecute(state: RunProfileState,
-                           env: ExecutionEnvironment): RunContentDescriptor? {
+                           environment: ExecutionEnvironment): RunContentDescriptor? {
         if (state is RubyAbstractCommandLineState) {
-            val (_, _, typeTrackerEnabled) = ServiceManager.getService(env.project, RubyTypeContractsSettings::class.java)
+            val (_, _, typeTrackerEnabled) = ServiceManager.getService(environment.project, RubyTypeContractsSettings::class.java)
             val newConfig = state.config.clone()
             val pathToState = tryGenerateTmpDirPath()
 
@@ -31,23 +31,20 @@ class RubyCollectTypeRunner : RubyProgramRunner() {
                             false,
                             pathToState
                     ))
-            val newState = newConfig.getState(env.executor, env)
+            val newState = newConfig.getState(environment.executor, environment)
             if (newState != null) {
-                return super.doExecute(newState, env)
+                return super.doExecute(newState, environment)
             }
         }
 
         return null
     }
 
-    private fun tryGenerateTmpDirPath(): String? {
-        try {
-            val tmpDir = FileUtil.createTempDirectory("type-tracker", "")
-            return tmpDir.absolutePath
-        } catch (ignored: IOException) {
-            return null
-        }
-
+    private fun tryGenerateTmpDirPath(): String? = try {
+        val tmpDir = FileUtil.createTempDirectory("type-tracker", "")
+        tmpDir.absolutePath
+    } catch (ignored: IOException) {
+        null
     }
 
     override fun canRun(executorId: String, profile: RunProfile): Boolean {
