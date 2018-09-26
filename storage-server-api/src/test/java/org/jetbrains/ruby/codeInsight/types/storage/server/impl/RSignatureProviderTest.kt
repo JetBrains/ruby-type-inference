@@ -1,7 +1,6 @@
 package org.jetbrains.ruby.codeInsight.types.storage.server.impl
 
 import junit.framework.TestCase
-import org.jetbrains.exposed.sql.Transaction
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.transactions.TransactionManager
@@ -10,30 +9,17 @@ import org.jetbrains.ruby.codeInsight.types.signature.serialization.BlobSerializ
 import org.jetbrains.ruby.codeInsight.types.signature.serialization.SignatureContract
 import org.jetbrains.ruby.codeInsight.types.signature.serialization.StringDataInput
 import org.jetbrains.ruby.codeInsight.types.storage.server.DatabaseProvider
+import org.jetbrains.ruby.codeInsight.types.storage.server.testutil.doDBTest
 import org.junit.Test
 
 class RSignatureProviderTest : TestCase() {
-    private var transaction: Transaction? = null
-
-    override fun setUp() {
-        DatabaseProvider.connect(true)
-        super.setUp()
-        transaction = TransactionManager.manager.newTransaction()
-        DatabaseProvider.createAllDatabases()
-    }
-
-    override fun tearDown() {
-        try {
-            DatabaseProvider.dropAllDatabases()
-        } finally {
-            transaction?.commit()
-        }
-        transaction = null
-        super.tearDown()
+    init {
+        DatabaseProvider.connectToInMemoryDB()
     }
 
     @Test
-    fun testPutGet() {
+    fun testPutGet() = doDBTest {
+        DatabaseProvider.createAllDatabases()
         GemInfoTable.insert { it[name] = "rails"; it[version] = "5.0.0.beta1" }
         val insertedGem = GemInfoRow.all().first()
         assertEquals("rails", insertedGem.name)
@@ -52,7 +38,7 @@ class RSignatureProviderTest : TestCase() {
     }
 
     @Test
-    fun testClosestGem() {
+    fun testClosestGem() = doDBTest {
         val gems = listOf(
                 GemInfo("name1", "0.1"),
                 GemInfo("name1", "0.2"),
@@ -78,7 +64,7 @@ class RSignatureProviderTest : TestCase() {
     }
 
     @Test
-    fun testRegisteredClasses() {
+    fun testRegisteredClasses() = doDBTest {
         val insertResult = GemInfoTable.insertAndGetId { it[name] = "test_gem"; it[version] = "0.1" }
         ClassInfoTable.insert { it[fqn] = "Test1"; it[gemInfo] = insertResult }
         ClassInfoTable.insert { it[fqn] = "Test2"; it[gemInfo] = insertResult }
@@ -91,7 +77,7 @@ class RSignatureProviderTest : TestCase() {
     }
 
     @Test
-    fun testRegisteredMethods() {
+    fun testRegisteredMethods() = doDBTest {
         val gem = GemInfoTable.insertAndGetId { it[name] = "test_gem"; it[version] = "1.2.3" }
         val class1 = ClassInfoTable.insertAndGetId { it[fqn] = "Test::Fqn" }
         val class2 = ClassInfoTable.insertAndGetId { it[fqn] = "Test2::Fqn" }
@@ -112,7 +98,7 @@ class RSignatureProviderTest : TestCase() {
     }
 
     @Test
-    fun testSignatures() {
+    fun testSignatures() = doDBTest {
         val gem = GemInfoTable.insertAndGetId { it[name] = "test_gem"; it[version] = "1.2.3" }
         val clazz = ClassInfoTable.insertAndGetId { it[fqn] = "Test::Fqn"; it[gemInfo] = gem }
         val method1 = MethodInfoTable.insertAndGetId {
@@ -149,7 +135,7 @@ class RSignatureProviderTest : TestCase() {
     }
 
     @Test
-    fun testSignaturesWithAPIPut() {
+    fun testSignaturesWithAPIPut() = doDBTest {
         val gem = GemInfo("test_gem", "1.2.3")
         val clazz = ClassInfo(gem, "Test::Fqn")
         val method1 = MethodInfo(clazz,
@@ -179,7 +165,7 @@ class RSignatureProviderTest : TestCase() {
     }
 
     @Test
-    fun testSignaturesWithSignatureReplace() {
+    fun testSignaturesWithSignatureReplace() = doDBTest {
         val gem = GemInfo("test_gem", "1.2.3")
         val clazz = ClassInfo(gem, "Test::Fqn")
         val method = MethodInfo(clazz,
