@@ -6,11 +6,15 @@ import org.jetbrains.ruby.codeInsight.types.storage.server.DatabaseProvider
 import org.jetbrains.ruby.codeInsight.types.storage.server.StorageException
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.RSignatureProviderImpl
 import java.io.File
+import java.nio.file.Paths
+
+const val DB_NAME = "ruby-type-inference-db"
 
 fun main(arg : Array<String>) {
-    DatabaseProvider.connect()
+    val outputDirPath = parseCommandLine(arg)
+    DatabaseProvider.connectToDB(Paths.get(outputDirPath, DB_NAME).toString())
 
-    val outputDir = File(parseCommandLine(arg))
+    val outputDir = File(outputDirPath)
 
     if (!outputDir.exists()) {
         outputDir.mkdirs()

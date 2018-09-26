@@ -5,6 +5,7 @@ import org.jetbrains.ruby.codeInsight.types.signature.SignatureInfo
 import org.jetbrains.ruby.codeInsight.types.storage.server.DatabaseProvider
 import org.jetbrains.ruby.codeInsight.types.storage.server.StorageException
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.RSignatureProviderImpl
+import java.nio.file.Paths
 
 fun dumpSignatureInfo(signatureInfo: SignatureInfo) {
     val methodInfo = signatureInfo.methodInfo
@@ -20,8 +21,8 @@ fun dumpSignatureInfo(signatureInfo: SignatureInfo) {
 
 
 fun main(args : Array<String>) {
-
-    DatabaseProvider.connect()
+    val outputDirPath = parseCommandLine(args)
+    DatabaseProvider.connectToDB(Paths.get(outputDirPath, DB_NAME).toString())
 
     val map = HashMap<String, MutableList<SignatureInfo>>()
 

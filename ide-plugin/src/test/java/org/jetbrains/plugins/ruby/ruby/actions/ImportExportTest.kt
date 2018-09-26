@@ -6,7 +6,10 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import junit.framework.TestCase
 import org.jetbrains.exposed.dao.EntityID
-import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.Transaction
+import org.jetbrains.exposed.sql.deleteAll
+import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.plugins.ruby.settings.PerGemSettings
 import org.jetbrains.ruby.codeInsight.types.signature.ClassInfo
@@ -20,6 +23,7 @@ import org.jetbrains.ruby.codeInsight.types.storage.server.impl.GemInfoTable
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.MethodInfoTable
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.SignatureTable
 import org.jetbrains.ruby.runtime.signature.server.SignatureServer
+import org.junit.Test
 import java.io.File
 
 class  ImportExportTest : LightPlatformCodeInsightFixtureTestCase() {
@@ -30,7 +34,7 @@ class  ImportExportTest : LightPlatformCodeInsightFixtureTestCase() {
     override fun setUp() {
         super.setUp()
 
-        DatabaseProvider.connect(true)
+        DatabaseProvider.connectToInMemoryDB()
         transaction = TransactionManager.manager.newTransaction()
         DatabaseProvider.createAllDatabases()
 
