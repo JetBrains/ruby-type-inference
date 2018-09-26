@@ -48,18 +48,11 @@ object SignatureServer {
 
     @JvmStatic
     fun main(args: Array<String>) {
-        DatabaseProvider.connect()
+        parseArgs(args).let {
+            DatabaseProvider.connectToDB(it.dbFilePath)
+        }
         DatabaseProvider.createAllDatabases()
-
-        Thread {
-            while (true) {
-                try {
-                    SignatureServer.runServer()
-                } catch (e: Throwable) {
-                    System.err.println(e)
-                }
-            }
-        }.start()
+        SignatureServer.runServerAsyncIfNotRunYet(isDaemon = false)
     }
 
     fun getContract(info: MethodInfo): SignatureContract? {
@@ -78,24 +71,31 @@ object SignatureServer {
 
     fun isProcessingRequests() = !isReady.get()
 
+    private val socketDispatcher = SocketDispatcher()
+
+    private val pollJsonThread = PollJsonThread()
+
     /**
-     * Run server
+     * Run server in separate [Thread] if not run yet
      * @param port specify port to run server on. (7777 is used as default port) you can also specify
      * [AUTOMATICALLY_ALLOCATED_PORT] to use a port number that is automatically allocated
+     *
+     * @return true if server run successfully; false if has already been run before this function call
      */
-    fun runServer(port: Int = portNumber) {
-        portNumber = port
-        LOGGER.info("Starting server")
+    @JvmStatic
+    fun runServerAsyncIfNotRunYet(port: Int = portNumber, isDaemon: Boolean): Boolean {
+        if (socketDispatcher.state == Thread.State.NEW && pollJsonThread.state == Thread.State.NEW) {
+            LOGGER.info("Starting server")
+            portNumber = port
 
-        SocketDispatcher().start()
+            socketDispatcher.isDaemon = isDaemon
+            socketDispatcher.start()
 
-        try {
-            while (true) {
-                pollJson()
-            }
-        } finally {
-            LOGGER.warning("Exiting...")
+            pollJsonThread.isDaemon = isDaemon
+            pollJsonThread.start()
+            return true
         }
+        return false
     }
 
     private fun pollJson() {
@@ -218,6 +218,29 @@ object SignatureServer {
         }
     }
 
+    private data class ParsedArgs(val dbFilePath: String)
+    private fun parseArgs(args: Array<String>): ParsedArgs {
+        if (args.size != 1) {
+            System.err.println("One argument required: path-to-h2-db-file")
+            System.exit(1)
+        }
+        return ParsedArgs(args.single())
+    }
+
+    private class PollJsonThread : Thread() {
+        override fun run() {
+            while (true) {
+                try {
+                    pollJson()
+                } catch (ex: InterruptedException) {
+                    break
+                } catch (ex: Throwable) {
+                    ex.printStackTrace(System.err)
+                }
+            }
+        }
+    }
+
     private class SocketDispatcher : Thread() {
         override fun run() {
             var handlersCounter = 0
@@ -225,7 +248,9 @@ object SignatureServer {
                 portNumber = listener.localPort
                 LOGGER.info("Used port is: ${listener.localPort}")
                 while (true) {
-                    SignatureHandler(listener.accept(), handlersCounter++).start()
+                    SignatureHandler(listener.accept(), handlersCounter++)
+                            .also { it.isDaemon = this.isDaemon }
+                            .start()
                 }
             }
         }

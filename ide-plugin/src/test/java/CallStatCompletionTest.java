@@ -16,6 +16,7 @@ import org.jetbrains.ruby.codeInsight.types.storage.server.RSignatureProvider;
 import org.jetbrains.ruby.codeInsight.types.storage.server.SignatureStorageImpl;
 import org.jetbrains.ruby.codeInsight.types.storage.server.StorageException;
 import org.jetbrains.ruby.runtime.signature.server.SignatureServer;
+import org.jetbrains.ruby.runtime.signature.server.SignatureServerKt;
 import org.junit.Assert;
 
 import java.io.IOException;
@@ -36,6 +37,11 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
     private static final Logger LOGGER = Logger.getInstance("CallStatCompletionTest");
 
     private final RSignatureProvider signatureProvider = new SignatureStorageImpl();
+
+    public CallStatCompletionTest() {
+        DatabaseProvider.connectToInMemoryDB();
+        SignatureServer.runServerAsyncIfNotRunYet(SignatureServerKt.AUTOMATICALLY_ALLOCATED_PORT, true);
+    }
 
     @Override
     protected String getTestDataPath() {
