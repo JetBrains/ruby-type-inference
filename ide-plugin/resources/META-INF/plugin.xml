@@ -23,7 +23,6 @@
         <programRunner implementation="org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyCollectTypeRunner"/>
         <programRunner implementation="org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyCollectStateRunner"/>
 
-        <applicationService serviceImplementation="org.jetbrains.plugins.ruby.ruby.codeInsight.SignatureService"/>
         <applicationService serviceImplementation="org.jetbrains.plugins.ruby.settings.RubyTypeContractsSettings"/>
 
         <intentionAction>
@@ -35,6 +34,7 @@
         </intentionAction>
 
         <postStartupActivity implementation="org.jetbrains.plugins.ruby.ruby.codeInsight.TrackerDataLoader"/>
+        <postStartupActivity implementation="org.jetbrains.plugins.ruby.ruby.codeInsight.ConnectToDBActivity"/>
 
         <applicationConfigurable groupId="language"
                                  groupWeight="130"

@@ -61,7 +61,7 @@ _(i)_ requiring it from Ruby code and _(ii)_ using IJ/RubyMine plugin.
    it could be run by running
   
    ```sh
-   ./gradlew contract-creator:runServer
+   ./gradlew contract-creator:runServer --args path-to-db
    ```
    
    If you're using RubyMine plugin, there is no need to run server manually since it will

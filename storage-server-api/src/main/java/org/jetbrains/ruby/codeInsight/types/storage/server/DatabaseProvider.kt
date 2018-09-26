@@ -10,10 +10,12 @@ object DatabaseProvider {
     private const val H2_DRIVER = "org.h2.Driver"
     private const val H2_DB_FILE_EXTENSION = ".mv.db"
 
+    @JvmStatic
     fun connectToInMemoryDB() {
         Database.connect(IN_MEMORY_URL, driver = H2_DRIVER)
     }
 
+    @JvmStatic
     fun connectToDB(filePath: String) {
         val fixedFilePath = if (filePath.endsWith(H2_DB_FILE_EXTENSION)) {
             filePath.substring(0, filePath.lastIndexOf(H2_DB_FILE_EXTENSION))
