@@ -46,6 +46,10 @@ allprojects {
     }
 }
 
+task wrapper(type: Wrapper) {
+    gradleVersion = '4.10.2'
+}
+
 subprojects {
     if (it.name in ['storage-server-api', 'lambda-update-handler', 'lambda-put-handler', 'contract-creator', 'state-tracker', 'ide-plugin']) {
         dependencies {
