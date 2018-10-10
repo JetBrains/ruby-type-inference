@@ -44,23 +44,28 @@ class RubyParameterTypeProvider : AbstractRubyTypeProvider() {
         }
         if (expr is RIdentifier && expr.isParameter) {
             val method = RubyPsiUtil.getContainingRMethod(expr) ?: return null
-            val methodLineNumber = PsiUtilBase.findEditor(method)?.document?.getLineNumber(method.textOffset)?.plus(1)
             val rubyModuleName = RubyPsiUtil.getContainingRClassOrModule(method)?.fqn?.fullPath ?: "Object"
             val numberOfArgs = method.arguments.size
             val indexOfArgument = method.arguments.indexOfFirst { it.identifier == expr }
 
-            val info = MethodInfo.Impl(ClassInfo(rubyModuleName), method.fqn.shortName, RVisibility.PUBLIC,
-                    methodLineNumber?.let { Location(method.containingFile.virtualFile.path, methodLineNumber) })
+            val info = MethodInfo.Impl(ClassInfo(rubyModuleName), method.fqn.shortName, RVisibility.PUBLIC)
 
             val callInfos: List<CallInfo> = RSignatureProviderImpl().getRegisteredCallInfos(info, numberOfArgs)
 
-            return callInfos.map {
+            val returnType = callInfos.map {
                 if (indexOfArgument in 0 until it.numberOfArguments) {
                     RTypeFactory.createTypeClassName(it.argumentsTypes[indexOfArgument], expr)
                 } else {
                     REmptyType.INSTANCE
                 }
             }.unionTypesSmart()
+            return if (returnType == REmptyType.INSTANCE) {
+                // If we don't have any information about type then return null
+                // in order to allow to RubyMine try to determine type itself
+                null
+            } else {
+                returnType
+            }
         }
         return null
     }
