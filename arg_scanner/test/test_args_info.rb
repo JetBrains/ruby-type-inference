@@ -16,7 +16,7 @@ class TestArgsInfoWrapper
 
   end
 
-  def foo4(kw: 1, **rest)
+  def foo4(kw: 1, **rest1)
 
   end
 
@@ -80,7 +80,7 @@ class TestArgsInfo < Test::Unit::TestCase
       @args_info_wrapper.foo4(kw: Date.new)
     end
 
-    assert_equal ["KEY,Date,kw", "KEYREST,Hash"], type_tracker.last_args_info
+    assert_equal ["KEY,Date,kw", "KEYREST,Hash,rest1"], type_tracker.last_args_info
   end
 
   def test_reqkw_and_empty_kwrest
@@ -88,7 +88,7 @@ class TestArgsInfo < Test::Unit::TestCase
       @args_info_wrapper.foo5(kw: Date.new)
     end
 
-    assert_equal ["KEYREQ,Date,kw", "KEYREST,Hash"], type_tracker.last_args_info
+    assert_equal ["KEYREQ,Date,kw", "KEYREST,Hash,rest"], type_tracker.last_args_info
   end
 
   def test_reqkw_and_kwrest
@@ -96,7 +96,7 @@ class TestArgsInfo < Test::Unit::TestCase
       @args_info_wrapper.foo5(kw: Date.new, aa: 1, bb: '1')
     end
 
-    assert_equal ["KEYREQ,Date,kw", "KEYREST,Hash"], type_tracker.last_args_info
+    assert_equal ["KEYREQ,Date,kw", "KEYREST,Hash,rest"], type_tracker.last_args_info
   end
 
   def test_optkw_and_kwrest
@@ -105,7 +105,7 @@ class TestArgsInfo < Test::Unit::TestCase
     end
 
     assert type_tracker.last_args_info[0] == "KEY,Fixnum,kw" || type_tracker.last_args_info[0] == "KEY,Integer,kw"
-    assert type_tracker.last_args_info[1] == "KEYREST,Hash"
+    assert type_tracker.last_args_info[1] == "KEYREST,Hash,rest1"
   end
 
   def test_rest
