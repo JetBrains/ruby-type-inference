@@ -541,6 +541,7 @@ get_args_info()
         const ID *keywords = cfp->iseq->body->param.keyword->table;
         size_t kw_num = cfp->iseq->body->param.keyword->num;
         size_t required_num = cfp->iseq->body->param.keyword->required_num;
+        size_t rest_start = cfp->iseq->body->param.keyword->rest_start;
 
         LOG("%d %d\n", kw_num, required_num)
 
@@ -554,21 +555,16 @@ get_args_info()
             ID key = keywords[i];
             ans[ans_iterator] = fast_join(',', 3, "KEY", types[types_iterator], rb_id2name(key));
         }
-    }
 
-    if(param_size - has_block > 1 && has_kwrest && TYPE(*(ep + types_ids[types_iterator])) == T_FIXNUM)
-        types_iterator--;
+        if(param_size - has_block > 1 && has_kwrest && TYPE(*(ep + types_ids[types_iterator])) == T_FIXNUM)
+            types_iterator--;
 
-    for(i = 0; i < has_kwrest; i++, ans_iterator++, types_iterator--)
-    {
-        const char* name = rb_id2name(cfp->iseq->body->local_table[ans_iterator]);
-        LOG("%s\n", calc_sane_class_name(*(ep + types_ids[types_iterator])));
-        LOG("%d\n", rb_hash_size(*(ep + types_ids[types_iterator])));
-        const char *type;
+        for(i = 0; i < has_kwrest; i++, ans_iterator++, types_iterator--)
+        {
+            const char *name = rb_id2name(cfp->iseq->body->local_table[rest_start]);
 
-        type = types[types_iterator];
-
-        ans[ans_iterator] = fast_join(',', 3, "KEYREST", type, name);
+            ans[ans_iterator] = fast_join(',', 3, "KEYREST", types[types_iterator], name);
+        }
     }
 
     for(i = 0; i < has_block; i++, ans_iterator++, types_iterator--)

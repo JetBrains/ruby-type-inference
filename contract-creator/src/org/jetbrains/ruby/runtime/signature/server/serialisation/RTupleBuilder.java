@@ -48,15 +48,11 @@ public class RTupleBuilder {
             for (String argument : Arrays.asList(argsInfo.split("\\s*;\\s*"))) {
                 List<String> parts = Arrays.asList(argument.split("\\s*,\\s*"));
 
-                String name = null;
-
-                if (parts.size() > 2 && !parts.get(2).equals("nil"))
+                String name = "";
+                if (parts.size() == 3) {
+                    // It's possible that parameter in ruby doesn't have name, for example:
+                    // def foo(*); end
                     name = parts.get(2);
-
-                if (name == null) {
-                    // TODO[viuginick] investigate nullability
-//                    throw new RuntimeException("parse fail: <" + argsInfo + ">");
-                    name = "FUCKYOU";
                 }
 
                 myArgsInfo.add(new ParameterInfo(name, ParameterInfo.Type.valueOf(parts.get(0))));
