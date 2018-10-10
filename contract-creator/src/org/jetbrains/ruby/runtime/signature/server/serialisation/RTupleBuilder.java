@@ -24,7 +24,7 @@ public class RTupleBuilder {
         myMethodInfo = MethodInfoKt.MethodInfo(
                 ClassInfoKt.ClassInfo(
                         GemInfoKt.GemInfoFromFilePathOrNull(bean.path),
-                        beautifyClassName(bean.receiver_name)),
+                        beautifulClassName(bean.receiver_name)),
                 bean.method_name,
                 RVisibility.valueOf(bean.visibility),
                 new Location(bean.path, bean.lineno));
@@ -77,7 +77,7 @@ public class RTupleBuilder {
     }
 
     @NotNull
-    private String beautifyClassName(@NotNull String bean) {
+    private String beautifulClassName(@NotNull String bean) {
         if (bean.length() > 90) {
             return bean.substring(0, 90) + "...";
         }
