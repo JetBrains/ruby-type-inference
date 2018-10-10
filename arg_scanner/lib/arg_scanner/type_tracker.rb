@@ -110,7 +110,15 @@ module ArgScanner
       signature = signatures.pop
       if signature
         @performance_monitor.on_handled_return unless @performance_monitor.nil?
-        ArgScanner.handle_return(signature, tp.defined_class.name, tp.return_value.class.name)
+        defined_class = tp.defined_class.name
+        # if defined_class is nil then then it means that method is invoked from anonymous module.
+        # Then trying to extract name of it's anonymous module. For more details see
+        # CallStatCompletionTest#testAnonymousModuleMethodCall
+        if defined_class == nil
+          this = tp.binding.eval('self')
+          defined_class = this.name if this.respond_to?(:name)
+        end
+        ArgScanner.handle_return(signature, defined_class, tp.return_value.class.name)
       end
     end
 

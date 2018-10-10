@@ -182,6 +182,14 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
         assertTrue(callInfosContainsUnique(callInfos, emptyList(), "String"));
     }
 
+    public void testAnonymousModuleMethodCall() throws StorageException {
+        List<CallInfo> callInfos = runAndGetCallInfos("anonymous_module_method_call_test.rb",
+                createMethodInfo("A", "foo"));
+        assertEquals(1, callInfos.size());
+        assertTrue(allCallInfosHaveNumberOfArguments(callInfos, 2));
+        assertTrue(callInfosContainsUnique(callInfos, asList("String", "Symbol"), "TrueClass"));
+    }
+
     public void testMultipleExecution() {
         executeScript("multiple_execution_test1.rb");
         SignatureContract contract = doTestContract("multiple_execution_test2",
