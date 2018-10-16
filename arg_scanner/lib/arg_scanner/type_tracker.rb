@@ -52,11 +52,8 @@ module ArgScanner
     include Singleton
 
     def initialize
-      @server_port = ENV['ARG_SCANNER_SERVER_PORT']
-      if @server_port != nil
-          @server_port = @server_port.to_i
-      end
-      ArgScanner.set_server_port(@server_port)
+      server_port = ENV['ARG_SCANNER_SERVER_PORT'].to_i
+      ArgScanner.set_server_port(server_port)
 
       @catch_only_every_n_call = ENV['ARG_SCANNER_CATCH_ONLY_EVERY_N_CALL']
       @catch_only_every_n_call = @catch_only_every_n_call ? @catch_only_every_n_call.to_i : 1

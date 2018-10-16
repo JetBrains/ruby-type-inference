@@ -180,7 +180,8 @@ my_rb_vm_get_binding_creatable_next_cfp(const rb_thread_t *th, const rb_control_
 static VALUE
 set_server_port(VALUE self, VALUE server_port)
 {
-    int server_port_c = (server_port == Qnil ? SERVER_DEFAULT_PORT : FIX2INT(server_port));
+    int server_port_c = FIX2INT(server_port);
+    server_port_c = (server_port_c == 0 ? SERVER_DEFAULT_PORT : server_port_c);
 
     if (init_socket(server_port_c)) {
         socket_errno = errno;
