@@ -7,7 +7,7 @@ module ArgScanner
       :output_directory => ENV['ARG_SCANNER_DIR'],
       :catch_only_every_n_call => ENV['ARG_SCANNER_CATCH_ONLY_EVERY_N_CALL'] || 1,
       :project_root => ENV['ARG_SCANNER_PROJECT_ROOT'],
-      :server_port => ENV['ARG_SCANNER_SERVER_PORT']
+      :server_port => ENV['ARG_SCANNER_SERVER_PORT'] || 0
   )
 
   def OPTIONS.set_env
