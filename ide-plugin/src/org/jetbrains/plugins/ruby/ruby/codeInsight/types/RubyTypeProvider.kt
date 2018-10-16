@@ -89,15 +89,15 @@ class ReturnTypeSymbolicTypeInferenceProvider : SymbolicTypeInferenceProvider {
 
         val receiverType: RType = SymbolicTypeInferenceProvider.getReceiverType(symbolicCall, component, callContext)
 
-        val methodInfo = MethodInfo.Impl(ClassInfo.Impl(null, receiverType.name ?: return null),
-                symbolicCall.name, RVisibility.PUBLIC, null)
+        val methodInfo = MethodInfo.Impl(
+                ClassInfo.Impl(null, receiverType.name ?: return null), symbolicCall.name)
 
-        val registeredReturnTypes: List<String> = if (!argumentsTypes.contains(null)) {
-            @Suppress("UNCHECKED_CAST")
-            signatureProviderImpl.getRegisteredReturnTypesForMethodCall(methodInfo, argumentsTypes as List<String>)
-        } else {
-            signatureProviderImpl.getRegisteredCallInfos(methodInfo, argumentsTypes.size).map { it.returnType }
-        }
+        @Suppress("UNCHECKED_CAST")
+        val registeredReturnTypes: List<String> = argumentsTypes
+                .takeIf { !it.contains(null) }
+                ?.let { signatureProviderImpl.getRegisteredReturnTypesForMethodCall(methodInfo, it as List<String>) }
+                ?.takeIf { !it.isEmpty() }
+                ?: signatureProviderImpl.getRegisteredCallInfos(methodInfo, numberOfArguments = null).map { it.returnType }
 
         val returnType = registeredReturnTypes
                 .map { RTypeFactory.createTypeClassName(it, callContext.invocationPoint) }
