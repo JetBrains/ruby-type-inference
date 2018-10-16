@@ -221,7 +221,10 @@ object SignatureServer {
     private data class ParsedArgs(val dbFilePath: String)
     private fun parseArgs(args: Array<String>): ParsedArgs {
         if (args.size != 1) {
-            System.err.println("One argument required: path-to-h2-db-file")
+            System.err.println("""
+                One argument required: path-to-h2-db-file
+                Or if you run it via gradle: ./gradlew contract-creator:runServer --args path-to-db
+            """.trimIndent())
             System.exit(1)
         }
         return ParsedArgs(args.single())
