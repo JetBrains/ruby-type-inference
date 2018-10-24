@@ -16,23 +16,25 @@ object DatabaseProvider {
     }
 
     @JvmStatic
-    fun connectToDB(filePath: String) {
+    fun connectToDB(filePath: String): Database {
         val fixedFilePath = if (filePath.endsWith(H2_DB_FILE_EXTENSION)) {
             filePath.substring(0, filePath.lastIndexOf(H2_DB_FILE_EXTENSION))
         } else {
             filePath
         }
-        Database.connect("jdbc:h2:$fixedFilePath", driver = H2_DRIVER)
+        return Database.connect("jdbc:h2:$fixedFilePath", driver = H2_DRIVER)
     }
 
-    fun createAllDatabases() {
-        transaction {
+    @JvmOverloads
+    fun createAllDatabases(db: Database? = null) {
+        transaction(db) {
             SchemaUtils.create(GemInfoTable, ClassInfoTable, MethodInfoTable, SignatureTable, CallInfoTable)
         }
     }
 
-    fun dropAllDatabases() {
-        transaction {
+    @JvmOverloads
+    fun dropAllDatabases(db: Database? = null) {
+        transaction(db) {
             SchemaUtils.drop(GemInfoTable, ClassInfoTable, MethodInfoTable, SignatureTable, CallInfoTable)
         }
     }
