@@ -75,7 +75,7 @@ class ClassInfoRow(id: EntityID<Int>) : IntEntity(id), ClassInfo {
 object MethodInfoTable : IntIdTableWithDependency<MethodInfo, ClassInfo>(ClassInfoTable) {
     val classInfo = reference("class_info", ClassInfoTable, ReferenceOption.CASCADE)
     val name = varchar("name", MethodInfo.LENGTH_OF_NAME)
-    val visibility = enumeration("visibility", RVisibility::class.java)
+    val visibility = enumeration("visibility", RVisibility::class)
     val locationFile = varchar("location_file", MethodInfo.LENGTH_OF_PATH).nullable()
     val locationLineno = integer("location_lineno").default(0)
 

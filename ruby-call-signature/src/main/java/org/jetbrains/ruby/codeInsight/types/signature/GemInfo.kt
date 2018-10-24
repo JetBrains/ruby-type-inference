@@ -1,7 +1,5 @@
 package org.jetbrains.ruby.codeInsight.types.signature
 
-import java.util.NoSuchElementException
-
 interface GemInfo {
     val name: String
     val version: String
