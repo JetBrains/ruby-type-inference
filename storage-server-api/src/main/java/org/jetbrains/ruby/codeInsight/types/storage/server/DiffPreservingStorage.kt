@@ -74,13 +74,6 @@ class DiffPreservingStorage<T : RSignatureStorage.Packet>(
         }
     }
 
-    override fun getRegisteredReturnTypesForMethodCall(methodInfo: MethodInfo, argumentsTypes: MutableList<String>): MutableCollection<String> {
-        return HashSet<String>().apply {
-            addAll(localDataStorage.getRegisteredReturnTypesForMethodCall(methodInfo, argumentsTypes))
-            addAll(receivedDataStorage.getRegisteredReturnTypesForMethodCall(methodInfo, argumentsTypes))
-        }
-    }
-
     override fun deleteSignature(method: MethodInfo) {
         localDataStorage.deleteSignature(method)
     }

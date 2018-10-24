@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.ruby.ruby.codeInsight.types
 
 import com.intellij.openapi.module.ModuleUtilCore
-import com.intellij.psi.util.PsiUtilBase
+import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.plugins.ruby.ruby.codeInsight.AbstractRubyTypeProvider
 import org.jetbrains.plugins.ruby.ruby.codeInsight.resolve.ResolveUtil
 import org.jetbrains.plugins.ruby.ruby.codeInsight.stateTracker.RubyClassHierarchyWithCaching
@@ -18,7 +18,10 @@ import org.jetbrains.plugins.ruby.ruby.codeInsight.types.impl.REmptyType
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RubyPsiUtil
 import org.jetbrains.plugins.ruby.ruby.lang.psi.expressions.RExpression
 import org.jetbrains.plugins.ruby.ruby.lang.psi.variables.RIdentifier
-import org.jetbrains.ruby.codeInsight.types.signature.*
+import org.jetbrains.ruby.codeInsight.types.signature.CallInfo
+import org.jetbrains.ruby.codeInsight.types.signature.ClassInfo
+import org.jetbrains.ruby.codeInsight.types.signature.MethodInfo
+import org.jetbrains.ruby.codeInsight.types.signature.RVisibility
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.CallInfoTable
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.RSignatureProviderImpl
 
@@ -81,34 +84,36 @@ class ReturnTypeSymbolicTypeInferenceProvider : SymbolicTypeInferenceProvider {
                                       callContext: TypeInferenceInstance.CallContext,
                                       provider: SymbolicExpressionProvider,
                                       component: TypeInferenceComponent): SymbolicExpression? {
+        val receiverTypeName: String = SymbolicTypeInferenceProvider
+                .getReceiverType(symbolicCall, component, callContext).name ?: return null
+
         val typeInferenceComponent = context.getComponent(TypeInferenceComponent::class.java)
         val argumentsTypes: List<String?> = symbolicCall.arguments
                 .map { typeInferenceComponent.getTypeForSymbolicExpression(it.expression).name }
 
-        val receiverType: RType = SymbolicTypeInferenceProvider.getReceiverType(symbolicCall, component, callContext)
+        val methodInfo = MethodInfo.Impl(ClassInfo.Impl(null, receiverTypeName), symbolicCall.name)
 
-        val methodInfo = MethodInfo.Impl(
-                ClassInfo.Impl(null, receiverType.name ?: return null), symbolicCall.name)
+        val registeredCallInfos = RSignatureProviderImpl.getRegisteredCallInfos(methodInfo, numberOfArguments = null)
 
         @Suppress("UNCHECKED_CAST")
-        val registeredReturnTypes: List<String> = argumentsTypes
-                .takeIf { !it.contains(null) }
-                ?.let { signatureProviderImpl.getRegisteredReturnTypesForMethodCall(methodInfo, it as List<String>) }
-                ?.takeIf { !it.isEmpty() }
-                ?: signatureProviderImpl.getRegisteredCallInfos(methodInfo, numberOfArguments = null).map { it.returnType }
+        val registeredReturnTypes: List<String> = registeredCallInfos
+                .filter { it.argumentsTypes == argumentsTypes }
+                .map { it.returnType }
+                .takeIf { !it.isEmpty() }
+                ?: registeredCallInfos.map { it.returnType }
 
         val returnType = registeredReturnTypes
                 .map { RTypeFactory.createTypeClassName(it, callContext.invocationPoint) }
                 .unionTypesSmart()
 
-        if (returnType == REmptyType.INSTANCE) {
+        return if (returnType == REmptyType.INSTANCE) {
             // If we don't have any information about type then return null
             // in order to allow to RubyMine try to determine type itself
-            return null
+            null
+        } else {
+            component.updateSymbolicExpressionType(symbolicCall, returnType)
+            symbolicCall
         }
-
-        component.updateSymbolicExpressionType(symbolicCall, returnType)
-        return symbolicCall
     }
 }
 

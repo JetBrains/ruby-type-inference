@@ -93,15 +93,6 @@ object RSignatureProviderImpl : RSignatureProvider {
             return@transaction CallInfoRow.find { searchCriteria }.map { it.copy() }
         }
     }
-
-    override fun getRegisteredReturnTypesForMethodCall(methodInfo: MethodInfo,
-                                                       argumentsTypes: List<String>): List<String> {
-        return transaction {
-            val registeredCallInfos = getRegisteredCallInfos(methodInfo, argumentsTypes.size)
-
-            return@transaction registeredCallInfos.filter { it.argumentsTypes == argumentsTypes }.map { it.returnType }
-        }
-    }
 }
 
 fun firstStringCloser(gemVersion: String,
