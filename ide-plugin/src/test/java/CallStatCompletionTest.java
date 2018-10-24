@@ -12,9 +12,8 @@ import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.Contrac
 import org.jetbrains.ruby.codeInsight.types.signature.serialization.SignatureContractSerializationKt;
 import org.jetbrains.ruby.codeInsight.types.signature.serialization.StringDataOutput;
 import org.jetbrains.ruby.codeInsight.types.storage.server.DatabaseProvider;
-import org.jetbrains.ruby.codeInsight.types.storage.server.RSignatureProvider;
-import org.jetbrains.ruby.codeInsight.types.storage.server.SignatureStorageImpl;
 import org.jetbrains.ruby.codeInsight.types.storage.server.StorageException;
+import org.jetbrains.ruby.codeInsight.types.storage.server.impl.RSignatureProviderImpl;
 import org.jetbrains.ruby.runtime.signature.server.SignatureServer;
 import org.jetbrains.ruby.runtime.signature.server.SignatureServerKt;
 import org.junit.Assert;
@@ -35,8 +34,6 @@ import static java.util.Collections.singletonList;
 public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestCase {
 
     private static final Logger LOGGER = Logger.getInstance("CallStatCompletionTest");
-
-    private final RSignatureProvider signatureProvider = new SignatureStorageImpl();
 
     public CallStatCompletionTest() {
         DatabaseProvider.connectToInMemoryDB();
@@ -86,9 +83,9 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
         executeScript("simple_call_info_collection_test_multiple_functions_test.rb");
         waitForServer();
 
-        List<CallInfo> fooCallInfos = new ArrayList<>(signatureProvider.getRegisteredCallInfos(
+        List<CallInfo> fooCallInfos = new ArrayList<>(RSignatureProviderImpl.INSTANCE.getRegisteredCallInfos(
                 createMethodInfo("A", "foo"), null));
-        List<CallInfo> barCallInfos = new ArrayList<>(signatureProvider.getRegisteredCallInfos(
+        List<CallInfo> barCallInfos = new ArrayList<>(RSignatureProviderImpl.INSTANCE.getRegisteredCallInfos(
                 createMethodInfo("A", "bar"), null));
 
         assertEquals(1, fooCallInfos.size());
@@ -294,7 +291,7 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
                                               @NotNull MethodInfo methodInfo) throws StorageException {
         executeScript(executableScriptName);
         waitForServer();
-        return new ArrayList<>(signatureProvider.getRegisteredCallInfos(methodInfo, null));
+        return new ArrayList<>(RSignatureProviderImpl.INSTANCE.getRegisteredCallInfos(methodInfo, null));
     }
 
     private void doTest(@NotNull String name, @NotNull MethodInfo methodInfo, String... items) {

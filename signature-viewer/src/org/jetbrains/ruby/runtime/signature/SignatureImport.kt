@@ -18,11 +18,10 @@ fun main(arg : Array<String>) {
     }
     val rmcDirectory = RmcDirectoryImpl(inputDirectory)
 
-    val provider = RSignatureProviderImpl()
     try {
         rmcDirectory.listGems()
                 .map { rmcDirectory.load(it) }
-                .forEach { signatureInfos -> signatureInfos.forEach { provider.putSignature(it) } }
+                .forEach { signatureInfos -> signatureInfos.forEach { RSignatureProviderImpl.putSignature(it) } }
     } catch (e: StorageException) {
         e.printStackTrace()
     }

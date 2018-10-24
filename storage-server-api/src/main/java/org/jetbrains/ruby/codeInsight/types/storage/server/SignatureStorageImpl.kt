@@ -12,7 +12,7 @@ import java.io.ByteArrayOutputStream
 import java.io.DataInputStream
 import java.io.DataOutputStream
 
-class SignatureStorageImpl : RSignatureStorage<PacketImpl>, RSignatureProvider by RSignatureProviderImpl() {
+class SignatureStorageImpl : RSignatureStorage<PacketImpl>, RSignatureProvider by RSignatureProviderImpl {
     override fun formPackets(descriptor: RSignatureStorage.ExportDescriptor?): MutableCollection<PacketImpl> {
         val contractData = transaction {
             val join = GemInfoTable innerJoin ClassInfoTable innerJoin MethodInfoTable innerJoin SignatureTable

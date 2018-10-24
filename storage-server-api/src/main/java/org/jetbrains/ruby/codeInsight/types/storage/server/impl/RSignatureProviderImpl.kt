@@ -8,7 +8,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.ruby.codeInsight.types.signature.*
 import org.jetbrains.ruby.codeInsight.types.storage.server.RSignatureProvider
 
-class RSignatureProviderImpl : RSignatureProvider {
+object RSignatureProviderImpl : RSignatureProvider {
     override fun getRegisteredGems(): Collection<GemInfo> {
         return transaction { GemInfoRow.all() }.map { it.copy() }
     }

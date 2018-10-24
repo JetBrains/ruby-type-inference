@@ -50,7 +50,7 @@ class RubyParameterTypeProvider : AbstractRubyTypeProvider() {
 
             val info = MethodInfo.Impl(ClassInfo(rubyModuleName), method.fqn.shortName, RVisibility.PUBLIC)
 
-            val callInfos: List<CallInfo> = RSignatureProviderImpl().getRegisteredCallInfos(info, numberOfArgs)
+            val callInfos: List<CallInfo> = RSignatureProviderImpl.getRegisteredCallInfos(info, numberOfArgs)
 
             val returnType = callInfos.map {
                 if (indexOfArgument in 0 until it.numberOfArguments) {
@@ -75,8 +75,6 @@ class RubyParameterTypeProvider : AbstractRubyTypeProvider() {
  * Provides types for Ruby method return values. Type providing based on information collection into [CallInfoTable]
  */
 class ReturnTypeSymbolicTypeInferenceProvider : SymbolicTypeInferenceProvider {
-
-    private val signatureProviderImpl = RSignatureProviderImpl()
 
     override fun evaluateSymbolicCall(symbolicCall: SymbolicCall,
                                       context: SymbolicExecutionContext,

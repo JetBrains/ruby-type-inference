@@ -22,12 +22,11 @@ fun main(arg : Array<String>) {
     val rmcDirectory = RmcDirectoryImpl(outputDir)
 
 
-    val provider = RSignatureProviderImpl()
     try {
-        for (gem in provider.registeredGems) {
+        for (gem in RSignatureProviderImpl.registeredGems) {
             val signatureInfos = ArrayList<SignatureInfo>()
-            for (clazz in provider.getRegisteredClasses(gem)) {
-                provider.getRegisteredMethods(clazz).mapNotNullTo(signatureInfos) { provider.getSignature(it) }
+            for (clazz in RSignatureProviderImpl.getRegisteredClasses(gem)) {
+                RSignatureProviderImpl.getRegisteredMethods(clazz).mapNotNullTo(signatureInfos) { RSignatureProviderImpl.getSignature(it) }
             }
             rmcDirectory.save(gem, signatureInfos)
         }

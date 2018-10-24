@@ -26,13 +26,11 @@ fun main(args : Array<String>) {
 
     val map = HashMap<String, MutableList<SignatureInfo>>()
 
-    val provider = RSignatureProviderImpl()
-
     try {
-        for (gem in provider.registeredGems) {
-            for (clazz in provider.getRegisteredClasses(gem)) {
-                for (method in provider.getRegisteredMethods(clazz)) {
-                    val signatureInfo = provider.getSignature(method)
+        for (gem in RSignatureProviderImpl.registeredGems) {
+            for (clazz in RSignatureProviderImpl.getRegisteredClasses(gem)) {
+                for (method in RSignatureProviderImpl.getRegisteredMethods(clazz)) {
+                    val signatureInfo = RSignatureProviderImpl.getSignature(method)
                     signatureInfo?.let<SignatureInfo?, Unit> {
                         var list = map[method.name]
                         if (list == null) {

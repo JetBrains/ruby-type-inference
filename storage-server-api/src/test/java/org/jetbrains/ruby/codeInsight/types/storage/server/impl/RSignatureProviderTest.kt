@@ -48,7 +48,7 @@ class RSignatureProviderTest : TestCase() {
             GemInfoTable.insert { it[name] = gem.name; it[version] = gem.version }
         }
 
-        val provider = RSignatureProviderImpl()
+        val provider = RSignatureProviderImpl
         assertEquals("0.1", provider.getClosestRegisteredGem(GemInfo("name1", "0.0"))?.version)
         assertEquals("0.1", provider.getClosestRegisteredGem(GemInfo("name1", "0.1"))?.version)
         assertEquals("0.1", provider.getClosestRegisteredGem(GemInfo("name1", "0.1.2"))?.version)
@@ -69,7 +69,7 @@ class RSignatureProviderTest : TestCase() {
         ClassInfoTable.insert { it[fqn] = "Test2"; it[gemInfo] = insertResult }
         ClassInfoTable.insert { it[fqn] = "Test3" }
 
-        val provider = RSignatureProviderImpl()
+        val provider = RSignatureProviderImpl
         val classes = provider.getRegisteredClasses(GemInfo("test_gem", "0.1"))
         assertEquals(2, classes.size)
         assertEquals(setOf("Test1", "Test2"), classes.map { it.classFQN }.toSet())
@@ -86,7 +86,7 @@ class RSignatureProviderTest : TestCase() {
         MethodInfoTable.insert { it[name] = "met3"; it[visibility] = RVisibility.PUBLIC; it[classInfo] = class2 }
         MethodInfoTable.insert { it[name] = "met4"; it[visibility] = RVisibility.PUBLIC; it[classInfo] = class3 }
 
-        val provider = RSignatureProviderImpl()
+        val provider = RSignatureProviderImpl
         val methodsWithNullGem = provider.getRegisteredMethods(ClassInfo("Test::Fqn"))
         assertEquals(2, methodsWithNullGem.size)
         assertEquals(setOf("met1", "met2"), methodsWithNullGem.map { it.name }.toSet())
@@ -122,7 +122,7 @@ class RSignatureProviderTest : TestCase() {
         SignatureTable.insert { it[contract] = BlobSerializer.writeToBlob(contract2, blob2); it[methodInfo] = method2 }
         blob2.free()
 
-        val provider = RSignatureProviderImpl()
+        val provider = RSignatureProviderImpl
         val signatureInfo1 = provider.getSignature(MethodInfo(ClassInfo(GemInfo("test_gem", "1.2.3"), "Test::Fqn"), "met1", RVisibility.PUBLIC))
         val signatureInfo2 = provider.getSignature(MethodInfo(ClassInfo(GemInfo("test_gem", "1.2.3"), "Test::Fqn"), "met2", RVisibility.PUBLIC))
 
@@ -148,7 +148,7 @@ class RSignatureProviderTest : TestCase() {
         val contract1 = SignatureContract(StringDataInput(SignatureTestData.simpleContract))
         val contract2 = SignatureContract(StringDataInput(SignatureTestData.trivialContract))
 
-        val provider = RSignatureProviderImpl()
+        val provider = RSignatureProviderImpl
 
         provider.putSignature(SignatureInfo(method1, contract1))
         provider.putSignature(SignatureInfo(method2, contract2))
@@ -174,7 +174,7 @@ class RSignatureProviderTest : TestCase() {
         val contract1 = SignatureContract(StringDataInput(SignatureTestData.simpleContract))
         val contract2 = SignatureContract(StringDataInput(SignatureTestData.trivialContract))
 
-        val provider = RSignatureProviderImpl()
+        val provider = RSignatureProviderImpl
 
         provider.putSignature(SignatureInfo(method, contract1))
         val signatureInfo1 = provider.getSignature(MethodInfo(ClassInfo(GemInfo("test_gem", "1.2.3"), "Test::Fqn"), "met1", RVisibility.PUBLIC))
