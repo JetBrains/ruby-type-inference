@@ -4,29 +4,17 @@ require 'date'
 
 class TestArgsInfoWrapper
 
-  def foo(a)
+  def foo(a); end
 
-  end
+  def foo2(a, b = 1); end
 
-  def foo2(a, b = 1)
+  def foo3(**rest); end
 
-  end
+  def foo4(kw: :symbol, **rest1); end
 
-  def foo3(**rest)
+  def foo5(kw:, **rest); end
 
-  end
-
-  def foo4(kw: 1, **rest1)
-
-  end
-
-  def foo5(kw:, **rest)
-
-  end
-
-  def foo6(a, *rest, b)
-
-  end
+  def foo6(a, *rest, b); end
 
   def initialize
 

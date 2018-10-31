@@ -486,8 +486,9 @@ get_args_info()
     LOG("%d\n", has_kwrest);
     LOG("%d\n", has_block);
 
-    if(param_size == 0)
+    if (param_size == 0) {
         return 0;
+    }
 
     const char **types = (const char **)malloc(param_size * sizeof(*types));
     size_t i, ans_iterator;
@@ -500,15 +501,16 @@ get_args_info()
 
     for(i = param_size - 1 - new_version_flag, types_iterator = 0; (size_t)types_iterator < param_size; i--, types_iterator++)
     {
-        types[types_iterator] = calc_sane_class_name(*(ep + i - 1));
+        types[types_iterator] = calc_sane_class_name(ep[i - 1]);
         types_ids[types_iterator] = i - 1;
         LOG("Type #%d=%s\n", types_iterator, types[types_iterator])
     }
 
     types_iterator--;
 
-    if(has_kw)
+    if(has_kw) {
         param_size--;
+    }
 
     char **ans = (char **)malloc(param_size * sizeof(*ans));
 
@@ -557,8 +559,9 @@ get_args_info()
             ans[ans_iterator] = fast_join(',', 3, "KEY", types[types_iterator], rb_id2name(key));
         }
 
-        if(param_size - has_block > 1 && has_kwrest && TYPE(*(ep + types_ids[types_iterator])) == T_FIXNUM)
+        if (param_size - has_block > 1 && has_kwrest && TYPE(ep[types_ids[types_iterator]]) == T_FIXNUM) {
             types_iterator--;
+        }
 
         for(i = 0; i < has_kwrest; i++, ans_iterator++, types_iterator--)
         {
