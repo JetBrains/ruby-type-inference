@@ -35,10 +35,21 @@ int types_ids[20];
 
 static VALUE c_signature;
 
+/**
+ * Contains info related to explicitly passed args
+ * For example:
+ * def foo(a, b = 1); end
+ *
+ * `b` passed here implicitly:
+ * foo(1)
+ *
+ * But here explicitly:
+ * foo(1, 10)
+ */
 typedef struct
 {
-    ssize_t call_info_argc;
-    char* call_info_kw_args;
+    ssize_t call_info_explicit_argc;   // Number of arguments that was explicitly passed by user
+    char **call_info_kw_explicit_args; // kw arguments names that was explicitly passed by user (null terminating array)
 } call_info_t;
 
 typedef struct
@@ -47,8 +58,7 @@ typedef struct
     char *method_name;
     char *args_info;
     char *path;
-    char *call_info_kw_args;
-    ssize_t call_info_argc;
+    ssize_t explicit_argc; // Number of arguments that was explicitly passed by user
     int lineno;
     char *return_type_name;
 } signature_t;
@@ -59,7 +69,7 @@ static const char *EMPTY_VALUE = "";
 static const int SERVER_DEFAULT_PORT = 7777;
 static GTree *sent_to_server_tree;
 static int socket_fd = -1;
-static char* get_args_info();
+static char *get_args_info(const char *const *explicit_kw_args);
 static VALUE set_server_port(VALUE self, VALUE server_port);
 static VALUE handle_call(VALUE self, VALUE lineno, VALUE method_name, VALUE path);
 static VALUE handle_return(VALUE self, VALUE signature, VALUE receiver_name, VALUE return_type_name);
@@ -74,14 +84,12 @@ static int socket_errno = 0;
 static VALUE get_args_info_rb(VALUE self);
 static VALUE get_call_info_rb(VALUE self);
 
-static call_info_t* get_call_info();
+static call_info_t get_call_info();
 static bool is_call_info_needed();
 
-static void call_info_t_free(void *s)
+static void call_info_t_free(call_info_t s)
 {
-    if (((call_info_t *)s)->call_info_kw_args != NULL)
-        free(((call_info_t *)s)->call_info_kw_args);
-    free(s);
+    free(s.call_info_kw_explicit_args);
 }
 
 static void signature_t_free(signature_t *s)
@@ -90,7 +98,6 @@ static void signature_t_free(signature_t *s)
     free(s->method_name);
     free(s->args_info);
     free(s->path);
-    free(s->call_info_kw_args);
     free(s->return_type_name);
     free(s);
 }
@@ -104,17 +111,19 @@ static void signature_t_free_partially(signature_t *s)
 
     free(s->method_name);
     s->method_name = NULL;
-
-    free(s->call_info_kw_args);
-    s->call_info_kw_args = NULL;
 }
 
 // Just one possible comparator. Feel free to change the way it compare (but do it meaningfully and
 // don't forget to change signature_t_free_partially accordingly)
 // @see_also signature_t_free_partially
-static int
-compare_signature_t(const signature_t *a, const signature_t *b) {
+static gint
+compare_signature_t(gconstpointer x, gconstpointer y, gpointer user_data_ignored) {
+    const signature_t *a = x;
+    const signature_t *b = y;
     int ret;
+
+    // Comparison using lineno and path theoretically should guarantees us unique.
+    // And compare lineno firstly because it's faster O(1) than comparing path which is O(path_len)
 
     ret = a->lineno - b->lineno;
     if (ret != 0) return ret;
@@ -161,7 +170,7 @@ void Init_arg_scanner() {
 
     sent_to_server_tree = g_tree_new_full(/*key_compare_func =*/compare_signature_t,
                                           /*key_compare_data =*/NULL,
-                                          /*key_destroy_func =*/signature_t_free,
+                                          /*key_destroy_func =*/(GDestroyNotify)signature_t_free,
                                           /*value_destroy_func =*/NULL);
 }
 
@@ -201,28 +210,24 @@ handle_call(VALUE self, VALUE lineno, VALUE method_name, VALUE path)
     sign->lineno = FIX2INT(lineno); // Convert Ruby's Fixnum to C language int
     sign->method_name = strdup(StringValueCStr(method_name));
     sign->path = strdup(StringValueCStr(path));
+    sign->explicit_argc = -1;
 
 #ifdef DEBUG_ARG_SCANNER
     LOG("Getting args info for %s %s %d \n", sign->method_name, sign->path, sign->lineno);
 #endif
-    sign->args_info = get_args_info();
+    call_info_t info;
+    info.call_info_kw_explicit_args = NULL;
+    if (is_call_info_needed()) {
+        info = get_call_info();
+        sign->explicit_argc = info.call_info_explicit_argc;
+    }
+
+    sign->args_info = get_args_info(info.call_info_kw_explicit_args);
+    call_info_t_free(info);
 
     if (sign->args_info != NULL && strlen(sign->args_info) >= 1000) {
         signature_t_free(sign);
         return Qnil;
-    }
-
-    if (is_call_info_needed())
-    {
-        call_info_t *info = get_call_info();
-
-        sign->call_info_argc = info->call_info_argc;
-        sign->call_info_kw_args = info->call_info_kw_args;
-
-        free(info);
-    } else {
-        sign->call_info_argc = -1;
-        sign->call_info_kw_args = NULL;
     }
 
     return Data_Wrap_Struct(c_signature,
@@ -250,11 +255,10 @@ handle_return(VALUE self, VALUE signature, VALUE receiver_name, VALUE return_typ
 
         // json_len doesn't count terminating '\0'
         int json_len = snprintf(json, json_size,
-            "{\"method_name\":\"%s\",\"call_info_argc\":\"%d\",\"call_info_kw_args\":\"%s\",\"args_info\":\"%s\""
-            ",\"visibility\":\"%s\",\"path\":\"%s\",\"lineno\":\"%d\",\"receiver_name\":\"%s\",\"return_type_name\":\"%s\"}\n",
+            "{\"method_name\":\"%s\",\"call_info_argc\":\"%d\",\"args_info\":\"%s\",\"visibility\":\"%s\","
+            "\"path\":\"%s\",\"lineno\":\"%d\",\"receiver_name\":\"%s\",\"return_type_name\":\"%s\"}\n",
             sign->method_name,
-            sign->call_info_argc,
-            sign->call_info_kw_args != NULL ? sign->call_info_kw_args : "",
+            sign->explicit_argc,
             sign->args_info != NULL ? sign->args_info : "",
             "PUBLIC",
             sign->path,
@@ -275,99 +279,64 @@ handle_return(VALUE self, VALUE signature, VALUE receiver_name, VALUE return_typ
     return Qnil;
 }
 
-static call_info_t*
-get_call_info()
-{
+static call_info_t
+get_call_info() {
     rb_thread_t *thread = ruby_current_thread;
     rb_control_frame_t *cfp = TH_CFP(thread);
-    call_info_t *info = (call_info_t *) malloc(sizeof(*info));
 
-    //info = ALLOC(call_info_t);
-    //info = malloc;
-
-    info->call_info_argc = -1;
-    info->call_info_kw_args = NULL;
+    call_info_t empty;
+    empty.call_info_kw_explicit_args = NULL;
+    empty.call_info_explicit_argc = -1;
 
     cfp += 4;
     cfp = my_rb_vm_get_binding_creatable_next_cfp(thread, cfp);
 
-    if(cfp->iseq != NULL)
-    {
-        if(cfp->pc == NULL || cfp->iseq->body == NULL)
-        {
+    if(cfp->iseq == NULL || cfp->pc == NULL || cfp->iseq->body == NULL) {
+        return empty;
+    }
+
+    const rb_iseq_t *iseq = (const rb_iseq_t *) cfp->iseq;
+
+    ptrdiff_t pc = cfp->pc - cfp->iseq->body->iseq_encoded;
+
+    const VALUE *iseq_original = rb_iseq_original_iseq(iseq);
+
+    for (int indent = 1; indent < 6; indent++) {
+        VALUE insn = iseq_original[pc - indent];
+        int tmp = (int)insn;
+        if(0 < tmp && tmp < 256) {
+            if(indent < 3) {
+                return empty;
+            }
+            call_info_t info;
+            struct rb_call_info *ci = (struct rb_call_info *)iseq_original[pc - indent + 1];
+            info.call_info_explicit_argc = ci->orig_argc;
+            info.call_info_kw_explicit_args = NULL;
+
+            if (ci->flag & VM_CALL_KWARG) {
+                struct rb_call_info_kw_arg *kw_args = ((struct rb_call_info_with_kwarg *)ci)->kw_arg;
+
+                size_t kwArgSize = kw_args->keyword_len;
+
+                VALUE kw_ary = rb_ary_new_from_values(kw_args->keyword_len, kw_args->keywords);
+
+                info.call_info_kw_explicit_args = (char **) malloc((kwArgSize + 1)*sizeof(*(info.call_info_kw_explicit_args)));
+
+                for (int i = kwArgSize -1 ; i >= 0; --i) {
+                    VALUE kw = rb_ary_pop(kw_ary);
+                    const char *kw_name = rb_id2name(SYM2ID(kw));
+
+                    info.call_info_kw_explicit_args[i] = kw_name;
+                }
+                info.call_info_kw_explicit_args[kwArgSize] = NULL;
+            } else {
+                info.call_info_kw_explicit_args = malloc(sizeof(*info.call_info_kw_explicit_args));
+                info.call_info_kw_explicit_args[0] = NULL;
+            }
             return info;
         }
-
-        const rb_iseq_t *iseq;
-        iseq = (const rb_iseq_t *) cfp->iseq;
-
-        ptrdiff_t pc = cfp->pc - cfp->iseq->body->iseq_encoded;
-
-        const VALUE *iseq_original = rb_iseq_original_iseq((rb_iseq_t *)iseq);
-
-        int indent = 1;
-
-        for(; indent < 6; indent++)
-        {
-            VALUE insn = iseq_original[pc - indent];
-            int tmp = (int)insn;
-
-            if(0 < tmp && tmp < 256)
-            {
-                if(indent < 3)
-                    return info;
-
-                struct rb_call_info *ci = (struct rb_call_info *)iseq_original[pc - indent + 1];
-
-                info->call_info_argc = ci->orig_argc;
-
-                if (ci->flag & VM_CALL_KWARG)
-                {
-                    struct rb_call_info_kw_arg *kw_args = ((struct rb_call_info_with_kwarg *)ci)->kw_arg;
-
-                    size_t kwArgSize = kw_args->keyword_len;
-
-                    VALUE kw_ary = rb_ary_new_from_values(kw_args->keyword_len, kw_args->keywords);
-                    const char *c_kw_ary[kwArgSize];
-
-                    size_t ans_size = 0;
-                    int j;
-
-                    for(j = kwArgSize - 1; j >= 0; j--)
-                    {
-                        VALUE kw = rb_ary_pop(kw_ary);
-                        const char* kw_name = rb_id2name(SYM2ID(kw));
-
-                        c_kw_ary[j] = kw_name;
-                        ans_size += strlen(kw_name);
-
-                        if((size_t)j + 1 < kwArgSize)
-                            ans_size++;
-                    }
-
-                    info->call_info_kw_args = (char*)malloc(ans_size + 1);
-
-                    if(kwArgSize > 0)
-                    {
-                        strcpy(info->call_info_kw_args, c_kw_ary[0]);
-
-                        if(kwArgSize > 1)
-                            strcat(info->call_info_kw_args, ",");
-                    }
-
-                    for(j = 1; (size_t)j < kwArgSize; j++)
-                    {
-                        strcat(info->call_info_kw_args, c_kw_ary[j]);
-
-                        if((size_t)j + 1 < kwArgSize)
-                            strcat(info->call_info_kw_args, ",");
-                    }
-                }
-                return info;
-            }
-        }
     }
-    return info;
+    return empty;
 }
 
 static const char*
@@ -452,8 +421,72 @@ fast_join(char sep, size_t count, ...)
     return fast_join_array(sep, count, strings);
 }
 
+/**
+ * Checks that `container` contains `element`
+ */
+static int contains(const char *const *container, const char *element) {
+    if (container == NULL || element == NULL) {
+        return 0;
+    }
+    const char *const *iterator = container;
+    while (*iterator != NULL) {
+        if (strcmp(*iterator, element) == 0) {
+            return 1;
+        }
+        ++iterator;
+    }
+    return 0;
+}
+
+#define JOIN_KW_NAMES_AND_TYPES_BUF_SIZE 2048
+static char join_kw_names_and_types_buf[JOIN_KW_NAMES_AND_TYPES_BUF_SIZE];
+/**
+ * Null terminating array which contains strings of explicitly passed kw args.
+ * It's used for join_kw_names_and_types
+ */
+static const char *const *join_kw_names_and_types_explicit_kw_args = NULL;
+
+/**
+ * This function is used for concatenating hash keys and value's types.
+ * Be sure that buf is at least JOIN_KW_NAMES_AND_TYPES_BUF_SIZE bytes.
+ * If join_kw_names_and_types_buf size = JOIN_KW_NAMES_AND_TYPES_BUF_SIZE
+ * isn't enough then this buf will contain invalid information
+ */
+static int join_kw_names_and_types(VALUE key, VALUE val, VALUE ignored) {
+    const char *kw_name = rb_id2name(SYM2ID(key));
+    const char *kw_type = calc_sane_class_name(val);
+
+    const char *const *explicit_kw_args_iterator = join_kw_names_and_types_explicit_kw_args;
+
+    // Just such behaviour: when join_kw_names_and_types_explicit_kw_args is
+    // not provided then consider every kw arg as explicitly passed by user
+    int is_explicit = explicit_kw_args_iterator == NULL;
+
+    if (explicit_kw_args_iterator != NULL) {
+        while(*explicit_kw_args_iterator != NULL) {
+            if (strcmp(*explicit_kw_args_iterator, kw_name) == 0) {
+                is_explicit = 1;
+                break;
+            }
+            ++explicit_kw_args_iterator;
+        }
+    }
+
+    if (is_explicit) {
+        // Check that buf is not empty
+        if (join_kw_names_and_types_buf[0] != '\0') {
+            strncat(join_kw_names_and_types_buf, ";", JOIN_KW_NAMES_AND_TYPES_BUF_SIZE - 1);
+        }
+        strncat(join_kw_names_and_types_buf, "KEYREST,", JOIN_KW_NAMES_AND_TYPES_BUF_SIZE - 1);
+        strncat(join_kw_names_and_types_buf, kw_type, JOIN_KW_NAMES_AND_TYPES_BUF_SIZE - 1);
+        strncat(join_kw_names_and_types_buf, ",", JOIN_KW_NAMES_AND_TYPES_BUF_SIZE - 1);
+        strncat(join_kw_names_and_types_buf, kw_name, JOIN_KW_NAMES_AND_TYPES_BUF_SIZE - 1);
+    }
+    return ST_CONTINUE;
+}
+
 static char*
-get_args_info()
+get_args_info(const char *const *explicit_kw_args)
 {
     rb_thread_t *thread;
     rb_control_frame_t *cfp;
@@ -553,21 +586,38 @@ get_args_info()
             ID key = keywords[i];
             ans[ans_iterator] = fast_join(',', 3, "KEYREQ", types[types_iterator], rb_id2name(key));
         }
-        for(i = required_num; i < kw_num; i++, ans_iterator++, types_iterator--)
+        for(i = required_num; i < kw_num; i++, types_iterator--)
         {
             ID key = keywords[i];
-            ans[ans_iterator] = fast_join(',', 3, "KEY", types[types_iterator], rb_id2name(key));
+            const char *name = rb_id2name(key);
+            if (explicit_kw_args == NULL || contains(explicit_kw_args, name)) {
+                ans[ans_iterator++] = fast_join(',', 3, "KEY", types[types_iterator], name);
+            }
         }
 
         if (param_size - has_block > 1 && has_kwrest && TYPE(ep[types_ids[types_iterator]]) == T_FIXNUM) {
             types_iterator--;
         }
 
-        for(i = 0; i < has_kwrest; i++, ans_iterator++, types_iterator--)
+        if (has_kwrest)
         {
-            const char *name = rb_id2name(cfp->iseq->body->local_table[rest_start]);
+            char *buf = malloc(JOIN_KW_NAMES_AND_TYPES_BUF_SIZE * sizeof(*buf));
+            buf[0] = '\0';
+            join_kw_names_and_types_buf[0] = '\0';
+            join_kw_names_and_types_explicit_kw_args = explicit_kw_args;
 
-            ans[ans_iterator] = fast_join(',', 3, "KEYREST", types[types_iterator], name);
+            // This function call will concatenate info into join_kw_names_and_types_buf
+            rb_hash_foreach(ep[types_ids[types_iterator]], join_kw_names_and_types, Qnil);
+
+            // Checking that join_kw_names_and_types_buf isn't possibly containing invalid info.
+            // See join_kw_names_and_types documentation to understand why it can be invalid
+            size_t len = strlen(join_kw_names_and_types_buf);
+            if (len > 0 && len < JOIN_KW_NAMES_AND_TYPES_BUF_SIZE - 1) {
+                strncpy(buf, join_kw_names_and_types_buf, JOIN_KW_NAMES_AND_TYPES_BUF_SIZE);
+                ans[ans_iterator++] = buf;
+            }
+            join_kw_names_and_types_explicit_kw_args = NULL;
+            types_iterator--;
         }
     }
 
@@ -586,7 +636,6 @@ get_args_info()
     }
 
     LOG("%d %d %d", ans_iterator, param_size, types_iterator);
-    assert(ans_iterator == param_size);
     assert(types_iterator <= 0);
 
     free(types);
@@ -598,7 +647,14 @@ get_args_info()
 static VALUE
 get_args_info_rb(VALUE self)
 {
-    char *args_info = get_args_info();
+    call_info_t info;
+    info.call_info_kw_explicit_args = NULL;
+    if (is_call_info_needed()) {
+        info = get_call_info();
+    }
+
+    char *args_info = get_args_info(info.call_info_kw_explicit_args);
+    call_info_t_free(info);
     VALUE ret = args_info ? rb_str_new_cstr(args_info) : Qnil;
     free(args_info);
     return ret;
@@ -609,13 +665,21 @@ get_call_info_rb(VALUE self)
 {
     if (is_call_info_needed())
     {
-        call_info_t *info = get_call_info();
+        call_info_t info = get_call_info();
 
         VALUE ans;
         ans = rb_ary_new();
-        rb_ary_push(ans, LONG2FIX(info->call_info_argc));
-        if (info->call_info_kw_args != NULL) {
-            rb_ary_push(ans, rb_str_new_cstr(info->call_info_kw_args));
+        rb_ary_push(ans, LONG2FIX(info.call_info_explicit_argc));
+        if (info.call_info_kw_explicit_args != NULL) {
+            const char *const *kwarg = info.call_info_kw_explicit_args;
+            int explicit_kw_count = 0;
+            while (*kwarg != NULL) {
+                ++explicit_kw_count;
+                ++kwarg;
+            }
+            char *answer = fast_join_array(',', explicit_kw_count, info.call_info_kw_explicit_args);
+            rb_ary_push(ans, rb_str_new_cstr(answer));
+            free(answer);
         }
 
         call_info_t_free(info);

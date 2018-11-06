@@ -1,14 +1,15 @@
 package org.jetbrains.ruby.runtime.signature.server
 
+import com.google.gson.Gson
 import com.google.gson.JsonParseException
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.ruby.codeInsight.types.signature.*
 import org.jetbrains.ruby.codeInsight.types.storage.server.DatabaseProvider
 import org.jetbrains.ruby.codeInsight.types.storage.server.DiffPreservingStorage
-import org.jetbrains.ruby.codeInsight.types.storage.server.RSignatureStorage
 import org.jetbrains.ruby.codeInsight.types.storage.server.SignatureStorageImpl
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.CallInfoTable
-import org.jetbrains.ruby.runtime.signature.server.serialisation.RTupleBuilder
+import org.jetbrains.ruby.runtime.signature.server.serialisation.ServerResponseBean
+import org.jetbrains.ruby.runtime.signature.server.serialisation.toCallInfo
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
@@ -26,9 +27,9 @@ object SignatureServer {
     private val LOGGER = Logger.getLogger("SignatureServer")
 
     private val mainContainer = DiffPreservingStorage(SignatureStorageImpl(), SignatureStorageImpl())
-    private val newSignaturesContainer = RSignatureContractContainer()
     private val callInfoContainer = LinkedList<CallInfo>()
 
+    private val gson = Gson()
     private val queue = ArrayBlockingQueue<String>(10024)
     private val isReady = AtomicBoolean(true)
     private var previousPollEndedWithFlush = false
@@ -95,9 +96,7 @@ object SignatureServer {
 
     private fun pollJson() {
         val jsonString by lazy { if (previousPollEndedWithFlush) queue.take() else queue.poll() }
-        if (callInfoContainer.size > LOCAL_STORAGE_SIZE_LIMIT ||
-                newSignaturesContainer.size > LOCAL_STORAGE_SIZE_LIMIT ||
-                jsonString == null) {
+        if (callInfoContainer.size > LOCAL_STORAGE_SIZE_LIMIT || jsonString == null) {
             flushNewTuplesToMainStorage()
             previousPollEndedWithFlush = true
             if (queue.isEmpty()) isReady.set(true)
@@ -113,45 +112,27 @@ object SignatureServer {
     }
 
     private fun parseJson(jsonString: String) {
-        val currRTuple = ben(jsonTime) { RTupleBuilder.fromJson(jsonString) }
+        val currCallInfo = ben(jsonTime) { gson.fromJson(jsonString, ServerResponseBean::class.java)?.toCallInfo() }
 
         // filter, for example, such things #<Class:DidYouMean::Jaro>
-        if (currRTuple?.methodInfo?.classInfo?.classFQN?.startsWith("#<") == true) {
+        if (currCallInfo?.methodInfo?.classInfo?.classFQN?.startsWith("#<") == true) {
             return
         }
 
         ben(addTime) {
-            if (currRTuple != null) {
-                if (!newSignaturesContainer.acceptTuple(currRTuple) // optimization
-                        && !mainContainer.acceptTuple(currRTuple)) {
-                    newSignaturesContainer.addTuple(currRTuple)
-                }
-                callInfoContainer.add(CallInfoImpl(currRTuple))
+            if (currCallInfo != null) {
+                callInfoContainer.add(currCallInfo)
             }
         }
     }
 
     private fun flushNewTuplesToMainStorage() {
         transaction {
-            for (methodInfo in newSignaturesContainer.registeredMethods) {
-                if (!methodInfo.validate()) {
-                    LOGGER.warning("validation failed, cannot store " + methodInfo.toString())
-                    continue
-                }
-                newSignaturesContainer.getSignature(methodInfo)?.let { newSignature: RSignatureContract ->
-                    val storedSignature = mainContainer.getSignature(methodInfo)
-                    mainContainer.putSignature(SignatureInfo(methodInfo,
-                            storedSignature?.let { RSignatureContract.mergeMutably(storedSignature.contract, newSignature) }
-                                    ?: newSignature
-                    ))
-                }
-            }
             for (callInfo in callInfoContainer) {
                 CallInfoTable.insertInfoIfNotContains(callInfo)
             }
         }
         callInfoContainer.clear()
-        newSignaturesContainer.clear()
     }
 
     private class SignatureHandler internal constructor(private val socket: Socket, private val handlerNumber: Int) : Thread() {
@@ -258,12 +239,4 @@ fun <T> ben(x: AtomicLong, F: ()->T): T {
     finally {
         x.addAndGet(System.nanoTime() - start)
     }
-}
-
-private fun <T : RSignatureStorage.Packet> RSignatureStorage<T>.acceptTuple(tuple: RTuple): Boolean {
-    val contractInfo = getSignature(tuple.methodInfo)
-    return contractInfo != null
-            && tuple.argsInfo == contractInfo.contract.argsInfo
-            && SignatureContract.accept(contractInfo.contract, tuple)
-
 }

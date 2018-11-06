@@ -51,7 +51,15 @@ class TestArgsInfo < Test::Unit::TestCase
       @args_info_wrapper.foo3(a: Date.new, kkw: 'hi')
     end
 
-    assert_equal ["KEYREST,Hash,rest"], type_tracker.last_args_info
+    assert_equal ["KEYREST,Date,a", "KEYREST,String,kkw"], type_tracker.last_args_info
+  end
+
+  def test_empty_kwrest
+    type_tracker.enable do
+      @args_info_wrapper.foo3()
+    end
+
+    assert_equal [], type_tracker.last_args_info
   end
 
   def test_req_and_opt_arg
@@ -59,7 +67,7 @@ class TestArgsInfo < Test::Unit::TestCase
       @args_info_wrapper.foo2(Date.new)
     end
 
-    assert type_tracker.last_args_info[0] == "REQ,Date,a"
+    assert_equal "REQ,Date,a", type_tracker.last_args_info[0]
     assert type_tracker.last_args_info[1] == "OPT,Fixnum,b" || type_tracker.last_args_info[1] == "OPT,Integer,b"
   end
 
@@ -68,7 +76,7 @@ class TestArgsInfo < Test::Unit::TestCase
       @args_info_wrapper.foo4(kw: Date.new)
     end
 
-    assert_equal ["KEY,Date,kw", "KEYREST,Hash,rest1"], type_tracker.last_args_info
+    assert_equal ["KEY,Date,kw"], type_tracker.last_args_info
   end
 
   def test_reqkw_and_empty_kwrest
@@ -76,24 +84,31 @@ class TestArgsInfo < Test::Unit::TestCase
       @args_info_wrapper.foo5(kw: Date.new)
     end
 
-    assert_equal ["KEYREQ,Date,kw", "KEYREST,Hash,rest"], type_tracker.last_args_info
+    assert_equal ["KEYREQ,Date,kw"], type_tracker.last_args_info
   end
 
   def test_reqkw_and_kwrest
     type_tracker.enable do
-      @args_info_wrapper.foo5(kw: Date.new, aa: 1, bb: '1')
+      @args_info_wrapper.foo5(kw: Date.new, aa: true, bb: '1')
     end
 
-    assert_equal ["KEYREQ,Date,kw", "KEYREST,Hash,rest"], type_tracker.last_args_info
+    assert_equal ["KEYREQ,Date,kw", "KEYREST,TrueClass,aa", "KEYREST,String,bb"], type_tracker.last_args_info
   end
 
   def test_optkw_and_kwrest
     type_tracker.enable do
-      @args_info_wrapper.foo4(aa: 1, bb: '1')
+      @args_info_wrapper.foo4(aa: :symbol, bb: '1')
     end
 
-    assert type_tracker.last_args_info[0] == "KEY,Fixnum,kw" || type_tracker.last_args_info[0] == "KEY,Integer,kw"
-    assert type_tracker.last_args_info[1] == "KEYREST,Hash,rest1"
+    assert_equal ["KEYREST,Symbol,aa", "KEYREST,String,bb"], type_tracker.last_args_info
+  end
+
+  def test_optkw_passed_and_kwrest
+    type_tracker.enable do
+      @args_info_wrapper.foo4(kw: 'bla-bla', aa: :symbol, bb: '1')
+    end
+
+    assert_equal ["KEY,String,kw", "KEYREST,Symbol,aa", "KEYREST,String,bb"], type_tracker.last_args_info
   end
 
   def test_rest

@@ -5,7 +5,7 @@ import org.junit.Test
 
 class GemInfoFromPathTest : TestCase() {
     private fun doTest(path: String, gemName: String, gemVersion: String) {
-        assertEquals(GemInfoOrNull(gemName, gemVersion), GemInfoFromFilePathOrNull(path))
+        assertEquals(GemInfoOrNull(gemName, gemVersion), gemInfoFromFilePathOrNull(path))
     }
 
     @Test

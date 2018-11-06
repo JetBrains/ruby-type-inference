@@ -137,11 +137,13 @@ object CallInfoTable : IntIdTableWithDependency<CallInfo, MethodInfo>(MethodInfo
     val methodInfoId = reference("method_info_id", MethodInfoTable, ReferenceOption.NO_ACTION)
 
     /**
-     * string containing types of arguments splitted by separator
+     * string containing types of unnamed args (e.g. REQ, KEYREQ args) splitted by separator
      */
-    val argsTypes = varchar("args_types", ARGS_TYPES_STRING_LENGTH)
+    val unnamedArgsTypes = varchar("required_args_types", ARGS_TYPES_STRING_LENGTH)
 
-    val numberOfArguments = integer("number_of_arguments")
+    val namedArgsTypes = varchar("named_args_types", ARGS_TYPES_STRING_LENGTH)
+
+    private val numberOfUnnamedArguments = integer("number_of_unnamed_arguments")
 
     val returnType = varchar("return_type", RETURN_TYPE_STRING_LENGTH)
 
@@ -170,7 +172,9 @@ object CallInfoTable : IntIdTableWithDependency<CallInfo, MethodInfo>(MethodInfo
     }
 
     override fun SqlExpressionBuilder.createSearchCriteriaForInfo(info: CallInfo): Op<Boolean> {
-        return (argsTypes eq info.argumentsTypesJoinToString()) and (numberOfArguments eq info.numberOfArguments) and
+        return (numberOfUnnamedArguments eq info.unnamedArguments.size) and
+                (unnamedArgsTypes eq info.unnamedArgumentsTypesJoinToRawString()) and
+                (namedArgsTypes eq info.namedArgumentsJoinToRawString()) and
                 (returnType eq info.returnType)
     }
 
@@ -179,21 +183,22 @@ object CallInfoTable : IntIdTableWithDependency<CallInfo, MethodInfo>(MethodInfo
     }
 
     override fun validateInfo(info: CallInfo): Boolean {
-        return info.argumentsTypesJoinToString().length <= ARGS_TYPES_STRING_LENGTH &&
+        return info.unnamedArgumentsTypesJoinToRawString().length <= ARGS_TYPES_STRING_LENGTH &&
                 info.returnType.length <= RETURN_TYPE_STRING_LENGTH
     }
 
     override fun writeInfoToBuilderNotNullableDependency(builder: UpdateBuilder<*>, info: CallInfo, dependencyId: EntityID<Int>) {
         builder[methodInfoId] = dependencyId
-        builder[argsTypes] = info.argumentsTypesJoinToString()
-        builder[numberOfArguments] = info.numberOfArguments
+        builder[unnamedArgsTypes] = info.unnamedArgumentsTypesJoinToRawString()
+        builder[namedArgsTypes] = info.namedArgumentsJoinToRawString()
+        builder[numberOfUnnamedArguments] = info.unnamedArguments.size
         builder[returnType] = info.returnType
     }
 
     override fun removeInvalidInfo(validInfo: CallInfo) {
         val methodInfoId = MethodInfoTable.findRowId(validInfo.methodInfo) ?: return
         deleteWhere {
-            (CallInfoTable.methodInfoId eq methodInfoId) and (CallInfoTable.numberOfArguments neq validInfo.argumentsTypes.size)
+            (CallInfoTable.methodInfoId eq methodInfoId) and (CallInfoTable.numberOfUnnamedArguments neq validInfo.unnamedArguments.size)
         }
     }
 }
@@ -201,28 +206,39 @@ object CallInfoTable : IntIdTableWithDependency<CallInfo, MethodInfo>(MethodInfo
 class CallInfoRow(id: EntityID<Int>) : IntEntity(id), CallInfo {
     companion object : IntEntityClass<CallInfoRow>(CallInfoTable)
 
+    private val requiredArgsTypesRaw: String by CallInfoTable.unnamedArgsTypes
+
+    private val namedArgsTypesRaw: String by CallInfoTable.namedArgsTypes
+
+    override val namedArguments: List<ArgumentNameAndType> by lazy {
+        namedArgsTypesRaw.takeIf { it != "" }?.split(ARGUMENTS_TYPES_SEPARATOR)?.asSequence()?.map {
+            val (name, type) = it.split(ArgumentNameAndType.NAME_AND_TYPE_SEPARATOR)
+            return@map ArgumentNameAndType(name, type)
+        }?.toList() ?: emptyList()
+    }
+
+    override fun namedArgumentsJoinToRawString(): String = namedArgsTypesRaw
+
     override val methodInfo: MethodInfoRow by MethodInfoRow referencedOn CallInfoTable.methodInfoId
 
-    private val argsTypesRaw: String by CallInfoTable.argsTypes
-    
-    override val argumentsTypes: List<String> by lazy {
-        // filter { it != "" } is required when argsTypesRaw is empty string
-        argsTypesRaw.split(ARGUMENTS_TYPES_SEPARATOR).filter { it != "" }
+    override val unnamedArguments: List<ArgumentNameAndType> by lazy {
+        requiredArgsTypesRaw.takeIf { it != "" }?.split(ARGUMENTS_TYPES_SEPARATOR)?.map {
+            val (name, type) = it.split(ArgumentNameAndType.NAME_AND_TYPE_SEPARATOR)
+            return@map ArgumentNameAndType(name, type)
+        } ?: emptyList()
     }
 
     override val returnType: String by CallInfoTable.returnType
 
-    override fun argumentsTypesJoinToString(): String {
-        return argsTypesRaw
-    }
+    override fun unnamedArgumentsTypesJoinToRawString(): String = requiredArgsTypesRaw
 
     override fun toString(): String {
         // just for pretty debugging :)
-        return "arguments: " + argumentsTypes.joinToString(separator = ", ", prefix = "[", postfix = "]") +
+        return "unnamedArguments: " + unnamedArguments.joinToString(separator = ", ", prefix = "[", postfix = "]") +
                 " return: $returnType"
     }
 
-    fun copy(): CallInfo = CallInfoImpl(methodInfo.copy(), argumentsTypes, returnType)
+    fun copy(): CallInfo = CallInfoImpl(methodInfo.copy(), namedArguments, unnamedArguments, returnType)
 }
 
 object SignatureTable : IntIdTableWithDependency<SignatureInfo, MethodInfo>(MethodInfoTable) {

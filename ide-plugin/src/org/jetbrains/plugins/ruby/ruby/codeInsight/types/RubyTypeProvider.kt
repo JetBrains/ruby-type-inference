@@ -3,6 +3,7 @@ package org.jetbrains.plugins.ruby.ruby.codeInsight.types
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.plugins.ruby.ruby.codeInsight.AbstractRubyTypeProvider
+import org.jetbrains.plugins.ruby.ruby.codeInsight.IncomingType
 import org.jetbrains.plugins.ruby.ruby.codeInsight.resolve.ResolveUtil
 import org.jetbrains.plugins.ruby.ruby.codeInsight.stateTracker.RubyClassHierarchyWithCaching
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbolicExecution.SymbolicExecutionContext
@@ -18,10 +19,7 @@ import org.jetbrains.plugins.ruby.ruby.codeInsight.types.impl.REmptyType
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RubyPsiUtil
 import org.jetbrains.plugins.ruby.ruby.lang.psi.expressions.RExpression
 import org.jetbrains.plugins.ruby.ruby.lang.psi.variables.RIdentifier
-import org.jetbrains.ruby.codeInsight.types.signature.CallInfo
-import org.jetbrains.ruby.codeInsight.types.signature.ClassInfo
-import org.jetbrains.ruby.codeInsight.types.signature.MethodInfo
-import org.jetbrains.ruby.codeInsight.types.signature.RVisibility
+import org.jetbrains.ruby.codeInsight.types.signature.*
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.CallInfoTable
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.RSignatureProviderImpl
 
@@ -54,8 +52,6 @@ class RubyParameterTypeProvider : AbstractRubyTypeProvider() {
         if (expr is RIdentifier && expr.isParameter) {
             val method = RubyPsiUtil.getContainingRMethod(expr) ?: return null
             val rubyModuleName = RubyPsiUtil.getContainingRClassOrModule(method)?.fqn?.fullPath ?: "Object"
-            val numberOfArgs = method.arguments.size
-            val indexOfArgument = method.arguments.indexOfFirst { it.identifier == expr }
 
             val info = MethodInfo.Impl(ClassInfo(rubyModuleName), method.fqn.shortName, RVisibility.PUBLIC)
 
@@ -63,12 +59,9 @@ class RubyParameterTypeProvider : AbstractRubyTypeProvider() {
                 RSignatureProviderImpl.getRegisteredCallInfos(info)
             }
 
-            val returnType = callInfos.map {
-                if (indexOfArgument in 0 until it.numberOfArguments) {
-                    RTypeFactory.createTypeClassName(it.argumentsTypes[indexOfArgument], expr)
-                } else {
-                    REmptyType.INSTANCE
-                }
+            val returnType = callInfos.map { callInfo ->
+                val typeName = expr.name?.let { callInfo.getTypeNameByArgumentName(it) } ?: return@map REmptyType.INSTANCE
+                return@map RTypeFactory.createTypeClassName(typeName, expr)
             }.unionTypesSmart()
             return if (returnType == REmptyType.INSTANCE) {
                 // If we don't have any information about type then return null
@@ -95,8 +88,15 @@ class ReturnTypeSymbolicTypeInferenceProvider : SymbolicTypeInferenceProvider {
                 .getReceiverType(symbolicCall, component, callContext).name ?: return null
 
         val typeInferenceComponent = context.getComponent(TypeInferenceComponent::class.java)
-        val argumentsTypes: List<String?> = symbolicCall.arguments
-                .map { typeInferenceComponent.getTypeForSymbolicExpression(it.expression).name }
+
+        val unnamedArgsTypes: List<String?> = symbolicCall.arguments.asSequence().filter { it.type != IncomingType.ASSOC }
+                .map { typeInferenceComponent.getTypeForSymbolicExpression(it.expression).name }.toList()
+
+        val namedArgsTypes = symbolicCall.arguments.asSequence().filter { it.type == IncomingType.ASSOC }
+                .map {
+                    val type = typeInferenceComponent.getTypeForSymbolicExpression(it.expression).name ?: return@map null
+                    return@map ArgumentNameAndType(it.keyName, type)
+                }.toList()
 
         val methodInfo = MethodInfo.Impl(ClassInfo.Impl(null, receiverTypeName), symbolicCall.name)
 
@@ -106,8 +106,10 @@ class ReturnTypeSymbolicTypeInferenceProvider : SymbolicTypeInferenceProvider {
 
         @Suppress("UNCHECKED_CAST")
         val registeredReturnTypes: List<String> = registeredCallInfos
-                .filter { it.argumentsTypes == argumentsTypes }
+                .asSequence()
+                .filter { argumentsMatch(it, unnamedArgsTypes, namedArgsTypes) }
                 .map { it.returnType }
+                .toList()
                 .takeIf { !it.isEmpty() }
                 ?: registeredCallInfos.map { it.returnType }
 
@@ -123,6 +125,31 @@ class ReturnTypeSymbolicTypeInferenceProvider : SymbolicTypeInferenceProvider {
             component.updateSymbolicExpressionType(symbolicCall, returnType)
             symbolicCall
         }
+    }
+
+    private fun argumentsMatch(oneOfExpected: CallInfo, actualUnnamedArgs: List<String?>, actualNamedArgs: List<ArgumentNameAndType?>): Boolean {
+        if (oneOfExpected.unnamedArguments.size != actualUnnamedArgs.size || oneOfExpected.namedArguments.size != actualNamedArgs.size) {
+            return false
+        }
+
+        if (oneOfExpected.unnamedArguments.zip(actualUnnamedArgs).any {
+                    it.first.type != ArgumentNameAndType.IMPLICITLY_PASSED_ARGUMENT_TYPE &&
+                            it.second != null &&
+                            it.first.type != it.second
+                }) {
+            return false
+        }
+
+        if (oneOfExpected.namedArguments.zip(actualNamedArgs).any {
+                    it.second != null &&
+                            it.first.type != ArgumentNameAndType.IMPLICITLY_PASSED_ARGUMENT_TYPE &&
+                            it.second!!.type != ArgumentNameAndType.IMPLICITLY_PASSED_ARGUMENT_TYPE &&
+                            it.first.type != it.second!!.type
+                }) {
+            return false
+        }
+
+        return true
     }
 }
 

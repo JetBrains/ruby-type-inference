@@ -56,7 +56,7 @@ class TestCallInfo < Test::Unit::TestCase
     assert_not_nil type_tracker.last_call_info
     #assert type_tracker.last_call_info.size == 2
     #assert type_tracker.last_call_info[0] == "sqr2"
-    assert type_tracker.last_call_info[0] == 2
+    assert_equal 2, type_tracker.last_call_info[0]
   end
 
   def test_simple_req_arg
@@ -75,8 +75,8 @@ class TestCallInfo < Test::Unit::TestCase
     assert_not_nil type_tracker.last_call_info
     #assert type_tracker.last_call_info.size == 3
     #assert type_tracker.last_call_info[0] == "sqr2"
-    assert type_tracker.last_call_info[0] == 4
-    assert type_tracker.last_call_info[1] == "x,y"
+    assert_equal 4, type_tracker.last_call_info[0]
+    assert_equal "x,y", type_tracker.last_call_info[1]
   end
 
   def test_rest
@@ -87,7 +87,7 @@ class TestCallInfo < Test::Unit::TestCase
     assert_not_nil type_tracker.last_call_info
     #assert type_tracker.last_call_info.size == 2
     #assert type_tracker.last_call_info[0] == "foo2"
-    assert type_tracker.last_call_info[0] == 8
+    assert_equal 8, type_tracker.last_call_info[0]
   end
 
   def test_post_and_rest
@@ -110,8 +110,8 @@ class TestCallInfo < Test::Unit::TestCase
     assert_not_nil type_tracker.last_call_info
     #assert type_tracker.last_call_info.size == 3
     #assert type_tracker.last_call_info[0] == "foo3"
-    assert type_tracker.last_call_info[0] == 4
-    assert type_tracker.last_call_info[1] == "a,b,c,d"
+    assert_equal 4, type_tracker.last_call_info[0]
+    assert_equal "a,b,c,d", type_tracker.last_call_info[1]
   end
 
   def test_rest_and_reqkw_args
@@ -122,8 +122,8 @@ class TestCallInfo < Test::Unit::TestCase
     assert_not_nil type_tracker.last_call_info
     #assert type_tracker.last_call_info.size == 3
     #assert type_tracker.last_call_info[0] == "foo4"
-    assert type_tracker.last_call_info[0] == 4
-    assert type_tracker.last_call_info[1] == "b,c,e,f"
+    assert_equal 4, type_tracker.last_call_info[0]
+    assert_equal "b,c,e,f", type_tracker.last_call_info[1]
 
   end
 end

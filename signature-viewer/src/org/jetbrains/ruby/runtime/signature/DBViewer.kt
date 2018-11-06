@@ -23,7 +23,7 @@ fun main(args: Array<String>) {
                     it.methodInfo.visibility + " " +
                     it.methodInfo.classInfo.classFQN + " " +
                     it.methodInfo.name + " " +
-                    "args:${it.argumentsTypesJoinToString()} " +
+                    "args:${it.unnamedArgumentsTypesJoinToRawString()} " +
                     "return:${it.returnType}")
         }
         println("Size: ${table.size}")

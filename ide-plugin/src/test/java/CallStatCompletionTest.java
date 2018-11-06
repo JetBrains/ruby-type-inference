@@ -8,24 +8,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ruby.ruby.run.RubyCommandLine;
 import org.jetbrains.plugins.ruby.ruby.run.RubyLocalRunner;
 import org.jetbrains.ruby.codeInsight.types.signature.*;
-import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition;
-import org.jetbrains.ruby.codeInsight.types.signature.serialization.SignatureContractSerializationKt;
-import org.jetbrains.ruby.codeInsight.types.signature.serialization.StringDataOutput;
 import org.jetbrains.ruby.codeInsight.types.storage.server.DatabaseProvider;
 import org.jetbrains.ruby.codeInsight.types.storage.server.StorageException;
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.RSignatureProviderImpl;
 import org.jetbrains.ruby.runtime.signature.server.SignatureServer;
-import org.jetbrains.ruby.runtime.signature.server.SignatureServerKt;
 import org.junit.Assert;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
@@ -187,34 +182,6 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
         assertTrue(callInfosContainsUnique(callInfos, asList("String", "Symbol"), "TrueClass"));
     }
 
-    public void testMultipleExecution() {
-        executeScript("multiple_execution_test1.rb");
-        SignatureContract contract = doTestContract("multiple_execution_test2",
-                createMethodInfo("A", "foo2"));
-
-
-        assertEquals(3, contract.getNodeCount());
-        Map<ContractTransition, SignatureNode> edges = contract.getStartNode().getTransitions();
-        assertEquals(4, edges.size());
-
-        assertEquals(1, edges.values().stream().distinct().count());
-        Map<ContractTransition, SignatureNode> nextEdges = edges.values().iterator().next().getTransitions();
-
-        assertEquals(Collections.singleton("Abacaba"), nextEdges.keySet().iterator().next().getValue(singletonList(Collections.singleton("Abacaba"))));
-    }
-
-    public void testRefLinks() {
-        SignatureContract contract = doTestContract("ref_links_test",
-                createMethodInfo("A", "doo"));
-
-        final StringDataOutput stream = new StringDataOutput();
-        SignatureContractSerializationKt.serialize(contract, stream);
-        assertTrue(
-                stream.getResult().toString().equals("3 a 0 b 0 c 0 9 3 1 0 Fixnum 2 0 B 3 0 String 1 4 0 String 1 4 0 A 1 5 1 1 1 6 1 1 1 7 1 3 1 8 1 5 1 8 1 7 0")
-                || stream.getResult().toString().equals("3 a 0 b 0 c 0 9 3 1 0 Integer 2 0 B 3 0 String 1 4 0 String 1 4 0 A 1 5 1 1 1 6 1 1 1 7 1 3 1 8 1 5 1 8 1 7 0")
-        );
-    }
-
     private void executeScript(@NotNull String runnableScriptName) {
         URL url = getClass().getClassLoader().getResource(runnableScriptName);
 
@@ -316,11 +283,12 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
     private static boolean callInfosContainsUnique(final @NotNull List<CallInfo> callInfos,
                                                    final @NotNull List<String> arguments,
                                                    final @NotNull String returnType) {
-        return callInfos.stream().filter(callInfo -> callInfo.getArgumentsTypes().equals(arguments) &&
-                callInfo.getReturnType().equals(returnType)).count() == 1;
+        return callInfos.stream().filter(callInfo ->
+                callInfo.getUnnamedArguments().stream().map(ArgumentNameAndType::getType).collect(Collectors.toList()).equals(arguments) &&
+                        callInfo.getReturnType().equals(returnType)).count() == 1;
     }
 
     private static boolean allCallInfosHaveNumberOfArguments(final @NotNull List<CallInfo> callInfos, int numberOfArguments) {
-        return callInfos.stream().allMatch(callInfo -> callInfo.getNumberOfArguments() == numberOfArguments);
+        return callInfos.stream().allMatch(callInfo -> callInfo.getUnnamedArguments().size() == numberOfArguments);
     }
 }

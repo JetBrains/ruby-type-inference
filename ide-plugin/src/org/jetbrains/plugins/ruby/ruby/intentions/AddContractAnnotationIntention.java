@@ -76,7 +76,7 @@ public class AddContractAnnotationIntention extends BaseRubyMethodIntentionActio
         builder.append("# @contract");
         for (CallInfo callInfo : registeredCallInfos) {
             builder.append("\n# (");
-            builder.append(String.join(", ", callInfo.getArgumentsTypes().toArray(new String[0])));
+            builder.append(String.join(", ", callInfo.getNamedArguments().stream().map(ArgumentNameAndType::getType).toArray(String[]::new)));
             builder.append(") -> ");
             builder.append(callInfo.getReturnType());
         }
