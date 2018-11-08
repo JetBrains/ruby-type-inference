@@ -23,6 +23,10 @@ class RubyCollectTypeRunner : RubyProgramRunner() {
                            environment: ExecutionEnvironment): RunContentDescriptor? {
         if (state is RubyAbstractCommandLineState) {
             SignatureServer.runServerAsyncIfNotRunYet(port = 0, isDaemon = true)
+
+            // Clears cache of registered CallInfos because after rerunning under type tracker data may changed
+            registeredCallInfosCache.clear()
+
             val (_, _, typeTrackerEnabled) = ServiceManager.getService(environment.project, RubyTypeContractsSettings::class.java)
             val newConfig = state.config.clone()
             val pathToState = tryGenerateTmpDirPath()

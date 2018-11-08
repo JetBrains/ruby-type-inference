@@ -25,6 +25,12 @@ import org.jetbrains.ruby.codeInsight.types.signature.RVisibility
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.CallInfoTable
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.RSignatureProviderImpl
 
+/**
+ * Cache where we store last accessed [CallInfo]s
+ */
+val registeredCallInfosCache: MutableMap<MethodInfo, List<CallInfo>>
+        = ContainerUtil.createSoftKeySoftValueMap<MethodInfo, List<CallInfo>>()
+
 class RubyParameterTypeProvider : AbstractRubyTypeProvider() {
 
     override fun createTypeBySymbol(p0: Symbol?, p1: Context?): RType? {
@@ -53,7 +59,9 @@ class RubyParameterTypeProvider : AbstractRubyTypeProvider() {
 
             val info = MethodInfo.Impl(ClassInfo(rubyModuleName), method.fqn.shortName, RVisibility.PUBLIC)
 
-            val callInfos: List<CallInfo> = RSignatureProviderImpl.getRegisteredCallInfos(info)
+            val callInfos: List<CallInfo> = registeredCallInfosCache.getOrPut(info) {
+                RSignatureProviderImpl.getRegisteredCallInfos(info)
+            }
 
             val returnType = callInfos.map {
                 if (indexOfArgument in 0 until it.numberOfArguments) {
@@ -78,7 +86,6 @@ class RubyParameterTypeProvider : AbstractRubyTypeProvider() {
  * Provides types for Ruby method return values. Type providing based on information collection into [CallInfoTable]
  */
 class ReturnTypeSymbolicTypeInferenceProvider : SymbolicTypeInferenceProvider {
-
     override fun evaluateSymbolicCall(symbolicCall: SymbolicCall,
                                       context: SymbolicExecutionContext,
                                       callContext: TypeInferenceInstance.CallContext,
@@ -93,7 +100,9 @@ class ReturnTypeSymbolicTypeInferenceProvider : SymbolicTypeInferenceProvider {
 
         val methodInfo = MethodInfo.Impl(ClassInfo.Impl(null, receiverTypeName), symbolicCall.name)
 
-        val registeredCallInfos = RSignatureProviderImpl.getRegisteredCallInfos(methodInfo)
+        val registeredCallInfos = registeredCallInfosCache.getOrPut(methodInfo) {
+            RSignatureProviderImpl.getRegisteredCallInfos(methodInfo)
+        }
 
         @Suppress("UNCHECKED_CAST")
         val registeredReturnTypes: List<String> = registeredCallInfos
