@@ -20,11 +20,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import java.util.logging.Logger
 
-/**
- * Port number that is used to show server to allocate port automatically
- */
-const val AUTOMATICALLY_ALLOCATED_PORT = 0
-
 const val DEFAULT_PORT_NUMBER = 7777
 
 object SignatureServer {
@@ -78,7 +73,7 @@ object SignatureServer {
     /**
      * Run server in separate [Thread] if not run yet
      * @param port specify port to run server on. (7777 is used as default port) you can also specify
-     * [AUTOMATICALLY_ALLOCATED_PORT] to use a port number that is automatically allocated
+     * 0 to use a port number that is automatically allocated
      *
      * @return true if server run successfully; false if has already been run before this function call
      */
@@ -218,7 +213,6 @@ object SignatureServer {
         }
     }
 
-    private data class ParsedArgs(val dbFilePath: String)
     private fun parseArgs(args: Array<String>): ParsedArgs {
         if (args.size != 1) {
             System.err.println("""
@@ -229,6 +223,8 @@ object SignatureServer {
         }
         return ParsedArgs(args.single())
     }
+
+    private data class ParsedArgs(val dbFilePath: String)
 
     private class PollJsonThread : Thread() {
         override fun run() {

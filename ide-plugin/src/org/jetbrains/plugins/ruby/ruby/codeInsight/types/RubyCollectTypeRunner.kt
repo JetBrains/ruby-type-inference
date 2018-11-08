@@ -13,7 +13,6 @@ import org.jetbrains.plugins.ruby.ruby.run.configuration.CollectExecSettings
 import org.jetbrains.plugins.ruby.ruby.run.configuration.RubyAbstractCommandLineState
 import org.jetbrains.plugins.ruby.ruby.run.configuration.RubyProgramRunner
 import org.jetbrains.plugins.ruby.settings.RubyTypeContractsSettings
-import org.jetbrains.ruby.runtime.signature.server.AUTOMATICALLY_ALLOCATED_PORT
 import org.jetbrains.ruby.runtime.signature.server.SignatureServer
 import java.io.IOException
 
@@ -23,7 +22,7 @@ class RubyCollectTypeRunner : RubyProgramRunner() {
     override fun doExecute(state: RunProfileState,
                            environment: ExecutionEnvironment): RunContentDescriptor? {
         if (state is RubyAbstractCommandLineState) {
-            SignatureServer.runServerAsyncIfNotRunYet(port = AUTOMATICALLY_ALLOCATED_PORT, isDaemon = true)
+            SignatureServer.runServerAsyncIfNotRunYet(port = 0, isDaemon = true)
             val (_, _, typeTrackerEnabled) = ServiceManager.getService(environment.project, RubyTypeContractsSettings::class.java)
             val newConfig = state.config.clone()
             val pathToState = tryGenerateTmpDirPath()
