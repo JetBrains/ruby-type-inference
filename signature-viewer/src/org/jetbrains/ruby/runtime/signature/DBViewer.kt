@@ -17,7 +17,7 @@ fun main(args: Array<String>) {
         table.forEach {
             println("" +
                     (it.methodInfo.classInfo.gemInfo?.name ?: "No gem") + " " +
-                    (it.methodInfo.classInfo.gemInfo?.version ?: "No gem") + " " +
+                    (it.methodInfo.classInfo.gemInfo?.version ?: "No version") + " " +
                     it.methodInfo.location?.path + " " +
                     it.methodInfo.location?.lineno + " " +
                     it.methodInfo.visibility + " " +

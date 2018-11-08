@@ -234,7 +234,7 @@ class CallInfoRow(id: EntityID<Int>) : IntEntity(id), CallInfo {
 
     override fun toString(): String {
         // just for pretty debugging :)
-        return "unnamedArguments: " + unnamedArguments.joinToString(separator = ", ", prefix = "[", postfix = "]") +
+        return "name: ${methodInfo.name} unnamedArguments: " + unnamedArguments.joinToString(separator = ", ", prefix = "[", postfix = "]") +
                 " return: $returnType"
     }
 
