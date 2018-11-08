@@ -13,27 +13,25 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.exposed.dao.EntityID;
+import org.jetbrains.exposed.sql.transactions.ThreadLocalTransactionManagerKt;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.fqn.FQN;
-import org.jetbrains.plugins.ruby.ruby.codeInsight.types.CoreTypes;
-import org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyStatTypeProviderImpl;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RFile;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RubyElementFactory;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RubyPsiUtil;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.controlStructures.methods.RMethod;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.variables.RFName;
-import org.jetbrains.ruby.codeInsight.types.signature.MethodInfo;
-import org.jetbrains.ruby.codeInsight.types.signature.SignatureContract;
-import org.jetbrains.ruby.codeInsight.types.signature.SignatureNode;
+import org.jetbrains.ruby.codeInsight.types.signature.*;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ReferenceContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.TypedContractTransition;
-import org.jetbrains.ruby.runtime.signature.server.SignatureServer;
+import org.jetbrains.ruby.codeInsight.types.storage.server.impl.MethodInfoTable;
+import org.jetbrains.ruby.codeInsight.types.storage.server.impl.RSignatureProviderImpl;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class AddContractAnnotationIntention extends BaseRubyMethodIntentionAction {
     @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -59,12 +57,9 @@ public class AddContractAnnotationIntention extends BaseRubyMethodIntentionActio
             return false;
         }
 
-        final MethodInfo methodInfo = createMethodInfo(method);
-        if (methodInfo == null) {
-            return false;
-        }
-        final SignatureContract contract = SignatureServer.INSTANCE.getContract(methodInfo);
-        return contract != null && getContractAsStringList(contract) != null;
+        EntityID<Integer> found = ThreadLocalTransactionManagerKt.transaction(null,
+                transaction -> MethodInfoTable.INSTANCE.findRowId(createMethodInfo(method)));
+        return found != null;
     }
 
     public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
@@ -74,8 +69,19 @@ public class AddContractAnnotationIntention extends BaseRubyMethodIntentionActio
         assert method != null : "Method cannot be null here";
         final MethodInfo methodInfo = createMethodInfo(method);
         assert methodInfo != null : "MethodInfo mustn't be null: it was checked in isAvailable";
-        final SignatureContract contract = SignatureServer.INSTANCE.getContract(methodInfo);
-        final RFile fileWithComments = RubyElementFactory.createRubyFile(project, getContractAsStringList(contract).stream().reduce("# @contract", (s, s2) -> s + "\n# " + s2));
+
+        List<CallInfo> registeredCallInfos = RSignatureProviderImpl.INSTANCE.getRegisteredCallInfos(methodInfo);
+
+        StringBuilder builder = new StringBuilder();
+        builder.append("# @contract");
+        for (CallInfo callInfo : registeredCallInfos) {
+            builder.append("\n# (");
+            builder.append(String.join(", ", callInfo.getArgumentsTypes().toArray(new String[0])));
+            builder.append(") -> ");
+            builder.append(callInfo.getReturnType());
+        }
+
+        final RFile fileWithComments = RubyElementFactory.createRubyFile(project, builder.toString());
         method.getParent().addRangeBefore(fileWithComments.getFirstChild(), fileWithComments.getLastChild(), method);
     }
 
@@ -88,29 +94,7 @@ public class AddContractAnnotationIntention extends BaseRubyMethodIntentionActio
         if (module == null) {
             return null;
         }
-        return RubyStatTypeProviderImpl.findMethodInfo(methodName,
-                receiverName.isEmpty() ? CoreTypes.Object : receiverName,
-                module,
-                SignatureServer.INSTANCE.getStorage());
-    }
-
-    @Nullable
-    private List<String> getContractAsStringList(SignatureContract contract) {
-        final List<String> contracts = new ArrayList<>();
-        final SignatureNode startNode = contract.getStartNode();
-        dfs(startNode, new StringBuilder(), contracts);
-        if (contracts.size() > 3) {
-            return null;
-        }
-
-        return contracts.stream().map(s -> {
-            final int i = s.lastIndexOf(",");
-            if (i <= 0) {
-                return "-> " + s;
-            } else {
-                return "(" + s.substring(0, i) + ") -> " + s.substring(i + 2);
-            }
-        }).collect(Collectors.toList());
+        return new MethodInfo.Impl(new ClassInfo.Impl(null, receiverName), methodName, RVisibility.PUBLIC, null);
     }
 
     private void dfs(@NotNull SignatureNode v, @NotNull StringBuilder currentLine, @NotNull List<String> result) {

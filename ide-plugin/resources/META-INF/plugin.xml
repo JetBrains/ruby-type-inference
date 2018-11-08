@@ -44,7 +44,6 @@
 
     <extensions defaultExtensionNs="org.jetbrains.plugins.ruby">
 
-        <rubyStatTypeProvider implementation="org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyStatTypeProviderImpl"/>
         <rubyTypeProvider implementation="org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyParameterTypeProvider"/>
         <symbolicTypeInferenceProvider implementation="org.jetbrains.plugins.ruby.ruby.codeInsight.types.ReturnTypeSymbolicTypeInferenceProvider"/>
 
