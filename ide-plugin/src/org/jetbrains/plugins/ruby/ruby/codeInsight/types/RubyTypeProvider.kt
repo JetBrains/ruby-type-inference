@@ -53,7 +53,7 @@ class RubyParameterTypeProvider : AbstractRubyTypeProvider() {
 
             val info = MethodInfo.Impl(ClassInfo(rubyModuleName), method.fqn.shortName, RVisibility.PUBLIC)
 
-            val callInfos: List<CallInfo> = RSignatureProviderImpl.getRegisteredCallInfos(info, numberOfArgs)
+            val callInfos: List<CallInfo> = RSignatureProviderImpl.getRegisteredCallInfos(info)
 
             val returnType = callInfos.map {
                 if (indexOfArgument in 0 until it.numberOfArguments) {
@@ -93,7 +93,7 @@ class ReturnTypeSymbolicTypeInferenceProvider : SymbolicTypeInferenceProvider {
 
         val methodInfo = MethodInfo.Impl(ClassInfo.Impl(null, receiverTypeName), symbolicCall.name)
 
-        val registeredCallInfos = RSignatureProviderImpl.getRegisteredCallInfos(methodInfo, numberOfArguments = null)
+        val registeredCallInfos = RSignatureProviderImpl.getRegisteredCallInfos(methodInfo)
 
         @Suppress("UNCHECKED_CAST")
         val registeredReturnTypes: List<String> = registeredCallInfos

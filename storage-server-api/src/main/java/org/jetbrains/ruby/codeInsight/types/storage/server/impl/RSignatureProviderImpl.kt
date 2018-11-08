@@ -1,6 +1,5 @@
 package org.jetbrains.ruby.codeInsight.types.storage.server.impl
 
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.select
@@ -82,15 +81,11 @@ object RSignatureProviderImpl : RSignatureProvider {
         SignatureTable.insertInfoIfNotContains(signatureInfo)
     }
 
-    override fun getRegisteredCallInfos(methodInfo: MethodInfo, numberOfArguments: Int?): List<CallInfo> {
+    override fun getRegisteredCallInfos(methodInfo: MethodInfo): List<CallInfo> {
         return transaction {
             val methodId = MethodInfoTable.findRowId(methodInfo) ?: return@transaction listOf()
 
-            var searchCriteria = CallInfoTable.methodInfoId eq methodId
-            if (numberOfArguments != null) {
-                searchCriteria = searchCriteria and (CallInfoTable.numberOfArguments eq numberOfArguments)
-            }
-            return@transaction CallInfoRow.find { searchCriteria }.map { it.copy() }
+            return@transaction CallInfoRow.find { CallInfoTable.methodInfoId eq methodId }.map { it.copy() }
         }
     }
 }

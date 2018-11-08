@@ -84,9 +84,9 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
         waitForServer();
 
         List<CallInfo> fooCallInfos = new ArrayList<>(RSignatureProviderImpl.INSTANCE.getRegisteredCallInfos(
-                createMethodInfo("A", "foo"), null));
+                createMethodInfo("A", "foo")));
         List<CallInfo> barCallInfos = new ArrayList<>(RSignatureProviderImpl.INSTANCE.getRegisteredCallInfos(
-                createMethodInfo("A", "bar"), null));
+                createMethodInfo("A", "bar")));
 
         assertEquals(1, fooCallInfos.size());
         assertTrue(allCallInfosHaveNumberOfArguments(fooCallInfos, 2));
@@ -291,7 +291,7 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
                                               @NotNull MethodInfo methodInfo) throws StorageException {
         executeScript(executableScriptName);
         waitForServer();
-        return new ArrayList<>(RSignatureProviderImpl.INSTANCE.getRegisteredCallInfos(methodInfo, null));
+        return new ArrayList<>(RSignatureProviderImpl.INSTANCE.getRegisteredCallInfos(methodInfo));
     }
 
     private void doTest(@NotNull String name, @NotNull MethodInfo methodInfo, String... items) {

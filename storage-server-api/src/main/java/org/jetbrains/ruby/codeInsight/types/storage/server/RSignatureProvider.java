@@ -42,12 +42,10 @@ public interface RSignatureProvider {
             throws StorageException;
 
     /**
-     * Get registered {@link CallInfo}s by given {@code methodInfo}. Also provide {@code numberOfArguments} if you
-     * need {@link CallInfo}s of method with particular number of arguments.
+     * Get registered {@link CallInfo}s by given {@code methodInfo}
      */
     @NotNull
-    Collection<CallInfo> getRegisteredCallInfos(@NotNull MethodInfo methodInfo, @Nullable Integer numberOfArguments)
-            throws StorageException;
+    Collection<CallInfo> getRegisteredCallInfos(@NotNull MethodInfo methodInfo) throws StorageException;
 
     @Nullable
     SignatureInfo getSignature(@NotNull MethodInfo method) throws StorageException;

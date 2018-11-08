@@ -67,10 +67,10 @@ class DiffPreservingStorage<T : RSignatureStorage.Packet>(
                 ?: receivedDataStorage.getSignature(method)
     }
 
-    override fun getRegisteredCallInfos(methodInfo: MethodInfo, numberOfArguments: Int?): MutableCollection<CallInfo> {
+    override fun getRegisteredCallInfos(methodInfo: MethodInfo): MutableCollection<CallInfo> {
         return HashSet<CallInfo>().apply {
-            addAll(localDataStorage.getRegisteredCallInfos(methodInfo, numberOfArguments))
-            addAll(receivedDataStorage.getRegisteredCallInfos(methodInfo, numberOfArguments))
+            addAll(localDataStorage.getRegisteredCallInfos(methodInfo))
+            addAll(receivedDataStorage.getRegisteredCallInfos(methodInfo))
         }
     }
 
