@@ -37,7 +37,7 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
 
     public CallStatCompletionTest() {
         DatabaseProvider.connectToInMemoryDB();
-        SignatureServer.runServerAsyncIfNotRunYet(SignatureServerKt.AUTOMATICALLY_ALLOCATED_PORT, true);
+        SignatureServer.runServerAsyncIfNotRunYet(0, true);
     }
 
     @Override
