@@ -58,16 +58,26 @@ typedef struct
     char *method_name;
     char *args_info;
     char *path;
+    char *return_type_name;
     ssize_t explicit_argc; // Number of arguments that was explicitly passed by user
     int lineno;
-    char *return_type_name;
 } signature_t;
 
 void Init_arg_scanner();
 
 static const char *EMPTY_VALUE = "";
 static const int SERVER_DEFAULT_PORT = 7777;
+static const int MAX_NUMBER_OF_MISSED_CALLS = 10;
+/**
+ * There we keep information about signatures that have already been sent to server in order to not sent them again
+ */
 static GTree *sent_to_server_tree;
+/**
+ * Here we store map with key: signature_t and value: int number (how many times method was called with the same args)
+ * If we got that any method is called with the same args more than MAX_NUMBER_OF_MISSED_CALLS times in a row then
+ * we will ignore it.
+ */
+static GTree *number_missed_calls_tree;
 static int socket_fd = -1;
 static char *get_args_info(const char *const *explicit_kw_args);
 static VALUE set_server_port(VALUE self, VALUE server_port);
@@ -102,8 +112,8 @@ static void signature_t_free(signature_t *s)
     free(s);
 }
 
-// Free signature_t partially leaving parts that are used while comparison (compare_signature_t)
-// @see_also compare_signature_t
+// Free signature_t partially leaving parts that are used in sent_to_server_tree_comparator
+// @see_also sent_to_server_tree_comparator
 static void signature_t_free_partially(signature_t *s)
 {
     free(s->receiver_name);
@@ -113,26 +123,41 @@ static void signature_t_free_partially(signature_t *s)
     s->method_name = NULL;
 }
 
-// Just one possible comparator. Feel free to change the way it compare (but do it meaningfully and
-// don't forget to change signature_t_free_partially accordingly)
-// @see_also signature_t_free_partially
+// Comparator for number_missed_calls_tree.
 static gint
-compare_signature_t(gconstpointer x, gconstpointer y, gpointer user_data_ignored) {
+number_missed_calls_tree_comparator(gconstpointer x, gconstpointer y, gpointer user_data_ignored) {
     const signature_t *a = x;
     const signature_t *b = y;
     int ret;
 
     // Comparison using lineno and path theoretically should guarantees us unique.
     // And compare lineno firstly because it's faster O(1) than comparing path which is O(path_len)
-
     ret = a->lineno - b->lineno;
     if (ret != 0) return ret;
 
     ret = strcmp(a->path, b->path);
     if (ret != 0) return ret;
 
-    ret = strcmp(a->args_info != NULL ? a->args_info : "", b->args_info != NULL ? b->args_info : "");
+    return 0;
+}
+
+// Comparator for sent_to_server_tree.
+// If you want to change the way it compare then don't forget to
+// change signature_t_free_partially accordingly
+// @see_also signature_t_free_partially
+static gint
+sent_to_server_tree_comparator(gconstpointer x, gconstpointer y, gpointer user_data_ignored) {
+    const signature_t *a = x;
+    const signature_t *b = y;
+    int ret;
+
+    ret = number_missed_calls_tree_comparator(x, y, user_data_ignored);
     if (ret != 0) return ret;
+
+    if (a->args_info != NULL && b->args_info != NULL) {
+        ret = strcmp(a->args_info, b->args_info);
+        if (ret != 0) return ret;
+    }
 
     ret = strcmp(a->return_type_name, b->return_type_name);
     if (ret != 0) return ret;
@@ -168,10 +193,17 @@ void Init_arg_scanner() {
     rb_define_module_function(mArgScanner, "check_if_arg_scanner_ready", check_if_arg_scanner_ready, 0);
     rb_define_module_function(mArgScanner, "set_server_port", set_server_port, 1);
 
-    sent_to_server_tree = g_tree_new_full(/*key_compare_func =*/compare_signature_t,
+    sent_to_server_tree = g_tree_new_full(/*key_compare_func =*/sent_to_server_tree_comparator,
                                           /*key_compare_data =*/NULL,
                                           /*key_destroy_func =*/(GDestroyNotify)signature_t_free,
                                           /*value_destroy_func =*/NULL);
+
+    // key_destroy_func is NULL because we will use the same keys for number_missed_calls_tree
+    // and sent_to_server_tree. And all memory management is done by sent_to_server_tree
+    number_missed_calls_tree = g_tree_new_full(/*key_compare_func =*/number_missed_calls_tree_comparator,
+                                               /*key_compare_data =*/NULL,
+                                               /*key_destroy_func =*/NULL,
+                                               /*value_destroy_func =*/NULL);
 }
 
 rb_control_frame_t *
@@ -205,11 +237,21 @@ handle_call(VALUE self, VALUE lineno, VALUE method_name, VALUE path)
     if (lineno == Qnil || method_name == Qnil || path == Qnil) {
         return Qnil;
     }
+
+    signature_t sign_temp;
+    memset(&sign_temp, 0, sizeof(sign_temp));
+    sign_temp.lineno = FIX2INT(lineno); // Convert Ruby's Fixnum to C language int
+    sign_temp.path = StringValueCStr(path);
+
+    int number_of_missed_calls = (int)g_tree_lookup(number_missed_calls_tree, &sign_temp);
+    if (number_of_missed_calls > MAX_NUMBER_OF_MISSED_CALLS) {
+        return Qnil;
+    }
     signature_t *sign = (signature_t *) calloc(1, sizeof(*sign));
 
-    sign->lineno = FIX2INT(lineno); // Convert Ruby's Fixnum to C language int
+    sign->lineno = sign_temp.lineno;
+    sign->path = strdup(sign_temp.path);
     sign->method_name = strdup(StringValueCStr(method_name));
-    sign->path = strdup(StringValueCStr(path));
     sign->explicit_argc = -1;
 
 #ifdef DEBUG_ARG_SCANNER
@@ -246,9 +288,13 @@ handle_return(VALUE self, VALUE signature, VALUE receiver_name, VALUE return_typ
     sign->receiver_name = strdup(StringValueCStr(receiver_name));
     sign->return_type_name = strdup(StringValueCStr(return_type_name));
 
-    if (g_tree_lookup(sent_to_server_tree, sign) == NULL) {
+    signature_t *sign_in_sent_to_server_tree = g_tree_lookup(sent_to_server_tree, sign);
+    if (sign_in_sent_to_server_tree == NULL) {
+        // Resets number of missed calls to 0
+        g_tree_insert(number_missed_calls_tree, /*key = */sign, /*value = */0);
+
         // GTree will free memory allocated by sign by itself
-        g_tree_insert(sent_to_server_tree, /*key = */sign, /*value = */EMPTY_VALUE);
+        g_tree_insert(sent_to_server_tree, /*key = */sign, /*value = */sign);
 
         char json[2048];
         size_t json_size = sizeof(json) / sizeof(*json);
@@ -275,6 +321,9 @@ handle_return(VALUE self, VALUE signature, VALUE receiver_name, VALUE return_typ
         send(socket_fd, json, json_len, 0);
     } else {
         signature_t_free(sign);
+
+        int found = (int) g_tree_lookup(number_missed_calls_tree, sign_in_sent_to_server_tree);
+        g_tree_insert(number_missed_calls_tree, /*key = */sign_in_sent_to_server_tree, /*value = */found + 1);
     }
     return Qnil;
 }
@@ -722,6 +771,7 @@ check_if_arg_scanner_ready(VALUE self) {
 static VALUE
 destructor(VALUE self) {
     g_tree_destroy(sent_to_server_tree);
+    g_tree_destroy(number_missed_calls_tree);
     close(socket_fd);
     return Qnil;
 }

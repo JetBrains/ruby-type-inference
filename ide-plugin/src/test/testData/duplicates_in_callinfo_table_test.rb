@@ -7,5 +7,5 @@ end
 
 foo("str")
 foo("not str")
-10.times { foo("str") }
-10.times { foo(false) }
+3.times { foo("str") }
+3.times { foo(false) }
