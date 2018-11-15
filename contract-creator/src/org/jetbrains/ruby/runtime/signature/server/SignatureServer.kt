@@ -2,6 +2,7 @@ package org.jetbrains.ruby.runtime.signature.server
 
 import com.google.gson.Gson
 import com.google.gson.JsonParseException
+import com.google.gson.JsonSyntaxException
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.ruby.codeInsight.types.signature.*
 import org.jetbrains.ruby.codeInsight.types.storage.server.DatabaseProvider
@@ -106,8 +107,14 @@ object SignatureServer {
 
         try {
             parseJson(jsonString)
-        } catch (e: JsonParseException) {
-            LOGGER.severe("!$jsonString!\n$e")
+        } catch (ex: Throwable) {
+            when (ex) {
+                is JsonSyntaxException, is JsonParseException -> {
+                    // Sometimes it's possible that some json fields contain quotation mark and we got JsonSyntaxException
+                    LOGGER.severe("Cannot parse: $jsonString")
+                }
+                else -> throw ex
+            }
         }
     }
 
