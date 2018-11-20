@@ -27,8 +27,8 @@ abstract class ExportFileActionBase(
         private val description: String = "",
         private val numberOfProgressBarFractions: Int? = null
 ) : DumbAwareAction() {
-    final override fun actionPerformed(e: AnActionEvent?) {
-        val project = e?.project ?: return
+    final override fun actionPerformed(e: AnActionEvent) {
+        val project = e.project ?: return
         val dialog = FileSaverDialogImpl(FileSaverDescriptor(
                 "Export $whatToExport",
                 description,

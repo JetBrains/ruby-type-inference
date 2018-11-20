@@ -16,6 +16,7 @@ import org.jetbrains.plugins.ruby.ruby.codeInsight.symbolicExecution.symbolicExp
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.Type
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.Symbol
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.impl.REmptyType
+import org.jetbrains.plugins.ruby.ruby.lang.psi.RPsiElement
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RubyPsiUtil
 import org.jetbrains.plugins.ruby.ruby.lang.psi.expressions.RExpression
 import org.jetbrains.plugins.ruby.ruby.lang.psi.variables.RIdentifier
@@ -114,7 +115,10 @@ class ReturnTypeSymbolicTypeInferenceProvider : SymbolicTypeInferenceProvider {
                 ?: registeredCallInfos.map { it.returnType }
 
         val returnType = registeredReturnTypes
-                .map { RTypeFactory.createTypeClassName(it, callContext.invocationPoint) }
+                .mapNotNull {
+                    RTypeFactory.createTypeClassName(it, callContext.invocationPoint as? RPsiElement
+                            ?: return@mapNotNull null)
+                }
                 .unionTypesSmart()
 
         return if (returnType == REmptyType.INSTANCE) {

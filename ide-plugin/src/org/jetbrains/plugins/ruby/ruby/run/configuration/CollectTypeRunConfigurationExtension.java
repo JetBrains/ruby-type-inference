@@ -8,7 +8,6 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
@@ -69,13 +68,13 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
     }
 
     @Override
-    protected boolean isApplicableFor(@NotNull final AbstractRubyRunConfiguration configuration) {
+    public boolean isApplicableFor(@NotNull AbstractRubyRunConfiguration<?> configuration) {
         return true;
     }
 
     @Override
-    protected boolean isEnabledFor(@NotNull final AbstractRubyRunConfiguration applicableConfiguration,
-                                   @Nullable final RunnerSettings runnerSettings) {
+    public boolean isEnabledFor(@NotNull AbstractRubyRunConfiguration<?> applicableConfiguration,
+                                @Nullable RunnerSettings runnerSettings) {
         final CollectExecSettings config = CollectExecSettings.getFrom(applicableConfiguration);
         return config.isArgScannerEnabled();
     }
@@ -172,12 +171,6 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
             return null;
         }
         return " -I" + libFolder.getPath();
-    }
-
-    @Nullable
-    @Override
-    protected <P extends AbstractRubyRunConfiguration> SettingsEditor<P> createEditor(@NotNull final P configuration) {
-        return null;
     }
 
     @Override
