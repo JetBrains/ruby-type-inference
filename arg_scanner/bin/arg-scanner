@@ -38,10 +38,10 @@ option_parser = OptionParser.new do |opts|
   opts.on("--project-root=[PATH]", String, "Specify project's root directory to catch calls only from this directory") do |path|
     options.project_root = path
   end
-  opts.on("--server-port=[PORT_NUMBER]", Integer, "Specify port number to connect to server") do |port|
-    options.server_port = port
-  end
 
+  opts.on("--pipe-file-path=[PATH]", String, "Specify pipe file path to connect to server") do |path|
+    options.pipe_file_path = path
+  end
 end
 
 begin

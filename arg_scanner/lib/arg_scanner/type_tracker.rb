@@ -52,8 +52,8 @@ module ArgScanner
     include Singleton
 
     def initialize
-      server_port = ENV['ARG_SCANNER_SERVER_PORT'].to_i
-      ArgScanner.set_server_port(server_port)
+      pipe_file_path = ENV['ARG_SCANNER_PIPE_FILE_PATH']
+      ArgScanner.set_pipe_file_path(pipe_file_path)
 
       @catch_only_every_n_call = ENV['ARG_SCANNER_CATCH_ONLY_EVERY_N_CALL']
       @catch_only_every_n_call = @catch_only_every_n_call ? @catch_only_every_n_call.to_i : 1
@@ -115,7 +115,7 @@ module ArgScanner
           this = tp.binding.eval('self')
           defined_class = this.to_s
         end
-        ArgScanner.handle_return(signature, defined_class, tp.return_value.class.name)
+        ArgScanner.handle_return(signature, defined_class, tp.return_value.class.to_s)
       end
     end
 

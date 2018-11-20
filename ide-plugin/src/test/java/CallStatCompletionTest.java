@@ -32,7 +32,6 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
 
     public CallStatCompletionTest() {
         DatabaseProvider.connectToInMemoryDB();
-        SignatureServer.runServerAsyncIfNotRunYet(0, true);
     }
 
     @Override
@@ -201,9 +200,11 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
                     .withParameters("install")
                     .createProcess()));
 
+            String pipeFileName = SignatureServer.runServerAsync(true);
+
             LOGGER.warn(getProcessOutput(new RubyCommandLine(RubyLocalRunner.getRunner(module), false)
                     .withExePath("arg-scanner")
-                    .withParameters("--server-port=" + SignatureServer.getPortNumber(),
+                    .withParameters("--pipe-file-path=" + pipeFileName,
                             "--type-tracker", "ruby", scriptPath)
                     .createProcess()));
         } catch (ExecutionException | InterruptedException e) {

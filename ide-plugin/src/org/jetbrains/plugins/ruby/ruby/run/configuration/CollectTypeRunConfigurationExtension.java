@@ -27,8 +27,8 @@ import org.jetbrains.plugins.ruby.gem.GemInstallUtil;
 import org.jetbrains.plugins.ruby.gem.util.GemSearchUtil;
 import org.jetbrains.plugins.ruby.ruby.RubyUtil;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.stateTracker.RubyClassHierarchyWithCaching;
+import org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyTypeProviderKt;
 import org.jetbrains.ruby.runtime.signature.server.SignatureServer;
-
 
 import java.io.File;
 import java.io.IOException;
@@ -47,7 +47,7 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
 
     private static final String PROJECT_ROOT_KEY = "ARG_SCANNER_PROJECT_ROOT";
 
-    private static final String SERVER_PORT_KEY = "ARG_SCANNER_SERVER_PORT";
+    private static final String ARG_SCANNER_PIPE_FILE_PATH_KEY = "ARG_SCANNER_PIPE_FILE_PATH";
 
     private static final String OUTPUT_DIRECTORY = "ARG_SCANNER_DIR";
 
@@ -95,6 +95,12 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
             return;
         }
 
+        String pipeFileName = SignatureServer.runServerAsync(true);
+
+        SignatureServer.setAfterExitListener(() -> {
+            RubyTypeProviderKt.getRegisteredCallInfosCache().clear();
+            return null;
+        });
 
         final Map<String, String> env = cmdLine.getEnvironment();
         final String rubyOpt = StringUtil.notNullize(env.get(RubyUtil.RUBYOPT));
@@ -112,7 +118,7 @@ public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationEx
         if (basePath != null) {
             env.put(PROJECT_ROOT_KEY, basePath);
         }
-        env.put(SERVER_PORT_KEY, String.valueOf(SignatureServer.getPortNumber()));
+        env.put(ARG_SCANNER_PIPE_FILE_PATH_KEY, pipeFileName);
 
         final String newRubyOpt = rubyOpt + includeKey + " -r" + ARG_SCANNER_REQUIRE_SCRIPT;
 

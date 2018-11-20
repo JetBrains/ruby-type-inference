@@ -5,7 +5,6 @@
 #include <string.h>
 #include <assert.h>
 #include <stdarg.h>
-#include <sys/socket.h>
 #include <netinet/in.h>
 #include <glib.h>
 
@@ -66,7 +65,6 @@ typedef struct
 void Init_arg_scanner();
 
 static const char *EMPTY_VALUE = "";
-static const int SERVER_DEFAULT_PORT = 7777;
 static const int MAX_NUMBER_OF_MISSED_CALLS = 10;
 /**
  * There we keep information about signatures that have already been sent to server in order to not sent them again
@@ -78,17 +76,13 @@ static GTree *sent_to_server_tree;
  * we will ignore it.
  */
 static GTree *number_missed_calls_tree;
-static int socket_fd = -1;
 static char *get_args_info(const char *const *explicit_kw_args);
-static VALUE set_server_port(VALUE self, VALUE server_port);
 static VALUE handle_call(VALUE self, VALUE lineno, VALUE method_name, VALUE path);
 static VALUE handle_return(VALUE self, VALUE signature, VALUE receiver_name, VALUE return_type_name);
 static VALUE destructor(VALUE self);
 
 // returns Qnil if ready; or string containing error message otherwise 
 static VALUE check_if_arg_scanner_ready(VALUE self);
-// errno status after socket creation attempt
-static int socket_errno = 0;
 
 // For testing
 static VALUE get_args_info_rb(VALUE self);
@@ -165,22 +159,10 @@ sent_to_server_tree_comparator(gconstpointer x, gconstpointer y, gpointer user_d
     return 0;
 }
 
-// returns zero if no errors occured
-int init_socket(int server_port) {
-    struct sockaddr_in serv_addr;
-    socket_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (socket_fd < 0) {
-        return 1;
-    }
+FILE *pipe_file = NULL;
 
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(server_port);
-
-    if(inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) != 1) {
-        return 1;
-    }
-
-    return connect(socket_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
+static VALUE set_pipe_file_path(VALUE self, VALUE pipe_file_path) {
+    pipe_file = fopen(StringValueCStr(pipe_file_path), "w");
 }
 
 void Init_arg_scanner() {
@@ -191,7 +173,7 @@ void Init_arg_scanner() {
     rb_define_module_function(mArgScanner, "get_call_info", get_call_info_rb, 0);
     rb_define_module_function(mArgScanner, "destructor", destructor, 0);
     rb_define_module_function(mArgScanner, "check_if_arg_scanner_ready", check_if_arg_scanner_ready, 0);
-    rb_define_module_function(mArgScanner, "set_server_port", set_server_port, 1);
+    rb_define_module_function(mArgScanner, "set_pipe_file_path", set_pipe_file_path, 1);
 
     sent_to_server_tree = g_tree_new_full(/*key_compare_func =*/sent_to_server_tree_comparator,
                                           /*key_compare_data =*/NULL,
@@ -216,18 +198,6 @@ my_rb_vm_get_binding_creatable_next_cfp(const rb_thread_t *th, const rb_control_
 	    cfp = RUBY_VM_PREVIOUS_CONTROL_FRAME(cfp);
     }
     return 0;
-}
-
-static VALUE
-set_server_port(VALUE self, VALUE server_port)
-{
-    int server_port_c = FIX2INT(server_port);
-    server_port_c = (server_port_c == 0 ? SERVER_DEFAULT_PORT : server_port_c);
-
-    if (init_socket(server_port_c)) {
-        socket_errno = errno;
-    }
-    return Qnil;
 }
 
 static VALUE
@@ -296,29 +266,21 @@ handle_return(VALUE self, VALUE signature, VALUE receiver_name, VALUE return_typ
         // GTree will free memory allocated by sign by itself
         g_tree_insert(sent_to_server_tree, /*key = */sign, /*value = */sign);
 
-        char json[2048];
-        size_t json_size = sizeof(json) / sizeof(*json);
-
-        // json_len doesn't count terminating '\0'
-        int json_len = snprintf(json, json_size,
-            "{\"method_name\":\"%s\",\"call_info_argc\":\"%d\",\"args_info\":\"%s\",\"visibility\":\"%s\","
-            "\"path\":\"%s\",\"lineno\":\"%d\",\"receiver_name\":\"%s\",\"return_type_name\":\"%s\"}\n",
-            sign->method_name,
-            sign->explicit_argc,
-            sign->args_info != NULL ? sign->args_info : "",
-            "PUBLIC",
-            sign->path,
-            sign->lineno,
-            sign->receiver_name,
-            sign->return_type_name);
-        // if json_len >= json_size then it means that string in snprintf truncated output
-        if (json_len >= json_size) {
-            return Qnil;
+        if (pipe_file != NULL) {
+            fprintf(pipe_file,
+                "{\"method_name\":\"%s\",\"call_info_argc\":\"%d\",\"args_info\":\"%s\",\"visibility\":\"%s\","
+                "\"path\":\"%s\",\"lineno\":\"%d\",\"receiver_name\":\"%s\",\"return_type_name\":\"%s\"}\n",
+                sign->method_name,
+                sign->explicit_argc,
+                sign->args_info != NULL ? sign->args_info : "",
+                "PUBLIC",
+                sign->path,
+                sign->lineno,
+                sign->receiver_name,
+                sign->return_type_name);
         }
 
         signature_t_free_partially(sign);
-
-        send(socket_fd, json, json_len, 0);
     } else {
         signature_t_free(sign);
 
@@ -759,10 +721,9 @@ is_call_info_needed()
 
 static VALUE 
 check_if_arg_scanner_ready(VALUE self) {
-    if (socket_errno != 0) {
-        char error_msg[1024];
-        snprintf(error_msg, sizeof(error_msg)/sizeof(*error_msg), 
-            "Are sure you've run server?, error message: %s", strerror(socket_errno));
+    char error_msg[1024];
+    if (pipe_file == NULL) {
+        snprintf(error_msg, sizeof(error_msg)/sizeof(*error_msg), "Pipe file is not specified");
         return rb_str_new_cstr(error_msg);
     }
     return Qnil;
@@ -772,6 +733,6 @@ static VALUE
 destructor(VALUE self) {
     g_tree_destroy(sent_to_server_tree);
     g_tree_destroy(number_missed_calls_tree);
-    close(socket_fd);
+    fclose(pipe_file);
     return Qnil;
 }

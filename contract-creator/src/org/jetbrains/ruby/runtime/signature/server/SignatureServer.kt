@@ -11,18 +11,18 @@ import org.jetbrains.ruby.codeInsight.types.storage.server.SignatureStorageImpl
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.CallInfoTable
 import org.jetbrains.ruby.runtime.signature.server.serialisation.ServerResponseBean
 import org.jetbrains.ruby.runtime.signature.server.serialisation.toCallInfo
-import java.io.BufferedReader
+import java.io.File
+import java.io.FileInputStream
 import java.io.IOException
-import java.io.InputStreamReader
-import java.net.ServerSocket
-import java.net.Socket
+import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import java.util.logging.Logger
+import kotlin.concurrent.thread
 
-const val DEFAULT_PORT_NUMBER = 7777
+private const val POLL_THREAD_EXIT = "\u0000"
 
 object SignatureServer {
     private val LOGGER = Logger.getLogger("SignatureServer")
@@ -40,16 +40,19 @@ object SignatureServer {
     val addTime = AtomicLong(0)
 
     @JvmStatic
-    var portNumber = DEFAULT_PORT_NUMBER
-        private set
-
-    @JvmStatic
     fun main(args: Array<String>) {
         parseArgs(args).let {
             DatabaseProvider.connectToDB(it.dbFilePath)
         }
         DatabaseProvider.createAllDatabases()
-        SignatureServer.runServerAsyncIfNotRunYet(isDaemon = false)
+
+        val pipeFileName = SignatureServer.runServerAsync(isDaemon = false)
+        println("Pass this to arg-scanner via --pipe-file-path: $pipeFileName")
+
+        // Intercept Ctrl+C
+        Runtime.getRuntime().addShutdownHook(thread(start = false) {
+            File(pipeFileName).delete()
+        })
     }
 
     fun getContract(info: MethodInfo): SignatureContract? {
@@ -68,40 +71,49 @@ object SignatureServer {
 
     fun isProcessingRequests() = !isReady.get()
 
-    private val socketDispatcher = SocketDispatcher()
-
-    private val pollJsonThread = PollJsonThread()
-
-    /**
-     * Run server in separate [Thread] if not run yet
-     * @param port specify port to run server on. (7777 is used as default port) you can also specify
-     * 0 to use a port number that is automatically allocated
-     *
-     * @return true if server run successfully; false if has already been run before this function call
-     */
-    @JvmStatic
-    fun runServerAsyncIfNotRunYet(port: Int = portNumber, isDaemon: Boolean): Boolean {
-        if (socketDispatcher.state == Thread.State.NEW && pollJsonThread.state == Thread.State.NEW) {
-            LOGGER.info("Starting server")
-            portNumber = port
-
-            socketDispatcher.isDaemon = isDaemon
-            socketDispatcher.start()
-
-            pollJsonThread.isDaemon = isDaemon
-            pollJsonThread.start()
-            return true
-        }
-        return false
+    private fun generateTempFilePath(prefix: String = ""): String {
+        val dirForTempFiles = System.getProperty("java.io.tmpdir")
+        return Paths.get(dirForTempFiles, prefix + UUID.randomUUID()).toString()
     }
 
-    private fun pollJson() {
+    /**
+     * @return pipe filename path which should be passed to arg-scanner
+     */
+    @JvmStatic
+    fun runServerAsync(isDaemon: Boolean): String {
+        LOGGER.info("Starting server")
+
+        val pipeFileName = generateTempFilePath(prefix = "ruby-type-inference-pipe-")
+        val proc: Process = Runtime.getRuntime().exec("mkfifo $pipeFileName")
+        if (proc.waitFor() != 0) {
+            throw RuntimeException("Cannot create pipe file")
+        }
+
+        val signatureHandler = SignatureHandler(pipeFileName)
+
+        signatureHandler.isDaemon = isDaemon
+        signatureHandler.start()
+
+        val pollJsonThread = PollJsonThread()
+
+        pollJsonThread.isDaemon = isDaemon
+        pollJsonThread.start()
+        return pipeFileName
+    }
+
+    @JvmStatic
+    var afterExitListener: (() -> Unit)? = null
+
+    /**
+     * @return true when client won't send data anymore
+     */
+    private fun pollJson(): Boolean {
         val jsonString by lazy { if (previousPollEndedWithFlush) queue.take() else queue.poll() }
-        if (callInfoContainer.size > LOCAL_STORAGE_SIZE_LIMIT || jsonString == null) {
+        if (callInfoContainer.size > LOCAL_STORAGE_SIZE_LIMIT || jsonString == null || jsonString == POLL_THREAD_EXIT) {
             flushNewTuplesToMainStorage()
             previousPollEndedWithFlush = true
             if (queue.isEmpty()) isReady.set(true)
-            return
+            return jsonString == POLL_THREAD_EXIT
         }
         previousPollEndedWithFlush = false
 
@@ -116,6 +128,7 @@ object SignatureServer {
                 else -> throw ex
             }
         }
+        return false
     }
 
     private fun parseJson(jsonString: String) {
@@ -142,15 +155,10 @@ object SignatureServer {
         callInfoContainer.clear()
     }
 
-    private class SignatureHandler internal constructor(private val socket: Socket, private val handlerNumber: Int) : Thread() {
-
-        init {
-            LOGGER.info("New connection with client# $handlerNumber at $socket")
-        }
-
+    private class SignatureHandler internal constructor(private val pipeFilePath: String) : Thread() {
         override fun run() {
             try {
-                val br = BufferedReader(InputStreamReader(socket.getInputStream()))
+                val br = FileInputStream(pipeFilePath).bufferedReader()
                 while (true) {
                     onLowQueueCapacity()
                     val currString = ben(readTime) { br.readLine() }
@@ -159,14 +167,11 @@ object SignatureServer {
                     isReady.set(false)
                 }
             } catch (e: IOException) {
-                LOGGER.severe("Error handling client# $handlerNumber: $e")
+                LOGGER.severe("Error in SignatureHandler")
             } finally {
-                try {
-                    socket.close()
-                } catch (e: IOException) {
-                    LOGGER.severe("Can't close a socket")
-                }
-                onExit(handlerNumber)
+                queue.put(POLL_THREAD_EXIT)
+                File(pipeFilePath).delete()
+                onExit()
             }
         }
 
@@ -185,13 +190,13 @@ object SignatureServer {
                     LOGGER.info( "[" + iter.toString() + "]" +" per second: " +
                             ((mask +1) * 1000 / timeInterval).toString())
                     if (queue.size > remainingCapacity) {
-                        LOGGER.info("Queue capacity is low: " + remainingCapacity)
+                        LOGGER.info("Queue capacity is low: $remainingCapacity")
                     }
                 }
             }
 
-            fun onExit(handlerNumber: Int) {
-                LOGGER.info("Connection with client# $handlerNumber closed")
+            fun onExit() {
+                LOGGER.info("Connection with client closed")
 
                 LOGGER.info("Stats: ")
                 LOGGER.info("add=" + addTime.toLong() * 1e-6)
@@ -217,21 +222,9 @@ object SignatureServer {
     private class PollJsonThread : Thread() {
         override fun run() {
             while (true) {
-                pollJson()
-            }
-        }
-    }
-
-    private class SocketDispatcher : Thread() {
-        override fun run() {
-            var handlersCounter = 0
-            ServerSocket(portNumber).use { listener: ServerSocket ->
-                portNumber = listener.localPort
-                LOGGER.info("Used port is: ${listener.localPort}")
-                while (true) {
-                    SignatureHandler(listener.accept(), handlersCounter++)
-                            .also { it.isDaemon = this.isDaemon }
-                            .start()
+                if (pollJson()) {
+                    afterExitListener?.invoke()
+                    break
                 }
             }
         }
