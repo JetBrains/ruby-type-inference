@@ -15,6 +15,7 @@ import org.jetbrains.plugins.ruby.ruby.codeInsight.symbolicExecution.symbolicExp
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbolicExecution.symbolicExpression.SymbolicExpression
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.Type
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.Symbol
+import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.util.SymbolScopeUtil
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.impl.REmptyType
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RPsiElement
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RubyPsiUtil
@@ -85,8 +86,13 @@ class ReturnTypeSymbolicTypeInferenceProvider : SymbolicTypeInferenceProvider {
                                       callContext: TypeInferenceInstance.CallContext,
                                       provider: SymbolicExpressionProvider,
                                       component: TypeInferenceComponent): SymbolicExpression? {
-        val receiverTypeName: String = SymbolicTypeInferenceProvider
-                .getReceiverType(symbolicCall, component, callContext).name ?: return null
+        val exactReceiverType: RType = SymbolicTypeInferenceProvider.getReceiverType(symbolicCall, component, callContext)
+
+        // reversed because getAncestorsCaching gives us list of ancestors ordered from parent to end children
+        // This list already include exactReceiverType
+        val receiverTypesConsideringAncestors: List<String> = RTypeUtil.getBirthTypeSymbol(exactReceiverType)
+                ?.let { SymbolScopeUtil.getAncestorsCaching(it, callContext.invocationPoint) }
+                ?.map { it.symbol.fqnWithNesting.toString() }?.reversed() ?: emptyList()
 
         val typeInferenceComponent = context.getComponent(TypeInferenceComponent::class.java)
 
@@ -99,36 +105,37 @@ class ReturnTypeSymbolicTypeInferenceProvider : SymbolicTypeInferenceProvider {
                     return@map ArgumentNameAndType(it.keyName, type)
                 }.toList()
 
-        val methodInfo = MethodInfo.Impl(ClassInfo.Impl(null, receiverTypeName), symbolicCall.name)
+        for (receiverTypeName in receiverTypesConsideringAncestors) {
+            val methodInfo = MethodInfo.Impl(ClassInfo.Impl(null, receiverTypeName), symbolicCall.name)
 
-        val registeredCallInfos = registeredCallInfosCache.getOrPut(methodInfo) {
-            RSignatureProviderImpl.getRegisteredCallInfos(methodInfo)
+            val registeredCallInfos = registeredCallInfosCache.getOrPut(methodInfo) {
+                RSignatureProviderImpl.getRegisteredCallInfos(methodInfo)
+            }
+
+            @Suppress("UNCHECKED_CAST")
+            val registeredReturnTypes: List<String> = registeredCallInfos
+                    .asSequence()
+                    .filter { argumentsMatch(it, unnamedArgsTypes, namedArgsTypes) }
+                    .map { it.returnType }
+                    .toList()
+                    .takeIf { !it.isEmpty() }
+                    ?: registeredCallInfos.map { it.returnType }
+
+            val returnType = registeredReturnTypes
+                    .mapNotNull {
+                        RTypeFactory.createTypeClassName(it, callContext.invocationPoint as? RPsiElement
+                                ?: return@mapNotNull null)
+                    }
+                    .unionTypesSmart()
+
+            if (returnType != REmptyType.INSTANCE) {
+                component.updateSymbolicExpressionType(symbolicCall, returnType)
+                return symbolicCall
+            }
         }
-
-        @Suppress("UNCHECKED_CAST")
-        val registeredReturnTypes: List<String> = registeredCallInfos
-                .asSequence()
-                .filter { argumentsMatch(it, unnamedArgsTypes, namedArgsTypes) }
-                .map { it.returnType }
-                .toList()
-                .takeIf { !it.isEmpty() }
-                ?: registeredCallInfos.map { it.returnType }
-
-        val returnType = registeredReturnTypes
-                .mapNotNull {
-                    RTypeFactory.createTypeClassName(it, callContext.invocationPoint as? RPsiElement
-                            ?: return@mapNotNull null)
-                }
-                .unionTypesSmart()
-
-        return if (returnType == REmptyType.INSTANCE) {
-            // If we don't have any information about type then return null
-            // in order to allow to RubyMine try to determine type itself
-            null
-        } else {
-            component.updateSymbolicExpressionType(symbolicCall, returnType)
-            symbolicCall
-        }
+        // If we don't have any information about type then return null
+        // in order to allow to RubyMine try to determine type itself
+        return null
     }
 
     private fun argumentsMatch(oneOfExpected: CallInfo, actualUnnamedArgs: List<String?>, actualNamedArgs: List<ArgumentNameAndType?>): Boolean {
