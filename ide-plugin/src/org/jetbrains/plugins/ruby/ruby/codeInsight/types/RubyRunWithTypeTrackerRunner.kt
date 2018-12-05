@@ -3,7 +3,7 @@ package org.jetbrains.plugins.ruby.ruby.codeInsight.types
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.configurations.RunProfileState
-import com.intellij.execution.executors.CollectTypeExecutor
+import com.intellij.execution.executors.RunWithTypeTrackerExecutor
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.components.ServiceManager
@@ -13,10 +13,9 @@ import org.jetbrains.plugins.ruby.ruby.run.configuration.CollectExecSettings
 import org.jetbrains.plugins.ruby.ruby.run.configuration.RubyAbstractCommandLineState
 import org.jetbrains.plugins.ruby.ruby.run.configuration.RubyProgramRunner
 import org.jetbrains.plugins.ruby.settings.RubyTypeContractsSettings
-import org.jetbrains.ruby.runtime.signature.server.SignatureServer
 import java.io.IOException
 
-class RubyCollectTypeRunner : RubyProgramRunner() {
+class RubyRunWithTypeTrackerRunner : RubyProgramRunner() {
 
     @Throws(ExecutionException::class)
     override fun doExecute(state: RunProfileState,
@@ -49,7 +48,7 @@ class RubyCollectTypeRunner : RubyProgramRunner() {
     }
 
     override fun canRun(executorId: String, profile: RunProfile): Boolean {
-        return executorId == CollectTypeExecutor.EXECUTOR_ID && profile is AbstractRubyRunConfiguration<*>
+        return executorId == RunWithTypeTrackerExecutor.EXECUTOR_ID && profile is AbstractRubyRunConfiguration<*>
     }
 
     override fun getRunnerId(): String {

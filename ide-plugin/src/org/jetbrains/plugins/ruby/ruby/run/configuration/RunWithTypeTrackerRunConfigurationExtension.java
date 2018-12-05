@@ -34,8 +34,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class CollectTypeRunConfigurationExtension extends RubyRunConfigurationExtension {
-    private static final Logger LOG = Logger.getInstance(CollectTypeRunConfigurationExtension.class);
+public class RunWithTypeTrackerRunConfigurationExtension extends RubyRunConfigurationExtension {
+    private static final Logger LOG = Logger.getInstance(RunWithTypeTrackerRunConfigurationExtension.class);
     private static final String ARG_SCANNER_GEM_NAME = "arg_scanner";
 
     private static final String ARG_SCANNER_REQUIRE_SCRIPT = "arg_scanner/starter";

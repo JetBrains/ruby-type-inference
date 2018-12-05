@@ -2,25 +2,28 @@ package com.intellij.execution.executors;
 
 import com.intellij.execution.Executor;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.net.URL;
 
-public class CollectTypeExecutor extends Executor {
+public class RunWithTypeTrackerExecutor extends Executor {
     @NotNull
-    public static final String EXECUTOR_ID = "CollectType";
+    public static final String EXECUTOR_ID = "RunWithTypeTracker";
 
     @NotNull
     private final Icon myIcon;
 
-    public CollectTypeExecutor() {
-//        final URL iconURL = CollectTypeExecutor.class.getClassLoader().getResource("runCollectType.png");
-//        final Icon icon = IconLoader.findIcon(iconURL);
-//        myIcon = icon != null ? icon : AllIcons.General.Error
-        myIcon = AllIcons.General.ExternalToolsSmall;
+    public RunWithTypeTrackerExecutor() {
+        final URL iconURL = RunWithTypeTrackerExecutor.class.getClassLoader().getResource(
+                UIUtil.isUnderDarcula() ? "runWithTypeTracker_dark.svg" : "runWithTypeTracker.svg");
+        final Icon icon = IconLoader.findIcon(iconURL);
+        myIcon = icon != null ? icon : AllIcons.General.Error;
     }
 
     @Override
@@ -48,13 +51,13 @@ public class CollectTypeExecutor extends Executor {
     @NotNull
     @Override
     public String getDescription() {
-        return "Run selected configuration with collecting type info";
+        return "Run selected configuration with Type Tracker";
     }
 
     @NotNull
     @Override
     public String getActionName() {
-        return "CollectType";
+        return "Run with Type Tracker";
     }
 
     @NotNull
@@ -65,13 +68,13 @@ public class CollectTypeExecutor extends Executor {
 
     @NotNull
     public String getStartActionText() {
-        return "Run with Collecting Type Info";
+        return "Run with Type Tracker";
     }
 
     @NotNull
     @Override
     public String getContextActionId() {
-        return "RunCollectType";
+        return "Run with Type Tracker";
     }
 
     @Nullable
@@ -86,7 +89,7 @@ public class CollectTypeExecutor extends Executor {
         final String name = configurationName != null
                 ? escapeMnemonicsInConfigurationName(StringUtil.first(configurationName, 30, true))
                 : null;
-        return "Run" + (StringUtil.isEmpty(name) ? "" :  " '" + name + "'") + " with Collecting Type Info";
+        return "Run" + (StringUtil.isEmpty(name) ? "" :  " '" + name + "'") + " with Type Tracker";
     }
 
     @NotNull

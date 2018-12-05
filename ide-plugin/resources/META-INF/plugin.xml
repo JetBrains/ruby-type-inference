@@ -17,10 +17,10 @@
     </change-notes>
 
     <extensions defaultExtensionNs="com.intellij">
-        <executor implementation="com.intellij.execution.executors.CollectTypeExecutor"/>
+        <executor implementation="com.intellij.execution.executors.RunWithTypeTrackerExecutor"/>
         <executor implementation="com.intellij.execution.executors.CollectStateExecutor"/>
 
-        <programRunner implementation="org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyCollectTypeRunner"/>
+        <programRunner implementation="org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyRunWithTypeTrackerRunner"/>
         <programRunner implementation="org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyCollectStateRunner"/>
 
         <applicationService serviceImplementation="org.jetbrains.plugins.ruby.settings.RubyTypeContractsSettings"/>
@@ -50,7 +50,7 @@
         <symbolProvider implementation="org.jetbrains.plugins.ruby.ruby.codeInsight.stateTracker.ClassHierarchySymbolProvider"/>
 
         <runConfigurationExtension
-                implementation="org.jetbrains.plugins.ruby.ruby.run.configuration.CollectTypeRunConfigurationExtension"/>
+                implementation="org.jetbrains.plugins.ruby.ruby.run.configuration.RunWithTypeTrackerRunConfigurationExtension"/>
     </extensions>
 
     <actions>
