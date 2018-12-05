@@ -19,7 +19,6 @@ class RSignatureProviderTest : TestCase() {
 
     @Test
     fun testPutGet() = doDBTest {
-        DatabaseProvider.createAllDatabases()
         GemInfoTable.insert { it[name] = "rails"; it[version] = "5.0.0.beta1" }
         val insertedGem = GemInfoRow.all().first()
         assertEquals("rails", insertedGem.name)
