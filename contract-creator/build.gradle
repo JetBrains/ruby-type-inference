@@ -11,5 +11,5 @@ dependencies {
 
 task runServer(type: JavaExec) {
     classpath sourceSets.main.runtimeClasspath
-    main = 'org.jetbrains.ruby.runtime.signature.server.SignatureServer'
+    main = 'org.jetbrains.ruby.runtime.signature.server.SignatureServerKt'
 }

@@ -12,7 +12,6 @@ import org.jetbrains.ruby.codeInsight.types.storage.server.DatabaseProvider;
 import org.jetbrains.ruby.codeInsight.types.storage.server.StorageException;
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.RSignatureProviderImpl;
 import org.jetbrains.ruby.runtime.signature.server.SignatureServer;
-import org.junit.Assert;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,6 +28,8 @@ import static java.util.Collections.singletonList;
 public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestCase {
 
     private static final Logger LOGGER = Logger.getInstance("CallStatCompletionTest");
+
+    private SignatureServer lastServer = null;
 
     public CallStatCompletionTest() {
         DatabaseProvider.connectToInMemoryDB();
@@ -54,16 +55,6 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
             super.tearDown();
         }
     }
-
-// todo: test is disabled as new version of ruby plugin doesn't support this feature
-//    public void testSimple() {
-//        doTest("sample_test", createMethodInfo("A", "foo"), "test1", "test2");
-//    }
-
-// todo: test is disabled as new version of ruby plugin doesn't support this feature
-//    public void testKW() {
-//        doTest("sample_kw_test", createMethodInfo("A", "foo1"), "test1", "test2");
-//    }
 
     public void testSimpleCallInfoCollection() throws StorageException {
         List<CallInfo> callInfos = runAndGetCallInfos("simple_call_info_collection_test.rb",
@@ -200,12 +191,13 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
                     .withParameters("install")
                     .createProcess()));
 
-            String pipeFileName = SignatureServer.runServerAsync(true);
+            lastServer = new SignatureServer();
+
+            String pipeFileName = lastServer.runServerAsync(true);
 
             LOGGER.warn(getProcessOutput(new RubyCommandLine(RubyLocalRunner.getRunner(module), false)
                     .withExePath("arg-scanner")
-                    .withParameters("--pipe-file-path=" + pipeFileName,
-                            "--type-tracker", "ruby", scriptPath)
+                    .withParameters("--pipe-file-path=" + pipeFileName, "--type-tracker", "ruby", scriptPath)
                     .createProcess()));
         } catch (ExecutionException | InterruptedException e) {
             LOGGER.error(e.getMessage());
@@ -231,7 +223,7 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
         }
 
         int cnt = 0;
-        while (SignatureServer.INSTANCE.isProcessingRequests() && cnt < 100) {
+        while (lastServer.isProcessingRequests() && cnt < 100) {
             try {
                 Thread.sleep(1000);
                 cnt++;
@@ -241,40 +233,12 @@ public class CallStatCompletionTest extends LightPlatformCodeInsightFixtureTestC
         }
     }
 
-    private SignatureContract run(@NotNull String name, @NotNull MethodInfo methodInfo) {
-        final String scriptName = name + ".rb";
-        final String runnableScriptName = name + "_to_run.rb";
-
-        myFixture.configureByFiles(scriptName, runnableScriptName);
-
-        executeScript(runnableScriptName);
-
-        waitForServer();
-
-        return SignatureServer.INSTANCE.getContract(methodInfo);
-    }
-
     @NotNull
     private List<CallInfo> runAndGetCallInfos(@NotNull String executableScriptName,
                                               @NotNull MethodInfo methodInfo) throws StorageException {
         executeScript(executableScriptName);
         waitForServer();
         return new ArrayList<>(RSignatureProviderImpl.INSTANCE.getRegisteredCallInfos(methodInfo));
-    }
-
-    private void doTest(@NotNull String name, @NotNull MethodInfo methodInfo, String... items) {
-
-        final String scriptName = name + ".rb";
-        Assert.assertNotNull(run(name, methodInfo));
-
-        myFixture.testCompletionVariants(scriptName, items);
-    }
-
-    private SignatureContract doTestContract(@NotNull String name, @NotNull MethodInfo methodInfo) {
-        SignatureContract contract = run(name, methodInfo);
-        Assert.assertNotNull(contract);
-
-        return contract;
     }
 
     private static MethodInfo createMethodInfo(@NotNull String className, @NotNull String methodName) {

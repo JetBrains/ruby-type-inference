@@ -17,6 +17,7 @@ import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.ruby.codeInsight.types.signature.GemInfo
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.GemInfoTable
+import org.jetbrains.ruby.codeInsight.types.storage.server.impl.RSignatureProviderImpl
 import org.jetbrains.ruby.runtime.signature.server.SignatureServer
 import java.util.*
 import javax.swing.JComponent
@@ -28,7 +29,7 @@ import kotlin.collections.HashMap
 class RubyTypeContractsConfigurableUI(settings: RubyTypeContractsSettings) : ConfigurableUi<RubyTypeContractsSettings> {
     private val toBeRemovedGems = ArrayList<GemInfo>()
 
-    private val registeredGems = ArrayList(SignatureServer.getStorage().registeredGems)
+    private val registeredGems = ArrayList(RSignatureProviderImpl.registeredGems)
 
     private val perGemSettingsMap = HashMap(settings.perGemSettingsMap)
 

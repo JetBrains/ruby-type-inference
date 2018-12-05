@@ -94,9 +94,11 @@ public class RunWithTypeTrackerRunConfigurationExtension extends RubyRunConfigur
             return;
         }
 
-        String pipeFileName = SignatureServer.runServerAsync(true);
+        SignatureServer server = new SignatureServer();
 
-        SignatureServer.setAfterExitListener(() -> {
+        String pipeFileName = server.runServerAsync(true);
+
+        server.setAfterExitListener(() -> {
             RubyTypeProviderKt.getRegisteredCallInfosCache().clear();
             return null;
         });
