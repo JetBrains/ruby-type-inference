@@ -36,6 +36,9 @@ private const val PARAMETER_TYPE_INDEX_IN_ATTRIBUTES = 1
 private const val PARAMETER_NAME_INDEX_IN_ATTRIBUTES = 2
 private const val NUMBER_OF_ATTRIBUTES_FOR_PARAMETER = 3
 
+/**
+ * @throws IllegalStateException if [ServerResponseBean] is not correctly formed
+ */
 fun ServerResponseBean.toCallInfo(): CallInfo {
     var argc = this.call_info_argc
 
@@ -86,7 +89,9 @@ fun ServerResponseBean.toCallInfo(): CallInfo {
             }
         }
 
-        assert(argc == 0 || args.any { it.paramInfo.modifier == ParameterInfo.Type.BLOCK } && argc == 1)
+        check(argc == 0 || args.any { it.paramInfo.modifier == ParameterInfo.Type.BLOCK } && argc == 1) {
+            "Failed to parse this bean: ${this.toString()}"
+        }
     }
 
     val namedArgumentsNamesToTypes = args.asSequence().filter { it.paramInfo.isNamedParameter }
