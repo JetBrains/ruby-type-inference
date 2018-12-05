@@ -9,7 +9,9 @@ import java.nio.file.Paths
 
 class ConnectToDBActivity : StartupActivity, DumbAware {
     override fun runActivity(project: Project) {
-        DatabaseProvider.connectToDB(Paths.get(TypeInferenceDirectory.RUBY_TYPE_INFERENCE_DIRECTORY.toString(), project.name).toString())
+        DatabaseProvider.connectToDB(Paths.get(
+                TypeInferenceDirectory.RUBY_TYPE_INFERENCE_DIRECTORY.toString(),
+                project.name).toString())
         DatabaseProvider.createAllDatabases()
     }
 }
