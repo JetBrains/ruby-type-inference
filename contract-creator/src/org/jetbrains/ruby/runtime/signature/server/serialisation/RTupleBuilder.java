@@ -8,6 +8,11 @@ import org.jetbrains.ruby.codeInsight.types.signature.*;
 import java.util.*;
 
 public class RTupleBuilder {
+    private final static int PARAMETER_MODIFIER_INDEX_IN_ATTRIBUTES = 0;
+    private final static int PARAMETER_TYPE_INDEX_IN_ATTRIBUTES = 1;
+    private final static int PARAMETER_NAME_INDEX_IN_ATTRIBUTES = 2;
+    private final static int NUMBER_OF_ATTRIBUTES_FOR_PARAMETER = 3;
+
     private static final Gson GSON = new Gson();
 
     @NotNull
@@ -49,14 +54,14 @@ public class RTupleBuilder {
                 List<String> parts = Arrays.asList(argument.split("\\s*,\\s*"));
 
                 String name = "";
-                if (parts.size() == 3) {
+                if (parts.size() == NUMBER_OF_ATTRIBUTES_FOR_PARAMETER) {
                     // It's possible that parameter in ruby doesn't have name, for example:
                     // def foo(*); end
-                    name = parts.get(2);
+                    name = parts.get(PARAMETER_NAME_INDEX_IN_ATTRIBUTES);
                 }
 
-                myArgsInfo.add(new ParameterInfo(name, ParameterInfo.Type.valueOf(parts.get(0))));
-                myArgsTypes.add(parts.get(1));
+                myArgsInfo.add(new ParameterInfo(name, ParameterInfo.Type.valueOf(parts.get(PARAMETER_MODIFIER_INDEX_IN_ATTRIBUTES))));
+                myArgsTypes.add(parts.get(PARAMETER_TYPE_INDEX_IN_ATTRIBUTES));
             }
         }
 
