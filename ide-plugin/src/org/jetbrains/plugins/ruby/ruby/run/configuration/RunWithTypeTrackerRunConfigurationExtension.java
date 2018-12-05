@@ -26,7 +26,7 @@ import org.jetbrains.plugins.ruby.gem.GemInstallUtil;
 import org.jetbrains.plugins.ruby.gem.util.GemSearchUtil;
 import org.jetbrains.plugins.ruby.ruby.RubyUtil;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.stateTracker.RubyClassHierarchyWithCaching;
-import org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyTypeProviderKt;
+import org.jetbrains.plugins.ruby.util.SignatureServerUtilKt;
 import org.jetbrains.ruby.runtime.signature.server.SignatureServer;
 
 import java.io.File;
@@ -94,14 +94,7 @@ public class RunWithTypeTrackerRunConfigurationExtension extends RubyRunConfigur
             return;
         }
 
-        SignatureServer server = new SignatureServer();
-
-        String pipeFileName = server.runServerAsync(true);
-
-        server.setAfterExitListener(() -> {
-            RubyTypeProviderKt.getRegisteredCallInfosCache().clear();
-            return null;
-        });
+        String pipeFileName = SignatureServerUtilKt.runServerAsyncInIDEACompatibleMode(new SignatureServer(), configuration.getProject());
 
         final Map<String, String> env = cmdLine.getEnvironment();
         final String rubyOpt = StringUtil.notNullize(env.get(RubyUtil.RUBYOPT));

@@ -1,6 +1,8 @@
 package org.jetbrains.plugins.ruby.ruby.codeInsight.types
 
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.project.Project
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.plugins.ruby.ruby.codeInsight.AbstractRubyTypeProvider
 import org.jetbrains.plugins.ruby.ruby.codeInsight.IncomingType
@@ -28,8 +30,14 @@ import org.jetbrains.ruby.codeInsight.types.storage.server.impl.RSignatureProvid
 /**
  * Cache where we store last accessed [CallInfo]s
  */
-val registeredCallInfosCache: MutableMap<MethodInfo, List<CallInfo>>
+private val registeredCallInfosCache: MutableMap<MethodInfo, List<CallInfo>>
         = ContainerUtil.createSoftKeySoftValueMap<MethodInfo, List<CallInfo>>()
+
+fun resetAllRubyTypeProviderAndIDEACaches(project: Project) {
+    registeredCallInfosCache.clear()
+    // Clears IDEAs caches about inferred types
+    ServiceManager.getService(project, TypeInferenceContext::class.java)?.clear()
+}
 
 class RubyParameterTypeProvider : AbstractRubyTypeProvider() {
 

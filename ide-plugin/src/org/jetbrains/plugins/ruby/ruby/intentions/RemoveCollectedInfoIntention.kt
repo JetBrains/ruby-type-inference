@@ -4,7 +4,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.plugins.ruby.ruby.codeInsight.types.registeredCallInfosCache
+import org.jetbrains.plugins.ruby.ruby.codeInsight.types.resetAllRubyTypeProviderAndIDEACaches
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RubyPsiUtil
 import org.jetbrains.plugins.ruby.ruby.lang.psi.variables.RFName
 import org.jetbrains.ruby.codeInsight.types.signature.ClassInfo
@@ -26,6 +26,6 @@ class RemoveCollectedInfoIntention : BaseRubyMethodIntentionAction() {
 
         transaction { CallInfoTable.deleteAllInfoRelatedTo(info) }
 
-        registeredCallInfosCache.clear()
+        resetAllRubyTypeProviderAndIDEACaches(project)
     }
 }

@@ -104,6 +104,8 @@ class SignatureServer {
         return pipeFileName
     }
 
+    var afterFlushListener: (() -> Unit)? = null
+
     var afterExitListener: (() -> Unit)? = null
 
     /**
@@ -155,6 +157,7 @@ class SignatureServer {
             }
         }
         callInfoContainer.clear()
+        afterFlushListener?.invoke()
     }
 
     private inner class SignatureHandler internal constructor() : Thread() {
