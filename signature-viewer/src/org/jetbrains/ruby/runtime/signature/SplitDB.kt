@@ -23,6 +23,10 @@ fun input(msg: String): String {
     return readLine()!!
 }
 
+/**
+ * This small script splits massive database into small databases. Each
+ * small database is responsible for particular gem and named accordingly
+ */
 fun main(args: Array<String>) {
     val dpPath = parseDBViewerCommandLineArgs(args)
     val input = DatabaseProvider.connectToDB(dpPath)
