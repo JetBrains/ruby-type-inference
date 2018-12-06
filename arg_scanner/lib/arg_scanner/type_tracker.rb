@@ -52,8 +52,7 @@ module ArgScanner
     include Singleton
 
     def initialize
-      pipe_file_path = ENV['ARG_SCANNER_PIPE_FILE_PATH']
-      ArgScanner.set_pipe_file_path(pipe_file_path)
+      ArgScanner.init(ENV['ARG_SCANNER_PIPE_FILE_PATH'], ENV['ARG_SCANNER_BUFFERING'])
 
       @catch_only_every_n_call = ENV['ARG_SCANNER_CATCH_ONLY_EVERY_N_CALL']
       @catch_only_every_n_call = @catch_only_every_n_call ? @catch_only_every_n_call.to_i : 1

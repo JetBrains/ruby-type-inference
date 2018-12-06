@@ -42,6 +42,11 @@ option_parser = OptionParser.new do |opts|
   opts.on("--pipe-file-path=[PATH]", String, "Specify pipe file path to connect to server") do |path|
     options.pipe_file_path = path
   end
+
+  opts.on("--buffering", "enable buffering between arg-scanner and server. It speeds up arg-scanner but doesn't allow "\
+      "to use arg-scanner \"interactively\". Disabled by default") do |buffering|
+    options.buffering = buffering
+  end
 end
 
 begin

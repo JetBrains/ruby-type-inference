@@ -161,8 +161,16 @@ sent_to_server_tree_comparator(gconstpointer x, gconstpointer y, gpointer user_d
 
 FILE *pipe_file = NULL;
 
-static VALUE set_pipe_file_path(VALUE self, VALUE pipe_file_path) {
-    pipe_file = fopen(StringValueCStr(pipe_file_path), "w");
+static VALUE init(VALUE self, VALUE pipe_file_path, VALUE buffering) {
+    if (pipe_file != Qnil) {
+        pipe_file = fopen(StringValueCStr(pipe_file_path), "w");
+
+        int buffering_disabled = buffering == Qnil;
+        if (buffering_disabled) {
+            setbuf(pipe_file, NULL);
+        }
+    }
+    return Qnil;
 }
 
 void Init_arg_scanner() {
@@ -173,7 +181,7 @@ void Init_arg_scanner() {
     rb_define_module_function(mArgScanner, "get_call_info", get_call_info_rb, 0);
     rb_define_module_function(mArgScanner, "destructor", destructor, 0);
     rb_define_module_function(mArgScanner, "check_if_arg_scanner_ready", check_if_arg_scanner_ready, 0);
-    rb_define_module_function(mArgScanner, "set_pipe_file_path", set_pipe_file_path, 1);
+    rb_define_module_function(mArgScanner, "init", init, 2);
 
     sent_to_server_tree = g_tree_new_full(/*key_compare_func =*/sent_to_server_tree_comparator,
                                           /*key_compare_data =*/NULL,
