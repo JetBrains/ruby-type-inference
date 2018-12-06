@@ -229,13 +229,7 @@ object SignatureServer {
     private class PollJsonThread : Thread() {
         override fun run() {
             while (true) {
-                try {
-                    pollJson()
-                } catch (ex: InterruptedException) {
-                    break
-                } catch (ex: Throwable) {
-                    ex.printStackTrace(System.err)
-                }
+                pollJson()
             }
         }
     }
