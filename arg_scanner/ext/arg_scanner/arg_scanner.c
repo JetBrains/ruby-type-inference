@@ -159,9 +159,23 @@ sent_to_server_tree_comparator(gconstpointer x, gconstpointer y, gpointer user_d
     return 0;
 }
 
-FILE *pipe_file = NULL;
+inline int start_with(const char *str, const char *prefix) {
+    while (*str != '\0' && *prefix != '\0') {
+        if (*str != *prefix) {
+            return 0;
+        }
+        str++;
+        prefix++;
+    }
+    return 1;
+}
 
-static VALUE init(VALUE self, VALUE pipe_file_path, VALUE buffering) {
+FILE *pipe_file = NULL;
+static char *project_root = NULL;
+static int catch_only_every_n_call = 1;
+
+static VALUE init(VALUE self, VALUE pipe_file_path, VALUE buffering,
+                  VALUE project_root_local, VALUE catch_only_every_n_call_local) {
     if (pipe_file != Qnil) {
         pipe_file = fopen(StringValueCStr(pipe_file_path), "w");
 
@@ -169,6 +183,16 @@ static VALUE init(VALUE self, VALUE pipe_file_path, VALUE buffering) {
         if (buffering_disabled) {
             setbuf(pipe_file, NULL);
         }
+    }
+    if (project_root_local != Qnil) {
+        project_root = strdup(StringValueCStr(project_root_local));
+    }
+    if (catch_only_every_n_call_local != Qnil) {
+        if (sscanf(StringValueCStr(catch_only_every_n_call_local), "%d", &catch_only_every_n_call) != 1) {
+            fprintf(stderr, "Please specify number in --catch-only-every-N-call arg\n");
+            exit(1);
+        }
+        srand(time(0));
     }
     return Qnil;
 }
@@ -181,7 +205,7 @@ void Init_arg_scanner() {
     rb_define_module_function(mArgScanner, "get_call_info", get_call_info_rb, 0);
     rb_define_module_function(mArgScanner, "destructor", destructor, 0);
     rb_define_module_function(mArgScanner, "check_if_arg_scanner_ready", check_if_arg_scanner_ready, 0);
-    rb_define_module_function(mArgScanner, "init", init, 2);
+    rb_define_module_function(mArgScanner, "init", init, 4);
 
     sent_to_server_tree = g_tree_new_full(/*key_compare_func =*/sent_to_server_tree_comparator,
                                           /*key_compare_data =*/NULL,
@@ -225,6 +249,14 @@ handle_call(VALUE self, VALUE lineno, VALUE method_name, VALUE path)
     if (number_of_missed_calls > MAX_NUMBER_OF_MISSED_CALLS) {
         return Qnil;
     }
+
+    if (project_root != NULL && !start_with(sign_temp.path, project_root)) {
+        return Qnil;
+    }
+    if (catch_only_every_n_call != 1 && rand() % catch_only_every_n_call != 0) {
+        return Qnil;
+    }
+
     signature_t *sign = (signature_t *) calloc(1, sizeof(*sign));
 
     sign->lineno = sign_temp.lineno;
@@ -744,5 +776,6 @@ destructor(VALUE self) {
     g_tree_destroy(sent_to_server_tree);
     g_tree_destroy(number_missed_calls_tree);
     fclose(pipe_file);
+    free(project_root);
     return Qnil;
 }

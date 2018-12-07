@@ -52,20 +52,12 @@ module ArgScanner
     include Singleton
 
     def initialize
-      ArgScanner.init(ENV['ARG_SCANNER_PIPE_FILE_PATH'], ENV['ARG_SCANNER_BUFFERING'])
+      ArgScanner.init(ENV['ARG_SCANNER_PIPE_FILE_PATH'], ENV['ARG_SCANNER_BUFFERING'],
+                      ENV['ARG_SCANNER_PROJECT_ROOT'], ENV['ARG_SCANNER_CATCH_ONLY_EVERY_N_CALL'])
 
-      @catch_only_every_n_call = ENV['ARG_SCANNER_CATCH_ONLY_EVERY_N_CALL']
-      @catch_only_every_n_call = @catch_only_every_n_call ? @catch_only_every_n_call.to_i : 1
-
-      @project_root = ENV['ARG_SCANNER_PROJECT_ROOT']
-      @method_ids_cache = Set.new
       @enable_debug = ENV["ARG_SCANNER_DEBUG"]
       @performance_monitor = if @enable_debug then TypeTrackerPerformanceMonitor.new else nil end
       TracePoint.trace(:call, :return) do |tp|
-        if @project_root != nil && !tp.path.start_with?(@project_root)
-          next
-        end
-
         case tp.event
           when :call
             handle_call(tp)
@@ -93,19 +85,12 @@ module ArgScanner
 
     private
     def handle_call(tp)
-      if @catch_only_every_n_call == 1 || @method_ids_cache.add?(tp.method_id) || rand(@catch_only_every_n_call) == 0
-        @performance_monitor.on_call unless @performance_monitor.nil?
-        signatures << ArgScanner.handle_call(tp.lineno, tp.method_id.id2name, tp.path)
-      else
-        signatures << nil
-      end
+      signatures << ArgScanner.handle_call(tp.lineno, tp.method_id.id2name, tp.path)
     end
 
     def handle_return(tp)
-      @performance_monitor.on_return unless @performance_monitor.nil?
       signature = signatures.pop
       if signature
-        @performance_monitor.on_handled_return unless @performance_monitor.nil?
         defined_class = tp.defined_class.name
         # if defined_class is nil then it means that method is invoked from anonymous module.
         # Then trying to extract name of it's anonymous module. For more details see
