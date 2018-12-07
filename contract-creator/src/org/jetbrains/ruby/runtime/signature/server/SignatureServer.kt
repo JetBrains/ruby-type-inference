@@ -12,6 +12,8 @@ import org.jetbrains.ruby.runtime.signature.server.serialisation.toCallInfo
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
+import java.lang.AssertionError
+import java.lang.IllegalStateException
 import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.ArrayBlockingQueue
@@ -121,32 +123,36 @@ class SignatureServer {
         }
         previousPollEndedWithFlush = false
 
-        try {
-            parseJson(jsonString)
-        } catch (ex: Throwable) {
-            when (ex) {
-                is JsonSyntaxException, is JsonParseException -> {
-                    // Sometimes it's possible that some json fields contain quotation mark and we got JsonSyntaxException
-                    LOGGER.severe("Cannot parse: $jsonString")
-                }
-                else -> throw ex
-            }
-        }
+        parseJson(jsonString)
         return false
     }
 
     private fun parseJson(jsonString: String) {
-        val currCallInfo = ben(jsonTime) { gson.fromJson(jsonString, ServerResponseBean::class.java)?.toCallInfo() }
+        val currCallInfo = ben(jsonTime) {
+            try {
+                return@ben gson.fromJson(jsonString, ServerResponseBean::class.java)?.toCallInfo()
+            } catch (ex: Throwable) {
+                when (ex) {
+                    is JsonSyntaxException, is JsonParseException -> {
+                        // Sometimes it's possible that some json fields contain quotation mark and we got JsonSyntaxException
+                        LOGGER.severe("Cannot parse: $jsonString")
+                    }
+                    is IllegalStateException -> {
+                        LOGGER.severe(ex.message)
+                    }
+                    else -> throw ex
+                }
+                return@ben null
+            }
+        }
 
         // filter, for example, such things #<Class:DidYouMean::Jaro>
         if (currCallInfo?.methodInfo?.classInfo?.classFQN?.startsWith("#<") == true) {
             return
         }
 
-        ben(addTime) {
-            if (currCallInfo != null) {
-                callInfoContainer.add(currCallInfo)
-            }
+        if (currCallInfo != null) {
+            ben(addTime) { callInfoContainer.add(currCallInfo) }
         }
     }
 
