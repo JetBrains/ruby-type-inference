@@ -251,9 +251,6 @@ handle_call(VALUE self, VALUE tp)
         return Qnil;
     }
 
-    if (project_root != NULL && !start_with(sign_temp.path, project_root)) {
-        return Qnil;
-    }
     if (catch_only_every_n_call != 1 && rand() % catch_only_every_n_call != 0) {
         return Qnil;
     }
@@ -322,7 +319,7 @@ handle_return(VALUE self, VALUE signature, VALUE receiver_name, VALUE return_typ
         }
 
         signature_t_free_partially(sign);
-    } else {
+    } else if (project_root == NULL || !start_with(sign->path, project_root)) {
         signature_t_free(sign);
 
         int found = (int) g_tree_lookup(number_missed_calls_tree, sign_in_sent_to_server_tree);
