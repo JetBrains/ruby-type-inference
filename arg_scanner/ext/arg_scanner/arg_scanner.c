@@ -77,7 +77,7 @@ static GTree *sent_to_server_tree;
  */
 static GTree *number_missed_calls_tree;
 static char *get_args_info(const char *const *explicit_kw_args);
-static VALUE handle_call(VALUE self, VALUE lineno, VALUE method_name, VALUE path);
+static VALUE handle_call(VALUE self, VALUE tp);
 static VALUE handle_return(VALUE self, VALUE signature, VALUE receiver_name, VALUE return_type_name);
 static VALUE destructor(VALUE self);
 
@@ -199,7 +199,7 @@ static VALUE init(VALUE self, VALUE pipe_file_path, VALUE buffering,
 
 void Init_arg_scanner() {
     mArgScanner = rb_define_module("ArgScanner");
-    rb_define_module_function(mArgScanner, "handle_call", handle_call, 3);
+    rb_define_module_function(mArgScanner, "handle_call", handle_call, 1);
     rb_define_module_function(mArgScanner, "handle_return", handle_return, 3);
     rb_define_module_function(mArgScanner, "get_args_info", get_args_info_rb, 0);
     rb_define_module_function(mArgScanner, "get_call_info", get_call_info_rb, 0);
@@ -233,16 +233,17 @@ my_rb_vm_get_binding_creatable_next_cfp(const rb_thread_t *th, const rb_control_
 }
 
 static VALUE
-handle_call(VALUE self, VALUE lineno, VALUE method_name, VALUE path)
+handle_call(VALUE self, VALUE tp)
 {
     // Just for code safety
-    if (lineno == Qnil || method_name == Qnil || path == Qnil) {
+    if (tp == Qnil) {
         return Qnil;
     }
 
     signature_t sign_temp;
     memset(&sign_temp, 0, sizeof(sign_temp));
-    sign_temp.lineno = FIX2INT(lineno); // Convert Ruby's Fixnum to C language int
+    sign_temp.lineno = FIX2INT(rb_funcall(tp, rb_intern("lineno"), 0)); // Convert Ruby's Fixnum to C language int
+    VALUE path = rb_funcall(tp, rb_intern("path"), 0);
     sign_temp.path = StringValueCStr(path);
 
     int number_of_missed_calls = (int)g_tree_lookup(number_missed_calls_tree, &sign_temp);
@@ -261,7 +262,7 @@ handle_call(VALUE self, VALUE lineno, VALUE method_name, VALUE path)
 
     sign->lineno = sign_temp.lineno;
     sign->path = strdup(sign_temp.path);
-    sign->method_name = strdup(StringValueCStr(method_name));
+    sign->method_name = strdup(rb_id2name(SYM2ID(rb_funcall(tp, rb_intern("method_id"), 0))));
     sign->explicit_argc = -1;
 
 #ifdef DEBUG_ARG_SCANNER

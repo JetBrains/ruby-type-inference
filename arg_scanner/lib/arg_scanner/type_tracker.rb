@@ -85,7 +85,7 @@ module ArgScanner
 
     private
     def handle_call(tp)
-      signatures << ArgScanner.handle_call(tp.lineno, tp.method_id.id2name, tp.path)
+      signatures << ArgScanner.handle_call(tp)
     end
 
     def handle_return(tp)

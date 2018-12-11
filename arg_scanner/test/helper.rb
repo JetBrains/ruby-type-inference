@@ -29,11 +29,7 @@ class TestTypeTracker
 
   private
   def handle_call(tp)
-    if tp.defined_class && !tp.defined_class.singleton_class?
-      signature = ArgScanner.handle_call(tp.lineno, tp.method_id.id2name, tp.path)
-    else
-      signature = nil
-    end
+    signature = ArgScanner.handle_call(tp)
     signatures.push(signature)
 
     @last_args_info = ArgScanner.get_args_info.split ';'
