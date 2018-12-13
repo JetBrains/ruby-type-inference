@@ -312,7 +312,8 @@ get_call_info() {
 
     const VALUE *iseq_original = rb_iseq_original_iseq(iseq);
 
-    for (int indent = 1; indent < 6; indent++) {
+    int indent;
+    for (indent = 1; indent < 6; indent++) {
         VALUE insn = iseq_original[pc - indent];
         int tmp = (int)insn;
         if(0 < tmp && tmp < 256) {
@@ -333,7 +334,8 @@ get_call_info() {
 
                 info.call_info_kw_explicit_args = (char **) malloc((kwArgSize + 1)*sizeof(*(info.call_info_kw_explicit_args)));
 
-                for (int i = kwArgSize -1 ; i >= 0; --i) {
+                int i;
+                for (i = kwArgSize -1 ; i >= 0; --i) {
                     VALUE kw = rb_ary_pop(kw_ary);
                     const char *kw_name = rb_id2name(SYM2ID(kw));
 
