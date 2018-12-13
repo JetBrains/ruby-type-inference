@@ -18,7 +18,7 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <executor implementation="com.intellij.execution.executors.RunWithTypeTrackerExecutor"/>
-        <executor implementation="com.intellij.execution.executors.CollectStateExecutor"/>
+        <!--<executor implementation="com.intellij.execution.executors.CollectStateExecutor"/>-->
 
         <programRunner implementation="org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyRunWithTypeTrackerRunner"/>
         <programRunner implementation="org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyCollectStateRunner"/>
