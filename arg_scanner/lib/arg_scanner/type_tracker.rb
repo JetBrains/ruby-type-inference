@@ -57,13 +57,13 @@ module ArgScanner
 
       @enable_debug = ENV["ARG_SCANNER_DEBUG"]
       @performance_monitor = if @enable_debug then TypeTrackerPerformanceMonitor.new else nil end
-      TracePoint.trace(:call, :return) do |tp|
-        case tp.event
-          when :call
-            handle_call(tp)
-          when :return
-            handle_return(tp)
-        end
+
+      TracePoint.trace(:call) do |tp|
+        handle_call(tp)
+      end
+
+      TracePoint.trace(:return) do |tp|
+        handle_return(tp)
       end
 
       error_msg = ArgScanner.check_if_arg_scanner_ready()
