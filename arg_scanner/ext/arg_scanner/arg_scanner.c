@@ -377,7 +377,7 @@ get_call_info() {
     empty.call_info_kw_explicit_args = NULL;
     empty.call_info_explicit_argc = -1;
 
-    cfp += 4;
+    cfp += 3;
     cfp = my_rb_vm_get_binding_creatable_next_cfp(thread, cfp);
 
     if(cfp->iseq == NULL || cfp->pc == NULL || cfp->iseq->body == NULL) {
@@ -585,7 +585,7 @@ get_args_info(const char *const *explicit_kw_args)
     thread = ruby_current_thread;
     cfp = TH_CFP(thread);
 
-    cfp += 3;
+    cfp += 2;
 
     VALUE *ep = cfp->ep;
     ep -= cfp->iseq->body->local_table_size;
@@ -791,7 +791,7 @@ is_call_info_needed()
 
     thread = ruby_current_thread;
     cfp = TH_CFP(thread);
-    cfp += 3;
+    cfp += 2;
 
     return (cfp->iseq->body->param.flags.has_opt
         || cfp->iseq->body->param.flags.has_kwrest
