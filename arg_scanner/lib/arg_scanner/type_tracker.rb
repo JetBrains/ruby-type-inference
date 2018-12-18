@@ -79,28 +79,21 @@ module ArgScanner
     attr_accessor :performance_monitor
     attr_accessor :prefix
 
-    def signatures
-      Thread.current[:signatures] ||= Array.new
-    end
-
     private
     def handle_call(tp)
-      signatures << ArgScanner.handle_call(tp)
+      ArgScanner.handle_call(tp)
     end
 
     def handle_return(tp)
-      signature = signatures.pop
-      if signature
-        defined_class = tp.defined_class.name
-        # if defined_class is nil then it means that method is invoked from anonymous module.
-        # Then trying to extract name of it's anonymous module. For more details see
-        # CallStatCompletionTest#testAnonymousModuleMethodCall
-        if defined_class == nil
-          this = tp.binding.eval('self')
-          defined_class = this.to_s
-        end
-        ArgScanner.handle_return(signature, defined_class, tp.return_value.class.to_s)
+      defined_class = tp.defined_class.name
+      # if defined_class is nil then it means that method is invoked from anonymous module.
+      # Then trying to extract name of it's anonymous module. For more details see
+      # CallStatCompletionTest#testAnonymousModuleMethodCall
+      if defined_class == nil
+        this = tp.binding.eval('self')
+        defined_class = this.to_s
       end
+      ArgScanner.handle_return(defined_class, tp.return_value.class.to_s)
     end
 
   end

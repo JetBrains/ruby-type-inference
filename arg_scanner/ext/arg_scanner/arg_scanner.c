@@ -76,9 +76,10 @@ static GTree *sent_to_server_tree;
  * we will ignore it.
  */
 static GTree *number_missed_calls_tree;
+static GSList *call_stack = NULL;
 static char *get_args_info(const char *const *explicit_kw_args);
 static VALUE handle_call(VALUE self, VALUE tp);
-static VALUE handle_return(VALUE self, VALUE signature, VALUE receiver_name, VALUE return_type_name);
+static VALUE handle_return(VALUE self, VALUE receiver_name, VALUE return_type_name);
 static VALUE destructor(VALUE self);
 
 // returns Qnil if ready; or string containing error message otherwise 
@@ -200,7 +201,7 @@ static VALUE init(VALUE self, VALUE pipe_file_path, VALUE buffering,
 void Init_arg_scanner() {
     mArgScanner = rb_define_module("ArgScanner");
     rb_define_module_function(mArgScanner, "handle_call", handle_call, 1);
-    rb_define_module_function(mArgScanner, "handle_return", handle_return, 3);
+    rb_define_module_function(mArgScanner, "handle_return", handle_return, 2);
     rb_define_module_function(mArgScanner, "get_args_info", get_args_info_rb, 0);
     rb_define_module_function(mArgScanner, "get_call_info", get_call_info_rb, 0);
     rb_define_module_function(mArgScanner, "destructor", destructor, 0);
@@ -220,6 +221,22 @@ void Init_arg_scanner() {
                                                /*value_destroy_func =*/NULL);
 }
 
+void push_to_call_stack(signature_t *signature) {
+    call_stack = g_slist_prepend(call_stack, (gpointer) signature);
+}
+
+signature_t *pop_from_call_stack() {
+    if (call_stack == NULL) {
+        return NULL;
+    }
+    signature_t *ret = (signature_t *) call_stack->data;
+
+    GSList *old_head = call_stack;
+    call_stack = g_slist_remove_link(call_stack, old_head);
+    g_slist_free_1(old_head);
+    return ret;
+}
+
 rb_control_frame_t *
 my_rb_vm_get_binding_creatable_next_cfp(const rb_thread_t *th, const rb_control_frame_t *cfp)
 {
@@ -232,12 +249,17 @@ my_rb_vm_get_binding_creatable_next_cfp(const rb_thread_t *th, const rb_control_
     return 0;
 }
 
+static VALUE exit_from_handle_call_skipping_call() {
+    push_to_call_stack(NULL);
+    return Qnil;
+}
+
 static VALUE
 handle_call(VALUE self, VALUE tp)
 {
     // Just for code safety
     if (tp == Qnil) {
-        return Qnil;
+        return exit_from_handle_call_skipping_call();
     }
 
     signature_t sign_temp;
@@ -248,11 +270,11 @@ handle_call(VALUE self, VALUE tp)
 
     int number_of_missed_calls = (int)g_tree_lookup(number_missed_calls_tree, &sign_temp);
     if (number_of_missed_calls > MAX_NUMBER_OF_MISSED_CALLS) {
-        return Qnil;
+        return exit_from_handle_call_skipping_call();
     }
 
     if (catch_only_every_n_call != 1 && rand() % catch_only_every_n_call != 0) {
-        return Qnil;
+        return exit_from_handle_call_skipping_call();
     }
 
     signature_t *sign = (signature_t *) calloc(1, sizeof(*sign));
@@ -277,22 +299,25 @@ handle_call(VALUE self, VALUE tp)
 
     if (sign->args_info != NULL && strlen(sign->args_info) >= 1000) {
         signature_t_free(sign);
-        return Qnil;
+        return exit_from_handle_call_skipping_call();
     }
 
-    return Data_Wrap_Struct(c_signature,
-        NULL, /*free memory function is NULL because sent_to_server_tree will free it (see handle_return)*/NULL, sign);
+    push_to_call_stack(sign);
+    return Qnil;
 }
 
 static VALUE
-handle_return(VALUE self, VALUE signature, VALUE receiver_name, VALUE return_type_name)
+handle_return(VALUE self, VALUE receiver_name, VALUE return_type_name)
 {
-    if (signature == Qnil || receiver_name == Qnil || return_type_name == Qnil) {
+    if (receiver_name == Qnil || return_type_name == Qnil) {
+        pop_from_call_stack();
         return Qnil;
     }
 
-    signature_t *sign;
-    Data_Get_Struct(signature, signature_t, sign);
+    signature_t *sign = pop_from_call_stack();
+    if (sign == NULL) {
+        return Qnil;
+    }
     sign->receiver_name = strdup(StringValueCStr(receiver_name));
     sign->return_type_name = strdup(StringValueCStr(return_type_name));
 
