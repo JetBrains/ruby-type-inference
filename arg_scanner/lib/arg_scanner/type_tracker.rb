@@ -85,15 +85,7 @@ module ArgScanner
     end
 
     def handle_return(tp)
-      defined_class = tp.defined_class.name
-      # if defined_class is nil then it means that method is invoked from anonymous module.
-      # Then trying to extract name of it's anonymous module. For more details see
-      # CallStatCompletionTest#testAnonymousModuleMethodCall
-      if defined_class == nil
-        this = tp.binding.eval('self')
-        defined_class = this.to_s
-      end
-      ArgScanner.handle_return(defined_class, tp.return_value.class.to_s)
+      ArgScanner.handle_return(tp)
     end
 
   end

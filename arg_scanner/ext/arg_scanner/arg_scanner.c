@@ -79,8 +79,9 @@ static GTree *number_missed_calls_tree;
 static GSList *call_stack = NULL;
 static char *get_args_info(const char *const *explicit_kw_args);
 static VALUE handle_call(VALUE self, VALUE tp);
-static VALUE handle_return(VALUE self, VALUE receiver_name, VALUE return_type_name);
+static VALUE handle_return(VALUE self, VALUE tp);
 static VALUE destructor(VALUE self);
+static const char *calc_sane_class_name(VALUE ptr);
 
 // returns Qnil if ready; or string containing error message otherwise 
 static VALUE check_if_arg_scanner_ready(VALUE self);
@@ -201,7 +202,7 @@ static VALUE init(VALUE self, VALUE pipe_file_path, VALUE buffering,
 void Init_arg_scanner() {
     mArgScanner = rb_define_module("ArgScanner");
     rb_define_module_function(mArgScanner, "handle_call", handle_call, 1);
-    rb_define_module_function(mArgScanner, "handle_return", handle_return, 2);
+    rb_define_module_function(mArgScanner, "handle_return", handle_return, 1);
     rb_define_module_function(mArgScanner, "get_args_info", get_args_info_rb, 0);
     rb_define_module_function(mArgScanner, "get_call_info", get_call_info_rb, 0);
     rb_define_module_function(mArgScanner, "destructor", destructor, 0);
@@ -307,9 +308,9 @@ handle_call(VALUE self, VALUE tp)
 }
 
 static VALUE
-handle_return(VALUE self, VALUE receiver_name, VALUE return_type_name)
+handle_return(VALUE self, VALUE tp)
 {
-    if (receiver_name == Qnil || return_type_name == Qnil) {
+    if (tp == Qnil) {
         pop_from_call_stack();
         return Qnil;
     }
@@ -318,8 +319,22 @@ handle_return(VALUE self, VALUE receiver_name, VALUE return_type_name)
     if (sign == NULL) {
         return Qnil;
     }
+    VALUE defined_class = rb_funcall(tp, rb_intern("defined_class"), 0);
+
+    VALUE receiver_name = rb_mod_name(defined_class);
+
+    // if defined_class is nil then it means that method is invoked from anonymous module.
+    // Then trying to extract name of it's anonymous module. For more details see
+    // CallStatCompletionTest#testAnonymousModuleMethodCall
+    if (receiver_name == Qnil) {
+        VALUE this = rb_funcall(tp, rb_intern("self"), 0);
+        receiver_name = rb_funcall(this, rb_intern("to_s"), 0);
+    }
+
+    VALUE return_type_name = rb_funcall(tp, rb_intern("return_value"), 0);
+
     sign->receiver_name = strdup(StringValueCStr(receiver_name));
-    sign->return_type_name = strdup(StringValueCStr(return_type_name));
+    sign->return_type_name = strdup(calc_sane_class_name(return_type_name));
 
     signature_t *sign_in_sent_to_server_tree = g_tree_lookup(sent_to_server_tree, sign);
     if (sign_in_sent_to_server_tree == NULL) {
