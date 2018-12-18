@@ -60,7 +60,22 @@ typedef struct
     char *return_type_name;
     ssize_t explicit_argc; // Number of arguments that was explicitly passed by user
     int lineno;
+    int is_in_project_root; // Can be 0, 1 or -1 when project_root is not specified
 } signature_t;
+
+typedef enum
+{
+    /**
+     * Functions which are located in project root
+     */
+    IN_PROJECT_ROOT,
+    /**
+     * Functions which are located in gems
+     */
+    IN_GEM
+} FunctionLocation;
+
+static FunctionLocation prev_fun_location = IN_PROJECT_ROOT;
 
 void Init_arg_scanner();
 
@@ -162,6 +177,9 @@ sent_to_server_tree_comparator(gconstpointer x, gconstpointer y, gpointer user_d
 }
 
 inline int start_with(const char *str, const char *prefix) {
+    if (str == NULL || prefix == NULL) {
+        return -1;
+    }
     while (*str != '\0' && *prefix != '\0') {
         if (*str != *prefix) {
             return 0;
@@ -258,20 +276,29 @@ static VALUE exit_from_handle_call_skipping_call() {
 static VALUE
 handle_call(VALUE self, VALUE tp)
 {
-    // Just for code safety
-    if (tp == Qnil) {
-        return exit_from_handle_call_skipping_call();
-    }
-
     signature_t sign_temp;
     memset(&sign_temp, 0, sizeof(sign_temp));
     sign_temp.lineno = FIX2INT(rb_funcall(tp, rb_intern("lineno"), 0)); // Convert Ruby's Fixnum to C language int
     VALUE path = rb_funcall(tp, rb_intern("path"), 0);
     sign_temp.path = StringValueCStr(path);
 
-    int number_of_missed_calls = (int)g_tree_lookup(number_missed_calls_tree, &sign_temp);
-    if (number_of_missed_calls > MAX_NUMBER_OF_MISSED_CALLS) {
-        return exit_from_handle_call_skipping_call();
+    int is_in_project_root = start_with(sign_temp.path, project_root);
+
+    if (project_root != NULL && !is_in_project_root) {
+        FunctionLocation cur_fun_location = IN_GEM;
+        if (prev_fun_location == IN_GEM) {
+            return exit_from_handle_call_skipping_call();
+        }
+        prev_fun_location = cur_fun_location;
+    } else {
+        prev_fun_location = IN_PROJECT_ROOT;
+    }
+
+    if (project_root == NULL || !is_in_project_root) {
+        int number_of_missed_calls = (int)g_tree_lookup(number_missed_calls_tree, &sign_temp);
+        if (number_of_missed_calls > MAX_NUMBER_OF_MISSED_CALLS) {
+            return exit_from_handle_call_skipping_call();
+        }
     }
 
     if (catch_only_every_n_call != 1 && rand() % catch_only_every_n_call != 0) {
@@ -280,6 +307,7 @@ handle_call(VALUE self, VALUE tp)
 
     signature_t *sign = (signature_t *) calloc(1, sizeof(*sign));
 
+    sign->is_in_project_root = is_in_project_root;
     sign->lineno = sign_temp.lineno;
     sign->path = strdup(sign_temp.path);
     sign->method_name = strdup(rb_id2name(SYM2ID(rb_funcall(tp, rb_intern("method_id"), 0))));
@@ -310,11 +338,6 @@ handle_call(VALUE self, VALUE tp)
 static VALUE
 handle_return(VALUE self, VALUE tp)
 {
-    if (tp == Qnil) {
-        pop_from_call_stack();
-        return Qnil;
-    }
-
     signature_t *sign = pop_from_call_stack();
     if (sign == NULL) {
         return Qnil;
@@ -359,7 +382,7 @@ handle_return(VALUE self, VALUE tp)
         }
 
         signature_t_free_partially(sign);
-    } else if (project_root == NULL || !start_with(sign->path, project_root)) {
+    } else if (project_root == NULL || !sign->is_in_project_root) {
         signature_t_free(sign);
 
         int found = (int) g_tree_lookup(number_missed_calls_tree, sign_in_sent_to_server_tree);
