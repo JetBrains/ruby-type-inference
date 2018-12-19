@@ -196,7 +196,7 @@ static int catch_only_every_n_call = 1;
 
 static VALUE init(VALUE self, VALUE pipe_file_path, VALUE buffering,
                   VALUE project_root_local, VALUE catch_only_every_n_call_local) {
-    if (pipe_file != Qnil) {
+    if (pipe_file_path != Qnil) {
         pipe_file = fopen(StringValueCStr(pipe_file_path), "w");
 
         int buffering_disabled = buffering == Qnil;
