@@ -13,7 +13,6 @@ import org.jetbrains.ruby.codeInsight.types.storage.server.DatabaseProvider
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.RSignatureProviderImpl
 import org.jetbrains.ruby.runtime.signature.server.SignatureServer
 import java.io.IOException
-import java.util.*
 import java.util.concurrent.TimeUnit
 
 class CallStatCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
@@ -156,7 +155,35 @@ class CallStatCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
         assertTrue(callInfosContainsUnique(callInfos, listOf("String", "Symbol"), "TrueClass"))
     }
 
-    private fun executeScript(runnableScriptName: String) {
+    fun testRubyExecWithBuffering() {
+        executeScript("ruby_exec_test.rb", additionalArgScannerArgs = arrayOf("--buffering"))
+        waitForServer()
+        val foo: List<CallInfo> = RSignatureProviderImpl.getRegisteredCallInfos(createMethodInfo("Object", "foo"))
+        val bar: List<CallInfo> = RSignatureProviderImpl.getRegisteredCallInfos(createMethodInfo("Object", "bar"))
+
+        assertEquals(0, foo.size)
+
+        assertEquals(1, bar.size)
+        assertTrue(allCallInfosHaveNumberOfUnnamedArguments(bar, 1))
+        assertTrue(callInfosContainsUnique(bar, listOf("TrueClass"), "NilClass"))
+    }
+
+    fun testRubyExecWithoutBuffering() {
+        executeScript("ruby_exec_test.rb")
+        waitForServer()
+        val foo: List<CallInfo> = RSignatureProviderImpl.getRegisteredCallInfos(createMethodInfo("Object", "foo"))
+        val bar: List<CallInfo> = RSignatureProviderImpl.getRegisteredCallInfos(createMethodInfo("Object", "bar"))
+
+        assertEquals(1, foo.size)
+        assertTrue(allCallInfosHaveNumberOfUnnamedArguments(foo, 1))
+        assertTrue(callInfosContainsUnique(foo, listOf("String"), "NilClass"))
+
+        assertEquals(1, bar.size)
+        assertTrue(allCallInfosHaveNumberOfUnnamedArguments(bar, 1))
+        assertTrue(callInfosContainsUnique(bar, listOf("TrueClass"), "NilClass"))
+    }
+
+    private fun executeScript(runnableScriptName: String, additionalArgScannerArgs: Array<String> = emptyArray()) {
         val url = javaClass.classLoader.getResource(runnableScriptName)
 
         if (url == null) {
@@ -179,9 +206,10 @@ class CallStatCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
 
             val pipeFileName = lastServer!!.runServerAsync(true)
 
-            LOGGER.warn(getProcessOutput(RubyCommandLine(RubyLocalRunner.getRunner(module), false)
+            assertEquals("", getProcessOutput(RubyCommandLine(RubyLocalRunner.getRunner(module), false)
                     .withExePath("arg-scanner")
-                    .withParameters("--pipe-file-path=$pipeFileName", "--type-tracker", "ruby", scriptPath)
+                    .withParameters("--pipe-file-path=$pipeFileName", "--type-tracker",
+                            *additionalArgScannerArgs, "ruby", scriptPath)
                     .createProcess()))
         } catch (e: ExecutionException) {
             LOGGER.error(e.message)
@@ -252,3 +280,4 @@ class CallStatCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
         }
     }
 }
+
