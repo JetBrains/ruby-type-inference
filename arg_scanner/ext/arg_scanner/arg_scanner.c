@@ -195,10 +195,19 @@ FILE *pipe_file = NULL;
 static char *project_root = NULL;
 static int catch_only_every_n_call = 1;
 
+static int file_exists(const char *file_path) {
+    return access(file_path, F_OK) != -1;
+}
+
 static VALUE init(VALUE self, VALUE pipe_file_path, VALUE buffering,
                   VALUE project_root_local, VALUE catch_only_every_n_call_local) {
     if (pipe_file_path != Qnil) {
-        pipe_file = fopen(StringValueCStr(pipe_file_path), "w");
+        const char *pipe_file_path_c = StringValueCStr(pipe_file_path);
+        if (!file_exists(pipe_file_path_c)) {
+            fprintf(stderr, "Specified pipe file: %s doesn't exists\n", pipe_file_path_c);
+            exit(1);
+        }
+        pipe_file = fopen(pipe_file_path_c, "w");
 
         int buffering_disabled = buffering == Qnil;
         if (buffering_disabled) {
