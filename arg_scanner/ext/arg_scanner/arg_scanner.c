@@ -79,6 +79,7 @@ static FunctionLocation prev_fun_location = IN_PROJECT_ROOT;
 
 void Init_arg_scanner();
 
+static const char *ARG_SCANNER_EXIT_COMMAND = "EXIT";
 static const char *EMPTY_VALUE = "";
 static const int MAX_NUMBER_OF_MISSED_CALLS = 10;
 /**
@@ -836,6 +837,7 @@ static VALUE
 destructor(VALUE self) {
     g_tree_destroy(sent_to_server_tree);
     g_tree_destroy(number_missed_calls_tree);
+    fprintf(pipe_file, "%s\n", ARG_SCANNER_EXIT_COMMAND);
     fclose(pipe_file);
     free(project_root);
     return Qnil;

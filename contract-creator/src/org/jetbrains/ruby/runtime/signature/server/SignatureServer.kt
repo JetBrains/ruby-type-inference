@@ -9,11 +9,7 @@ import org.jetbrains.ruby.codeInsight.types.storage.server.DatabaseProvider
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.CallInfoTable
 import org.jetbrains.ruby.runtime.signature.server.serialisation.ServerResponseBean
 import org.jetbrains.ruby.runtime.signature.server.serialisation.toCallInfo
-import java.io.File
-import java.io.FileInputStream
-import java.io.IOException
-import java.lang.AssertionError
-import java.lang.IllegalStateException
+import java.io.*
 import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.ArrayBlockingQueue
@@ -22,7 +18,7 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.logging.Logger
 import kotlin.concurrent.thread
 
-private const val POLL_THREAD_EXIT = "\u0000"
+private const val EXIT_COMMAND = "EXIT";
 
 fun main(args: Array<String>) {
     parseArgs(args).let {
@@ -88,6 +84,7 @@ class SignatureServer {
      * @return pipe filename path which should be passed to arg-scanner
      */
     fun runServerAsync(isDaemon: Boolean): String {
+        isReady.set(false)
         _runningServers.add(this)
         LOGGER.info("Starting server")
 
@@ -115,11 +112,10 @@ class SignatureServer {
      */
     private fun pollJson(): Boolean {
         val jsonString by lazy { if (previousPollEndedWithFlush) queue.take() else queue.poll() }
-        if (callInfoContainer.size > LOCAL_STORAGE_SIZE_LIMIT || jsonString == null || jsonString == POLL_THREAD_EXIT) {
+        if (callInfoContainer.size > LOCAL_STORAGE_SIZE_LIMIT || jsonString == null || jsonString == EXIT_COMMAND) {
             flushNewTuplesToMainStorage()
             previousPollEndedWithFlush = true
-            if (queue.isEmpty()) isReady.set(true)
-            return jsonString == POLL_THREAD_EXIT
+            return jsonString == EXIT_COMMAND
         }
         previousPollEndedWithFlush = false
 
@@ -171,17 +167,30 @@ class SignatureServer {
 
         override fun run() {
             try {
-                val br = FileInputStream(pipeFilePath).bufferedReader()
-                while (true) {
-                    val currString = ben(readTime) { br.readLine() }
-                            ?: break
-                    queue.put(currString)
-                    isReady.set(false)
-                }
+                var missed = 0
+                var br = FileInputStream(pipeFilePath).bufferedReader()
+                var currString: String? = ""
+                do {
+                    // continue when EOF is reached because EOF doesn't mean that program
+                    // traced by arg-scanner is died. Program could simply call `Kernel.exec`
+                    // See CallStatCompletionTest.testRubyExecWithBuffering and
+                    // CallStatCompletionTest.testRubyExecWithoutBuffering
+                    currString = ben(readTime) { br.readLine() }
+
+                    if (currString != null) {
+                        queue.put(currString)
+                    } else {
+                        missed++
+                        br.close()
+                        // If don't reassign reader then `readLine` will always return `null`
+                        br = FileInputStream(pipeFilePath).bufferedReader()
+                    }
+
+                    // 1000 is just threshold for safety
+                } while (currString != EXIT_COMMAND && missed < 1000)
             } catch (e: IOException) {
                 LOGGER.severe("Error in SignatureHandler")
             } finally {
-                queue.put(POLL_THREAD_EXIT)
                 File(pipeFilePath).delete()
             }
         }
@@ -191,6 +200,7 @@ class SignatureServer {
         override fun run() {
             while (true) {
                 if (pollJson()) {
+                    isReady.set(true)
                     afterExitListener?.invoke()
                     _runningServers.remove(this@SignatureServer)
                     break
