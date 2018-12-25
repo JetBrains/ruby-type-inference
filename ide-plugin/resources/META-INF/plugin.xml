@@ -16,6 +16,12 @@
     ]]>
     </change-notes>
 
+    <application-components>
+        <component>
+            <implementation-class>org.jetbrains.plugins.ruby.ruby.codeInsight.ProjectLifecycleListenerImpl</implementation-class>
+        </component>
+    </application-components>
+
     <extensions defaultExtensionNs="com.intellij">
         <executor implementation="com.intellij.execution.executors.RunWithTypeTrackerExecutor"/>
         <!--<executor implementation="com.intellij.execution.executors.CollectStateExecutor"/>-->
@@ -34,7 +40,6 @@
         </intentionAction>
 
         <postStartupActivity implementation="org.jetbrains.plugins.ruby.ruby.codeInsight.TrackerDataLoader"/>
-        <postStartupActivity implementation="org.jetbrains.plugins.ruby.ruby.codeInsight.ConnectToDBActivity"/>
 
         <applicationConfigurable groupId="language"
                                  groupWeight="130"

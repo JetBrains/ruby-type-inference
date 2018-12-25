@@ -1,0 +1,68 @@
+#!/usr/bin/env ruby
+# This is small script for launching type tracker under RubyMine's provided server. Acts like arg-scanner wrapper
+require 'optparse'
+require 'arg_scanner/version'
+require 'tmpdir'
+require 'json'
+
+option_parser = OptionParser.new do |opts|
+  opts.banner = <<~EOB
+    rubymine-type-tracker #{ArgScanner::VERSION}
+    
+    Usage: rubymine-type-tracker <ruby script to execute>
+        rubymine-type-tracker is a ruby script for easy launching some command under
+        RubyMine's type tracker. The data will be sent to a server run by RubyMine. 
+        So before launching this script be sure project is opened in RubyMine with 
+        "Ruby Dynamic Code Insight" plugin installed.
+  EOB
+end
+
+begin
+  option_parser.parse! ARGV
+rescue StandardError => e
+  puts option_parser
+  puts
+  puts e.message
+  exit 1
+end
+
+dot_ruby_type_inference_dir = File.join(Dir.tmpdir, ".ruby-type-inference")
+match_jsons = Dir.foreach(dot_ruby_type_inference_dir).map do |file_name|
+  if file_name == '.' || file_name == '..'
+    next nil
+  end
+  json = JSON.parse(IO.read(File.join(dot_ruby_type_inference_dir, file_name)))
+  if json["projectPath"] != Dir.pwd
+    next nil
+  end
+  next json
+end.select { |x| x != nil }
+
+if match_jsons.count == 1
+  json = match_jsons[0]
+elsif match_jsons.count > 1
+  STDERR.puts <<~EOB
+      Critical error! You may try to:\n
+      1. Close RubyMine
+      2. Clean #{dot_ruby_type_inference_dir}
+      3. Open RubyMine
+  EOB
+  exit 1
+elsif match_jsons.count == 0
+  STDERR.puts <<~EOB
+      Error! You are possibly...
+      * launching this script under directory different from project 
+        opened in RubyMine (please `cd` to dir firstly)
+      * haven't opened project in RubyMine 
+      * haven't installed "Ruby Dynamic Code Insight" plugin in RubyMine
+  EOB
+  exit 1
+end
+
+to_exec = ["arg-scanner",
+           "--type-tracker",
+           "--project-root=#{json["projectPath"]}",
+           "--pipe-file-path=#{json["pipeFilePath"]}",
+           *ARGV]
+
+Kernel.exec(*to_exec)
