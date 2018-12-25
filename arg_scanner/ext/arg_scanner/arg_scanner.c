@@ -202,12 +202,17 @@ static int file_exists(const char *file_path) {
 static VALUE init(VALUE self, VALUE pipe_file_path, VALUE buffering,
                   VALUE project_root_local, VALUE catch_only_every_n_call_local) {
     if (pipe_file_path != Qnil) {
+        pipe_file_path = rb_file_s_expand_path(1, &pipe_file_path); // https://ruby-doc.org/core-2.2.0/File.html#method-c-expand_path
         const char *pipe_file_path_c = StringValueCStr(pipe_file_path);
         if (!file_exists(pipe_file_path_c)) {
             fprintf(stderr, "Specified pipe file: %s doesn't exists\n", pipe_file_path_c);
             exit(1);
         }
         pipe_file = fopen(pipe_file_path_c, "w");
+        if (pipe_file == NULL) {
+            fprintf(stderr, "Cannot open pipe file \"%s\" with write access\n", pipe_file_path_c);
+            exit(1);
+        }
 
         int buffering_disabled = buffering == Qnil;
         if (buffering_disabled) {
@@ -290,6 +295,7 @@ handle_call(VALUE self, VALUE tp)
     memset(&sign_temp, 0, sizeof(sign_temp));
     sign_temp.lineno = FIX2INT(rb_funcall(tp, rb_intern("lineno"), 0)); // Convert Ruby's Fixnum to C language int
     VALUE path = rb_funcall(tp, rb_intern("path"), 0);
+    path = rb_file_s_expand_path(1, &path); // https://ruby-doc.org/core-2.2.0/File.html#method-c-expand_path
     sign_temp.path = StringValueCStr(path);
 
     int is_in_project_root = start_with(sign_temp.path, project_root);
