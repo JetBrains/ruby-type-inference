@@ -3,6 +3,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import com.yourkit.util.FileUtil
+import junit.framework.Assert
 import org.jetbrains.plugins.ruby.ruby.run.RubyCommandLine
 import org.jetbrains.plugins.ruby.ruby.run.RubyLocalRunner
 import org.jetbrains.ruby.codeInsight.types.signature.CallInfo
@@ -181,6 +182,39 @@ class CallStatCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
         assertEquals(1, bar.size)
         assertTrue(allCallInfosHaveNumberOfUnnamedArguments(bar, 1))
         assertTrue(callInfosContainsUnique(bar, listOf("TrueClass"), "NilClass"))
+    }
+
+    fun testGemFunctionsCatchingWithProjectRootSpecified() {
+        val runnableScriptName = "in_project_root_test/in_project_root_test.rb"
+        val projectRoot: String = javaClass.classLoader.getResource(runnableScriptName).path
+        executeScript(runnableScriptName, additionalArgScannerArgs = arrayOf("--project-root=$projectRoot"))
+        waitForServer()
+
+        val catch = RSignatureProviderImpl.getRegisteredCallInfos(createMethodInfo("Object", "catch"))
+        assertEquals(1, catch.size)
+        assertTrue(allCallInfosHaveNumberOfUnnamedArguments(catch, 1))
+        assertTrue(callInfosContainsUnique(catch, listOf("String"), "NilClass"))
+
+        val catch_2 = RSignatureProviderImpl.getRegisteredCallInfos(createMethodInfo("Object", "catch_2"))
+        assertEquals(1, catch_2.size)
+        assertTrue(allCallInfosHaveNumberOfUnnamedArguments(catch_2, 1))
+        assertTrue(callInfosContainsUnique(catch_2, listOf("String"), "NilClass"))
+
+        val dont_catch_2 = RSignatureProviderImpl.getRegisteredCallInfos(createMethodInfo("Object", "dont_catch_2"))
+        assertEquals(0, dont_catch_2.size)
+
+        val catch_3 = RSignatureProviderImpl.getRegisteredCallInfos(createMethodInfo("Object", "catch_3"))
+        assertEquals(1, catch_3.size)
+        assertTrue(allCallInfosHaveNumberOfUnnamedArguments(catch_3, 1))
+        assertTrue(callInfosContainsUnique(catch_3, listOf("Proc"), "NilClass"))
+
+        val dont_catch_3 = RSignatureProviderImpl.getRegisteredCallInfos(createMethodInfo("Object", "dont_catch_3"))
+        assertEquals(0, dont_catch_3.size)
+
+        val foo = RSignatureProviderImpl.getRegisteredCallInfos(createMethodInfo("Object", "foo"))
+        assertEquals(1, foo.size)
+        assertTrue(allCallInfosHaveNumberOfUnnamedArguments(foo, 1))
+        assertTrue(callInfosContainsUnique(foo, listOf("Proc"), "NilClass"))
     }
 
     private fun executeScript(runnableScriptName: String, additionalArgScannerArgs: Array<String> = emptyArray()) {

@@ -63,20 +63,6 @@ typedef struct
     int is_in_project_root; // Can be 0, 1 or -1 when project_root is not specified
 } signature_t;
 
-typedef enum
-{
-    /**
-     * Functions which are located in project root
-     */
-    IN_PROJECT_ROOT,
-    /**
-     * Functions which are located in gems
-     */
-    IN_GEM
-} FunctionLocation;
-
-static FunctionLocation prev_fun_location = IN_PROJECT_ROOT;
-
 void Init_arg_scanner();
 
 static const char *ARG_SCANNER_EXIT_COMMAND = "EXIT";
@@ -255,11 +241,11 @@ void Init_arg_scanner() {
                                                /*value_destroy_func =*/NULL);
 }
 
-void push_to_call_stack(signature_t *signature) {
+inline void push_to_call_stack(signature_t *signature) {
     call_stack = g_slist_prepend(call_stack, (gpointer) signature);
 }
 
-signature_t *pop_from_call_stack() {
+inline signature_t *pop_from_call_stack() {
     if (call_stack == NULL) {
         return NULL;
     }
@@ -269,6 +255,20 @@ signature_t *pop_from_call_stack() {
     call_stack = g_slist_remove_link(call_stack, old_head);
     g_slist_free_1(old_head);
     return ret;
+}
+
+inline int is_call_stack_empty() {
+    return call_stack == NULL;
+}
+
+/**
+ * Looks at the object at the top of this stack without removing it from the stack.
+ */
+inline signature_t *top_of_call_stack() {
+    if (call_stack == NULL) {
+        return NULL;
+    }
+    return (signature_t *) call_stack[0].data;
 }
 
 rb_control_frame_t *
@@ -301,13 +301,11 @@ handle_call(VALUE self, VALUE tp)
     int is_in_project_root = start_with(sign_temp.path, project_root);
 
     if (project_root != NULL && !is_in_project_root) {
-        FunctionLocation cur_fun_location = IN_GEM;
-        if (prev_fun_location == IN_GEM) {
+        signature_t *peek = top_of_call_stack();
+
+        if (!is_call_stack_empty() && (peek == NULL || !(peek->is_in_project_root))) {
             return exit_from_handle_call_skipping_call();
         }
-        prev_fun_location = cur_fun_location;
-    } else {
-        prev_fun_location = IN_PROJECT_ROOT;
     }
 
     if (project_root == NULL || !is_in_project_root) {
