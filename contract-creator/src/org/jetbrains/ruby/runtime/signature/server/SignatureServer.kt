@@ -1,15 +1,11 @@
 package org.jetbrains.ruby.runtime.signature.server
 
 import com.google.gson.Gson
-import com.google.gson.JsonParseException
-import com.google.gson.JsonSyntaxException
-import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.ruby.codeInsight.types.signature.CallInfo
 import org.jetbrains.ruby.codeInsight.types.storage.server.DatabaseProvider
-import org.jetbrains.ruby.codeInsight.types.storage.server.impl.CallInfoTable
-import org.jetbrains.ruby.runtime.signature.server.serialisation.ServerResponseBean
-import org.jetbrains.ruby.runtime.signature.server.serialisation.toCallInfo
-import java.io.*
+import java.io.File
+import java.io.FileInputStream
+import java.io.IOException
+import java.io.PrintWriter
 import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.ArrayBlockingQueue
@@ -59,12 +55,17 @@ class SignatureServer {
     }
     private val LOGGER = Logger.getLogger("SignatureServer")
 
-    private val callInfoContainer = LinkedList<CallInfo>()
+    private val callInfoContainer = LinkedList<String>()
 
     private val gson = Gson()
     private val queue = ArrayBlockingQueue<String>(10024)
     private val isReady = AtomicBoolean(true)
     private var previousPollEndedWithFlush = false
+    private val correctResolvesWriter = PrintWriter(Paths.get(
+            System.getProperty("user.home")!!,
+            "logs",
+            "correct-resolves-${System.currentTimeMillis()}.txt"
+    ).toFile().also { it.createNewFile() })
 
     val readTime = AtomicLong(0)
     val jsonTime = AtomicLong(0)
@@ -124,40 +125,14 @@ class SignatureServer {
     }
 
     private fun parseJson(jsonString: String) {
-        val currCallInfo = ben(jsonTime) {
-            try {
-                return@ben gson.fromJson(jsonString, ServerResponseBean::class.java)?.toCallInfo()
-            } catch (ex: Throwable) {
-                when (ex) {
-                    is JsonSyntaxException, is JsonParseException -> {
-                        // Sometimes it's possible that some json fields contain quotation mark and we got JsonSyntaxException
-                        LOGGER.severe("Cannot parse: $jsonString")
-                    }
-                    is IllegalStateException -> {
-                        LOGGER.severe(ex.message)
-                    }
-                    else -> throw ex
-                }
-                return@ben null
-            }
-        }
-
-        // filter, for example, such things #<Class:DidYouMean::Jaro>
-        if (currCallInfo?.methodInfo?.classInfo?.classFQN?.startsWith("#<") == true) {
-            return
-        }
-
-        if (currCallInfo != null) {
-            ben(addTime) { callInfoContainer.add(currCallInfo) }
-        }
+        callInfoContainer.add(jsonString)
     }
 
     private fun flushNewTuplesToMainStorage() {
-        transaction {
-            for (callInfo in callInfoContainer) {
-                CallInfoTable.insertInfoIfNotContains(callInfo)
-            }
+        for (resolveInfo in callInfoContainer) {
+            correctResolvesWriter.println(resolveInfo)
         }
+
         callInfoContainer.clear()
         afterFlushListener?.invoke()
     }

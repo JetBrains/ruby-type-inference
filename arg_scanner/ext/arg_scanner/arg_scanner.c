@@ -381,18 +381,12 @@ handle_return(VALUE self, VALUE tp)
         // GTree will free memory allocated by sign by itself
         g_tree_insert(sent_to_server_tree, /*key = */sign, /*value = */sign);
 
-        if (pipe_file != NULL) {
-            fprintf(pipe_file,
-                "{\"method_name\":\"%s\",\"call_info_argc\":\"%d\",\"args_info\":\"%s\",\"visibility\":\"%s\","
-                "\"path\":\"%s\",\"lineno\":\"%d\",\"receiver_name\":\"%s\",\"return_type_name\":\"%s\"}\n",
-                sign->method_name,
-                sign->explicit_argc,
-                sign->args_info != NULL ? sign->args_info : "",
-                "PUBLIC",
-                sign->path,
-                sign->lineno,
-                sign->receiver_name,
-                sign->return_type_name);
+        if (pipe_file != NULL && !is_call_stack_empty()) {
+            signature_t *prev = top_of_call_stack();
+            if (prev != NULL) {
+                fprintf(pipe_file, "%s %s:%d -> %s %s:%d\n", prev->method_name, prev->path, prev->lineno,
+                    sign->method_name, sign->path, sign->lineno);
+            }
         }
 
         signature_t_free_partially(sign);
