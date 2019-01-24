@@ -1,5 +1,8 @@
 package org.jetbrains.plugins.ruby.ruby.actions
 
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import org.jetbrains.plugins.ruby.ancestorsextractor.AncestorsExtractorByObjectSpace
 import org.jetbrains.plugins.ruby.ancestorsextractor.AncestorsExtractorByRubyMine
 import org.jetbrains.plugins.ruby.ancestorsextractor.RubyModule
@@ -8,7 +11,7 @@ import java.io.PrintWriter
 class ExportAncestorsDiffAction : ExportFileActionBase(whatToExport = "ancestors diff",
         defaultFileName = "ancestors-diff", extensions = arrayOf("txt"),
         numberOfProgressBarFractions = 9) {
-    override fun backgroundProcess() {
+    override fun backgroundProcess(absoluteFilePath: String, module: Module?, sdk: Sdk?, project: Project) {
         moveProgressBarForward()
         val byObjectSpace: List<RubyModule>
         val byRubyMine: List<RubyModule>
@@ -18,17 +21,17 @@ class ExportAncestorsDiffAction : ExportFileActionBase(whatToExport = "ancestors
             val ancestorsExtractorByObjectSpace = AncestorsExtractorByObjectSpace(listener)
 
             // Here all listener methods would be called
-            byObjectSpace = ancestorsExtractorByObjectSpace.extractAncestors(project, sdkOrThrowExceptionWithMessage)
+            byObjectSpace = ancestorsExtractorByObjectSpace.extractAncestors(project, sdk ?: throw IllegalStateException("Ruby SDK is not set"))
 
             // The second place where all listener methods would be called
-            ancestorHashSymbolIncluderToWhereIncluded = ancestorsExtractorByObjectSpace.extractIncludes(project, sdkOrThrowExceptionWithMessage)
+            ancestorHashSymbolIncluderToWhereIncluded = ancestorsExtractorByObjectSpace.extractIncludes(project, sdk)
 
             // Provide all modulesNames same as in byObjectSpace for easy ancestors comparison
             val allModulesNames: List<String> = byObjectSpace.map { it.name }
 
             // The third place where all listener methods would be called
             byRubyMine = AncestorsExtractorByRubyMine(allModulesNames, listener)
-                    .extractAncestors(project, sdkOrThrowExceptionWithMessage)
+                    .extractAncestors(project, sdk)
         } catch (ex: Throwable) {
             PrintWriter(absoluteFilePath).use {
                 it.println(ex.message)

@@ -35,45 +35,23 @@ abstract class ExportFileActionBase(
                 *extensions), project)
         val fileWrapper = dialog.save(null, defaultFileName) ?: return
 
-        this.absoluteFilePath = fileWrapper.file.absolutePath
-        this.project = project
-        this.module = RModuleUtil.getInstance().getModule(e.dataContext)
-        this.sdk = RModuleUtil.getInstance().findRubySdkForModule(module)
+        val module: Module? = RModuleUtil.getInstance().getModule(e.dataContext)
+        val sdk: Sdk? = RModuleUtil.getInstance().findRubySdkForModule(module)
 
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(this::backgroundProcess,
-                "Exporting $whatToExport", false, e.project)
+        ProgressManager.getInstance().runProcessWithProgressSynchronously({
+            backgroundProcess(fileWrapper.file.absolutePath, module, sdk, project)
+        }, "Exporting $whatToExport", false, e.project)
     }
 
     /**
-     * Absolute file path which user have chosen to save file to.
-     */
-    protected lateinit var absoluteFilePath: String
-        private set
-
-    protected var module: Module? = null
-        private set
-
-    protected var sdk: Sdk? = null
-        private set
-
-    protected lateinit var project: Project
-        private set
-
-    /**
-     * @return [sdk] or throws [IllegalStateException] if [sdk] is `null`
-     * @throws IllegalStateException if [sdk] is `null`
-     */
-    protected val sdkOrThrowExceptionWithMessage: Sdk
-        @Throws(IllegalStateException::class)
-        get() {
-            return sdk ?: throw IllegalStateException("Ruby SDK is not set")
-        }
-
-    /**
      * In this method implementation you can do you job needed for file export and then file exporting itself.
-     * You may want to use [absoluteFilePath], [project], [module], [sdk] or [setProgressFraction] while implementing this method.
+     *
+     * @param absoluteFilePath absolute file path which user have chosen to save file to.
+     * @param module module from the context of action it invoked
+     * @param sdk sdk from the context of action it invoked
+     * @param project project from the context of action it invoked
      */
-    protected abstract fun backgroundProcess()
+    protected abstract fun backgroundProcess(absoluteFilePath: String, module: Module?, sdk: Sdk?, project: Project)
 
     @Throws(IllegalStateException::class)
     protected fun moveProgressBarForward() {

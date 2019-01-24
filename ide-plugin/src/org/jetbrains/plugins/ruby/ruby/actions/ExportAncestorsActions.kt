@@ -1,6 +1,12 @@
 package org.jetbrains.plugins.ruby.ruby.actions
 
-import org.jetbrains.plugins.ruby.ancestorsextractor.*
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
+import org.jetbrains.plugins.ruby.ancestorsextractor.AncestorsExtractorBase
+import org.jetbrains.plugins.ruby.ancestorsextractor.AncestorsExtractorByObjectSpace
+import org.jetbrains.plugins.ruby.ancestorsextractor.AncestorsExtractorByRubyMine
+import org.jetbrains.plugins.ruby.ancestorsextractor.RubyModule
 import java.io.PrintWriter
 
 /**
@@ -13,11 +19,11 @@ abstract class ExportAncestorsActionBase(
 ) : ExportFileActionBase(whatToExport, defaultFileName, extensions = arrayOf("txt"),
         numberOfProgressBarFractions = 5) {
 
-    override fun backgroundProcess() {
+    override fun backgroundProcess(absoluteFilePath: String, module: Module?, sdk: Sdk?, project: Project) {
         moveProgressBarForward()
         extractor.listener = ProgressListener()
         val ancestors: List<RubyModule> = try {
-            extractor.extractAncestors(project, sdkOrThrowExceptionWithMessage)
+            extractor.extractAncestors(project, sdk ?: throw IllegalStateException("Ruby SDK is not set"))
         } catch(ex: Throwable) {
             PrintWriter(absoluteFilePath).use {
                 it.println(ex.message)
