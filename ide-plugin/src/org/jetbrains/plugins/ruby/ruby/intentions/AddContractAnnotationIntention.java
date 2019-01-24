@@ -14,7 +14,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.exposed.dao.EntityID;
-import org.jetbrains.exposed.sql.transactions.ThreadLocalTransactionManagerKt;
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.fqn.FQN;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RFile;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RubyElementFactory;
@@ -25,6 +24,7 @@ import org.jetbrains.ruby.codeInsight.types.signature.*;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.ReferenceContractTransition;
 import org.jetbrains.ruby.codeInsight.types.signature.contractTransition.TypedContractTransition;
+import org.jetbrains.ruby.codeInsight.types.storage.server.DatabaseProvider;
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.MethodInfoTable;
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.RSignatureProviderImpl;
 
@@ -57,7 +57,7 @@ public class AddContractAnnotationIntention extends BaseRubyMethodIntentionActio
             return false;
         }
 
-        EntityID<Integer> found = ThreadLocalTransactionManagerKt.transaction(null,
+        EntityID<Integer> found = DatabaseProvider.defaultDatabaseTransaction(
                 transaction -> MethodInfoTable.INSTANCE.findRowId(createMethodInfo(method)));
         return found != null;
     }

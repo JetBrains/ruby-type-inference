@@ -3,17 +3,17 @@ package org.jetbrains.ruby.codeInsight.types.storage.server.impl
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.ruby.codeInsight.types.signature.*
+import org.jetbrains.ruby.codeInsight.types.storage.server.DatabaseProvider
 import org.jetbrains.ruby.codeInsight.types.storage.server.RSignatureProvider
 
 object RSignatureProviderImpl : RSignatureProvider {
     override fun getRegisteredGems(): Collection<GemInfo> {
-        return transaction { GemInfoRow.all() }.map { it.copy() }
+        return DatabaseProvider.defaultDatabaseTransaction { GemInfoRow.all() }.map { it.copy() }
     }
 
     override fun getClosestRegisteredGem(usedGem: GemInfo): GemInfo? {
-        val (upperBound, lowerBound) = transaction {
+        val (upperBound, lowerBound) = DatabaseProvider.defaultDatabaseTransaction {
             val upperBound = GemInfoTable.select {
                 GemInfoTable.name.eq(usedGem.name) and GemInfoTable.version.greaterEq(usedGem.version)
             }
@@ -29,7 +29,7 @@ object RSignatureProviderImpl : RSignatureProvider {
                     .limit(1)
                     .firstOrNull()
                     ?.let { GemInfoRow.wrapRow(it) }
-            return@transaction Pair(upperBound?.copy(), lowerBound?.copy())
+            return@defaultDatabaseTransaction Pair(upperBound?.copy(), lowerBound?.copy())
         }
 
         if (lowerBound == null || upperBound == null) {
@@ -40,38 +40,38 @@ object RSignatureProviderImpl : RSignatureProvider {
     }
 
     override fun getRegisteredClasses(gem: GemInfo): Collection<ClassInfo> {
-        return transaction {
-            val gemId = GemInfoTable.findRowId(gem) ?: return@transaction listOf()
+        return DatabaseProvider.defaultDatabaseTransaction {
+            val gemId = GemInfoTable.findRowId(gem) ?: return@defaultDatabaseTransaction emptyList()
 
-            return@transaction ClassInfoRow.find { ClassInfoTable.gemInfo eq gemId }.map { it.copy() }
+            return@defaultDatabaseTransaction ClassInfoRow.find { ClassInfoTable.gemInfo eq gemId }.map { it.copy() }
         }
     }
 
     override fun getAllClassesWithFQN(fqn: String): Collection<ClassInfo> {
-        return transaction {
+        return DatabaseProvider.defaultDatabaseTransaction {
             ClassInfoRow.find { ClassInfoTable.fqn eq fqn }.map { it.copy() }
         }
     }
 
     override fun getRegisteredMethods(containerClass: ClassInfo): Collection<MethodInfo> {
-        return transaction {
-            val classId = ClassInfoTable.findRowId(containerClass) ?: return@transaction listOf()
+        return DatabaseProvider.defaultDatabaseTransaction {
+            val classId = ClassInfoTable.findRowId(containerClass) ?: return@defaultDatabaseTransaction emptyList()
 
-            return@transaction MethodInfoRow.find { MethodInfoTable.classInfo eq classId }.map { it.copy() }
+            return@defaultDatabaseTransaction MethodInfoRow.find { MethodInfoTable.classInfo eq classId }.map { it.copy() }
         }
     }
 
     override fun getSignature(method: MethodInfo): SignatureInfo? {
-        return transaction {
-            val methodId = MethodInfoTable.findRowId(method) ?: return@transaction null
+        return DatabaseProvider.defaultDatabaseTransaction {
+            val methodId = MethodInfoTable.findRowId(method) ?: return@defaultDatabaseTransaction null
 
-            return@transaction SignatureContractRow.find { SignatureTable.methodInfo eq methodId }.firstOrNull()?.copy()
+            return@defaultDatabaseTransaction SignatureContractRow.find { SignatureTable.methodInfo eq methodId }.firstOrNull()?.copy()
         }
     }
 
     override fun deleteSignature(method: MethodInfo) {
-        return transaction {
-            val methodId = MethodInfoTable.findRowId(method) ?: return@transaction
+        return DatabaseProvider.defaultDatabaseTransaction {
+            val methodId = MethodInfoTable.findRowId(method) ?: return@defaultDatabaseTransaction
 
             SignatureTable.deleteWhere { SignatureTable.methodInfo eq methodId }
         }
@@ -82,10 +82,10 @@ object RSignatureProviderImpl : RSignatureProvider {
     }
 
     override fun getRegisteredCallInfos(methodInfo: MethodInfo): List<CallInfo> {
-        return transaction {
-            val methodId = MethodInfoTable.findRowId(methodInfo) ?: return@transaction listOf()
+        return DatabaseProvider.defaultDatabaseTransaction {
+            val methodId = MethodInfoTable.findRowId(methodInfo) ?: return@defaultDatabaseTransaction emptyList()
 
-            return@transaction CallInfoRow.find { CallInfoTable.methodInfoId eq methodId }.map { it.copy() }
+            return@defaultDatabaseTransaction CallInfoRow.find { CallInfoTable.methodInfoId eq methodId }.map { it.copy() }
         }
     }
 }

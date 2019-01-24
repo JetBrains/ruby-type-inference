@@ -83,7 +83,7 @@ class ProjectLifecycleListenerImpl : ProjectLifecycleListener {
                 TypeInferenceDirectory.RUBY_TYPE_INFERENCE_DIRECTORY.toString(),
                 projectName).toString()
 
-        DatabaseProvider.connectToDB(filePath)
+        DatabaseProvider.connectToDB(filePath, isDefaultDatabase = true)
         log.info("Connected to DB: $filePath")
 
         DatabaseProvider.createAllDatabases()

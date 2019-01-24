@@ -21,7 +21,7 @@ class CallStatCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
     private var lastServer: SignatureServer? = null
 
     init {
-        DatabaseProvider.connectToInMemoryDB()
+        DatabaseProvider.connectToInMemoryDB(isDefaultDatabase = true)
     }
 
     override fun getTestDataPath(): String {

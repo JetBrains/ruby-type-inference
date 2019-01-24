@@ -14,11 +14,10 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListTableModel
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.ruby.codeInsight.types.signature.GemInfo
+import org.jetbrains.ruby.codeInsight.types.storage.server.DatabaseProvider
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.GemInfoTable
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.RSignatureProviderImpl
-import org.jetbrains.ruby.runtime.signature.server.SignatureServer
 import java.util.*
 import javax.swing.JComponent
 import javax.swing.JTable
@@ -106,7 +105,7 @@ class RubyTypeContractsConfigurableUI(settings: RubyTypeContractsSettings) : Con
 
     override fun apply(settings: RubyTypeContractsSettings) {
         if (toBeRemovedGems.isNotEmpty()) {
-            transaction {
+            DatabaseProvider.defaultDatabaseTransaction {
                 toBeRemovedGems.forEach {
                     GemInfoTable.deleteWhere { GemInfoTable.name eq it.name and (GemInfoTable.version eq it.version) }
                 }

@@ -14,7 +14,7 @@ import org.junit.Test
 
 class RSignatureProviderTest : TestCase() {
     init {
-        DatabaseProvider.connectToInMemoryDB()
+        DatabaseProvider.connectToInMemoryDB(isDefaultDatabase = true)
     }
 
     @Test

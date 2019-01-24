@@ -3,13 +3,14 @@ package org.jetbrains.ruby.runtime.signature.server
 import com.google.gson.Gson
 import com.google.gson.JsonParseException
 import com.google.gson.JsonSyntaxException
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.ruby.codeInsight.types.signature.CallInfo
 import org.jetbrains.ruby.codeInsight.types.storage.server.DatabaseProvider
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.CallInfoTable
 import org.jetbrains.ruby.runtime.signature.server.serialisation.ServerResponseBean
 import org.jetbrains.ruby.runtime.signature.server.serialisation.toCallInfo
-import java.io.*
+import java.io.File
+import java.io.FileInputStream
+import java.io.IOException
 import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.ArrayBlockingQueue
@@ -22,7 +23,7 @@ private const val EXIT_COMMAND = "EXIT";
 
 fun main(args: Array<String>) {
     parseArgs(args).let {
-        DatabaseProvider.connectToDB(it.dbFilePath)
+        DatabaseProvider.connectToDB(it.dbFilePath, isDefaultDatabase = true)
     }
     DatabaseProvider.createAllDatabases()
 
@@ -153,7 +154,7 @@ class SignatureServer {
     }
 
     private fun flushNewTuplesToMainStorage() {
-        transaction {
+        DatabaseProvider.defaultDatabaseTransaction {
             for (callInfo in callInfoContainer) {
                 CallInfoTable.insertInfoIfNotContains(callInfo)
             }
