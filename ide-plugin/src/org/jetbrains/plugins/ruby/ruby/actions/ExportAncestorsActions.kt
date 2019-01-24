@@ -14,9 +14,9 @@ import java.io.PrintWriter
  */
 abstract class ExportAncestorsActionBase(
         whatToExport: String,
-        defaultFileName: String,
+        generateFilename: (Project) -> String,
         private val extractor: AncestorsExtractorBase
-) : ExportFileActionBase(whatToExport, defaultFileName, extensions = arrayOf("txt"),
+) : ExportFileActionBase(whatToExport, generateFilename, extensions = arrayOf("txt"),
         numberOfProgressBarFractions = 5) {
 
     override fun backgroundProcess(absoluteFilePath: String, module: Module?, sdk: Sdk?, project: Project) {
@@ -46,12 +46,12 @@ abstract class ExportAncestorsActionBase(
 
 class ExportAncestorsByObjectSpaceAction : ExportAncestorsActionBase(
         whatToExport = "ancestors by ObjectSpace",
-        defaultFileName = "ancestors-by-objectspace",
+        generateFilename = { project -> "ancestors-by-objectspace-${project.name}" },
         extractor = AncestorsExtractorByObjectSpace()
 )
 
 class ExportAncestorsByRubymineAction : ExportAncestorsActionBase(
         whatToExport = "ancestors by RubyMine",
-        defaultFileName = "ancestors-by-rubymine",
+        generateFilename = { project -> "ancestors-by-rubymine-${project.name}" },
         extractor = AncestorsExtractorByRubyMine()
 )

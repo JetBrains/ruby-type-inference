@@ -9,7 +9,7 @@ import org.jetbrains.plugins.ruby.ancestorsextractor.RubyModule
 import java.io.PrintWriter
 
 class ExportAncestorsDiffAction : ExportFileActionBase(whatToExport = "ancestors diff",
-        defaultFileName = "ancestors-diff", extensions = arrayOf("txt"),
+        generateFilename = { project: Project ->  "ancestors-diff-${project.name}" }, extensions = arrayOf("txt"),
         numberOfProgressBarFractions = 9) {
     override fun backgroundProcess(absoluteFilePath: String, module: Module?, sdk: Sdk?, project: Project) {
         moveProgressBarForward()

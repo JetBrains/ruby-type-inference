@@ -16,13 +16,13 @@ import org.jetbrains.plugins.ruby.ruby.RModuleUtil
 /**
  * Base class representing file export action with "save to" dialog
  * @param whatToExport Will be shown in "save to" dialog
- * @param defaultFileName Default file name in "save to" dialog
+ * @param generateFilename Generate filename for "save to" dialog
  * @param extensions Array of available extensions for exported file
  * @param description Description in "save to" dialog
  */
 abstract class ExportFileActionBase(
         private val whatToExport: String,
-        private val defaultFileName: String,
+        private val generateFilename: (Project) -> String,
         private val extensions: Array<String>,
         private val description: String = "",
         private val numberOfProgressBarFractions: Int? = null
@@ -33,7 +33,7 @@ abstract class ExportFileActionBase(
                 "Export $whatToExport",
                 description,
                 *extensions), project)
-        val fileWrapper = dialog.save(null, defaultFileName) ?: return
+        val fileWrapper = dialog.save(null, generateFilename(project)) ?: return
 
         val module: Module? = RModuleUtil.getInstance().getModule(e.dataContext)
         val sdk: Sdk? = RModuleUtil.getInstance().findRubySdkForModule(module)
