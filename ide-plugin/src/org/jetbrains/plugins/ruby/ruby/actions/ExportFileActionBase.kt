@@ -9,6 +9,9 @@ import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.ui.DialogBuilder
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.ThrowableComputable
 import org.jetbrains.plugins.ruby.ancestorsextractor.AncestorsExtractorBase
 import org.jetbrains.plugins.ruby.ancestorsextractor.RailsConsoleRunner
 import org.jetbrains.plugins.ruby.ruby.RModuleUtil
@@ -38,9 +41,13 @@ abstract class ExportFileActionBase(
         val module: Module? = RModuleUtil.getInstance().getModule(e.dataContext)
         val sdk: Sdk? = RModuleUtil.getInstance().findRubySdkForModule(module)
 
-        ProgressManager.getInstance().runProcessWithProgressSynchronously({
-            backgroundProcess(fileWrapper.file.absolutePath, module, sdk, project)
-        }, "Exporting $whatToExport", false, e.project)
+        try {
+            ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable<Unit, Exception> {
+                return@ThrowableComputable backgroundProcess(fileWrapper.file.absolutePath, module, sdk, project)
+            }, "", false, project)
+        } catch (ex: Exception) {
+            Messages.showErrorDialog(ex.message, "Error while exporting $whatToExport")
+        }
     }
 
     /**
