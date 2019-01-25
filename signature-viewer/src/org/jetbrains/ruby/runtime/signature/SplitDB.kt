@@ -12,7 +12,7 @@ val gemToDBMap = HashMap<GemInfo?, Database>()
 
 fun gemToDB(info: GemInfo?, outputDir: String, rubyVersion: String): Database =
         gemToDBMap[info] ?: DatabaseProvider.connectToDB(Paths.get(outputDir,
-                "${info?.name?.plus("-")?.plus(info.version) ?: "no_gem"}-ruby-$rubyVersion").toString())
+                "${info?.name?.plus("-")?.plus(info.version) ?: "no_gem"}-ruby-$rubyVersion" + DatabaseProvider.H2_DB_FILE_EXTENSION).toString())
                 .also {
                     DatabaseProvider.createAllDatabases(it)
                     gemToDBMap[info] = it

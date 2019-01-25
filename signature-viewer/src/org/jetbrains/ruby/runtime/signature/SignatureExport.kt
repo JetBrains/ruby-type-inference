@@ -8,7 +8,7 @@ import org.jetbrains.ruby.codeInsight.types.storage.server.impl.RSignatureProvid
 import java.io.File
 import java.nio.file.Paths
 
-const val DB_NAME = "ruby-type-inference-db"
+const val DB_NAME = "ruby-type-inference-db" + DatabaseProvider.H2_DB_FILE_EXTENSION
 
 fun main(arg : Array<String>) {
     val outputDirPath = parseCommandLine(arg)

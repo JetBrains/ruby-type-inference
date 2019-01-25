@@ -33,12 +33,12 @@ import org.jetbrains.ruby.codeInsight.types.storage.server.impl.RSignatureProvid
 private val registeredCallInfosCache: MutableMap<MethodInfo, List<CallInfo>>
         = ContainerUtil.createSoftKeySoftValueMap<MethodInfo, List<CallInfo>>()
 
-fun resetAllRubyTypeProviderAndIDEACaches(project: Project) {
+fun resetAllRubyTypeProviderAndIDEACaches(project: Project?) {
     synchronized(registeredCallInfosCache) {
         registeredCallInfosCache.clear()
     }
     // Clears IDEAs caches about inferred types
-    ServiceManager.getService(project, TypeInferenceContext::class.java)?.clear()
+    ServiceManager.getService(project ?: return, TypeInferenceContext::class.java)?.clear()
 }
 
 fun getCachedOrComputedRegisteredCallInfo(methodInfo: MethodInfo): List<CallInfo> {

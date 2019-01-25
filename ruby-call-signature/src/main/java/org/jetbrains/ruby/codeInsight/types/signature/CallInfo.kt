@@ -59,4 +59,28 @@ class CallInfoImpl(override val methodInfo: MethodInfo,
 
     override fun unnamedArgumentsTypesJoinToRawString(): String =
             unnamedArguments.joinToString(separator = ARGUMENTS_TYPES_SEPARATOR) { it.name + "," + it.type }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is CallInfo) return false
+
+        other as CallInfoImpl
+
+        return methodInfo == other.methodInfo &&
+               unnamedArguments == other.unnamedArguments &&
+               returnType == other.returnType &&
+               namedArguments == other.namedArguments
+    }
+
+    override fun hashCode(): Int {
+        var result = methodInfo.hashCode()
+        result = 31 * result + unnamedArguments.hashCode()
+        result = 31 * result + returnType.hashCode()
+        result = 31 * result + namedArguments.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "CallInfoIml(methodInfo=$methodInfo, namedArguments=$namedArguments, unnamedArguments=$unnamedArguments, returnType=$returnType)"
+    }
 }

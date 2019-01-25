@@ -81,7 +81,7 @@ class ProjectLifecycleListenerImpl : ProjectLifecycleListener {
     private fun connectToDB(projectName: String) {
         val filePath = Paths.get(
                 TypeInferenceDirectory.RUBY_TYPE_INFERENCE_DIRECTORY.toString(),
-                projectName).toString()
+                projectName).toString() + DatabaseProvider.H2_DB_FILE_EXTENSION
 
         DatabaseProvider.connectToDB(filePath, isDefaultDatabase = true)
         log.info("Connected to DB: $filePath")

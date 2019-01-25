@@ -8,9 +8,15 @@ import org.jetbrains.ruby.codeInsight.types.storage.server.impl.*
 
 object DatabaseProvider {
     var defaultDatabase: Database? = null
+        private set
+    /**
+     * Default database file path with .mv.db suffix included
+     */
+    var defaultDatabaseFilePath: String? = null
+        private set
     private const val IN_MEMORY_URL = "jdbc:h2:mem:test"
     private const val H2_DRIVER = "org.h2.Driver"
-    private const val H2_DB_FILE_EXTENSION = ".mv.db"
+    const val H2_DB_FILE_EXTENSION = ".mv.db"
 
     @JvmStatic
     fun connectToInMemoryDB(isDefaultDatabase: Boolean = false): Database {
@@ -23,14 +29,14 @@ object DatabaseProvider {
 
     @JvmStatic
     fun connectToDB(filePath: String, isDefaultDatabase: Boolean = false): Database {
-        val fixedFilePath = if (filePath.endsWith(H2_DB_FILE_EXTENSION)) {
-            filePath.substring(0, filePath.lastIndexOf(H2_DB_FILE_EXTENSION))
-        } else {
-            filePath
+        check(filePath.endsWith(H2_DB_FILE_EXTENSION)) {
+            "File path must end with $H2_DB_FILE_EXTENSION suffix"
         }
-        val database = Database.connect("jdbc:h2:$fixedFilePath", driver = H2_DRIVER)
+        val filePathForUrl = filePath.substring(0, filePath.lastIndexOf(H2_DB_FILE_EXTENSION))
+        val database = Database.connect("jdbc:h2:$filePathForUrl", driver = H2_DRIVER)
         if (isDefaultDatabase) {
             defaultDatabase = database
+            defaultDatabaseFilePath = filePath
         }
         return database
     }
@@ -43,14 +49,14 @@ object DatabaseProvider {
 
     @JvmOverloads
     fun createAllDatabases(db: Database? = null) {
-        transaction(db) {
+        transaction(db ?: defaultDatabase) {
             SchemaUtils.create(GemInfoTable, ClassInfoTable, MethodInfoTable, SignatureTable, CallInfoTable)
         }
     }
 
     @JvmOverloads
     fun dropAllDatabases(db: Database? = null) {
-        transaction(db) {
+        transaction(db ?: defaultDatabase) {
             SchemaUtils.drop(GemInfoTable, ClassInfoTable, MethodInfoTable, SignatureTable, CallInfoTable)
         }
     }

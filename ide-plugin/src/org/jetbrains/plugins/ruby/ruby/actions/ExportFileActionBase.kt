@@ -1,7 +1,10 @@
 package org.jetbrains.plugins.ruby.ruby.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.fileChooser.FileChooserDescriptor
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.FileSaverDescriptor
+import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl
 import com.intellij.openapi.fileChooser.ex.FileSaverDialogImpl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
@@ -44,7 +47,7 @@ abstract class ExportFileActionBase(
         try {
             ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable<Unit, Exception> {
                 return@ThrowableComputable backgroundProcess(fileWrapper.file.absolutePath, module, sdk, project)
-            }, "", false, project)
+            }, "Exporting $whatToExport", false, project)
         } catch (ex: Exception) {
             Messages.showErrorDialog(ex.message, "Error while exporting $whatToExport")
         }
