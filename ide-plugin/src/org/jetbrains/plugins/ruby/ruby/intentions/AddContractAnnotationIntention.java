@@ -57,8 +57,10 @@ public class AddContractAnnotationIntention extends BaseRubyMethodIntentionActio
             return false;
         }
 
-        EntityID<Integer> found = DatabaseProvider.defaultDatabaseTransaction(
-                transaction -> MethodInfoTable.INSTANCE.findRowId(createMethodInfo(method)));
+        MethodInfo methodInfo = createMethodInfo(method);
+
+        EntityID<Integer> found = methodInfo != null ? DatabaseProvider.defaultDatabaseTransaction(
+                transaction -> MethodInfoTable.INSTANCE.findRowId(methodInfo)) : null;
         return found != null;
     }
 
