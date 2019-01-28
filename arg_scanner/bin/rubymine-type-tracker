@@ -19,10 +19,11 @@ end
 
 begin
   option_parser.parse! ARGV
+  if ARGV.size == 0
+    raise StandardError.new("")
+  end
 rescue StandardError => e
   puts option_parser
-  puts
-  puts e.message
   exit 1
 end
 
