@@ -50,11 +50,9 @@ class CollectStateExecutor : Executor() {
         return null
     }
 
-    override fun getStartActionText(configurationName: String?): String {
-        val name = if (configurationName != null)
-            escapeMnemonicsInConfigurationName(StringUtil.first(configurationName, 30, true))
-        else
-            null
+    override fun getStartActionText(configurationName: String): String {
+        val name = escapeMnemonicsInConfigurationName(
+                StringUtil.first(configurationName, 30, true))
         return "Run" + (if (StringUtil.isEmpty(name)) "" else " '$name'") + " with Collecting State"
     }
 

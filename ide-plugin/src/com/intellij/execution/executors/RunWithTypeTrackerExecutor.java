@@ -85,10 +85,9 @@ public class RunWithTypeTrackerExecutor extends Executor {
 
     @NotNull
     @Override
-    public String getStartActionText(@Nullable final String configurationName) {
-        final String name = configurationName != null
-                ? escapeMnemonicsInConfigurationName(StringUtil.first(configurationName, 30, true))
-                : null;
+    public String getStartActionText(@NotNull final String configurationName) {
+        final String name = escapeMnemonicsInConfigurationName(
+                StringUtil.first(configurationName, 30, true));
         return "Run" + (StringUtil.isEmpty(name) ? "" :  " '" + name + "'") + " with Type Tracker";
     }
 

@@ -42,9 +42,9 @@ intellij {
     plugins = ["org.jetbrains.plugins.ruby:$rubyPluginVersion"]
 }
 
-patchPluginXml{
-    sinceBuild '183.4284.118'
-    untilBuild '183.*'
+patchPluginXml {
+    sinceBuild '191.4212.41'
+    untilBuild '191.*'
     version '0.1.1'
 }
 
