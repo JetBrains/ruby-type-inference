@@ -28,15 +28,25 @@ import org.jetbrains.ruby.codeInsight.types.storage.server.impl.CallInfoTable
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.RSignatureProviderImpl
 
 /**
- * Cache where we store last accessed [CallInfo]s
+ * Cache where we store last accessed [CallInfo]s. Synchronize access to this property with [registeredCallInfosCacheLock]
  */
 private val registeredCallInfosCache: MutableMap<MethodInfo, List<CallInfo>>
         = ContainerUtil.createSoftKeySoftValueMap<MethodInfo, List<CallInfo>>()
 
 fun resetAllRubyTypeProviderAndIDEACaches(project: Project) {
-    registeredCallInfosCache.clear()
+    synchronized(registeredCallInfosCache) {
+        registeredCallInfosCache.clear()
+    }
     // Clears IDEAs caches about inferred types
     ServiceManager.getService(project, TypeInferenceContext::class.java)?.clear()
+}
+
+fun getCachedOrComputedRegisteredCallInfo(methodInfo: MethodInfo): List<CallInfo> {
+    return synchronized(registeredCallInfosCache) {
+        registeredCallInfosCache.getOrPut(methodInfo) {
+            RSignatureProviderImpl.getRegisteredCallInfos(methodInfo)
+        }
+    }
 }
 
 class RubyParameterTypeProvider : AbstractRubyTypeProvider() {
@@ -65,9 +75,7 @@ class RubyParameterTypeProvider : AbstractRubyTypeProvider() {
 
             val info = MethodInfo.Impl(ClassInfo(rubyModuleName), method.fqn.shortName, RVisibility.PUBLIC)
 
-            val callInfos: List<CallInfo> = registeredCallInfosCache.getOrPut(info) {
-                RSignatureProviderImpl.getRegisteredCallInfos(info)
-            }
+            val callInfos: List<CallInfo> = getCachedOrComputedRegisteredCallInfo(info)
 
             val returnType = callInfos.map { callInfo ->
                 val typeName = expr.name?.let { callInfo.getTypeNameByArgumentName(it) } ?: return@map REmptyType.INSTANCE
@@ -116,9 +124,7 @@ class ReturnTypeSymbolicTypeInferenceProvider : SymbolicTypeInferenceProvider {
         for (receiverTypeName in receiverTypesConsideringAncestors) {
             val methodInfo = MethodInfo.Impl(ClassInfo.Impl(null, receiverTypeName), symbolicCall.name)
 
-            val registeredCallInfos = registeredCallInfosCache.getOrPut(methodInfo) {
-                RSignatureProviderImpl.getRegisteredCallInfos(methodInfo)
-            }
+            val registeredCallInfos = getCachedOrComputedRegisteredCallInfo(methodInfo)
 
             @Suppress("UNCHECKED_CAST")
             val registeredReturnTypes: List<String> = registeredCallInfos
