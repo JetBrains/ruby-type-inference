@@ -28,16 +28,20 @@ rescue StandardError => e
 end
 
 dot_ruby_type_inference_dir = File.join(Dir.tmpdir, ".ruby-type-inference")
-match_jsons = Dir.foreach(dot_ruby_type_inference_dir).map do |file_name|
-  if file_name == '.' || file_name == '..'
-    next nil
-  end
-  json = JSON.parse(IO.read(File.join(dot_ruby_type_inference_dir, file_name)))
-  if json["projectPath"] != Dir.pwd
-    next nil
-  end
-  next json
-end.select { |x| x != nil }
+if File.directory?(dot_ruby_type_inference_dir)
+  match_jsons = Dir.foreach(dot_ruby_type_inference_dir).map do |file_name|
+    if file_name == '.' || file_name == '..'
+      next nil
+    end
+    json = JSON.parse(IO.read(File.join(dot_ruby_type_inference_dir, file_name)))
+    if json["projectPath"] != Dir.pwd
+      next nil
+    end
+    next json
+  end.select { |x| x != nil }
+else
+  match_jsons = []
+end
 
 if match_jsons.count == 1
   json = match_jsons[0]
