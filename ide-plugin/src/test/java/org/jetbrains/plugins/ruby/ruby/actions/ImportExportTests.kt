@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.ruby.ruby.actions
 
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import junit.framework.Assert
 import junit.framework.TestCase
 import org.jetbrains.exposed.sql.Database
@@ -27,7 +26,7 @@ class ImportExportTests : TestCase() {
         }
 
         val exportedDB = generateTempDBFilePath().let { pathToExport: String ->
-            ExportContractsAction.exportContractsToFile(pathToExport)
+            ExportContractsAction.exportContractsToFile(pathToExport, moveProgressBar = false)
 
             return@let DatabaseProvider.connectToDB(pathToExport)
         }
@@ -52,7 +51,7 @@ class ImportExportTests : TestCase() {
                 data.forEach { CallInfoTable.insertInfoIfNotContains(it) }
             }
 
-            ImportContractsAction.importContractsFromFile(pathToImport)
+            ImportContractsAction.importContractsFromFile(pathToImport, moveProgressBar = false)
 
             return@let db
         }
@@ -89,7 +88,7 @@ class ImportExportTests : TestCase() {
                 data.forEach { CallInfoTable.insertInfoIfNotContains(it) }
             }
 
-            ImportContractsAction.importContractsFromFile(pathToImport)
+            ImportContractsAction.importContractsFromFile(pathToImport, moveProgressBar = false)
 
             return@let db
         }
