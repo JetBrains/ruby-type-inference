@@ -72,9 +72,6 @@ class ProjectLifecycleListenerImpl : ProjectLifecycleListener {
         if (!project.isDefault) {
             val projectDescription = readProjectDescription(project, deleteJsonAfterRead = true)
             File(projectDescription.pipeFilePath).delete()
-
-            assertEquals(projectDescription.projectName, project.name)
-            assertEquals(projectDescription.projectPath, project.basePath)
         }
     }
 
