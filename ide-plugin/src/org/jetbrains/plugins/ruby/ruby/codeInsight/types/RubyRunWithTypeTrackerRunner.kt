@@ -40,6 +40,8 @@ class RubyRunWithTypeTrackerRunner : RubyProgramRunner() {
         return null
     }
 
+    override fun preloaderAllowed(): Boolean = false
+
     private fun tryGenerateTmpDirPath(): String? = try {
         val tmpDir = FileUtil.createTempDirectory("type-tracker", "")
         tmpDir.absolutePath
