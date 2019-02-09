@@ -5,7 +5,7 @@ buildscript {
 }
 
 plugins {
-    id "org.jetbrains.intellij" version "0.3.11"
+    id "org.jetbrains.intellij" version "0.4.2"
 }
 
 dependencies {
@@ -39,11 +39,11 @@ sourceSets {
 intellij {
     version ideaVersion
     pluginName 'ruby-runtime-stats'
-    plugins = ["org.jetbrains.plugins.ruby:$rubyPluginVersion"]
+    plugins = ["yaml", "org.jetbrains.plugins.ruby:$rubyPluginVersion"]
 }
 
 patchPluginXml {
-    sinceBuild '191.4212.41'
+    sinceBuild '191.5109.14'
     untilBuild '191.*'
     version '0.1.1'
 }
