@@ -45,7 +45,7 @@ intellij {
 patchPluginXml {
     sinceBuild '191.5109.14'
     untilBuild '191.*'
-    version '0.1.1'
+    version '0.3.0'
 }
 
 prepareSandbox.doLast {
