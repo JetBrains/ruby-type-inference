@@ -138,7 +138,7 @@ public class RunWithTypeTrackerRunConfigurationExtension extends RubyRunConfigur
                     final HashMap<GemDependency, String> errors = new HashMap<>();
                     GemInstallUtil.installGemsDependencies(sdk,
                             module,
-                            Collections.singleton(GemDependency.create(ARG_SCANNER_GEM_NAME, ">= 0.2.0")),
+                            Collections.singleton(GemDependency.create(ARG_SCANNER_GEM_NAME, ">= 0.3.0")),
                             true,
                             false,
                             errors);
