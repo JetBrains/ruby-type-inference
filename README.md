@@ -23,9 +23,29 @@ The approach has its own pros and cons:
 This implementation addresses the stated coverage problem by providing
 the possibility to merge any type contracts at any time.
      
+## Usage
+
+For simple usage you need to install [Ruby Dynamic Code Insight](https://plugins.jetbrains.com/plugin/10227-ruby-dynamic-code-insight) 
+plugin for RubyMine. Then this plugin will require [arg_scanner](https://rubygems.org/gems/arg_scanner) gem to be installed.
+See [arg_scanner installation instruction](arg_scanner/README.md#installation) if you have problems while installation. 
+
+After that you will have possibility to run your programs under type tracker:
+
+![Run with type tracker](screenshots/run_with_type_tracker.png)
+
+Or you can run your programs in terminal via `rubymine-type-tracker` binary (But you have to keep your project opened 
+in RubyMine). E.g.:
+```
+rubymine-type-tracker bin/rails server
+```
+
+`rubymine-type-tracker` binary is included into [arg_scanner](https://rubygems.org/gems/arg_scanner) gem.
+
+See [FEATURES.md](FEATURES.md) for understanding what benefits you will have after running your program under type tracker.
+     
 ## Architecture
  
-* **Ruby Type Tracker** is a gem with a native extension to attach to 
+* **arg_scanner** is a gem with a native extension to attach to 
   ruby processes and trace and intercept all method calls to log 
   type-wise data flow in runtime.
   
@@ -37,40 +57,23 @@ the possibility to merge any type contracts at any time.
   The data stored may be used later for better code analysis and also
   can be shared with other users.
 
-* Code analysis clients (a RubyMine/IJ+Ruby plugin [example](ide-plugin)) use the contract data
+* Code analysis clients (a RubyMine/IJ+Ruby [plugin](ide-plugin)) use the contract data
   to provide features for the users such as code completion, better resolution, etc.
 
 * (_todo_) Signature server receives contracts anonymously from the users and provides
   a compiled contract collections for popular gems.
 
-## Usage
+## Running project from sources
 
 #### Prerequisites
 
-The [`arg_scanner`] gem is used for collecting type information. It can be installed to the
-target SDK manually and requires MRI Ruby at least 2.3.
+The [`arg_scanner`] gem is used for collecting type information. It can be installed manually 
+to the target SDK and requires MRI Ruby at least 2.3.
 
 #### Running type tracker
 
 There are two possibilities to use the type tracker:
-_(i)_ requiring it from Ruby code and _(ii)_ using IJ/RubyMine plugin.
-
-##### Using in ruby code
-
-1. In order to collect the data for the script needs a contract server to be up and running;
-   it could be run by running
-  
-   ```sh
-   ./gradlew contract-creator:runServer --args path-to-db
-   ```
-   
-   If you're using RubyMine plugin, there is no need to run server manually since it will
-   be run as a plugin service.
-
-1. Run the ruby script to be processed via [`arg-scanner`](arg_scanner/bin/arg-scanner)
-   binary.
-
-1. Use the data collected by the contract server.
+_(I)_ using IJ/RubyMine plugin or _(II)_ requiring it from Ruby code.
 
 ##### Using RubyMine plugin
 
@@ -94,6 +97,20 @@ you should:
     * Restart IDE.
 
 Note that due to API changes the plugin may be incompatible with older RM instances.
+
+##### Using command line
+
+1. In order to collect the data for the script needs a contract server to be up and running;
+   it could be run by running
+   ```sh
+   ./gradlew contract-creator:runServer --args path-to-db.mv.db
+   ```
+   where `path-to-db.mv.db` is path where type contracts will be stored (H2 database file).
+
+1. Run the ruby script to be processed via [`arg-scanner`](arg_scanner/bin/arg-scanner)
+   binary.
+
+1. Use the data collected by the contract server.
 
 ## Contributions
 

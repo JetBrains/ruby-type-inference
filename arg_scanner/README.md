@@ -9,28 +9,38 @@ deliver the following information:
 This information can be used then to calculate and use type contracts
 for the analysed methods.
 
-## Requirements
-
-##### libglib2.0-dev
-
-On Ubuntu run: ` $ sudo apt install libglib2.0-dev` 
-
-## Installation
-
 `arg_scanner` is meant to be used as a binary to run any other ruby executable
 manually so including it in the `Gemfile` is not necessary.
 
+## Installation
+
 The recommended way to install it is to install manually:
 
-    $ gem install arg_scanner
+```
+gem install arg_scanner
+```
+**You will possibly need to install [native dependencies](#dependencies)**
     
+## Building from sources
+
 If you want to compile the gem from sources, just run
-    
-    $ bundle install
-    $ bundle exec rake install
+
+```    
+bundle install
+bundle exec rake install
+```
     
 If you have problems with native extension compilation, make sure you have
-actual version of [ruby-core-source gem](https://github.com/os97673/debase-ruby_core_source). 
+actual version of [ruby-core-source gem](https://github.com/os97673/debase-ruby_core_source) and 
+have [native dependencies](#dependencies) installed. 
+
+## Dependencies
+
+##### [Glib](https://developer.gnome.org/glib/)
+
+macOS: `brew install glib`   
+Debian/Ubuntu: `sudo apt install libglib2.0-dev`  
+Arch Linux: `sudo pacman -S glib2`  
 
 ## Usage
 
@@ -38,11 +48,10 @@ actual version of [ruby-core-source gem](https://github.com/os97673/debase-ruby_
 arguments and executes the given command in type tracking mode,
 for example:
 
-    $ arg-scanner bundle exec rake spec
-    
-The gem will need to send the obtained data though TCP socket on **port 7777**.
-See [global readme](../README.md) for instructions on how to run server
-to receive and process that data.
+```
+arg-scanner --type-tracker --pipe-file-path=[pipe_file_path] bundle exec rake spec
+```
+`pipe_file_path` here is path to pipe file which is printed by server's stdout
 
 ## Contributing
 
