@@ -34,4 +34,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rake", "~> 12.0"
   spec.add_development_dependency "rake-compiler"
   spec.add_development_dependency "debase-ruby_core_source", ">= 0.10.0"
+  spec.add_development_dependency "native-package-installer", ">= 1.0.0"
 end

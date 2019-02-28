@@ -3,6 +3,43 @@ require "mkmf"
 RbConfig::MAKEFILE_CONFIG['CC'] = ENV['CC'] if ENV['CC']
 
 require "debase/ruby_core_source"
+require "native-package-installer"
+
+class NilClass
+  def empty?; true; end
+end
+
+# Just a replacement of have_header because have_header searches not recursively :(
+def real_have_header(header_name)
+  if (have_header(header_name))
+    return true
+  end
+  yes_msg = "checking for #{header_name}... yes"
+  no_msg = "checking for #{header_name}... no"
+
+  include_env = ENV["C_INCLUDE_PATH"]
+  if !include_env.empty? && !Dir.glob("#{include_env}/**/#{header_name}").empty?
+    puts yes_msg
+    return true
+  end
+  if !Dir.glob("/usr/include/**/#{header_name}").empty?
+    puts yes_msg
+    return true
+  end
+  puts no_msg
+  return false
+end
+
+if !real_have_header('glib.h') &&
+    !NativePackageInstaller.install(:alt_linux => "glib2-devel",
+                                    :debian => "libglib2.0-dev",
+                                    :redhat => "glib2-devel",
+                                    :arch_linux => "glib2",
+                                    :homebrew => "glib",
+                                    :macports => "glib2",
+                                    :msys2 => "glib2")
+  exit(false)
+end
 
 hdrs = proc {
   have_header("vm_core.h") and
