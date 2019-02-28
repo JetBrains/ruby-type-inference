@@ -47,7 +47,7 @@ class CallStatCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
                 createMethodInfo("AClass", "foo"))
         assertEquals(1, callInfos.size)
         assertTrue(allCallInfosHaveNumberOfUnnamedArguments(callInfos, 1))
-        assertTrue(callInfosContainsUnique(callInfos, listOf("String"), "Symbol"))
+        assertCallInfosContainsUnique(callInfos, listOf("String"), "Symbol")
     }
     
     fun testSimpleCallInfosCollectionMultipleFunctions() {
@@ -59,13 +59,13 @@ class CallStatCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
 
         assertEquals(1, fooCallInfos.size)
         assertTrue(allCallInfosHaveNumberOfUnnamedArguments(fooCallInfos, 2))
-        assertTrue(callInfosContainsUnique(fooCallInfos, listOf("String", "Class"), "String"))
+        assertCallInfosContainsUnique(fooCallInfos, listOf("String", "Class"), "String")
 
         assertEquals(3, barCallInfos.size)
         assertTrue(allCallInfosHaveNumberOfUnnamedArguments(barCallInfos, 1))
-        assertTrue(callInfosContainsUnique(barCallInfos, listOf("TrueClass"), "A"))
-        assertTrue(callInfosContainsUnique(barCallInfos, listOf("FalseClass"), "FalseClass"))
-        assertTrue(callInfosContainsUnique(barCallInfos, listOf("Symbol"), "A"))
+        assertCallInfosContainsUnique(barCallInfos, listOf("TrueClass"), "A")
+        assertCallInfosContainsUnique(barCallInfos, listOf("FalseClass"), "FalseClass")
+        assertCallInfosContainsUnique(barCallInfos, listOf("Symbol"), "A")
     }
     
     fun testSimpleCallInfosCollectionWithMultipleArguments() {
@@ -74,7 +74,7 @@ class CallStatCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
 
         assertEquals(1, callInfos.size)
         assertTrue(allCallInfosHaveNumberOfUnnamedArguments(callInfos, 2))
-        assertTrue(callInfosContainsUnique(callInfos, listOf("String", "TrueClass"), "Regexp"))
+        assertCallInfosContainsUnique(callInfos, listOf("String", "TrueClass"), "Regexp")
     }
     
     fun testSaveTypesBetweenLaunches() {
@@ -83,18 +83,18 @@ class CallStatCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
         assertEquals(2, callInfos.size)
         assertTrue(allCallInfosHaveNumberOfUnnamedArguments(callInfos, 1))
 
-        assertTrue(callInfosContainsUnique(callInfos, listOf("String"), "Symbol"))
-        assertTrue(callInfosContainsUnique(callInfos, listOf("Class"), "A"))
+        assertCallInfosContainsUnique(callInfos, listOf("String"), "Symbol")
+        assertCallInfosContainsUnique(callInfos, listOf("Class"), "A")
 
         callInfos = runAndGetCallInfos("save_types_between_launches_test_part_2.rb",
                 createMethodInfo("A", "foo"))
         assertEquals(4, callInfos.size)
         assertTrue(allCallInfosHaveNumberOfUnnamedArguments(callInfos, 1))
 
-        assertTrue(callInfosContainsUnique(callInfos, listOf("String"), "Symbol"))
-        assertTrue(callInfosContainsUnique(callInfos, listOf("Class"), "A"))
-        assertTrue(callInfosContainsUnique(callInfos, listOf("TrueClass"), "FalseClass"))
-        assertTrue(callInfosContainsUnique(callInfos, listOf("String"), "Regexp"))
+        assertCallInfosContainsUnique(callInfos, listOf("String"), "Symbol")
+        assertCallInfosContainsUnique(callInfos, listOf("Class"), "A")
+        assertCallInfosContainsUnique(callInfos, listOf("TrueClass"), "FalseClass")
+        assertCallInfosContainsUnique(callInfos, listOf("String"), "Regexp")
     }
     
     fun testForgetCallInfoWhenArgumentsNumberChanged() {
@@ -102,13 +102,13 @@ class CallStatCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
                 createMethodInfo("A", "foo"))
         assertEquals(1, callInfos.size)
         assertTrue(allCallInfosHaveNumberOfUnnamedArguments(callInfos, 1))
-        assertTrue(callInfosContainsUnique(callInfos, listOf("String"), "Symbol"))
+        assertCallInfosContainsUnique(callInfos, listOf("String"), "Symbol")
 
         callInfos = runAndGetCallInfos("forget_call_info_when_arguments_number_changed_test_part_2.rb",
                 createMethodInfo("A", "foo"))
         assertEquals(1, callInfos.size)
         assertTrue(allCallInfosHaveNumberOfUnnamedArguments(callInfos, 2))
-        assertTrue(callInfosContainsUnique(callInfos, listOf("TrueClass", "FalseClass"), "FalseClass"))
+        assertCallInfosContainsUnique(callInfos, listOf("TrueClass", "FalseClass"), "FalseClass")
     }
 
     fun testCallInfoOfNestedClass() {
@@ -116,7 +116,7 @@ class CallStatCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
                 createMethodInfo("M::A", "foo"))
         assertEquals(1, callInfos.size)
         assertTrue(allCallInfosHaveNumberOfUnnamedArguments(callInfos, 1))
-        assertTrue(callInfosContainsUnique(callInfos, listOf("M::A"), "M::A"))
+        assertCallInfosContainsUnique(callInfos, listOf("M::A"), "M::A")
     }
     
     fun testTopLevelMethodsCallInfoCollection() {
@@ -124,10 +124,10 @@ class CallStatCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
                 createMethodInfo("Object", "foo"))
         assertEquals(4, callInfos.size)
         assertTrue(allCallInfosHaveNumberOfUnnamedArguments(callInfos, 2))
-        assertTrue(callInfosContainsUnique(callInfos, listOf("TrueClass", "FalseClass"), "TrueClass"))
-        assertTrue(callInfosContainsUnique(callInfos, listOf("FalseClass", "Symbol"), "Symbol"))
-        assertTrue(callInfosContainsUnique(callInfos, listOf("String", "TrueClass"), "Regexp"))
-        assertTrue(callInfosContainsUnique(callInfos, listOf("String", "TrueClass"), "String"))
+        assertCallInfosContainsUnique(callInfos, listOf("TrueClass", "FalseClass"), "TrueClass")
+        assertCallInfosContainsUnique(callInfos, listOf("FalseClass", "Symbol"), "Symbol")
+        assertCallInfosContainsUnique(callInfos, listOf("String", "TrueClass"), "Regexp")
+        assertCallInfosContainsUnique(callInfos, listOf("String", "TrueClass"), "String")
     }
     
     fun testDuplicatesInCallInfoTable() {
@@ -135,9 +135,9 @@ class CallStatCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
                 createMethodInfo("Object", "foo"))
         assertEquals(3, callInfos.size)
         assertTrue(allCallInfosHaveNumberOfUnnamedArguments(callInfos, 1))
-        assertTrue(callInfosContainsUnique(callInfos, listOf("String"), "String"))
-        assertTrue(callInfosContainsUnique(callInfos, listOf("String"), "FalseClass"))
-        assertTrue(callInfosContainsUnique(callInfos, listOf("FalseClass"), "FalseClass"))
+        assertCallInfosContainsUnique(callInfos, listOf("String"), "String")
+        assertCallInfosContainsUnique(callInfos, listOf("String"), "FalseClass")
+        assertCallInfosContainsUnique(callInfos, listOf("FalseClass"), "FalseClass")
     }
     
     fun testMethodWithoutParameters() {
@@ -145,7 +145,7 @@ class CallStatCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
                 createMethodInfo("Object", "foo"))
         assertEquals(1, callInfos.size)
         assertTrue(allCallInfosHaveNumberOfUnnamedArguments(callInfos, 0))
-        assertTrue(callInfosContainsUnique(callInfos, emptyList(), "String"))
+        assertCallInfosContainsUnique(callInfos, emptyList(), "String")
     }
 
     fun testAnonymousModuleMethodCall() {
@@ -153,7 +153,7 @@ class CallStatCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
                 createMethodInfo("A", "foo"))
         assertEquals(1, callInfos.size)
         assertTrue(allCallInfosHaveNumberOfUnnamedArguments(callInfos, 2))
-        assertTrue(callInfosContainsUnique(callInfos, listOf("String", "Symbol"), "TrueClass"))
+        assertCallInfosContainsUnique(callInfos, listOf("String", "Symbol"), "TrueClass")
     }
 
     fun testRubyExecWithBuffering() {
@@ -166,7 +166,7 @@ class CallStatCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
 
         assertEquals(1, bar.size)
         assertTrue(allCallInfosHaveNumberOfUnnamedArguments(bar, 1))
-        assertTrue(callInfosContainsUnique(bar, listOf("TrueClass"), "NilClass"))
+        assertCallInfosContainsUnique(bar, listOf("TrueClass"), "NilClass")
     }
 
     fun testRubyExecWithoutBuffering() {
@@ -177,11 +177,11 @@ class CallStatCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
 
         assertEquals(1, foo.size)
         assertTrue(allCallInfosHaveNumberOfUnnamedArguments(foo, 1))
-        assertTrue(callInfosContainsUnique(foo, listOf("String"), "NilClass"))
+        assertCallInfosContainsUnique(foo, listOf("String"), "NilClass")
 
         assertEquals(1, bar.size)
         assertTrue(allCallInfosHaveNumberOfUnnamedArguments(bar, 1))
-        assertTrue(callInfosContainsUnique(bar, listOf("TrueClass"), "NilClass"))
+        assertCallInfosContainsUnique(bar, listOf("TrueClass"), "NilClass")
     }
 
     fun testGemFunctionsCatchingWithProjectRootSpecified() {
@@ -193,12 +193,12 @@ class CallStatCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
         val catch = RSignatureProviderImpl.getRegisteredCallInfos(createMethodInfo("Object", "catch"))
         assertEquals(1, catch.size)
         assertTrue(allCallInfosHaveNumberOfUnnamedArguments(catch, 1))
-        assertTrue(callInfosContainsUnique(catch, listOf("String"), "NilClass"))
+        assertCallInfosContainsUnique(catch, listOf("String"), "NilClass")
 
         val catch_2 = RSignatureProviderImpl.getRegisteredCallInfos(createMethodInfo("Object", "catch_2"))
         assertEquals(1, catch_2.size)
         assertTrue(allCallInfosHaveNumberOfUnnamedArguments(catch_2, 1))
-        assertTrue(callInfosContainsUnique(catch_2, listOf("String"), "NilClass"))
+        assertCallInfosContainsUnique(catch_2, listOf("String"), "NilClass")
 
         val dont_catch_2 = RSignatureProviderImpl.getRegisteredCallInfos(createMethodInfo("Object", "dont_catch_2"))
         assertEquals(0, dont_catch_2.size)
@@ -206,7 +206,7 @@ class CallStatCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
         val catch_3 = RSignatureProviderImpl.getRegisteredCallInfos(createMethodInfo("Object", "catch_3"))
         assertEquals(1, catch_3.size)
         assertTrue(allCallInfosHaveNumberOfUnnamedArguments(catch_3, 1))
-        assertTrue(callInfosContainsUnique(catch_3, listOf("Proc"), "NilClass"))
+        assertCallInfosContainsUnique(catch_3, listOf("Proc"), "NilClass")
 
         val dont_catch_3 = RSignatureProviderImpl.getRegisteredCallInfos(createMethodInfo("Object", "dont_catch_3"))
         assertEquals(0, dont_catch_3.size)
@@ -214,7 +214,7 @@ class CallStatCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
         val foo = RSignatureProviderImpl.getRegisteredCallInfos(createMethodInfo("Object", "foo"))
         assertEquals(1, foo.size)
         assertTrue(allCallInfosHaveNumberOfUnnamedArguments(foo, 1))
-        assertTrue(callInfosContainsUnique(foo, listOf("Proc"), "NilClass"))
+        assertCallInfosContainsUnique(foo, listOf("Proc"), "NilClass")
     }
 
     private fun executeScript(runnableScriptName: String, additionalArgScannerArgs: Array<String> = emptyArray()) {
@@ -301,12 +301,16 @@ class CallStatCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
             return MethodInfo(ClassInfo(className), methodName, RVisibility.PUBLIC)
         }
 
-        private fun callInfosContainsUnique(callInfos: List<CallInfo>,
-                                            arguments: List<String>,
-                                            returnType: String): Boolean {
-            return callInfos.filter { callInfo ->
+        private fun assertCallInfosContainsUnique(callInfos: List<CallInfo>,
+                                                  arguments: List<String>,
+                                                  returnType: String) {
+            val toAssert = callInfos.filter { callInfo ->
                 callInfo.unnamedArguments.map { it.type } == arguments && callInfo.returnType == returnType
             }.count() == 1
+            Assert.assertTrue("" +
+                    "Expected \n" +
+                    "${callInfos.joinToString(separator = ",\n")}\n" +
+                    "contains unique ${arguments.joinToString(prefix = "(", postfix = ")")} -> $returnType", toAssert)
         }
 
         private fun allCallInfosHaveNumberOfUnnamedArguments(callInfos: List<CallInfo>, numberOfArguments: Int): Boolean {
