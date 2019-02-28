@@ -30,8 +30,8 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
   spec.extensions = ["ext/arg_scanner/extconf.rb"]
 
-  spec.add_development_dependency "bundler", "~> 1.13"
-  spec.add_development_dependency "rake", "~> 12.0"
+  spec.add_development_dependency "bundler", ">= 1.13"
+  spec.add_development_dependency "rake", ">= 12.0"
   spec.add_development_dependency "rake-compiler"
   spec.add_development_dependency "debase-ruby_core_source", ">= 0.10.4"
   spec.add_development_dependency "native-package-installer", ">= 1.0.0"
