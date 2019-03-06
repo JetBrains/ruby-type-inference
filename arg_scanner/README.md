@@ -14,7 +14,7 @@ manually so including it in the `Gemfile` is not necessary.
 
 ## Installation
 
-The recommended way to install it is to install manually:
+The recommended way to install it is to execute command:
 
 ```
 gem install arg_scanner
@@ -23,7 +23,7 @@ gem install arg_scanner
     
 ## Building from sources
 
-If you want to compile the gem from sources, just run
+If you want to compile the gem from sources, just run the following commands:
 
 ```    
 bundle install
@@ -44,7 +44,7 @@ Arch Linux: `sudo pacman -S glib2`
 
 ## Usage
 
-`arg_scanner` provides binary `arg-scanner` which receives any number of
+`arg_scanner` provides the `arg-scanner` binary which receives any number of
 arguments and executes the given command in type tracking mode,
 for example:
 

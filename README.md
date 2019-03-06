@@ -2,7 +2,7 @@ Automated Type Contracts Generation [![JetBrains incubator project](http://jb.gg
 ===================================
 
 `ruby-type-inference` project is a completely new approach to
-tackle the problems Ruby dynamic nature and provide more reliable
+tackle the problems of Ruby dynamic nature and provide more reliable
 symbol resolution and type inference. It collects some run time data
 to build type contracts for the methods.
 
@@ -25,21 +25,21 @@ the possibility to merge any type contracts at any time.
      
 ## Usage
 
-For simple usage you need to install [Ruby Dynamic Code Insight](https://plugins.jetbrains.com/plugin/10227-ruby-dynamic-code-insight) 
-plugin for RubyMine. Then this plugin will require [arg_scanner](https://rubygems.org/gems/arg_scanner) gem to be installed.
+For simple usage you need to install the [Ruby Dynamic Code Insight](https://plugins.jetbrains.com/plugin/10227-ruby-dynamic-code-insight) 
+plugin for RubyMine. Then this plugin will require the [arg_scanner](https://rubygems.org/gems/arg_scanner) gem to be installed.
 See [arg_scanner installation instruction](arg_scanner/README.md#installation) if you have problems while installation. 
 
-After that you will have possibility to run your programs under type tracker:
+After that, you will have the possibility to run your programs under type tracker:
 
 ![Run with type tracker](screenshots/run_with_type_tracker.png)
 
-Or you can run your programs in terminal via `rubymine-type-tracker` binary (But you have to keep your project opened 
+Or you can run your programs in terminal via the `rubymine-type-tracker` binary (But you have to keep your project opened 
 in RubyMine). E.g.:
 ```
 rubymine-type-tracker bin/rails server
 ```
 
-`rubymine-type-tracker` binary is included into [arg_scanner](https://rubygems.org/gems/arg_scanner) gem.
+The `rubymine-type-tracker` binary is included into the [arg_scanner](https://rubygems.org/gems/arg_scanner) gem.
 
 See [FEATURES.md](FEATURES.md) for understanding what benefits you will have after running your program under type tracker.
      
@@ -51,7 +51,7 @@ See [FEATURES.md](FEATURES.md) for understanding what benefits you will have aft
   
   See [`arg_scanner`] documentation for details on usage.
 
-* [**Type contract processor**](contract-creator) server listens for
+* The [**type contract processor**](contract-creator) server listens for
   incoming type data (from `arg_scanner`) and processes it to a compact format.
   
   The data stored may be used later for better code analysis and also
