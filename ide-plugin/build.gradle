@@ -25,7 +25,7 @@ dependencies {
     compile project(':state-tracker'), withoutSlfAndKotlinAndMySql
 
     // https://mvnrepository.com/artifact/com.h2database/h2
-    compile group: 'com.h2database', name: 'h2', version: '1.4.196'
+    compile group: 'com.h2database', name: 'h2', version: '1.4.199'
 
 }
 
