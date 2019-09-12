@@ -1,8 +1,7 @@
+
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
-import com.yourkit.util.FileUtil
 import junit.framework.Assert
 import org.jetbrains.plugins.ruby.ruby.run.RubyCommandLine
 import org.jetbrains.plugins.ruby.ruby.run.RubyLocalRunner
@@ -20,16 +19,13 @@ class CallStatCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
 
     private var lastServer: SignatureServer? = null
 
-    init {
-        DatabaseProvider.connectToInMemoryDB(isDefaultDatabase = true)
-    }
-
     override fun getTestDataPath(): String {
         return "src/test/testData"
     }
 
     override fun setUp() {
         super.setUp()
+        DatabaseProvider.connectToInMemoryDB(isDefaultDatabase = true)
         DatabaseProvider.dropAllDatabases()
         DatabaseProvider.createAllDatabases()
     }
@@ -290,7 +286,7 @@ class CallStatCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
             val errorStream = process.errorStream
             process.waitFor(30, TimeUnit.SECONDS)
             try {
-                return StringUtil.join(FileUtil.readStreamAsLines(errorStream), "\n")
+                return errorStream.bufferedReader().use { it.readText() }
             } catch (e: IOException) {
                 throw RuntimeException(e)
             }

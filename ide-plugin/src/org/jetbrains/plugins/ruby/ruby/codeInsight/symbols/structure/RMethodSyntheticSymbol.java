@@ -106,6 +106,12 @@ public class RMethodSyntheticSymbol extends SymbolImpl implements RMethodSymbol 
         return myArgsInfo;
     }
 
+    @Override
+    @Nullable
+    public List<ArgumentInfo> getArgumentInfos(boolean includeDefaultArgs) {
+        return null;
+    }
+
     @Nullable
     @Override
     public RType getCallType(@Nullable final RCall call) {

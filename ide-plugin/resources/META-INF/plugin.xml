@@ -16,11 +16,10 @@
     ]]>
     </change-notes>
 
-    <application-components>
-        <component>
-            <implementation-class>org.jetbrains.plugins.ruby.ruby.codeInsight.ProjectLifecycleListenerImpl</implementation-class>
-        </component>
-    </application-components>
+    <applicationListeners>
+        <listener class="org.jetbrains.plugins.ruby.ruby.codeInsight.ProjectLifecycleListenerImpl"
+                  topic="com.intellij.openapi.project.ProjectManagerListener"/>
+    </applicationListeners>
 
     <extensions defaultExtensionNs="com.intellij">
         <executor implementation="com.intellij.execution.executors.RunWithTypeTrackerExecutor"/>

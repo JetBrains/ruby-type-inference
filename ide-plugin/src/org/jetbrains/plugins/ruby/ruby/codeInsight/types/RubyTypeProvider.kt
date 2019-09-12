@@ -50,8 +50,7 @@ fun getCachedOrComputedRegisteredCallInfo(methodInfo: MethodInfo): List<CallInfo
 }
 
 class RubyParameterTypeProvider : AbstractRubyTypeProvider() {
-
-    override fun createTypeBySymbol(p0: Symbol?, p1: Context?): RType? {
+    override fun createTypeBySymbol(symbol: Symbol): RType? {
         return null
     }
 

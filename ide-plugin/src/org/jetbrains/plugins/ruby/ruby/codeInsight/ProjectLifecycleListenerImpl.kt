@@ -1,10 +1,9 @@
 package org.jetbrains.plugins.ruby.ruby.codeInsight
 
 import com.google.gson.Gson
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.impl.ProjectLifecycleListener
+import com.intellij.openapi.project.ProjectManagerListener
 import org.jetbrains.plugins.ruby.ruby.persistent.TypeInferenceDirectory
 import org.jetbrains.plugins.ruby.util.runServerAsyncInIDEACompatibleMode
 import org.jetbrains.ruby.codeInsight.types.storage.server.DatabaseProvider
@@ -12,7 +11,6 @@ import org.jetbrains.ruby.runtime.signature.server.SignatureServer
 import java.io.File
 import java.io.PrintWriter
 import java.nio.file.Paths
-import kotlin.test.assertEquals
 
 /**
  * Short [Project] description for `rubymine-type-tracer`
@@ -36,29 +34,16 @@ private val openedProjectsDir = File(System.getProperty("java.io.tmpdir")!!).res
 /**
  * This registered in `plugin.xml` and it's constructor called every time RubyMine starts
  */
-class ProjectLifecycleListenerImpl : ProjectLifecycleListener {
+class ProjectLifecycleListenerImpl : ProjectManagerListener {
     private val gson = Gson()
     private val log = Logger.getInstance(this.javaClass.canonicalName)
-
-    // This own singleton pattern implementation is needed because this class is registered in `plugin.xml`
-    // and should have public constructor but Kotlin's objects have private constructor
-    init {
-        synchronized(Companion) {
-            if (!initialized) {
-                initialized = true
-                ApplicationManager.getApplication().messageBus.connect().subscribe(ProjectLifecycleListener.TOPIC, this)
-            }
-        }
-    }
 
     private companion object {
         @Volatile
         private var initialized: Boolean = false
     }
 
-    override fun beforeProjectLoaded(project: Project) {
-        super.beforeProjectLoaded(project)
-
+    override fun projectOpened(project: Project) {
         if (!project.isDefault) {
             connectToDB(project.name)
 
@@ -67,8 +52,7 @@ class ProjectLifecycleListenerImpl : ProjectLifecycleListener {
         }
     }
 
-    override fun afterProjectClosed(project: Project) {
-        super.afterProjectClosed(project)
+    override fun projectClosed(project: Project) {
         if (!project.isDefault) {
             val projectDescription = readProjectDescription(project, deleteJsonAfterRead = true)
             File(projectDescription.pipeFilePath).delete()
