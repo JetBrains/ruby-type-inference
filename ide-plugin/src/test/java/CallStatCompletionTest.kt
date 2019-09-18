@@ -1,4 +1,3 @@
-
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
@@ -37,7 +36,7 @@ class CallStatCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
             super.tearDown()
         }
     }
-    
+
     fun testSimpleCallInfoCollection() {
         val callInfos = runAndGetCallInfos("simple_call_info_collection_test.rb",
                 createMethodInfo("AClass", "foo"))
@@ -45,7 +44,7 @@ class CallStatCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
         assertTrue(allCallInfosHaveNumberOfUnnamedArguments(callInfos, 1))
         assertCallInfosContainsUnique(callInfos, listOf("String"), "Symbol")
     }
-    
+
     fun testSimpleCallInfosCollectionMultipleFunctions() {
         executeScript("simple_call_info_collection_test_multiple_functions_test.rb")
         waitForServer()
@@ -63,7 +62,7 @@ class CallStatCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
         assertCallInfosContainsUnique(barCallInfos, listOf("FalseClass"), "FalseClass")
         assertCallInfosContainsUnique(barCallInfos, listOf("Symbol"), "A")
     }
-    
+
     fun testSimpleCallInfosCollectionWithMultipleArguments() {
         val callInfos = runAndGetCallInfos("simple_call_info_collection_with_multiple_arguments_test.rb",
                 createMethodInfo("AClass", "foo"))
@@ -72,7 +71,7 @@ class CallStatCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
         assertTrue(allCallInfosHaveNumberOfUnnamedArguments(callInfos, 2))
         assertCallInfosContainsUnique(callInfos, listOf("String", "TrueClass"), "Regexp")
     }
-    
+
     fun testSaveTypesBetweenLaunches() {
         var callInfos = runAndGetCallInfos("save_types_between_launches_test_part_1.rb",
                 createMethodInfo("A", "foo"))
@@ -92,7 +91,7 @@ class CallStatCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
         assertCallInfosContainsUnique(callInfos, listOf("TrueClass"), "FalseClass")
         assertCallInfosContainsUnique(callInfos, listOf("String"), "Regexp")
     }
-    
+
     fun testForgetCallInfoWhenArgumentsNumberChanged() {
         var callInfos = runAndGetCallInfos("forget_call_info_when_arguments_number_changed_test_part_1.rb",
                 createMethodInfo("A", "foo"))
@@ -114,7 +113,7 @@ class CallStatCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
         assertTrue(allCallInfosHaveNumberOfUnnamedArguments(callInfos, 1))
         assertCallInfosContainsUnique(callInfos, listOf("M::A"), "M::A")
     }
-    
+
     fun testTopLevelMethodsCallInfoCollection() {
         val callInfos = runAndGetCallInfos("top_level_methods_call_info_collection_test.rb",
                 createMethodInfo("Object", "foo"))
@@ -125,7 +124,7 @@ class CallStatCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
         assertCallInfosContainsUnique(callInfos, listOf("String", "TrueClass"), "Regexp")
         assertCallInfosContainsUnique(callInfos, listOf("String", "TrueClass"), "String")
     }
-    
+
     fun testDuplicatesInCallInfoTable() {
         val callInfos = runAndGetCallInfos("duplicates_in_callinfo_table_test.rb",
                 createMethodInfo("Object", "foo"))
@@ -135,7 +134,7 @@ class CallStatCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
         assertCallInfosContainsUnique(callInfos, listOf("String"), "FalseClass")
         assertCallInfosContainsUnique(callInfos, listOf("FalseClass"), "FalseClass")
     }
-    
+
     fun testMethodWithoutParameters() {
         val callInfos = runAndGetCallInfos("method_without_parameters_test.rb",
                 createMethodInfo("Object", "foo"))
@@ -268,7 +267,7 @@ class CallStatCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
 
         }
     }
-    
+
     private fun runAndGetCallInfos(executableScriptName: String,
                                    methodInfo: MethodInfo): List<CallInfo> {
         executeScript(executableScriptName)
