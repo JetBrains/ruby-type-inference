@@ -28,7 +28,7 @@
         <programRunner implementation="org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyRunWithTypeTrackerRunner"/>
         <programRunner implementation="org.jetbrains.plugins.ruby.ruby.codeInsight.types.RubyCollectStateRunner"/>
 
-        <applicationService serviceImplementation="org.jetbrains.plugins.ruby.settings.RubyTypeContractsSettings"/>
+        <projectService serviceImplementation="org.jetbrains.plugins.ruby.settings.RubyTypeContractsSettings"/>
 
         <intentionAction>
             <className>org.jetbrains.plugins.ruby.ruby.intentions.AddContractAnnotationIntention</className>
