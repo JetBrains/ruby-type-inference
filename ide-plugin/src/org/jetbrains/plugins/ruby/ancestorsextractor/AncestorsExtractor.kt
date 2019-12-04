@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.ThrowableComputable
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.SymbolUtil
-import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.util.SymbolScopeUtil
+import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.util.SymbolHierarchy
 import java.io.FileWriter
 import java.io.PrintWriter
 
@@ -70,7 +70,7 @@ class AncestorsExtractorByRubyMine(private val allModulesNames: List<String>? = 
 
     private fun extractAncestorsFor(rubyModuleName: String, project: Project): List<String> {
         return SymbolUtil.findConstantByFQN(project, rubyModuleName)?.let {
-            SymbolScopeUtil.getAncestorsCaching(it, null)
+            SymbolHierarchy.getAncestorsCaching(it, null)
         }?.map { it.symbol.fqnWithNesting.toString() } ?: listOf()
     }
 }

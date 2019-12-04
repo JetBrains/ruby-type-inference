@@ -17,7 +17,7 @@ import org.jetbrains.plugins.ruby.ruby.codeInsight.symbolicExecution.symbolicExp
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbolicExecution.symbolicExpression.SymbolicExpression
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.Type
 import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.Symbol
-import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.util.SymbolScopeUtil
+import org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.util.SymbolHierarchy
 import org.jetbrains.plugins.ruby.ruby.codeInsight.types.impl.REmptyType
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RPsiElement
 import org.jetbrains.plugins.ruby.ruby.lang.psi.RubyPsiUtil
@@ -106,7 +106,7 @@ class ReturnTypeSymbolicTypeInferenceProvider : SymbolicTypeInferenceProvider {
         // reversed because getAncestorsCaching gives us list of ancestors ordered from parent to end children
         // This list already include exactReceiverType
         val receiverTypesConsideringAncestors: List<String> = RTypeUtil.getBirthTypeSymbol(exactReceiverType)
-                ?.let { SymbolScopeUtil.getAncestorsCaching(it, callContext.invocationPoint) }
+                ?.let { SymbolHierarchy.getAncestorsCaching(it, callContext.invocationPoint) }
                 ?.map { it.symbol.fqnWithNesting.toString() }?.reversed() ?: emptyList()
 
         val typeInferenceComponent = context.getComponent(TypeInferenceComponent::class.java)
