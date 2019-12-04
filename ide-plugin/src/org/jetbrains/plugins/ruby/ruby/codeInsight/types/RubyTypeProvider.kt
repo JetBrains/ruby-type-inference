@@ -28,24 +28,20 @@ import org.jetbrains.ruby.codeInsight.types.storage.server.impl.CallInfoTable
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.RSignatureProviderImpl
 
 /**
- * Cache where we store last accessed [CallInfo]s. Synchronize access to this property with [registeredCallInfosCacheLock]
+ * Cache where we store last accessed [CallInfo]s. Thread safe
  */
 private val registeredCallInfosCache: MutableMap<MethodInfo, List<CallInfo>>
-        = ContainerUtil.createSoftKeySoftValueMap<MethodInfo, List<CallInfo>>()
+        = ContainerUtil.createConcurrentSoftKeySoftValueMap<MethodInfo, List<CallInfo>>()
 
 fun resetAllRubyTypeProviderAndIDEACaches(project: Project?) {
-    synchronized(registeredCallInfosCache) {
-        registeredCallInfosCache.clear()
-    }
+    registeredCallInfosCache.clear()
     // Clears IDEAs caches about inferred types
     ServiceManager.getService(project ?: return, TypeInferenceContext::class.java)?.clear()
 }
 
 fun getCachedOrComputedRegisteredCallInfo(methodInfo: MethodInfo): List<CallInfo> {
-    return synchronized(registeredCallInfosCache) {
-        registeredCallInfosCache.getOrPut(methodInfo) {
-            RSignatureProviderImpl.getRegisteredCallInfos(methodInfo)
-        }
+    return registeredCallInfosCache.getOrPut(methodInfo) {
+        RSignatureProviderImpl.getRegisteredCallInfos(methodInfo)
     }
 }
 
