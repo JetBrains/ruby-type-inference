@@ -27,7 +27,6 @@ fun main(args: Array<String>) {
     parseArgs(args).let {
         DatabaseProvider.connectToDB(it.dbFilePath, isDefaultDatabase = true)
     }
-    DatabaseProvider.createAllDatabases()
 
     val pipeFileName = SignatureServer().runServerAsync(isDaemon = false)
     println("Pass this to arg-scanner via --pipe-file-path: $pipeFileName")

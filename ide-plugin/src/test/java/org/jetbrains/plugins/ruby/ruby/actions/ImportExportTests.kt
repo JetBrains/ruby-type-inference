@@ -20,7 +20,6 @@ class ImportExportTests : TestCase() {
 
         DatabaseProvider.connectToDB(generateTempDBFilePath(), isDefaultDatabase = true)
 
-        DatabaseProvider.createAllDatabases(DatabaseProvider.defaultDatabase)
         DatabaseProvider.defaultDatabaseTransaction {
             data.forEach { CallInfoTable.insertInfoIfNotContains(it) }
         }
@@ -40,12 +39,9 @@ class ImportExportTests : TestCase() {
         }
 
         DatabaseProvider.connectToDB(generateTempDBFilePath(), isDefaultDatabase = true)
-        DatabaseProvider.createAllDatabases(DatabaseProvider.defaultDatabase)
 
         val dbToImport = generateTempDBFilePath().let { pathToImport: String ->
             val db = DatabaseProvider.connectToDB(pathToImport)
-
-            DatabaseProvider.createAllDatabases(db)
 
             transaction(db) {
                 data.forEach { CallInfoTable.insertInfoIfNotContains(it) }
@@ -74,15 +70,12 @@ class ImportExportTests : TestCase() {
         )
 
         DatabaseProvider.connectToDB(generateTempDBFilePath(), isDefaultDatabase = true)
-        DatabaseProvider.createAllDatabases(DatabaseProvider.defaultDatabase)
         DatabaseProvider.defaultDatabaseTransaction {
             defaultDBData.forEach { CallInfoTable.insertInfoIfNotContains(it) }
         }
 
         val dbToImport = generateTempDBFilePath().let { pathToImport: String ->
             val db = DatabaseProvider.connectToDB(pathToImport)
-
-            DatabaseProvider.createAllDatabases(db)
 
             transaction(db) {
                 data.forEach { CallInfoTable.insertInfoIfNotContains(it) }

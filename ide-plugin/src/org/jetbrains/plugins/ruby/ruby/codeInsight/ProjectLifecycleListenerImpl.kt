@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.ruby.ruby.codeInsight
 
 import com.google.gson.Gson
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManagerListener
 import org.jetbrains.plugins.ruby.ruby.persistent.TypeInferenceDirectory
@@ -64,8 +63,6 @@ class ProjectLifecycleListenerImpl : ProjectManagerListener {
                 projectName).toString() + DatabaseProvider.H2_DB_FILE_EXTENSION
 
         DatabaseProvider.connectToDB(filePath, isDefaultDatabase = true)
-
-        DatabaseProvider.createAllDatabases()
     }
 
     /**

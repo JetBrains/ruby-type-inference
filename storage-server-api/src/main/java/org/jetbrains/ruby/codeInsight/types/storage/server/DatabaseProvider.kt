@@ -45,6 +45,7 @@ object DatabaseProvider {
             defaultDatabaseFilePath = filePath
         }
         logger.info("Connected to DB: $filePath")
+        createAllDatabases(database)
         logDatabaseSize(database)
         return database
     }

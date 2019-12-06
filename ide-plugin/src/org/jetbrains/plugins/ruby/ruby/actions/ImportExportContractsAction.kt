@@ -70,7 +70,6 @@ class ExportContractsAction : ExportFileActionBase(
             File(pathToExport).delete()
 
             val databaseToExportTo = DatabaseProvider.connectToDB(pathToExport)
-            DatabaseProvider.createAllDatabases(databaseToExportTo)
 
             DatabaseProvider.defaultDatabase!!.copyTo(databaseToExportTo, moveProgressBar)
         }
