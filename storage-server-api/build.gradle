@@ -9,6 +9,7 @@ buildscript {
 }
 
 dependencies {
+    compile project(':common')
     compile project(':ruby-call-signature')
 
     compile "org.jetbrains.exposed:exposed:$exposedVersion"

@@ -4,6 +4,8 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.Transaction
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.ruby.codeInsight.Logger
+import org.jetbrains.ruby.codeInsight.injector
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.*
 
 object DatabaseProvider {
@@ -17,6 +19,7 @@ object DatabaseProvider {
     private const val IN_MEMORY_URL = "jdbc:h2:mem:test"
     private const val H2_DRIVER = "org.h2.Driver"
     const val H2_DB_FILE_EXTENSION = ".mv.db"
+    private val logger: Logger = injector.getLogger(DatabaseProvider::class.java)
 
     @JvmStatic
     fun connectToInMemoryDB(isDefaultDatabase: Boolean = false): Database {
@@ -24,6 +27,7 @@ object DatabaseProvider {
         if (isDefaultDatabase) {
             defaultDatabase = database
         }
+        logger.info("Connected to in memory DB")
         return database
     }
 
@@ -38,6 +42,7 @@ object DatabaseProvider {
             defaultDatabase = database
             defaultDatabaseFilePath = filePath
         }
+        logger.info("Connected to DB: $filePath")
         return database
     }
 

@@ -36,7 +36,6 @@ private val openedProjectsDir = File(System.getProperty("java.io.tmpdir")!!).res
  */
 class ProjectLifecycleListenerImpl : ProjectManagerListener {
     private val gson = Gson()
-    private val log = Logger.getInstance(this.javaClass.canonicalName)
 
     private companion object {
         @Volatile
@@ -65,7 +64,6 @@ class ProjectLifecycleListenerImpl : ProjectManagerListener {
                 projectName).toString() + DatabaseProvider.H2_DB_FILE_EXTENSION
 
         DatabaseProvider.connectToDB(filePath, isDefaultDatabase = true)
-        log.info("Connected to DB: $filePath")
 
         DatabaseProvider.createAllDatabases()
     }
