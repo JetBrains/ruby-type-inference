@@ -3,6 +3,7 @@ package org.jetbrains.ruby.codeInsight.types.storage.server
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.Transaction
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.ruby.codeInsight.Logger
 import org.jetbrains.ruby.codeInsight.injector
@@ -28,6 +29,7 @@ object DatabaseProvider {
             defaultDatabase = database
         }
         logger.info("Connected to in memory DB")
+        logDatabaseSize(database)
         return database
     }
 
@@ -43,6 +45,7 @@ object DatabaseProvider {
             defaultDatabaseFilePath = filePath
         }
         logger.info("Connected to DB: $filePath")
+        logDatabaseSize(database)
         return database
     }
 
@@ -63,6 +66,14 @@ object DatabaseProvider {
     fun dropAllDatabases(db: Database? = null) {
         transaction(db ?: defaultDatabase) {
             SchemaUtils.drop(GemInfoTable, ClassInfoTable, MethodInfoTable, SignatureTable, CallInfoTable)
+        }
+    }
+
+    private fun logDatabaseSize(db: Database) {
+        transaction(db) {
+            for (table in listOf(CallInfoTable, MethodInfoTable, ClassInfoTable, SignatureTable, GemInfoTable)) {
+                logger.info("${table.tableName} table's number of rows ${table.selectAll().count()}")
+            }
         }
     }
 }
