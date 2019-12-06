@@ -19,6 +19,7 @@ dependencies {
         exclude group: 'mysql'
     }
 
+    compile project(':common')
     compile project(':ruby-call-signature'), withoutKotlinAndMySql
     compile project(':storage-server-api'), withoutSlfAndKotlinAndMySql
     compile project(':contract-creator'), withoutSlfAndKotlinAndMySql

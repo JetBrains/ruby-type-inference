@@ -3,6 +3,7 @@ package org.jetbrains.ruby.runtime.signature.server
 import com.google.gson.Gson
 import com.google.gson.JsonParseException
 import com.google.gson.JsonSyntaxException
+import org.jetbrains.ruby.codeInsight.initInjector
 import org.jetbrains.ruby.codeInsight.types.signature.CallInfo
 import org.jetbrains.ruby.codeInsight.types.storage.server.DatabaseProvider
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.CallInfoTable
@@ -22,6 +23,7 @@ import kotlin.concurrent.thread
 private const val EXIT_COMMAND = "EXIT";
 
 fun main(args: Array<String>) {
+    initInjector(SignatureServerInjector)
     parseArgs(args).let {
         DatabaseProvider.connectToDB(it.dbFilePath, isDefaultDatabase = true)
     }

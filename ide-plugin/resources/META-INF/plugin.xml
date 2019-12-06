@@ -19,6 +19,9 @@
     <applicationListeners>
         <listener class="org.jetbrains.plugins.ruby.ruby.codeInsight.ProjectLifecycleListenerImpl"
                   topic="com.intellij.openapi.project.ProjectManagerListener"/>
+        <listener class="org.jetbrains.plugins.ruby.ruby.codeInsight.RubyDynamicCodeInsightPluginAppLifecyctlListener"
+                  topic="com.intellij.ide.AppLifecycleListener"
+                  activeInHeadlessMode="true"/>
     </applicationListeners>
 
     <extensions defaultExtensionNs="com.intellij">
