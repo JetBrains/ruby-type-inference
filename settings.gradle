@@ -3,4 +3,5 @@ include 'contract-creator'
 include 'ide-plugin'
 include 'signature-viewer'
 include 'state-tracker'
+include 'common'
 
