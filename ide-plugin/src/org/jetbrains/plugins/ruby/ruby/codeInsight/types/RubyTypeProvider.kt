@@ -1,7 +1,9 @@
 package org.jetbrains.plugins.ruby.ruby.codeInsight.types
 
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.plugins.ruby.ruby.codeInsight.AbstractRubyTypeProvider
@@ -26,6 +28,10 @@ import org.jetbrains.plugins.ruby.ruby.lang.psi.variables.RIdentifier
 import org.jetbrains.ruby.codeInsight.types.signature.*
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.CallInfoTable
 import org.jetbrains.ruby.codeInsight.types.storage.server.impl.RSignatureProviderImpl
+import java.util.concurrent.Executors
+import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 /**
  * Cache where we store last accessed [CallInfo]s. Thread safe
@@ -92,36 +98,64 @@ class RubyParameterTypeProvider : AbstractRubyTypeProvider() {
  * Provides types for Ruby method return values. Type providing based on information collection into [CallInfoTable]
  */
 class ReturnTypeSymbolicTypeInferenceProvider : SymbolicTypeInferenceProvider {
+    companion object {
+        private val pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() + 1)
+    }
+
     override fun evaluateSymbolicCall(symbolicCall: SymbolicCall,
                                       context: SymbolicExecutionContext,
                                       callContext: TypeInferenceInstance.CallContext,
                                       provider: SymbolicExpressionProvider,
                                       component: TypeInferenceComponent): SymbolicExpression? {
-        val exactReceiverType: RType = SymbolicTypeInferenceProvider.getReceiverType(symbolicCall, component, callContext)
+        ProgressManager.checkCanceled()
+        val job: () -> SymbolicExpression? = {
+            evaluateSymbolicCallPoolJob(symbolicCall, context, callContext, component)
+        }
 
-        // reversed because getAncestorsCaching gives us list of ancestors ordered from parent to end children
-        // This list already include exactReceiverType
-        val receiverTypesConsideringAncestors: List<String> = RTypeUtil.getBirthTypeSymbol(exactReceiverType)
-                ?.let { SymbolHierarchy.getAncestorsCaching(it, callContext.invocationPoint) }
-                ?.map { it.symbol.fqnWithNesting.toString() }?.reversed() ?: emptyList()
+        val future: Future<SymbolicExpression?> = pool.submit(job)
+        return try {
+            // This method is run under read action and we cannot afford to spend a lot of time determining time.
+            // Otherwise we got glitches see: https://youtrack.jetbrains.com/issue/RUBY-25433
+            future.get(100, TimeUnit.MILLISECONDS)
+        } catch (ex: TimeoutException) {
+            null
+        }
+    }
 
-        val typeInferenceComponent = context.getComponent(TypeInferenceComponent::class.java)
+    private fun evaluateSymbolicCallPoolJob(symbolicCall: SymbolicCall,
+                                            context: SymbolicExecutionContext,
+                                            callContext: TypeInferenceInstance.CallContext,
+                                            component: TypeInferenceComponent): SymbolicExpression? {
+        var unnamedArgsTypes: List<String?> = emptyList()
+        var namedArgsTypes: List<ArgumentNameAndType?> = emptyList()
+        var receiverTypesConsideringAncestors: List<String> = emptyList()
+        ReadAction.run<Exception> {
+            ProgressManager.checkCanceled()
+            val exactReceiverType: RType = SymbolicTypeInferenceProvider.getReceiverType(symbolicCall, component, callContext)
 
-        val unnamedArgsTypes: List<String?> = symbolicCall.arguments.asSequence().filter { it.type != IncomingType.ASSOC }
-                .map { typeInferenceComponent.getTypeForSymbolicExpression(it.expression).name }.toList()
+            // reversed because getAncestorsCaching gives us list of ancestors ordered from parent to end children
+            // This list already include exactReceiverType
+            receiverTypesConsideringAncestors = RTypeUtil.getBirthTypeSymbol(exactReceiverType)
+                    ?.let { SymbolHierarchy.getAncestorsCaching(it, callContext.invocationPoint) }
+                    ?.map { it.symbol.fqnWithNesting.toString() }?.reversed() ?: emptyList()
 
-        val namedArgsTypes = symbolicCall.arguments.asSequence().filter { it.type == IncomingType.ASSOC }
-                .map {
-                    val type = typeInferenceComponent.getTypeForSymbolicExpression(it.expression).name ?: return@map null
-                    return@map ArgumentNameAndType(it.keyName, type)
-                }.toList()
+            val typeInferenceComponent = context.getComponent(TypeInferenceComponent::class.java)
+
+            unnamedArgsTypes = symbolicCall.arguments.asSequence().filter { it.type != IncomingType.ASSOC }
+                    .map { typeInferenceComponent.getTypeForSymbolicExpression(it.expression).name }.toList()
+
+            namedArgsTypes = symbolicCall.arguments.asSequence().filter { it.type == IncomingType.ASSOC }
+                    .map {
+                        val type = typeInferenceComponent.getTypeForSymbolicExpression(it.expression).name ?: return@map null
+                        return@map ArgumentNameAndType(it.keyName, type)
+                    }.toList()
+        }
 
         for (receiverTypeName in receiverTypesConsideringAncestors) {
             val methodInfo = MethodInfo.Impl(ClassInfo.Impl(null, receiverTypeName), symbolicCall.name)
 
             val registeredCallInfos = getCachedOrComputedRegisteredCallInfo(methodInfo)
 
-            @Suppress("UNCHECKED_CAST")
             val registeredReturnTypes: List<String> = registeredCallInfos
                     .asSequence()
                     .filter { argumentsMatch(it, unnamedArgsTypes, namedArgsTypes) }
