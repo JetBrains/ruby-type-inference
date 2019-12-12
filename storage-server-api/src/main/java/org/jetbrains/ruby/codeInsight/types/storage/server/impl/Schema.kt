@@ -42,7 +42,7 @@ class GemInfoRow(id: EntityID<Int>) : IntEntity(id), GemInfo {
 
 object ClassInfoTable : IntIdTableWithNullableDependency<ClassInfo, GemInfo>(GemInfoTable) {
     val gemInfo = reference("gem_info", GemInfoTable, ReferenceOption.CASCADE).nullable()
-    val fqn = varchar("fqn", ClassInfo.LENGTH_OF_FQN)
+    val fqn = varchar("fqn", ClassInfo.LENGTH_OF_FQN).index()
 
     override fun SqlExpressionBuilder.createSearchCriteriaForInfo(info: ClassInfo): Op<Boolean> {
         // HACK: as soon as fqn in RubyMine is not fully qualified (search criteria must be: fqn eq info.classFQN)
@@ -74,7 +74,7 @@ class ClassInfoRow(id: EntityID<Int>) : IntEntity(id), ClassInfo {
 
 object MethodInfoTable : IntIdTableWithDependency<MethodInfo, ClassInfo>(ClassInfoTable) {
     val classInfo = reference("class_info", ClassInfoTable, ReferenceOption.CASCADE)
-    val name = varchar("name", MethodInfo.LENGTH_OF_NAME)
+    val name = varchar("name", MethodInfo.LENGTH_OF_NAME).index()
     val visibility = enumeration("visibility", RVisibility::class)
     val locationFile = varchar("location_file", MethodInfo.LENGTH_OF_PATH).nullable()
     val locationLineno = integer("location_lineno").default(0)
@@ -134,7 +134,7 @@ object CallInfoTable : IntIdTableWithDependency<CallInfo, MethodInfo>(MethodInfo
     private const val RETURN_TYPE_STRING_LENGTH = 50
     private const val CALL_INFOS_LIMIT_FOR_PARTICULAR_METHOD = 10
 
-    val methodInfoId = reference("method_info_id", MethodInfoTable, ReferenceOption.NO_ACTION)
+    val methodInfoId = reference("method_info_id", MethodInfoTable, ReferenceOption.NO_ACTION).index()
 
     /**
      * string containing types of unnamed args (e.g. REQ, KEYREQ args) splitted by separator
@@ -242,7 +242,7 @@ class CallInfoRow(id: EntityID<Int>) : IntEntity(id), CallInfo {
 }
 
 object SignatureTable : IntIdTableWithDependency<SignatureInfo, MethodInfo>(MethodInfoTable) {
-    val methodInfo = reference("method_info", MethodInfoTable, ReferenceOption.CASCADE)
+    val methodInfo = reference("method_info", MethodInfoTable, ReferenceOption.CASCADE).index()
     val contract = blob("contract")
 
     override fun insertInfoIfNotContains(info: SignatureInfo): EntityID<Int>? {
